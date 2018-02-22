@@ -24,6 +24,7 @@ _output
 
 # Eclipse
 .project
+.pydevproject
 .settings/
 
 # IntelliJ
