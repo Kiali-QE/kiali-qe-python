@@ -9,7 +9,5 @@ from widgetastic_patternfly import (Dropdown,
 
 
 class ButtonsView(View):
-    defaultButton = Button('Default Button')
-    button1 = Button('Default Normal')
-    button2 = Button(title='Destructive title')
-    button3 = Button(title='noText', classes=[Button.PRIMARY])
+    defaultButton = Button('Success Button')
+    primaryButton = Button(title='noText', classes=[Button.PRIMARY])

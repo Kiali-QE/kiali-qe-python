@@ -1,10 +1,10 @@
 import pytest
+import unittest
+import time
 
-from project import ButtonsView
+from project.react_view import ButtonsView
 
 def test_button_click(browser):
-    view = TestView(browser)
-    assert view.defaultButton.is_displayed
-    assert view.button1.is_displayed
-    assert view.button2.is_displayed
-    assert view.button3.is_displayed
+    view = ButtonsView(browser)
+    assert view.defaultButton.active
+    assert view.primaryButton.active
