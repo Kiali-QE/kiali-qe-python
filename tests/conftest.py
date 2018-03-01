@@ -8,6 +8,8 @@ import os
 import sys
 
 from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.alert import Alert
 
 from widgetastic.browser import Browser
 
@@ -36,7 +38,7 @@ def selenium(request):
 @pytest.fixture(scope='function')
 def browser(selenium):
     this_module = sys.modules[__name__]
-    selenium.get('https://rawgit.com/patternfly/patternfly-react/gh-pages/?selectedKind=Button&selectedStory=Button&full=0&addons=1&stories=1&panelRight=0&addonPanel=storybooks%2Fstorybook-addon-knobs')
+    selenium.get('http://jdoe:password@sws-istio-system.openshift.jonqe.lab.eng.bos.redhat.com/console/services')
     return CustomBrowser(selenium)
 
 
