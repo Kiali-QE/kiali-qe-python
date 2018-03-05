@@ -8,13 +8,12 @@ from widgetastic_patternfly import (Dropdown,
                                     Tab,
                                     Button)
 
-from . import Table, Search
+from widgetastic_sws import Table, Search, ReactView
 
 
-class ReactView(View):
-    def wait_displayed(self, timeout='10s'):
-        wait_for(lambda: self.is_displayed, timeout=timeout, delay=0.2)
-
+class GraphView(ReactView):
+    defaultButton = Button('Success Button')
+    primaryButton = Button(title='noText', classes=[Button.PRIMARY])
 
 class ButtonsView(ReactView):
     defaultButton = Button('Success Button')

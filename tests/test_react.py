@@ -13,11 +13,18 @@ def test_button_click(browser):
 def test_table_view(browser):
     view = TableView(browser)
     view.wait_displayed()
+    time.sleep(5)
     for row in view.table:
         assert row
     search = view.search
-    search.simple_search('kube')
+    time.sleep(5)
+    search.simple_search('sws')
+    time.sleep(5)
     view.wait_displayed()
     search.is_empty
     for row in view.table:
-        assert row
+        assert "sws" in row[0].text
+    time.sleep(5)
+"""
+def test_graph(browser):"""
+    
