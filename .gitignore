@@ -28,6 +28,8 @@ _output
 .pydevproject
 .settings/
 
+myvirtual/
+
 # IntelliJ
 .idea/
 

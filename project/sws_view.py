@@ -10,20 +10,10 @@ from widgetastic_patternfly import (Dropdown,
 
 from widgetastic_sws import Table, Search, ReactView
 
-
-class GraphView(ReactView):
-    defaultButton = Button('Success Button')
-    primaryButton = Button(title='noText', classes=[Button.PRIMARY])
-
-class ButtonsView(ReactView):
-    defaultButton = Button('Success Button')
-    primaryButton = Button(title='noText', classes=[Button.PRIMARY])
-
-
-class TableView(ReactView):
+class ServiceListView(ReactView):
     search = Search()
-    table = Table('//div[contains(@class, "list-group")]')
+    services = Table('//div[contains(@class, "list-group")]')
     
     @property
     def is_displayed(self):
-        return self.table.is_displayed
+        return self.services.is_displayed
