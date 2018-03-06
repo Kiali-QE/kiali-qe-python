@@ -7,8 +7,8 @@ yum install python-virtualenv wget unzip libcurl-devel unzip gcc openssl-devel r
 
 
 # Setup virtual environment
-virtualenv .cf-ui
-source .cf-ui/bin/activate
+virtualenv .sws-qe
+source .sws-qe/bin/activate
 
 # Install base requirements
 pip install -r requirements.txt
@@ -33,10 +33,6 @@ if grep -q -i "fedora 27" /etc/os-release
 then 
 pip install --no-cache-dir --compile --ignore-installed --install-option="--with-openssl" pycurl
 fi
-
-pip install mgmtsystem==1.6.1
-
-## End - Install mgmtsystem
 
 # Install Chromdriver - PATH must include "."
 rm -f chromedriver

@@ -1,8 +1,5 @@
-import pytest
-import unittest
-import time
-
 from project.sws_view import ServiceListView
+
 
 def test_service_search(browser):
     view = ServiceListView(browser)
@@ -14,4 +11,4 @@ def test_service_search(browser):
     view.wait_displayed()
     search.is_empty
     for row in view.services:
-        assert "sws" in row[0].text    
+        assert "sws" in row[0].text

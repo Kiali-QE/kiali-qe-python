@@ -28,7 +28,7 @@ _output
 .pydevproject
 .settings/
 
-myvirtual/
+.sws-qe/
 
 # IntelliJ
 .idea/
