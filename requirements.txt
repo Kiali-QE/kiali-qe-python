@@ -10,6 +10,7 @@ lxml
 # Chrome driver installation
 chromedriver
 ipython
+pyyaml
 pytest-allure-adaptor
 widgetastic.core
 widgetastic.patternfly

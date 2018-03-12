@@ -14,6 +14,13 @@ class ReactView(View):
         wait_for(lambda: self.is_displayed, timeout=timeout, delay=0.2)
 
 
+class Menu(View):
+    """ Represents Menu on the left side """
+    @property
+    def services(self):
+        return self.browser.element('//a//span[text()="Services"]')
+
+
 class Search(View):
     """ Represents search_text control """
     search_input = Input(locator="//div[contains(@class, 'input-group')]//input[contains(@class, 'form-control')]")
@@ -22,6 +29,7 @@ class Search(View):
         """ Search text using simple search """
         self.search_input.fill(text)
         self.browser.send_keys(Keys.ENTER, self.search_input)
+        self.parent.wait_displayed()
 
     @property
     def is_empty(self):
