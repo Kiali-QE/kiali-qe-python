@@ -3,10 +3,10 @@ from __future__ import unicode_literals
 import allure
 import pytest
 import yaml
-import os
-import sys
 
 from selenium import webdriver
+
+from rest_api.sws import SWSAPI
 
 from widgetastic.browser import Browser
 
@@ -32,9 +32,10 @@ def selenium(request, cfg):
     desired_capabilities = webdriver_options['desired_capabilities']
     driver = webdriver.Remote(
         command_executor=webdriver_options['command_executor'],
-        desired_capabilities={'platform': desired_capabilities['platform'],
-                              'browserName': desired_capabilities['browserName'],
-                              'unexpectedAlertBehaviour': desired_capabilities['unexpectedAlertBehaviour']}
+        desired_capabilities=
+        {'platform': desired_capabilities['platform'],
+         'browserName': desired_capabilities['browserName'],
+         'unexpectedAlertBehaviour': desired_capabilities['unexpectedAlertBehaviour']}
         )
     request.addfinalizer(driver.quit)
     driver.maximize_window()
@@ -49,8 +50,17 @@ def browser(selenium, cfg):
     return CustomBrowser(selenium)
 
 
+@pytest.fixture(scope='function')
+def rest_api(cfg):
+    return SWSAPI(cfg['sws_url'])
+
+
 def pytest_exception_interact(node, call, report):
     if selenium_browser is not None:
         allure.attach(
-            'Error screenshot', selenium_browser.get_screenshot_as_png(), allure.attach_type.PNG)
-        allure.attach('Error traceback', str(report.longrepr), allure.attach_type.TEXT)
+            'Error screenshot',
+            selenium_browser.get_screenshot_as_png(),
+            allure.attach_type.PNG)
+        allure.attach('Error traceback',
+                      str(report.longrepr),
+                      allure.attach_type.TEXT)
