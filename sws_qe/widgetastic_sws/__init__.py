@@ -69,9 +69,14 @@ class Paginator(Widget):
 
     It is mainly used in Paginator Pane.
     """
-    PAGINATOR_CTL = './/form[contains(@class, "content-view-pf-pagination"]/div[2]'
-    CUR_PAGE_CTL = './/div//input[contains(@class, "pagination-pf-page")]'
-    PAGE_BUTTON_CTL = './/a[contains(@title, {})]'
+    PAGINATOR_CTL = '//form[contains(@class, "content-view-pf-pagination")]'
+    CUR_PAGE_CTL = '//span//span[contains(@class, "pagination-pf-items-current")]'
+    TOTAL_PAGE_CTL = '//span//span[contains(@class, "pagination-pf-items-total")]'
+    PAGE_BUTTON_CTL = '//a[contains(@title, {})]'
+
+    @property
+    def is_displayed(self):
+        return self.browser.element(self.PAGINATOR_CTL, parent=self.parent_view).is_displayed()
 
     def __locator__(self):
         return self._paginator
@@ -81,7 +86,7 @@ class Paginator(Widget):
         return self.browser.element(self.PAGINATOR_CTL, parent=self.parent_view)
 
     def _is_enabled(self, element):
-        return 'disabled' not in self.browser.classes(element.find_element_by_xpath('..'))
+        return 'disabled' not in element.find_element_by_xpath('..').get_attribute('class')
 
     def _click_button(self, cmd):
         cur_page_btn = self.browser.element(self.PAGE_BUTTON_CTL.format(quote(cmd)),
@@ -105,14 +110,23 @@ class Paginator(Widget):
 
     def page_info(self):
         cur_page = self.browser.element(self.CUR_PAGE_CTL, parent=self._paginator)
-        text = cur_page.text
-        return re.search('(\d+)?-?(\d+)\s+of\s+(\d+)', text).groups()
+        curr_text = cur_page.text
+        total_page = self.browser.element(self.TOTAL_PAGE_CTL, parent=self._paginator)
+        total_text = total_page.text
+        return re.search('(\d+)?-?(\d+)\s+of\s+(\d+)', curr_text + ' of ' + total_text).groups()
 
 
 class PaginationPane(View):
     """ Represents Paginator Pane with the following controls.
     """
+    ROOT = '//form[contains(@class, "content-view-pf-pagination")]'
+    ITEMS_ON_PAGE_CTL = '//button[@id="pagination-row-dropdown"]'
+
     paginator = Paginator()
+
+    @property
+    def is_displayed(self):
+        return self.paginator.is_displayed
 
     @property
     def exists(self):
@@ -140,6 +154,12 @@ class PaginationPane(View):
             cur_page = int(ceil(float(max_item) / float(items_per_page)))
 
         return cur_page, page_amt
+
+    @property
+    def items_per_page(self):
+        items_per_page = self.browser.element(self.ITEMS_ON_PAGE_CTL, parent=self.paginator)
+        text = items_per_page.text
+        return int(re.sub(r'\s+', '', text))
 
     @property
     def cur_page(self):

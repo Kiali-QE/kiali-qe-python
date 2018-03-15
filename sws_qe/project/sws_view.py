@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from widgetastic_sws import Table, Search, ReactView, Menu, PaginationPane
+from entities import Service
 
 
 class ServiceListView(ReactView):
@@ -25,7 +26,8 @@ class ServiceListView(ReactView):
         for _ in self.paginator.pages():
             self.wait_displayed()
             for row in self.services:
-                rows.append(row)
+                name, namespace = row[0].text.strip().split(' ')
+                rows.append(Service(name=name, namespace=namespace))
         return rows
 
     @property
