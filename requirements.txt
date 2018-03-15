@@ -1,0 +1,18 @@
+# Set up project requirements
+# To Run: 'pip install -r requirements.txt'
+
+selenium
+pytest
+pytz
+paramiko
+psycopg2
+lxml
+# Chrome driver installation
+chromedriver
+ipython
+pyyaml
+requests
+virtualenv
+pytest-allure-adaptor
+widgetastic.core
+widgetastic.patternfly
