@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Template
+labels:
+  template: jenkins-slave-builder
+metadata:
+  name: jenkins-slave-sws-test-builder
+  annotations:
+    description: Template to build Jenkins slave with python and all deps for sws tests
+    iconClass: icon-jenkins
+    tags: jenkins
+objects:
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    labels:
+      role: jenkins-slave-sws-tests
+    name: jenkins-slave-sws-tests
+  spec: {}
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    name: jenkins-slave-sws-tests
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: jenkins-slave-sws-tests:latest
+    source:
+      git:
+        ref: ${REPO_REF}
+        uri: ${REPO_URL}
+      type: Git
+    strategy:
+      dockerStrategy:
+        dockerfilePath: docker/jenkins-slave/Dockerfile
+    triggers:
+    - type: ConfigChange
+parameters:
+- description: Git repository with Dockerfile and slave entrypoint.
+  displayName: Repository URL
+  name: REPO_URL
+  value: https://github.com/Hawkular-QE/sws-qe
+- description: The git ref or tag to use for customization.
+  displayName: Git Reference
+  name: REPO_REF
+  value: master
