@@ -3,7 +3,10 @@ from __future__ import unicode_literals
 import allure
 import pytest
 import yaml
+import time
 
+from selenium.common.exceptions import WebDriverException
+from selenium.webdriver.remote.remote_connection import RemoteConnection
 from selenium import webdriver
 
 from rest_api.sws import SWSAPI
@@ -28,22 +31,40 @@ def cfg():
 
 @pytest.fixture(scope='session')
 def selenium(request, cfg):
-    webdriver_options = cfg['webdriver_options']
-    desired_capabilities = webdriver_options['desired_capabilities']
-    driver = webdriver.Remote(
-        command_executor=webdriver_options['command_executor'],
-        desired_capabilities=
-        {'platform': desired_capabilities['platform'],
-         'browserName': desired_capabilities['browserName'],
-         'unexpectedAlertBehaviour': desired_capabilities['unexpectedAlertBehaviour']}
-        )
+    success = False
+    # try to get the driver more times (workaround for zalenium issue in OS)
+    for x in range(0, 3):
+        try:
+            driver = get_driver(cfg)
+        except WebDriverException:
+            print "Failed to create driver, trying again"
+            time.sleep(5)
+            continue
+        success = True
+        break
+    # trying one more time
+    if not success:
+        time.sleep(5)
+        driver = get_driver(cfg)
     request.addfinalizer(driver.quit)
     driver.maximize_window()
     global selenium_browser
     selenium_browser = driver
     return driver
 
+def get_driver(cfg):
+    print "Creating driver"
+    webdriver_options = cfg['webdriver_options']
+    desired_capabilities = webdriver_options['desired_capabilities']
 
+    # set resolve_ip to false to make it work in cases when remote driver is running in OpenShift
+    driver = webdriver.Remote(
+        command_executor=RemoteConnection(webdriver_options['command_executor'],resolve_ip=False),
+        desired_capabilities={'platform': desired_capabilities['platform'],
+                              'browserName': desired_capabilities['browserName'],
+                              'unexpectedAlertBehaviour': desired_capabilities['unexpectedAlertBehaviour']}
+        )
+    return driver
 @pytest.fixture(scope='function')
 def browser(selenium, cfg):
     selenium.get(cfg['sws_url'])

@@ -9,7 +9,8 @@ psycopg2
 lxml
 # Chrome driver installation
 chromedriver
-ipython
+# make it work with python2.7 in openshift/jenkins-slave-base-centos7
+ipython<6
 pyyaml
 requests
 virtualenv
