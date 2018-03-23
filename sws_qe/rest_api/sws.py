@@ -3,7 +3,9 @@ from rest_client import RestAPIClient
 
 Namespace = namedtuple('Namespace', ['name'])
 Service = namedtuple('Service', ['namespace', 'name'])
-Resource = namedtuple('Resource', ['namespace', 'name'])
+Action = namedtuple('Action', ['handler', 'instances'])
+Rule = namedtuple('Rule', ['namespace', 'name', 'match', 'actions'])
+Resource = namedtuple('Resource', ['namespace', 'data'])
 
 
 class SWSAPI(object):
@@ -34,7 +36,7 @@ class SWSAPI(object):
         return entities
 
     def list_services(self, namespace=None):
-        """Returns list of server deployments.
+        """Returns list of services.
 
         Args:
             namespace: Namespace of the resource
@@ -43,8 +45,29 @@ class SWSAPI(object):
         services_list = []
         if resources:
             for resource in resources:
-                services_list.append(Service(resource.namespace, resource.name))
+                services_list.append(Service(resource.namespace, resource.data['name']))
         return services_list
+
+    def list_rules(self, namespace=None):
+        """Returns list of rules.
+
+        Args:
+            namespace: Namespace of the resource
+        """
+        resources = self.list_resources(resource_name='rules', namespace=namespace)
+        rules_list = []
+        if resources:
+            for resource in resources:
+                match = resource.data['match']
+                actions = []
+                for action in resource.data['actions']:
+                    handler = action['handler']
+                    instances = []
+                    for instance in action['instances']:
+                        instances.append(instance)
+                    actions.append(Action(handler, instances))
+                rules_list.append(Rule(resource.namespace, resource.data['name'], match, actions))
+        return rules_list
 
     def list_resources(self, resource_name, namespace=None):
         """Returns list of resources.
@@ -77,5 +100,5 @@ class SWSAPI(object):
         entities_j = self._get('namespaces/{}/{}'.format(namespace, resource_name))
         if entities_j:
             for entity_j in entities_j[resource_name]:
-                resources_list.append(Resource(entities_j['namespace']['name'], entity_j['name']))
+                resources_list.append(Resource(entities_j['namespace']['name'], entity_j))
         return resources_list

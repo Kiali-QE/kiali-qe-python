@@ -20,18 +20,6 @@ class ReactView(View):
         wait_for(lambda: self.is_displayed, timeout=timeout, delay=0.2)
 
 
-class Menu(View):
-    """ Represents Menu on the left side """
-
-    @property
-    def services(self):
-        return self.browser.element('//a//span[text()="Services"]')
-
-    @property
-    def graph(self):
-        return self.browser.element('//a//span[text()="Graph"]')
-
-
 class Search(View):
     """ Represents search_text control """
     search_input = Input(
@@ -51,6 +39,30 @@ class Search(View):
 class TableColumn(VanillaTableColumn):
     def __locator__(self):
         return self.browser.element('./div[{}]'.format(self.position + 1), parent=self.parent)
+
+    """
+    The value of column can be separated by differently, containing key:value pairs or only values.
+    This function returns the values, by skipping keys.
+    """
+    def split_text(self):
+        values = []
+        rought_values = self.text.strip().split(' ')
+        ongoing_value = ''
+        for rough_value in rought_values:
+            if re.match('.*\\w+$', rough_value):  # does not contain ',' or ':' on the end
+                if not ongoing_value:  # if the previous values were not ',' separated
+                    values.append(rough_value)
+                else:  # if this is the last of ',' separated values list, collect it and append
+                    ongoing_value += rough_value
+                    values.append(ongoing_value)
+                    ongoing_value = ''
+            if re.match('.+,$', rough_value):  # if this is a next c',' separated value, collect it
+                ongoing_value += rough_value + ' '
+            if re.match('.+:$', rough_value):  # this is a key
+                if ongoing_value:  # if there were ',' separated values before the key, append them and continue
+                    values.append(ongoing_value)
+                    ongoing_value = ''
+        return values
 
 
 class TableRow(VanillaTableRow):

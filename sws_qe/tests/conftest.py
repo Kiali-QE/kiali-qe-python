@@ -52,6 +52,7 @@ def selenium(request, cfg):
     selenium_browser = driver
     return driver
 
+
 def get_driver(cfg):
     print "Creating driver"
     webdriver_options = cfg['webdriver_options']
@@ -65,6 +66,8 @@ def get_driver(cfg):
                               'unexpectedAlertBehaviour': desired_capabilities['unexpectedAlertBehaviour']}
         )
     return driver
+
+
 @pytest.fixture(scope='function')
 def browser(selenium, cfg):
     selenium.get(cfg['sws_url'])
