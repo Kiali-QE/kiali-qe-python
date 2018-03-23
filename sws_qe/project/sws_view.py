@@ -50,8 +50,9 @@ class ServiceListView(ListView):
         for _ in self.paginator.pages():
             self.wait_displayed()
             for row in self.items:
-                name, namespace = row[0].split_text()
-                rows.append(Service(name=name, namespace=namespace))
+                values = row[0].split_text()
+                rows.append(Service(name=values[0], namespace=values[1],
+                                    replicas=values[3], available_replicas=values[4]))
         return rows
 
 

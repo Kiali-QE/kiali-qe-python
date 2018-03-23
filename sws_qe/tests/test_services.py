@@ -23,6 +23,7 @@ def test_service_search(browser, rest_api):
 def get_services_set(services):
     """
     Return the set of services which contains only necessary fields,
-    such as 'name' and 'namespace'
+    such as 'name' 'namespace', 'replicas', 'available_replicas'
     """
-    return set((service.name, service.namespace) for service in services)
+    return set((service.name, service.namespace,
+                str(service.replicas), str(service.available_replicas)) for service in services)

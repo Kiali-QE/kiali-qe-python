@@ -8,13 +8,15 @@ class Service(object):
         namespace: namespace where service is located
     """
 
-    def __init__(self, name, namespace):
+    def __init__(self, name, namespace, **kwargs):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         if namespace is None:
             raise KeyError("'namespace' should not be 'None'")
         self.name = name
         self.namespace = namespace
+        self.replicas = kwargs['replicas'] if 'replicas' in kwargs else None
+        self.available_replicas = kwargs['available_replicas'] if 'available_replicas' in kwargs else None
 
 
 class Rule(object):
