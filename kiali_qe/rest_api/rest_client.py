@@ -11,7 +11,7 @@ class RestAPIClient(object):
         """Simple REST API client for container management systems
 
         Args:
-            url: String with the URL of the SWS server (e.g. 'http://jdoe:password@hostname')
+            url: String with the URL of the Kiali server (e.g. 'http://jdoe:password@hostname')
             entry: Entry point of the REST API
             verify: 'True' if we want to verify SSL, 'False' otherwise
         """

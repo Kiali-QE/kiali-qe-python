@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
-from widgetastic_sws import Table, Search, ReactView, PaginationPane
+from widgetastic_kiali import Table, Search, ReactView, PaginationPane
 from entities import Service, Rule
 
 

@@ -1,4 +1,4 @@
-from project.sws_view import ServiceListView
+from project.kiali_view import ServiceListView
 
 
 def test_service_list(browser, rest_api):
