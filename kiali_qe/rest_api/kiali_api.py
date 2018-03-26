@@ -8,11 +8,11 @@ Rule = namedtuple('Rule', ['namespace', 'name', 'match', 'actions'])
 Resource = namedtuple('Resource', ['namespace', 'data'])
 
 
-class SWSAPI(object):
+class KialiAPI(object):
     def __init__(self, url, entry="api"):
-        """ The class for SWS services
+        """ The class for Kiali services
         Args:
-            url: the url of SWS
+            url: the url of Kiali
             entry: entry point of a service url
         """
         self.url = url

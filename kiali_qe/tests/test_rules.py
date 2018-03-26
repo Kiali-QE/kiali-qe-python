@@ -1,4 +1,4 @@
-from project.sws_view import RuleListView
+from project.kiali_view import RuleListView
 
 
 def test_rule_list(browser, rest_api):

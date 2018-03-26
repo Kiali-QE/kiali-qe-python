@@ -9,7 +9,7 @@ from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.remote.remote_connection import RemoteConnection
 from selenium import webdriver
 
-from rest_api.sws import SWSAPI
+from rest_api.kiali_api import KialiAPI
 
 from widgetastic.browser import Browser
 
@@ -70,13 +70,13 @@ def get_driver(cfg):
 
 @pytest.fixture(scope='function')
 def browser(selenium, cfg):
-    selenium.get(cfg['sws_url'])
+    selenium.get(cfg['kiali_url'])
     return CustomBrowser(selenium)
 
 
 @pytest.fixture(scope='function')
 def rest_api(cfg):
-    return SWSAPI(cfg['sws_url'])
+    return KialiAPI(cfg['kiali_url'])
 
 
 def pytest_exception_interact(node, call, report):
