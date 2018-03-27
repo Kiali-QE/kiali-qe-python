@@ -20,10 +20,18 @@ def test_service_search(browser, rest_api):
         assert search in service[1]
 
 
+def test_service_search2(browser, rest_api):
+    view = ServiceListView(browser)
+    search = 'istio'
+    view.simple_search(search)
+    ui_services = get_services_set(view.get_all())
+    for service in ui_services:
+        assert search in service[0]
+        assert search in service[1]
+
+
 def get_services_set(services):
     """
-
-
     Return the set of services which contains only necessary fields,
     such as 'name' 'namespace', 'replicas', 'available_replicas'
     """
