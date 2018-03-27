@@ -23,6 +23,7 @@ def test_service_search(browser, rest_api):
 def get_services_set(services):
     """
 
+
     Return the set of services which contains only necessary fields,
     such as 'name' 'namespace', 'replicas', 'available_replicas'
     """
