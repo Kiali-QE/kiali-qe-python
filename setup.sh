@@ -7,8 +7,8 @@ yum install python-virtualenv wget unzip libcurl-devel unzip gcc openssl-devel r
 
 
 # Setup virtual environment
-virtualenv .sws-qe
-source .sws-qe/bin/activate
+virtualenv .kiali-qe
+source .kiali-qe/bin/activate
 
 # Install base requirements
 pip install -r requirements.txt
