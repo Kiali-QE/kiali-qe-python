@@ -10,6 +10,7 @@ from selenium.webdriver.remote.remote_connection import RemoteConnection
 from selenium import webdriver
 
 from rest_api.kiali_api import KialiAPI
+from cli.kiali_cli import KialiCli
 
 from widgetastic.browser import Browser
 
@@ -77,6 +78,14 @@ def browser(selenium, cfg):
 @pytest.fixture(scope='function')
 def rest_api(cfg):
     return KialiAPI(cfg['kiali_url'])
+
+
+@pytest.fixture(scope='function')
+def kiali_cli(cfg):
+    oc_cli = cfg['oc_cli_options']
+    return KialiCli(url=oc_cli['oc_url'],
+                    username=oc_cli['oc_username'],
+                    password=oc_cli['oc_password'])
 
 
 def pytest_exception_interact(node, call, report):

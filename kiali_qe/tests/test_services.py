@@ -1,7 +1,8 @@
 from project.kiali_view import ServiceListView
 
 
-def test_service_list(browser, rest_api):
+def test_service_list(browser, rest_api, kiali_cli):
+    kiali_cli.list_services()
     view = ServiceListView(browser)
     ui_services = get_services_set(view.get_all())
     rest_services = get_services_set(rest_api.list_services())

@@ -29,6 +29,7 @@ _output
 .settings/
 
 .sws-qe/
+.kiali-qe/
 
 # IntelliJ
 .idea/
