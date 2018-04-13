@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import re
+
 from widgetastic_kiali import Table, Search, ReactView, PaginationPane
 from entities import Service, Rule
 
@@ -51,8 +51,7 @@ class ServiceListView(ListView):
             self.wait_displayed()
             for row in self.items:
                 values = row[0].split_text()
-                rows.append(Service(name=values[0], namespace=values[1],
-                                    replicas=values[3], available_replicas=values[4]))
+                rows.append(Service(name=values[0], namespace=values[1]))
         return rows
 
 

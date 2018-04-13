@@ -17,3 +17,5 @@ virtualenv
 pytest-allure-adaptor
 widgetastic.core
 widgetastic.patternfly
+six
+pytest_jira
