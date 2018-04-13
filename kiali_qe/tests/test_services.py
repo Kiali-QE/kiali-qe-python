@@ -1,6 +1,9 @@
+import pytest
+
 from project.kiali_view import ServiceListView
 
 
+@pytest.mark.jira("KIALI-543", run=False)
 def test_service_list(browser, rest_api):
     view = ServiceListView(browser)
     ui_services = get_services_set(view.get_all())
@@ -25,5 +28,4 @@ def get_services_set(services):
     Return the set of services which contains only necessary fields,
     such as 'name' 'namespace', 'replicas', 'available_replicas'
     """
-    return set((service.name, service.namespace,
-                str(service.replicas), str(service.available_replicas)) for service in services)
+    return set((service.name, service.namespace) for service in services)

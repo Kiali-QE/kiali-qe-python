@@ -60,7 +60,7 @@ def get_driver(cfg):
 
     # set resolve_ip to false to make it work in cases when remote driver is running in OpenShift
     driver = webdriver.Remote(
-        command_executor=RemoteConnection(webdriver_options['command_executor'],resolve_ip=False),
+        command_executor=RemoteConnection(webdriver_options['command_executor'], resolve_ip=False),
         desired_capabilities={'platform': desired_capabilities['platform'],
                               'browserName': desired_capabilities['browserName'],
                               'unexpectedAlertBehaviour': desired_capabilities['unexpectedAlertBehaviour']}
