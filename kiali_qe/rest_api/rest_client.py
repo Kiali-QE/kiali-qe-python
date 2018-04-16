@@ -1,8 +1,9 @@
 import requests
 import os
+import urllib3
 
 
-requests.packages.urllib3.disable_warnings()
+urllib3.disable_warnings()
 
 
 class RestAPIClient(object):
