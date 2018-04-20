@@ -3,9 +3,9 @@ kind: Template
 labels:
   template: jenkins-slave-builder
 metadata:
-  name: jenkins-slave-sws-test-builder
+  name: jenkins-slave-kiali-ui-tests-builder
   annotations:
-    description: Template to build Jenkins slave with python and all deps for sws tests
+    description: Template to build Jenkins slave with python and all deps for kiali ui tests
     iconClass: icon-jenkins
     tags: jenkins
 objects:
@@ -13,18 +13,18 @@ objects:
   kind: ImageStream
   metadata:
     labels:
-      role: jenkins-slave-sws-tests
-    name: jenkins-slave-sws-tests
+      role: jenkins-slave-kiali-ui-tests
+    name: jenkins-slave-kiali-ui-tests
   spec: {}
 - apiVersion: v1
   kind: BuildConfig
   metadata:
-    name: jenkins-slave-sws-tests
+    name: jenkins-slave-kiali-ui-tests
   spec:
     output:
       to:
         kind: ImageStreamTag
-        name: jenkins-slave-sws-tests:latest
+        name: jenkins-slave-kiali-ui-tests:latest
     source:
       git:
         ref: ${REPO_REF}
@@ -39,7 +39,7 @@ parameters:
 - description: Git repository with Dockerfile and slave entrypoint.
   displayName: Repository URL
   name: REPO_URL
-  value: https://github.com/Hawkular-QE/sws-qe
+  value: https://github.com/Kiali-QE/kiali-qe-python.git
 - description: The git ref or tag to use for customization.
   displayName: Git Reference
   name: REPO_REF
