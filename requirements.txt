@@ -19,3 +19,4 @@ widgetastic.core
 widgetastic.patternfly
 six
 pytest_jira
+kiali-client
