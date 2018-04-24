@@ -33,6 +33,7 @@ objects:
     strategy:
       dockerStrategy:
         dockerfilePath: docker/jenkins-slave/Dockerfile
+        noCache: true
     triggers:
     - type: ConfigChange
 parameters:
