@@ -1,9 +1,6 @@
-import pytest
-
 from project.kiali_view import ServiceListView
 
 
-@pytest.mark.jira("KIALI-543", run=False)
 def test_service_list(browser, rest_api):
     view = ServiceListView(browser)
     ui_services = get_services_set(view.get_all())

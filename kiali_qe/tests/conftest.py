@@ -59,7 +59,7 @@ def get_driver(cfg):
     desired_capabilities = webdriver_options['desired_capabilities']
 
     # set resolve_ip to false to make it work in cases when remote driver is running in OpenShift
-    command_executor=RemoteConnection(webdriver_options['command_executor'], resolve_ip=False)
+    command_executor = RemoteConnection(webdriver_options['command_executor'], resolve_ip=False)
     # increase the timeout because we are waiting for new pod to be created which takes some time
     command_executor.set_timeout(120)
     driver = webdriver.Remote(
