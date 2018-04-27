@@ -1,6 +1,9 @@
+import pytest
+
 from project.kiali_view import RuleListView
 
 
+@pytest.mark.jira("KIALI-638", run=False)
 def test_rule_list(browser, rest_api):
     view = RuleListView(browser)
     ui_rules = get_ui_rules_set(view.get_all())

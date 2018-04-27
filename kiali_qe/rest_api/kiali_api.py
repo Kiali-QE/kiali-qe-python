@@ -2,7 +2,7 @@ from collections import namedtuple
 from rest_client import RestAPIClient
 
 Namespace = namedtuple('Namespace', ['name'])
-Service = namedtuple('Service', ['namespace', 'name', 'replicas', 'available_replicas'])
+Service = namedtuple('Service', ['namespace', 'name'])
 Action = namedtuple('Action', ['handler', 'instances'])
 Rule = namedtuple('Rule', ['namespace', 'name', 'match', 'actions'])
 Resource = namedtuple('Resource', ['namespace', 'data'])
@@ -46,9 +46,7 @@ class KialiAPI(object):
         if resources:
             for resource in resources:
                 services_list.append(Service(resource.namespace,
-                                             resource.data['name'],
-                                             resource.data['replicas'],
-                                             resource.data['available_replicas']))
+                                             resource.data['name']))
         return services_list
 
     def list_rules(self, namespace=None):
