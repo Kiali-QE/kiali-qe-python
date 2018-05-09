@@ -67,7 +67,7 @@ def get_driver(cfg):
         desired_capabilities={'platform': desired_capabilities['platform'],
                               'browserName': desired_capabilities['browserName'],
                               'unexpectedAlertBehaviour': desired_capabilities['unexpectedAlertBehaviour']}
-        )
+    )
     # reset the timeout to default, only driver creation is taking so much time
     command_executor.reset_timeout()
     return driver
@@ -75,13 +75,15 @@ def get_driver(cfg):
 
 @pytest.fixture(scope='function')
 def browser(selenium, cfg):
-    selenium.get(cfg['kiali_url'])
+    selenium.get('http://{}:{}@{}'.format(cfg['kiali_username'], cfg['kiali_password'], cfg['kiali_hostname']))
     return CustomBrowser(selenium)
 
 
 @pytest.fixture(scope='function')
 def rest_api(cfg):
-    return KialiAPI(cfg['kiali_url'])
+    return KialiAPI(host=cfg['kiali_hostname'],
+                    username=cfg['kiali_username'],
+                    password=cfg['kiali_password'])
 
 
 def pytest_exception_interact(node, call, report):

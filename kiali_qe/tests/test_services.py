@@ -3,8 +3,8 @@ from project.kiali_view import ServiceListView
 
 def test_service_list(browser, rest_api):
     view = ServiceListView(browser)
-    ui_services = get_services_set(view.get_all())
     rest_services = get_services_set(rest_api.list_services())
+    ui_services = get_services_set(view.get_all())
     assert ui_services == rest_services, \
         ("Lists of services mismatch! UI:{}, REST:{}"
          .format(ui_services, rest_services))

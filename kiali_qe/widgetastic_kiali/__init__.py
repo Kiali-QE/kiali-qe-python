@@ -51,17 +51,33 @@ class TableColumn(VanillaTableColumn):
         for rough_value in rought_values:
             if re.match('.*\\w+$', rough_value):  # does not contain ',' or ':' on the end
                 if not ongoing_value:  # if the previous values were not ',' separated
-                    values.append(rough_value)
-                else:  # if this is the last of ',' separated values list, collect it and append
+                    ongoing_value += rough_value
+                elif ongoing_value.endswith(', '):  # if this is the last of ',' separated values list, collect it and append
                     ongoing_value += rough_value
                     values.append(ongoing_value)
                     ongoing_value = ''
+                else:  # this is a new value, append the outgoing value and append this one
+                    values.append(ongoing_value)
+                    ongoing_value = ''
+                    ongoing_value += rough_value
             if re.match('.+,$', rough_value):  # if this is a next c',' separated value, collect it
                 ongoing_value += rough_value + ' '
+            if re.match('==', rough_value):  # if this is the '==', collect it as ongoing
+                ongoing_value += ' == '
             if re.match('.+:$', rough_value):  # this is a key
                 if ongoing_value:  # if there were ',' separated values before the key, append them and continue
                     values.append(ongoing_value)
                     ongoing_value = ''
+            if re.match('\".+\"', rough_value):  # if this is the '==' value, collect it
+                if ongoing_value:  # if there were ',' separated values before the key, append them and continue
+                    ongoing_value += ' ' + rough_value
+                    values.append(ongoing_value)
+                    ongoing_value = ''
+                else:
+                    ongoing_value += rough_value
+        if ongoing_value:  # last value
+            values.append(ongoing_value)
+            ongoing_value = ''
         return values
 
 
