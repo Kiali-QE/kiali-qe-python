@@ -67,6 +67,11 @@ class RuleListView(ListView):
             self.wait_displayed()
             for row in self.items:
                 values = row[0].split_text()
-                rows.append(Rule(name=values[0], namespace=values[1],
-                                 handler=values[2], instances=values[3]))
+                if len(values) == 5:
+                    rows.append(Rule(name=values[0], namespace=values[1],
+                                match=values[2],
+                                handler=values[3], instances=values[4]))
+                else:
+                    rows.append(Rule(name=values[0], namespace=values[1],
+                                handler=values[2], instances=values[3]))
         return rows

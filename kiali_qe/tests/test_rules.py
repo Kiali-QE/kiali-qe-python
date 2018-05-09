@@ -1,13 +1,12 @@
-import pytest
-
 from project.kiali_view import RuleListView
 
 
-@pytest.mark.jira("KIALI-638", run=False)
 def test_rule_list(browser, rest_api):
     view = RuleListView(browser)
     ui_rules = get_ui_rules_set(view.get_all())
     rest_rules = get_rest_rules_set(rest_api.list_rules())
+    assert len(ui_rules) != 0, ("UI Rules should not be empty")
+    assert len(rest_rules) != 0, ("REST Rules should not be empty")
     assert ui_rules == rest_rules, \
         ("Lists of rules mismatch! UI:{}, REST:{}"
          .format(ui_rules, rest_rules))
@@ -27,5 +26,5 @@ def get_rest_rules_set(rules):
     such as 'name' and 'namespace'
     """
     return set((rule.name, rule.namespace,
-                ', '.join(action.handler for action in rule.actions),
-                ', '.join(', '.join(instance for instance in action.instances) for action in rule.actions)) for rule in rules)
+                ', '.join(action.handler for action in sorted(rule.actions)),
+                ', '.join(', '.join(instance for instance in sorted(action.instances)) for action in sorted(rule.actions))) for rule in rules)
