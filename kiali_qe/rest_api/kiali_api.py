@@ -1,5 +1,5 @@
 from collections import namedtuple
-from rest_client import RestAPIClient
+from kiali import KialiClient
 
 Namespace = namedtuple('Namespace', ['name'])
 Service = namedtuple('Service', ['namespace', 'name'])
@@ -9,27 +9,19 @@ Resource = namedtuple('Resource', ['namespace', 'data'])
 
 
 class KialiAPI(object):
-    def __init__(self, url, entry="api"):
+    def __init__(self, host, username, password):
         """ The class for Kiali services
         Args:
-            url: the url of Kiali
-            entry: entry point of a service url
+            host: the hostname of Kiali
+            username: the username of Kiali
+            password: the password of Kiali
         """
-        self.url = url
-        self._api = RestAPIClient(url=url,  entry=entry)
-
-    def status(self):
-        """ Returns status of a service """
-        return self._get(path='status')
-
-    def _get(self, path, params=None):
-        """ runs GET request and returns response as JSON """
-        return self._api.get_json(path, params=params)
+        self._client = KialiClient(host=host, username=username, password=password)
 
     def list_namespaces(self):
         """ Returns list of namespaces """
         entities = []
-        entities_j = self._get('namespaces')
+        entities_j = self._client.namespace_list()
         if entities_j:
             for entity_j in entities_j:
                 entities.append(Namespace(entity_j['name']))
@@ -41,7 +33,14 @@ class KialiAPI(object):
         Args:
             namespace: Namespace of the resource
         """
-        resources = self.list_resources(resource_name='services', namespace=namespace)
+        resources = []
+        if not namespace:
+            for namespace in self.list_namespaces():
+                resources.extend(self._list_resources(self._client.services_list(namespace=namespace.name),
+                                                      resource_name='services'))
+        else:
+            resources.extend(self._list_resources(self._client.services_list(namespace=namespace),
+                                                  resource_name='services'))
         services_list = []
         if resources:
             for resource in resources:
@@ -55,7 +54,14 @@ class KialiAPI(object):
         Args:
             namespace: Namespace of the resource
         """
-        resources = self.list_resources(resource_name='rules', namespace=namespace)
+        resources = []
+        if not namespace:
+            for namespace in self.list_namespaces():
+                resources.extend(self._list_resources(self._client.rules_list(namespace=namespace.name),
+                                                      resource_name='rules'))
+        else:
+            resources.extend(self._list_resources(self._client.rules_list(namespace=namespace),
+                                                  resource_name='rules'))
         rules_list = []
         if resources:
             for resource in resources:
@@ -70,35 +76,15 @@ class KialiAPI(object):
                 rules_list.append(Rule(resource.namespace, resource.data['name'], match, actions))
         return rules_list
 
-    def list_resources(self, resource_name, namespace=None):
-        """Returns list of resources.
-
-          Args:
-            namespace: Namespace of the resource
-            resource_name: Name of the resource
-        """
-        if not namespace:
-            resources = []
-            for namespace in self.list_namespaces():
-                resources.extend(self._list_resources(namespace=namespace.name,
-                                                      resource_name=resource_name))
-            return resources
-        else:
-            return self._list_resources(namespace=namespace, resource_name=resource_name)
-
-    def _list_resources(self, resource_name, namespace):
+    def _list_resources(self, entities_j, resource_name):
         """Returns list of resources.
 
          Args:
-            namespace: Namespace of the resource
             resource_name: Name of the resource
         """
-        if not namespace:
-            raise KeyError("'namespace' is a mandatory field!")
         if not resource_name:
             raise KeyError("'resource_name' is a mandatory field!")
         resources_list = []
-        entities_j = self._get('namespaces/{}/{}'.format(namespace, resource_name))
         if entities_j:
             for entity_j in entities_j[resource_name]:
                 resources_list.append(Resource(entities_j['namespace']['name'], entity_j))
