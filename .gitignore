@@ -29,6 +29,7 @@ _output
 .settings/
 
 .sws-qe/
+.env/
 
 # IntelliJ
 .idea/

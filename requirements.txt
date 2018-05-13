@@ -1,22 +1,10 @@
 # Set up project requirements
 # To Run: 'pip install -r requirements.txt'
 
-selenium
-pytest
-pytz
-paramiko
-psycopg2
-lxml
-# Chrome driver installation
-chromedriver
-# make it work with python2.7 in openshift/jenkins-slave-base-centos7
-ipython<6
-pyyaml
-requests>=2.13.0
-virtualenv
-pytest-allure-adaptor
-widgetastic.core
-widgetastic.patternfly
-six
-pytest_jira
+enum34
+dotmap
 kiali-client
+pytest
+pyyaml
+selenium
+widgetastic.core
