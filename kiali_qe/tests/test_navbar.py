@@ -4,17 +4,6 @@ from kiali_qe.tests.common import check_equal
 from kiali_qe.utils.log import logger
 
 
-def test_help_menu(browser):
-    # load root page
-    page = RootPage(browser)
-    # test available menus
-    options_defined = [item.text for item in HelpMenuEnum]
-    options_listed = page.navbar.help_menu.options
-    logger.debug('help menus[defined:{}, listed:{}]'.format(options_defined, options_listed))
-    assert check_equal(options_defined, options_listed), \
-        ('Help menus mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
-
-
 def test_about(browser, rest_client):
     # load root page
     page = RootPage(browser)
@@ -57,3 +46,14 @@ def _get_version(versions, key):
     for item in versions:
         if item['name'] == key:
             return item['version']
+
+
+def test_help_menu(browser):
+    # load root page
+    page = RootPage(browser)
+    # test available menus
+    options_defined = [item.text for item in HelpMenuEnum]
+    options_listed = page.navbar.help_menu.options
+    logger.debug('help menus[defined:{}, listed:{}]'.format(options_defined, options_listed))
+    assert check_equal(options_defined, options_listed), \
+        ('Help menus mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
