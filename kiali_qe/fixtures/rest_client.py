@@ -1,15 +1,15 @@
 import json
 
 import pytest
-from kiali.api import KialiClient
 
+from kiali_qe.rest.extended_api import KialiExtendedClient
 from kiali_qe.utils.log import logger
 
 
 @pytest.fixture(scope='session')
 def rest_client(cfg):
     logger.debug('Creating rest client')
-    _client = KialiClient(
+    _client = KialiExtendedClient(
         host=cfg.kiali.hostname, username=cfg.kiali.username, password=cfg.kiali.password)
     # update kiali version details
     _response = _client.status()
