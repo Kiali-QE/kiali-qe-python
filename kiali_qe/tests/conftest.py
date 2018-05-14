@@ -10,6 +10,7 @@ from selenium.webdriver.remote.remote_connection import RemoteConnection
 from selenium import webdriver
 
 from rest_api.kiali_api import KialiAPI
+from rest_api.openshift_api import OpenshiftAPI
 
 from widgetastic.browser import Browser
 
@@ -84,6 +85,11 @@ def rest_api(cfg):
     return KialiAPI(host=cfg['kiali_hostname'],
                     username=cfg['kiali_username'],
                     password=cfg['kiali_password'])
+
+
+@pytest.fixture(scope='function')
+def openshift_api(cfg):
+    return OpenshiftAPI()
 
 
 def pytest_exception_interact(node, call, report):
