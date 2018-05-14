@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from time import sleep
 
@@ -15,6 +16,7 @@ from kiali_qe.utils.log import logger
 def browser(cfg, rest_client):
     selenium = _get_selenium(cfg)
     selenium.maximize_window()
+    logger.debug('Launching kiali instance: {}'.format(cfg.kiali.hostname))
     selenium.get(
         'http://{}:{}@{}'.format(cfg.kiali.username, cfg.kiali.password, cfg.kiali.hostname))
     # load KialiBrowser
@@ -39,13 +41,14 @@ def _get_selenium(cfg):
                 capabilities['zal:' + z_key] = z_value
         else:   # update selenium capabilities
             capabilities[key] = value
+    logger.debug('Selenium configuration:\n{}'.format(json.dumps(cfg.selenium.toDict(), indent=2)))
     # load driver
     driver = None
     # try to get the driver more times (workaround for zalenium issue in OS)
     maximum_try = 5
     for x in range(1, maximum_try):
         try:
-            logger.info('Trying to create web driver. Attempt: {} of {}'.format(x, maximum_try))
+            logger.info('Trying to create a web driver. Attempt: {} of {}'.format(x, maximum_try))
             driver = _get_driver(cfg, capabilities)
             break
         except WebDriverException as ex:

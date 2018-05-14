@@ -1,8 +1,8 @@
 from kiali_qe.pages import IstioMixerPage
-from kiali_qe.tests import common_tests
+from kiali_qe.tests.common import pagination_feature_test
 
 
 def test_pagination_feature(browser):
     # get page instance
     page = IstioMixerPage(browser)
-    common_tests.test_pagination_feature(page)
+    pagination_feature_test(page)

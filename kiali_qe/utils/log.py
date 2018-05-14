@@ -1,8 +1,9 @@
 import logging
-from kiali_qe.utils.path import log_path, conf_path, get_rel_path
-from kiali_qe.utils import get_dict
 import os
 import sys
+
+from kiali_qe.utils import get_dict
+from kiali_qe.utils.path import conf_path, get_rel_path, log_path
 
 MARKER_LEN = 80
 

@@ -1,7 +1,8 @@
 """ Update this doc"""
-from widgetastic.widget import Widget, TextInput
+from widgetastic.widget import Checkbox, TextInput, Widget
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 from kiali_qe.components.enums import HelpMenuEnum
+from wait_for import wait_for
 
 
 class Button(Widget):
@@ -273,6 +274,69 @@ class Filter(Widget):
     @property
     def active_filters(self):
         return self._filter_list.active_filters
+
+
+class CheckBoxFilter(Widget):
+    ROOT = ('//*[@role="tooltip" and contains(@class, "popover")]'
+            '//*[contains(@class, "popover-content")]')
+    ITEMS = './/label'
+    ITEM = './/label[normalize-space(text())="{}"]//input'
+
+    def __init__(self, parent, locator=None, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        if locator:
+            self.locator = locator
+        else:
+            self.locator = self.ROOT
+        self._filter_button = Button(
+            parent=self.parent,
+            locator=('//label[normalize-space(text())="Filters:"]/'
+                     '..//*[contains(@class, "fa-filter")]'))
+
+    def __locator__(self):
+        return self.locator
+
+    def open(self):
+        if not self.is_displayed:
+            self._filter_button.click()
+
+    def close(self):
+        if self.is_displayed:
+            self._filter_button.click()
+
+            def _is_closed():
+                return not self.is_displayed
+            wait_for(_is_closed, timeout=3, delay=0.2, very_quiet=True)
+
+    @property
+    def items(self):
+        self.open()
+        try:
+            return [
+                self.browser.text(el)
+                for el in self.browser.elements(parent=self, locator=self.ITEMS)]
+        finally:
+            self.close()
+
+    def _cb_action(self, filter_name, action, value=None):
+        self.open()
+        try:
+            _cb = Checkbox(locator=self.ITEM.format(filter_name), parent=self)
+            if action is 'fill':
+                _cb.fill(value)
+            elif action is 'read':
+                return _cb.read()
+        finally:
+            self.close()
+
+    def check(self, filter_name):
+        self._cb_action(filter_name, 'fill', True)
+
+    def uncheck(self, filter_name):
+        self._cb_action(filter_name, 'fill', False)
+
+    def is_checked(self, filter_name):
+        return self._cb_action(filter_name, 'read')
 
 
 class Pagination(Widget):

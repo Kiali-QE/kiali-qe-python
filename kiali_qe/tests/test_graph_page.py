@@ -1,7 +1,7 @@
-import pytest
-
-from kiali_qe.components.enums import GraphPageLayout
+from kiali_qe.components.enums import GraphPageFilter, GraphPageLayout
 from kiali_qe.pages import GraphPage
+from kiali_qe.utils.log import logger
+from kiali_qe.tests.common import check_equal
 
 
 def test_layout(browser):
@@ -14,27 +14,24 @@ def test_layout(browser):
         ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
 
 
-@pytest.mark.skip(reason="This page changed on recent version of GUI")
-def test_buttons(browser):
+def test_filter(browser):
     # get page instance
     page = GraphPage(browser)
-    # test circuit breaker
-    page.circuit_breaker.on()
-    assert page.circuit_breaker.is_on is True
-    page.circuit_breaker.off()
-    assert page.circuit_breaker.is_on is False
-    # test route_rules
-    page.route_rules.on()
-    assert page.route_rules.is_on is True
-    page.route_rules.off()
-    assert page.route_rules.is_on is False
-    # test edge_labels
-    page.edge_labels.on()
-    assert page.edge_labels.is_on is True
-    page.edge_labels.off()
-    assert page.edge_labels.is_on is False
-    # test node_labels
-    page.node_labels.on()
-    assert page.node_labels.is_on is True
-    page.node_labels.off()
-    assert page.node_labels.is_on is False
+    # test available filters
+    options_defined = [item.text for item in GraphPageFilter]
+    options_listed = page.filter.items
+    logger.debug('options[defined:{}, listed:{}]'.format(options_defined, options_listed))
+    assert check_equal(options_defined, options_listed), \
+        ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
+    # enable disable each filter
+    for filter_name in options_listed:
+        _filter_test(page, filter_name)
+
+
+def _filter_test(page, filter_name):
+    # test filter checked
+    page.filter.check(filter_name)
+    assert page.filter.is_checked(filter_name) is True
+    # test filter unchecked
+    page.filter.uncheck(filter_name)
+    assert page.filter.is_checked(filter_name) is False

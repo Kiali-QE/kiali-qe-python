@@ -1,15 +1,15 @@
 """update this doc"""
 from widgetastic.widget import View, Text
 from kiali_qe.components import (
-    MainMenu,
-    DropDown,
-    SortDropDown,
-    Filter,
-    Pagination,
     Button,
-    ButtonSwitch,
+    DropDown,
+    Filter,
+    ListViewIstioMixer,
     ListViewServices,
-    ListViewIstioMixer)
+    MainMenu,
+    Pagination,
+    SortDropDown,
+    CheckBoxFilter)
 from kiali_qe.components.enums import MainMenuEnum as MENU
 from kiali_qe.utils.log import logger
 
@@ -51,10 +51,7 @@ class GraphPage(RootPage):
     namespace = DropDown(locator=XP_DROP_DOWN.format('namespace-selector'))
     duration = DropDown(locator=XP_DROP_DOWN.format('graph_filter_interval_duration'))
     layout = DropDown(locator=XP_DROP_DOWN.format('graph_filter_layouts'))
-    circuit_breaker = ButtonSwitch(locator=XP_BUTTON_SWITCH.format('Circuit Breakers'))
-    route_rules = ButtonSwitch(locator=XP_BUTTON_SWITCH.format('Route Rules'))
-    edge_labels = ButtonSwitch(locator=XP_BUTTON_SWITCH.format('Edge Labels'))
-    node_labels = ButtonSwitch(locator=XP_BUTTON_SWITCH.format('Node Labels'))
+    filter = CheckBoxFilter()
     refresh = Button(locator='.//button//*[contains(@class, "fa-refresh")]')
     # TODO: implement graph control code
 

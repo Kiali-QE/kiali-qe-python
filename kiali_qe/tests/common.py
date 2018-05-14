@@ -2,7 +2,7 @@ from kiali_qe.components.enums import PaginationPerPage
 from kiali_qe.utils.log import logger
 
 
-def test_pagination_feature(page):
+def pagination_feature_test(page):
     pagination = page.pagination
     # test options
     options_defined = [item.value for item in PaginationPerPage]
@@ -39,3 +39,7 @@ def test_pagination_feature(page):
             assert len(page.content.items) == per_page and pagination.items_per_page == per_page
     # test total items
     assert pagination.total_items == len(page.content.all_items)
+
+
+def check_equal(L1, L2):
+    return len(L1) == len(L2) and sorted(L1) == sorted(L2)

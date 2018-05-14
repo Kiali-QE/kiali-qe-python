@@ -44,6 +44,13 @@ class GraphPageLayout(StringEnum):
     KLAY = ('Klay')
 
 
+class GraphPageFilter(StringEnum):
+    CIRCUIT_BREAKERS = ('Circuit Breakers')
+    ROUTE_RULES = ('Route Rules')
+    EDGE_LABELS = ('Edge Labels')
+    NODE_LABELS = ('Node Labels')
+
+
 class ServicesPageFilter(StringEnum):
     SERVICE_NAME = ('Service Name')
     ISTIO_SIDECAR = ('Istio Sidecar')

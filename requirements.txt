@@ -1,10 +1,11 @@
 # Set up project requirements
 # To Run: 'pip install -r requirements.txt'
 
-enum34
-dotmap
-kiali-client
-pytest
-pyyaml
-selenium
-widgetastic.core
+dotmap==1.2.20
+enum34==1.1.6
+flake8==3.5.0
+kiali-client==0.4.0
+pytest==3.5.1
+pyyaml==3.12
+selenium==3.12.0
+widgetastic.core==0.21.2

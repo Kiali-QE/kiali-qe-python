@@ -30,6 +30,7 @@ _output
 
 .sws-qe/
 .env/
+log/
 
 # IntelliJ
 .idea/

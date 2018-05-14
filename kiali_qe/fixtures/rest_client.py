@@ -8,6 +8,7 @@ from kiali_qe.utils.log import logger
 
 @pytest.fixture(scope='session')
 def rest_client(cfg):
+    logger.debug('Creating rest client')
     _client = KialiClient(
         host=cfg.kiali.hostname, username=cfg.kiali.username, password=cfg.kiali.password)
     # update kiali version details
@@ -23,5 +24,5 @@ def rest_client(cfg):
     #    cfg.kiali.version.core,
     #    _status['Kiali core commit hash'])
     cfg.selenium.capabilities.zalenium.build = '{}'.format(cfg.kiali.version.core)
-    logger.info('Kiali versions:\n{}'.format(json.dumps(_response, indent=4)))
+    logger.info('Kiali versions:\n{}'.format(json.dumps(_response, indent=2)))
     return _client

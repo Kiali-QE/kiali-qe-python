@@ -3,6 +3,7 @@ from os import environ
 import pytest
 
 from kiali_qe.utils import get_dict
+from kiali_qe.utils.log import logger
 from kiali_qe.utils.path import conf_path
 
 
@@ -23,4 +24,5 @@ def cfg():
     for y_key, e_key in _override_list.items():
         if environ.get(e_key) is not None:
             cfg.set(y_key, environ.get(e_key))
+    logger.debug('Kiali hostname: {}'.format(cfg.kiali.hostname))
     return cfg

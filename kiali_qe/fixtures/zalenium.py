@@ -26,7 +26,7 @@ def set_browser(browser):
 
 
 def update_suite_status():
-    if report['total_failed'] > 0 or report['test_passed'] == 0:
+    if report['total_failed'] > 0 or report['total_passed'] == 0:
         _update_zalenium_cookie('suite_failed')
     else:
         _update_zalenium_cookie('suite_passed')
@@ -39,7 +39,7 @@ def _get_test_name(location):
 
 def _update_cookie(name, value):
     if _browser is None:
-        logger.warn('there no browser object')
+        logger.warn('There is no browser object!')
         return
     _browser.selenium.add_cookie({'name': name, 'value': value})
 
