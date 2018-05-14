@@ -28,7 +28,7 @@ class RootPage(View):
     page_header = Text(locator='//*[contains(@class, "container-fluid")]//h2')
 
     def load(self):
-        # load page only if PAGE_MENU available
+        # load page only if PAGE_MENU is available
         if self.PAGE_MENU is not None and self.main_menu.selected != self.PAGE_MENU:
             self.main_menu.select(self.PAGE_MENU)
 

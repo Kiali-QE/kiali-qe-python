@@ -1,7 +1,7 @@
 """ Update this doc"""
 from widgetastic.widget import Checkbox, TextInput, Widget
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
-from kiali_qe.components.enums import HelpMenuEnum
+from kiali_qe.components.enums import HelpMenuEnum, ApplicationVersionEnum
 from wait_for import wait_for
 
 
@@ -61,8 +61,9 @@ class DropDown(Widget):
     OPTION = ('.//*[contains(@class, "dropdown-menu")]'
               '//*[contains(@role, "menuitem") and text()="{}"]')
 
-    def __init__(self, parent, locator=None, logger=None):
+    def __init__(self, parent, force_open=False, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
+        self._force_open = force_open
         if locator:
             self.locator = locator
         else:
@@ -84,12 +85,16 @@ class DropDown(Widget):
     @property
     def options(self):
         options = []
+        if self._force_open:
+            self._open()
         for el in self.browser.elements(locator=self.OPTIONS_LIST, parent=self):
             # on filter drop down, title comes in to options list.
             # Here it will be removed
             if self.browser.get_attribute('title', el).startswith('Filter by'):
                 continue
             options.append(self.browser.text(el))
+        if self._force_open:
+            self._close()
         return options
 
     def select(self, option):
@@ -425,6 +430,7 @@ class About(Widget):
 
     def __init__(self, parent, logger=None):
         Widget.__init__(self, parent, logger=logger)
+        self.wait_displayed()
 
     @property
     def application_name(self):
@@ -439,10 +445,22 @@ class About(Widget):
 
     @property
     def versions(self):
-        return [
-            self.browser.text(el)
-            for el
-            in self.browser.elements(self.VERSION, parent=self)]
+        _versions = {}
+
+        # ugly fix to wait until version details loaded
+        def _is_versions_loaded():
+            _locator = '{}/strong[text()="{}"]'.format(
+                self.VERSION, ApplicationVersionEnum.PROMETHEUS.text)
+            if len(self.browser.elements(_locator, parent=self, force_check_safe=True)) > 0:
+                return True
+            else:
+                return False
+        wait_for(_is_versions_loaded, timout=3, delay=0.2, very_quiet=True)
+        for el in self.browser.elements(self.VERSION, parent=self, force_check_safe=True):
+            _name = self.browser.text(self.browser.element(self.VERSION_NAME, parent=el))
+            _version = self.browser.text(el).split(_name, 1)[1].strip()
+            _versions[_name] = _version
+        return _versions
 
     @property
     def trademark(self):
@@ -456,7 +474,8 @@ class NavBar(Widget):
 
     def __init__(self, parent, logger=None):
         Widget.__init__(self, parent, logger=logger)
-        self.help_menu = DropDown(parent=self, locator=self.NAVBAR_RIGHT_MENU, logger=logger)
+        self.help_menu = DropDown(
+            parent=self, locator=self.NAVBAR_RIGHT_MENU, logger=logger, force_open=True)
 
     def about(self):
         self.help_menu.select(HelpMenuEnum.ABOUT.text)

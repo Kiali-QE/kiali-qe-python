@@ -17,6 +17,14 @@ class HelpMenuEnum(StringEnum):
     ABOUT = ('About')
 
 
+class ApplicationVersionEnum(StringEnum):
+    KIALI_UI = ("kiali-ui")
+    KIALI_CORE = ("kiali")
+    ISTIO = ("Istio")
+    PROMETHEUS = ("Prometheus")
+    KUBERNETES = ("Kubernetes")
+
+
 class PaginationPerPage(Enum):
     FIVE = 5
     TEN = 10

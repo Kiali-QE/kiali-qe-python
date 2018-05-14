@@ -2,13 +2,17 @@ from kiali_qe.components.enums import PaginationPerPage
 from kiali_qe.utils.log import logger
 
 
+def check_equal(L1, L2):
+    return len(L1) == len(L2) and sorted(L1) == sorted(L2)
+
+
 def pagination_feature_test(page):
     pagination = page.pagination
     # test options
     options_defined = [item.value for item in PaginationPerPage]
     options_listed = pagination.items_per_page_options
     logger.debug('options[defined:{}, listed:{}]'.format(options_defined, options_listed))
-    assert options_defined == options_listed, \
+    assert check_equal(options_defined, options_listed), \
         ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
     # test page next, previous, first, last, to page
     total_pages = pagination.total_pages
@@ -39,7 +43,3 @@ def pagination_feature_test(page):
             assert len(page.content.items) == per_page and pagination.items_per_page == per_page
     # test total items
     assert pagination.total_items == len(page.content.all_items)
-
-
-def check_equal(L1, L2):
-    return len(L1) == len(L2) and sorted(L1) == sorted(L2)
