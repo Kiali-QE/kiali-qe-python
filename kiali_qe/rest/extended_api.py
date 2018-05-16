@@ -1,12 +1,7 @@
 from kiali.api import KialiClient
-from collections import namedtuple
 
-
-Namespace = namedtuple('Namespace', ['name'])
-Service = namedtuple('Service', ['namespace', 'name'])
-Action = namedtuple('Action', ['handler', 'instances'])
-Rule = namedtuple('Rule', ['namespace', 'name', 'match', 'actions'])
-Resource = namedtuple('Resource', ['namespace', 'data'])
+from kiali_qe.entities.rule import Action, Rule
+from kiali_qe.entities.service import Health, Service
 
 
 class KialiExtendedClient(KialiClient):
@@ -17,68 +12,64 @@ class KialiExtendedClient(KialiClient):
         entities_j = super(KialiExtendedClient, self).namespace_list()
         if entities_j:
             for entity_j in entities_j:
-                entities.append(Namespace(entity_j['name']))
+                entities.append(entity_j['name'])
         return entities
 
-    def service_list(self, namespace=None):
+    def service_list(self, *namespaces):
         """Returns list of services.
         Args:
-            namespace: Namespace of the resource
+            namespaces: can be zero or any number of namespaces
         """
-        resources = []
-        if not namespace:
-            for namespace in self.namespace_list():
-                resources.extend(self._list_resources(
-                    super(KialiExtendedClient, self).services_list(
-                        namespace=namespace.name), resource_name='services'))
+        items = []
+        namespace_list = []
+        if len(namespaces) > 0:
+            namespace_list.extend(namespaces)
         else:
-            resources.extend(self._list_resources(
-                super(KialiExtendedClient, self).services_list(
-                    namespace=namespace), resource_name='services'))
-        services_list = []
-        if resources:
-            for resource in resources:
-                services_list.append(Service(resource.namespace, resource.data['name']))
-        return services_list
+            namespace_list = self.namespace_list()
+        # update items
+        for _namespace in namespace_list:
+            _data = super(KialiExtendedClient, self).services_list(namespace=_namespace)
+            _services = _data['services']
+            # update all the services to our custom entity
+            for _service_rest in _services:
+                # update health status
+                _health = Health.get_from_rest(_service_rest['health'])
+                _service = Service(
+                    namespace=_namespace,
+                    name=_service_rest['name'],
+                    istio_sidecar=_service_rest['istio_sidecar'],
+                    health=_health)
+                items.append(_service)
+        return items
 
-    def rule_list(self, namespace=None):
+    def rule_list(self, *namespaces):
         """Returns list of rules.
         Args:
-            namespace: Namespace of the resource
+            namespaces: can be zero or any number of namespaces
         """
-        resources = []
-        if not namespace:
-            for namespace in self.namespace_list():
-                resources.extend(
-                    self._list_resources(super(KialiExtendedClient, self).rules_list(
-                        namespace=namespace.name), resource_name='rules'))
+        items = []
+        namespace_list = []
+        if len(namespaces) > 0:
+            namespace_list.extend(namespaces)
         else:
-            resources.extend(
-                self._list_resources(super(KialiExtendedClient, self).rules_list(
-                    namespace=namespace), resource_name='rules'))
-        rules_list = []
-        if resources:
-            for resource in resources:
-                match = resource.data['match']
-                actions = []
-                for action in resource.data['actions']:
-                    handler = action['handler']
-                    instances = []
-                    for instance in action['instances']:
-                        instances.append(instance)
-                    actions.append(Action(handler, instances))
-                rules_list.append(Rule(resource.namespace, resource.data['name'], match, actions))
-        return rules_list
-
-    def _list_resources(self, entities_j, resource_name):
-        """Returns list of resources.
-         Args:
-            resource_name: Name of the resource
-        """
-        if not resource_name:
-            raise KeyError("'resource_name' is a mandatory field!")
-        resources_list = []
-        if entities_j:
-            for entity_j in entities_j[resource_name]:
-                resources_list.append(Resource(entities_j['namespace']['name'], entity_j))
-        return resources_list
+            namespace_list = self.namespace_list()
+        # update items
+        for _namespace in namespace_list:
+            _data = super(KialiExtendedClient, self).rules_list(namespace=_namespace)
+            _rules = _data['rules']
+            # update all the rules to our custom entity
+            for _rule_rest in _rules:
+                # update actions
+                _actions = []
+                for _action_r in _rule_rest['actions']:
+                    _actions.append(Action.get_from_rest(_action_r))
+                _match = None
+                if 'match' in _rule_rest:
+                    _match = _rule_rest['match']
+                _rule = Rule(
+                    namespace=_namespace,
+                    name=_rule_rest['name'],
+                    actions=_actions,
+                    match=_match)
+                items.append(_rule)
+        return items

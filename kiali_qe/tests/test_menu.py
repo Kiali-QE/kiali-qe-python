@@ -1,6 +1,6 @@
 from kiali_qe.components.enums import MainMenuEnum
 from kiali_qe.pages import RootPage
-from kiali_qe.tests.common import check_equal
+from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
 
 
@@ -11,7 +11,7 @@ def test_menu(browser):
     options_defined = [item.text for item in MainMenuEnum]
     options_listed = page.main_menu.items
     logger.debug('menus[defined:{}, listed:{}]'.format(options_defined, options_listed))
-    assert check_equal(options_defined, options_listed), \
+    assert is_equal(options_defined, options_listed), \
         ('Menus mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
     # navigate to menus
     for _menu in options_listed:

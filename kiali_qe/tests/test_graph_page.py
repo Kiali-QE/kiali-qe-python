@@ -1,7 +1,7 @@
 from kiali_qe.components.enums import GraphPageFilter, GraphPageLayout
 from kiali_qe.pages import GraphPage
+from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
-from kiali_qe.tests.common import check_equal
 
 
 def test_layout(browser):
@@ -21,7 +21,7 @@ def test_filter(browser):
     options_defined = [item.text for item in GraphPageFilter]
     options_listed = page.filter.items
     logger.debug('options[defined:{}, listed:{}]'.format(options_defined, options_listed))
-    assert check_equal(options_defined, options_listed), \
+    assert is_equal(options_defined, options_listed), \
         ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
     # enable disable each filter
     for filter_name in options_listed:

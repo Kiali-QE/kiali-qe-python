@@ -2,6 +2,8 @@
 from widgetastic.widget import Checkbox, TextInput, Widget
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 from kiali_qe.components.enums import HelpMenuEnum, ApplicationVersionEnum
+from kiali_qe.entities.service import Service
+from kiali_qe.entities.rule import Action, Rule
 from wait_for import wait_for
 
 
@@ -569,18 +571,20 @@ class ListViewServices(ListViewAbstract):
     def items(self):
         _items = []
         for el in self.browser.elements(self.ITEMS, parent=self):
-            # rule dict
-            service = {}
             # get rule name and namespace
             name, namespace = self.browser.element(
                 locator=self.ITEM_TEXT, parent=el).text.split('\n')
-            service['name'] = name.strip()
-            service['namespace'] = namespace.strip()
+            _name = name.strip()
+            _namespace = namespace.strip()
             # update istio sidecar logo
-            service['istio_sidecar'] = len(self.browser.elements(
+            _istio_sidecar = len(self.browser.elements(
                 parent=el, locator='.//img[contains(@class, "IstioLogo")]')) > 0
+            # TODO: fetch health information from GUI
+            # create service instance
+            _service = Service(
+                name=_name, namespace=_namespace, istio_sidecar=_istio_sidecar, health=None)
             # append this item to the final list
-            _items.append(service)
+            _items.append(_service)
         return _items
 
 
@@ -592,32 +596,30 @@ class ListViewIstioMixer(ListViewAbstract):
     def items(self):
         _items = []
         for el in self.browser.elements(self.ITEMS, parent=self):
-            # rule dict
-            rule = {}
-            action = {}
             # get rule name and namespace
             name, namespace = self.browser.element(
                 locator=self.ITEM_TEXT, parent=el).text.split('\n')
-            rule['name'] = name.strip()
-            rule['namespace'] = namespace.strip()
+            _name = name.strip()
+            _namespace = namespace.strip()
+            _actions = []
+            _match = None
             # get handler
-            handler = self.browser.element(
+            _handler = self.browser.element(
                 locator=self.ACTION_HEADER.format('Handler'),
                 parent=el).text.split('Handler:', 1)[1].strip()
-            action['handler'] = handler
             # get instances
-            instances = self.browser.element(
+            _instances = self.browser.element(
                 locator=self.ACTION_HEADER.format('Instances'),
                 parent=el).text.split('Instances:', 1)[1].strip().split(',')
-            action['instances'] = instances
+            _actions.append(Action(handler=_handler, instances=_instances))
             # get Match
             if 'Match:' in el.text:
                 match = self.browser.element(
                     locator=self.ACTION_HEADER.format('Match'),
                     parent=el).text.split('Match:', 1)[1].strip()
-                action['match'] = match.strip()
-            # add action into rule dict
-            rule['action'] = action
+                _match = match.strip()
+            # create rule instance
+            _rule = Rule(name=_name, namespace=_namespace, actions=_actions, match=_match)
             # append this item to the final list
-            _items.append(rule)
+            _items.append(_rule)
         return _items

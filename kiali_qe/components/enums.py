@@ -57,6 +57,7 @@ class GraphPageFilter(StringEnum):
     ROUTE_RULES = ('Route Rules')
     EDGE_LABELS = ('Edge Labels')
     NODE_LABELS = ('Node Labels')
+    MISSING_SIDECARS = ('Missing Sidecars')
 
 
 class ServicesPageFilter(StringEnum):

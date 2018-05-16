@@ -1,6 +1,6 @@
 from kiali_qe.components.enums import ApplicationVersionEnum, HelpMenuEnum
 from kiali_qe.pages import RootPage
-from kiali_qe.tests.common import check_equal
+from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
 
 
@@ -14,7 +14,7 @@ def test_about(browser, rest_client):
     versions_defined = [item.text for item in ApplicationVersionEnum]
     logger.debug('Application version keys: defined:{}, available:{}'.format(
         versions_defined, versions_ui.keys()))
-    check_equal(versions_defined, versions_ui.keys())
+    assert is_equal(versions_defined, versions_ui.keys())
 
     # compare each versions
     # get version details from REST API
@@ -55,5 +55,5 @@ def test_help_menu(browser):
     options_defined = [item.text for item in HelpMenuEnum]
     options_listed = page.navbar.help_menu.options
     logger.debug('help menus[defined:{}, listed:{}]'.format(options_defined, options_listed))
-    assert check_equal(options_defined, options_listed), \
+    assert is_equal(options_defined, options_listed), \
         ('Help menus mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
