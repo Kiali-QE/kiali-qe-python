@@ -1,13 +1,14 @@
 from project.kiali_view import ServiceListView
 
 
-def test_service_list(browser, rest_api):
+def test_service_list(browser, rest_api, openshift_api):
     view = ServiceListView(browser)
     rest_services = get_services_set(rest_api.list_services())
+    os_services = get_services_set(openshift_api.list_services())
     ui_services = get_services_set(view.get_all())
-    assert ui_services == rest_services, \
-        ("Lists of services mismatch! UI:{}, REST:{}"
-         .format(ui_services, rest_services))
+    assert ui_services == rest_services == os_services, \
+        ("Lists of services mismatch! UI:{}, Kiali REST:{} and OS REST:{}"
+         .format(ui_services, rest_services, os_services))
 
 
 def test_service_search(browser, rest_api):
