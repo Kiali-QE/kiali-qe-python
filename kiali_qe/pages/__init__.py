@@ -4,7 +4,7 @@ from kiali_qe.components import (
     Button,
     DropDown,
     Filter,
-    ListViewIstioMixer,
+    ListViewIstioConfig,
     ListViewServices,
     MainMenu,
     Pagination,
@@ -51,6 +51,7 @@ class GraphPage(RootPage):
     namespace = DropDown(locator=XP_DROP_DOWN.format('namespace-selector'))
     duration = DropDown(locator=XP_DROP_DOWN.format('graph_filter_interval_duration'))
     layout = DropDown(locator=XP_DROP_DOWN.format('graph_filter_layouts'))
+    edge_labels = DropDown(locator=XP_DROP_DOWN.format('graph_filter_edges'))
     filter = CheckBoxFilter()
     refresh = Button(locator='.//button//*[contains(@class, "fa-refresh")]')
     # TODO: implement graph control code
@@ -67,9 +68,9 @@ class ServicesPage(RootPage):
 
 
 class IstioMixerPage(RootPage):
-    PAGE_MENU = MENU.ISTIO_MIXER.text
+    PAGE_MENU = MENU.ISTIO_CONFIG.text
 
     filter = Filter()
     sort = SortDropDown(locator=XP_DROP_DOWN.format('sortTypeMenu'))
-    content = ListViewIstioMixer()
+    content = ListViewIstioConfig()
     pagination = Pagination()

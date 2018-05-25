@@ -13,8 +13,9 @@ class Envoy(EntityBase):
     def __repr__(self):
         return "{}({}, {})".format(type(self).__name__, repr(self.healthy), repr(self.total))
 
-    def is_equal(self, item):
-        return self.healthy == item.healthy and self.total == item.total
+    def is_equal(self, other):
+        return isinstance(other, Envoy)\
+         and self.healthy == other.healthy and self.total == other.total
 
 
 class DeploymentStatus(EntityBase):
@@ -32,9 +33,11 @@ class DeploymentStatus(EntityBase):
         return "{}({}, {}, {})".format(
             type(self).__name__, repr(self.name), repr(self.replicas), repr(self.available))
 
-    def is_equal(self, item):
-        return self.name == item.name and self.replicas == item.replicas\
-         and self.available == item.available
+    def is_equal(self, other):
+        return isinstance(other, DeploymentStatus)\
+         and self.name == other.name\
+         and self.replicas == other.replicas\
+         and self.available == other.available
 
 
 class Requests(EntityBase):
@@ -51,9 +54,10 @@ class Requests(EntityBase):
         return "{}({}, {})".format(
             type(self).__name__, repr(self.request_count), repr(self.request_error_count))
 
-    def is_equal(self, item):
-        return self.request_count == item.request_count\
-         and self.request_error_count == item.request_error_count
+    def is_equal(self, other):
+        return isinstance(other, Requests)\
+         and self.request_count == other.request_count\
+         and self.request_error_count == other.request_error_count
 
 
 class Health(EntityBase):
@@ -72,12 +76,14 @@ class Health(EntityBase):
             type(self).__name__,
             repr(self.envoy), repr(self.deployment_statuses), repr(self.requests))
 
-    def is_equal(self, item):
-        if not self.envoy.is_equal(item.envoy):
+    def is_equal(self, other):
+        if not isinstance(other, Health):
             return False
-        if not self.deployment_statuses.is_equal(item.deployment_statuses):
+        if not self.envoy.is_equal(other.envoy):
             return False
-        if not self.requests.is_equal(item.requests):
+        if not self.deployment_statuses.is_equal(other.deployment_statuses):
+            return False
+        if not self.requests.is_equal(other.requests):
             return False
         return True
 
@@ -133,13 +139,25 @@ class Service(object):
             type(self).__name__,
             repr(self.name), repr(self.namespace), repr(self.istio_sidecar), repr(self.health))
 
-    def is_equal(self, item):
-        if self.name != item.name:
+    def __hash__(self):
+        return (hash(self.name) ^ hash(self.namespace) ^ hash(self.istio_sidecar))
+
+    def __eq__(self, other):
+        return self.is_equal(advanced_check=True)
+
+    def is_equal(self, other, advanced_check=True):
+        # basic check
+        if not isinstance(other, Service):
             return False
-        if self.namespace != item.namespace:
+        if self.name != other.name:
             return False
-        if self.istio_sidecar != item.istio_sidecar:
+        if self.namespace != other.namespace:
             return False
-        if not self.health.is_equal(item.health):
+        # advanced check
+        if not advanced_check:
+            return True
+        if self.istio_sidecar != other.istio_sidecar:
+            return False
+        if not self.health.is_equal(other.health):
             return False
         return True

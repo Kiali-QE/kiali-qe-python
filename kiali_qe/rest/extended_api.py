@@ -15,7 +15,7 @@ class KialiExtendedClient(KialiClient):
                 entities.append(entity_j['name'])
         return entities
 
-    def service_list(self, *namespaces):
+    def service_list(self, namespaces=[], service_names=[]):
         """Returns list of services.
         Args:
             namespaces: can be zero or any number of namespaces
@@ -28,7 +28,7 @@ class KialiExtendedClient(KialiClient):
             namespace_list = self.namespace_list()
         # update items
         for _namespace in namespace_list:
-            _data = super(KialiExtendedClient, self).services_list(namespace=_namespace)
+            _data = super(KialiExtendedClient, self).service_list(namespace=_namespace)
             _services = _data['services']
             # update all the services to our custom entity
             for _service_rest in _services:
@@ -40,10 +40,16 @@ class KialiExtendedClient(KialiClient):
                     istio_sidecar=_service_rest['istio_sidecar'],
                     health=_health)
                 items.append(_service)
+        # filter by service name
+        if len(service_names) > 0:
+            filtered_list = []
+            for _name in service_names:
+                filtered_list.extend([_i for _i in items if _name in _i.name])
+            return set(filtered_list)
         return items
 
-    def rule_list(self, *namespaces):
-        """Returns list of rules.
+    def rule_list(self, namespaces=[], rule_names=[]):
+        """Returns list of istio config.
         Args:
             namespaces: can be zero or any number of namespaces
         """
@@ -55,7 +61,7 @@ class KialiExtendedClient(KialiClient):
             namespace_list = self.namespace_list()
         # update items
         for _namespace in namespace_list:
-            _data = super(KialiExtendedClient, self).rules_list(namespace=_namespace)
+            _data = super(KialiExtendedClient, self).istio_config_list(namespace=_namespace)
             _rules = _data['rules']
             # update all the rules to our custom entity
             for _rule_rest in _rules:
@@ -72,4 +78,10 @@ class KialiExtendedClient(KialiClient):
                     actions=_actions,
                     match=_match)
                 items.append(_rule)
+        # filter by rule name
+        if len(rule_names) > 0:
+            filtered_list = []
+            for _name in rule_names:
+                filtered_list.extend([_i for _i in items if _name in _i.name])
+            return set(filtered_list)
         return items

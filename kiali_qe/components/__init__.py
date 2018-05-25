@@ -4,7 +4,14 @@ from selenium.common.exceptions import NoSuchElementException, StaleElementRefer
 from kiali_qe.components.enums import HelpMenuEnum, ApplicationVersionEnum
 from kiali_qe.entities.service import Service
 from kiali_qe.entities.rule import Action, Rule
-from wait_for import wait_for
+from wait_for import wait_for, TimedOutError
+
+
+def wait_displayed(obj, timout='3s'):
+    try:
+        obj.wait_displayed(timeout=timout)
+    except TimedOutError:
+        pass
 
 
 class Button(Widget):
@@ -16,7 +23,7 @@ class Button(Widget):
             self.locator = locator
         else:
             self.locator = self.ROOT
-        self.wait_displayed()
+        wait_displayed(self)
 
     def __locator__(self):
         return self.locator
@@ -70,6 +77,7 @@ class DropDown(Widget):
             self.locator = locator
         else:
             self.locator = self.ROOT
+        wait_displayed(self)
 
     def __locator__(self):
         return self.locator
@@ -87,16 +95,24 @@ class DropDown(Widget):
     @property
     def options(self):
         options = []
-        if self._force_open:
-            self._open()
-        for el in self.browser.elements(locator=self.OPTIONS_LIST, parent=self):
-            # on filter drop down, title comes in to options list.
-            # Here it will be removed
-            if self.browser.get_attribute('title', el).startswith('Filter by'):
-                continue
-            options.append(self.browser.text(el))
-        if self._force_open:
-            self._close()
+
+        def _update_options():
+            if self._force_open:
+                self._open()
+            for el in self.browser.elements(locator=self.OPTIONS_LIST, parent=self):
+                # on filter drop down, title comes in to options list.
+                # Here it will be removed
+                if self.browser.get_attribute('title', el).startswith('Filter by'):
+                    continue
+                options.append(self.browser.text(el))
+            if self._force_open:
+                self._close()
+
+        # sometime options are not displayed, needs to do retry
+        for retry in range(1, 3):
+            _update_options()
+            if len(options) > 0:
+                break
         return options
 
     def select(self, option):
@@ -220,9 +236,10 @@ class FilterList(Widget):
     @property
     def active_filters(self):
         _filters = []
+        wait_displayed(self)
         if not self.is_displayed:
             return _filters
-        for el in self.browser.elements(parent=self, locator=self.ITEMS):
+        for el in self.browser.elements(parent=self, locator=self.ITEMS, force_check_safe=True):
             _name, _value = el.text.split('\n')[0].split(':', 1)
             _filters.append({'name': _name.strip(), 'value': _value.strip()})
         return _filters
@@ -365,13 +382,18 @@ class Pagination(Widget):
             self.locator = locator
         else:
             self.locator = self.ROOT
-        self.wait_displayed()
+        wait_displayed(self)
 
     def __locator__(self):
         return self.locator
 
+    def _element(self, locator):
+        wait_displayed(self)
+        return self.browser.element(parent=self, locator=locator)
+
     @property
     def _page_input(self):
+        wait_displayed(self)
         return TextInput(parent=self, locator=self.CURRENT_PAGE)
 
     @property
@@ -379,7 +401,7 @@ class Pagination(Widget):
         return int(self._page_input.read())
 
     def _move_to_page(self, page):
-        self.browser.click(self.browser.element(parent=self, locator=page))
+        self.browser.click(self._element(locator=page))
 
     def move_to_first_page(self):
         self._move_to_page(self.FIRST_PAGE)
@@ -398,14 +420,15 @@ class Pagination(Widget):
 
     @property
     def total_items(self):
-        return int(self.browser.text(self.browser.element(parent=self, locator=self.TOTAL_ITEMS)))
+        return int(self.browser.text(self._element(locator=self.TOTAL_ITEMS)))
 
     @property
     def total_pages(self):
-        return int(self.browser.text(self.browser.element(parent=self, locator=self.TOTAL_PAGES)))
+        return int(self.browser.text(self._element(locator=self.TOTAL_PAGES)))
 
     @property
     def _dropdown_per_page(self):
+        wait_displayed(self)
         return DropDown(parent=self, locator=self.PER_PAGE_DROPDOWN)
 
     @property
@@ -432,7 +455,7 @@ class About(Widget):
 
     def __init__(self, parent, logger=None):
         Widget.__init__(self, parent, logger=logger)
-        self.wait_displayed()
+        wait_displayed(self)
 
     @property
     def application_name(self):
@@ -588,7 +611,7 @@ class ListViewServices(ListViewAbstract):
         return _items
 
 
-class ListViewIstioMixer(ListViewAbstract):
+class ListViewIstioConfig(ListViewAbstract):
     ACTION_HEADER = ('.//*[contains(@class, "list-group-item-text")]'
                      '//strong[normalize-space(text())="{}"]/..')
 
@@ -603,21 +626,22 @@ class ListViewIstioMixer(ListViewAbstract):
             _namespace = namespace.strip()
             _actions = []
             _match = None
+            # disable handler and other features. UI changed
             # get handler
-            _handler = self.browser.element(
-                locator=self.ACTION_HEADER.format('Handler'),
-                parent=el).text.split('Handler:', 1)[1].strip()
-            # get instances
-            _instances = self.browser.element(
-                locator=self.ACTION_HEADER.format('Instances'),
-                parent=el).text.split('Instances:', 1)[1].strip().split(',')
-            _actions.append(Action(handler=_handler, instances=_instances))
-            # get Match
-            if 'Match:' in el.text:
-                match = self.browser.element(
-                    locator=self.ACTION_HEADER.format('Match'),
-                    parent=el).text.split('Match:', 1)[1].strip()
-                _match = match.strip()
+            # _handler = self.browser.element(
+            #     locator=self.ACTION_HEADER.format('Handler'),
+            #     parent=el).text.split('Handler:', 1)[1].strip()
+            # # get instances
+            # _instances = self.browser.element(
+            #     locator=self.ACTION_HEADER.format('Instances'),
+            #     parent=el).text.split('Instances:', 1)[1].strip().split(',')
+            # _actions.append(Action(handler=_handler, instances=_instances))
+            # # get Match
+            # if 'Match:' in el.text:
+            #     match = self.browser.element(
+            #         locator=self.ACTION_HEADER.format('Match'),
+            #         parent=el).text.split('Match:', 1)[1].strip()
+            #     _match = match.strip()
             # create rule instance
             _rule = Rule(name=_name, namespace=_namespace, actions=_actions, match=_match)
             # append this item to the final list

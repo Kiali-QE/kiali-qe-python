@@ -69,6 +69,6 @@ def _get_driver(cfg, capabilities):
     # reset the timeout to default, only driver creation is taking so much time
     command_executor.reset_timeout()
     _delta = datetime.now() - start_time
-    logger.debug('Web driver created successfully. Time taken: {}ms'.format(
+    logger.debug('Web driver created successfully. Time taken: {} ms'.format(
         int(_delta.total_seconds() * 1000)))
     return driver

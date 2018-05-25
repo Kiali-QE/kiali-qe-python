@@ -9,7 +9,7 @@ class StringEnum(Enum):
 class MainMenuEnum(StringEnum):
     GRAPH = ('Graph')
     SERVICES = ('Services')
-    ISTIO_MIXER = ('Istio Mixer')
+    ISTIO_CONFIG = ('Istio Config')
     DISTRIBUTED_TRACING = ('Distributed Tracing')
 
 
@@ -55,9 +55,9 @@ class GraphPageLayout(StringEnum):
 class GraphPageFilter(StringEnum):
     CIRCUIT_BREAKERS = ('Circuit Breakers')
     ROUTE_RULES = ('Route Rules')
-    EDGE_LABELS = ('Edge Labels')
     NODE_LABELS = ('Node Labels')
     MISSING_SIDECARS = ('Missing Sidecars')
+    TRAFFIC_ANIMATION = ('Traffic Animation')
 
 
 class ServicesPageFilter(StringEnum):
@@ -80,11 +80,12 @@ class ServicesPageRateInterval(StringEnum):
     LAST_30_MINUTES = ('Last 30 minutes')
 
 
-class IstioMixerPageFilter(StringEnum):
-    RULE_NAME = ('Rule Name')
+class IstioConfigPageFilter(StringEnum):
+    ISTIO_TYPE = ('Istio Type')
+    ISTIO_NAME = ('Istio Name')
     NAMESPACE = ('Namespace')
 
 
-class IstioMixerPageSort(StringEnum):
+class IstioConfigPageSort(StringEnum):
     NAMESPACE = ('Namespace')
-    RULE_NAME = ('Rule Name')
+    ISTIO_NAME = ('Istio Name')

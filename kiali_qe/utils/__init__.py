@@ -23,14 +23,28 @@ def get_dict(path, yaml_file):
     return MyDotMap(yaml_dict)
 
 
-def is_equal(list_a, list_b):
-    if len(list_a) == len(list_b):
-        for item in list_a:
-            if isinstance(item, str) or isinstance(item, float)\
-             or isinstance(item, int) or isinstance(item, unicode):
-                if item not in list_a:
-                    return False
-            else:
-                if not item.is_in(list_b):
-                    return False
-        return True
+def is_equal(object_a, object_b):
+    if isinstance(object_a, list):
+        if len(object_a) == len(object_b):
+            for item_a in object_a:
+                if isinstance(item_a, str) or isinstance(item_a, float)\
+                 or isinstance(item_a, int) or isinstance(item_a, unicode):
+                    if item_a not in object_b:
+                        return False
+                elif isinstance(item_a, dict):
+                    _is_in = False
+                    for item_b in object_b:
+                        if cmp(item_a, item_b) == 0:
+                            _is_in = True
+                            break
+                    if not _is_in:
+                        return False
+
+                else:
+                    if not item_a.is_in(object_b):
+                        return False
+            return True
+        else:
+            return False
+    elif isinstance(object_a, dict):
+        return cmp(object_a, object_b) == 0

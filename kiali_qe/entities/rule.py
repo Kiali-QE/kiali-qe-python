@@ -14,8 +14,10 @@ class Action(EntityBase):
     def __repr__(self):
         return "{}({}, {})".format(type(self).__name__, repr(self.handler), repr(self.instances))
 
-    def is_equal(self, item):
-        return self.handler == item.handler and is_equal(self.instances, item.instances)
+    def is_equal(self, other):
+        return isinstance(other, Action)\
+         and self.handler == other.handler\
+         and is_equal(self.instances, other.instances)
 
     @classmethod
     def get_from_rest(cls, action):
@@ -41,11 +43,23 @@ class Rule(EntityBase):
             type(self).__name__,
             repr(self.name), repr(self.namespace), repr(self.actions), repr(self.match))
 
-    def is_equal(self, item):
-        if self.name != item.name:
+    def __hash__(self):
+        return (hash(self.name) ^ hash(self.namespace))
+
+    def __eq__(self, other):
+        return self.is_equal(advanced_check=True)
+
+    def is_equal(self, other, advanced_check=True):
+        # basic check
+        if not isinstance(other, Rule):
             return False
-        if self.namespace != item.namespace:
+        if self.name != other.name:
             return False
-        if not is_equal(self.actions, item.actions):
+        if self.namespace != other.namespace:
+            return False
+        # advanced check
+        if not advanced_check:
+            return True
+        if not is_equal(self.actions, other.actions):
             return False
         return True
