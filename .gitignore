@@ -35,6 +35,8 @@ log/
 # IntelliJ
 .idea/
 
+.vscode/
+
 # Config
 conf/*.yaml
 
