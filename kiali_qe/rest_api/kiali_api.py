@@ -36,10 +36,10 @@ class KialiAPI(object):
         resources = []
         if not namespace:
             for namespace in self.list_namespaces():
-                resources.extend(self._list_resources(self._client.services_list(namespace=namespace.name),
+                resources.extend(self._list_resources(self._client.service_list(namespace=namespace.name),
                                                       resource_name='services'))
         else:
-            resources.extend(self._list_resources(self._client.services_list(namespace=namespace),
+            resources.extend(self._list_resources(self._client.service_list(namespace=namespace),
                                                   resource_name='services'))
         services_list = []
         if resources:
