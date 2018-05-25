@@ -13,7 +13,7 @@ from kiali_qe.utils.log import logger
 
 
 @pytest.fixture(scope='session')
-def browser(cfg, rest_client):
+def browser(cfg, kiali_client):
     selenium = _get_selenium(cfg)
     selenium.maximize_window()
     logger.debug('Launching kiali instance: {}'.format(cfg.kiali.hostname))

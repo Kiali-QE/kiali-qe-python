@@ -9,8 +9,8 @@ from kiali_qe.pages import ServicesPage, IstioMixerPage
 class AbstractListPageTest(object):
     FILTER_ENUM = None
 
-    def __init__(self, rest_client, page):
-        self.rest_client = rest_client
+    def __init__(self, kiali_client, page):
+        self.kiali_client = kiali_client
         self.page = page
 
     def _namespaces_ui(self):
@@ -31,7 +31,7 @@ class AbstractListPageTest(object):
 
     def assert_namespaces(self):
         namespaces_ui = self._namespaces_ui()
-        namespaces_rest = self.rest_client.namespace_list()
+        namespaces_rest = self.kiali_client.namespace_list()
         logger.debug('Namespaces[UI:{}, REST:{}]'.format(namespaces_ui, namespaces_rest))
         assert is_equal(namespaces_ui, namespaces_rest)
 
@@ -140,8 +140,8 @@ class AbstractListPageTest(object):
 class ServicesPageTest(AbstractListPageTest):
     FILTER_ENUM = ServicesPageFilter
 
-    def __init__(self, rest_client, browser):
-        AbstractListPageTest.__init__(self, rest_client=rest_client, page=ServicesPage(browser))
+    def __init__(self, kiali_client, browser):
+        AbstractListPageTest.__init__(self, kiali_client=kiali_client, page=ServicesPage(browser))
         self.browser = browser
 
     def assert_all_items(self, active_filters):
@@ -153,7 +153,7 @@ class ServicesPageTest(AbstractListPageTest):
         _sn = self.FILTER_ENUM.SERVICE_NAME.text
         _service_names = [_f['value'] for _f in active_filters if _f['name'] == _sn]
         logger.debug('Namespaces:{}, Service names:{}'.format(_namespaces, _service_names))
-        services_rest = self.rest_client.service_list(
+        services_rest = self.kiali_client.service_list(
             namespaces=_namespaces, service_names=_service_names)
         # compare both result
         logger.debug('Services UI:{}]'.format(services_ui))
@@ -172,7 +172,7 @@ class ServicesPageTest(AbstractListPageTest):
         # get services of a namespace
         _namespace = current_filters[0]['value']
         logger.debug('Running Services REST query for namespace:{}'.format(_namespace))
-        _services = self.rest_client.service_list(namespaces=[_namespace])
+        _services = self.kiali_client.service_list(namespaces=[_namespace])
         logger.debug('Query response, Namespace:{}, Services:{}'.format(_namespace, _services))
         # if we have a service, select a service randomly and return it
         if len(_services) > 0:
@@ -189,8 +189,8 @@ class ServicesPageTest(AbstractListPageTest):
 class IstioConfigPageTest(AbstractListPageTest):
     FILTER_ENUM = IstioConfigPageFilter
 
-    def __init__(self, rest_client, browser):
-        AbstractListPageTest.__init__(self, rest_client=rest_client, page=IstioMixerPage(browser))
+    def __init__(self, kiali_client, browser):
+        AbstractListPageTest.__init__(self, kiali_client=kiali_client, page=IstioMixerPage(browser))
         self.browser = browser
 
     def assert_all_items(self, active_filters):
@@ -202,7 +202,7 @@ class IstioConfigPageTest(AbstractListPageTest):
         _sn = self.FILTER_ENUM.ISTIO_NAME.text
         _rule_names = [_f['value'] for _f in active_filters if _f['name'] == _sn]
         logger.debug('Namespaces:{}, Rule names:{}'.format(_namespaces, _rule_names))
-        rules_rest = self.rest_client.rule_list(
+        rules_rest = self.kiali_client.rule_list(
             namespaces=_namespaces, rule_names=_rule_names)
         # compare both result
         logger.debug('Rules UI:{}]'.format(rules_ui))
@@ -221,7 +221,7 @@ class IstioConfigPageTest(AbstractListPageTest):
         # get rules of a namespace
         _namespace = current_filters[0]['value']
         logger.debug('Running Rules REST query for namespace:{}'.format(_namespace))
-        _rules = self.rest_client.rule_list(namespaces=[_namespace])
+        _rules = self.kiali_client.rule_list(namespaces=[_namespace])
         logger.debug('Query response, Namespace:{}, Rules:{}'.format(_namespace, _rules))
         # if we have a rule, select a rule randomly and return it
         if len(_rules) > 0:

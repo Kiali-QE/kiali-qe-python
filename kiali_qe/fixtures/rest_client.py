@@ -2,13 +2,14 @@ import json
 
 import pytest
 
-from kiali_qe.rest.extended_api import KialiExtendedClient
+from kiali_qe.rest.kiali_api import KialiExtendedClient
+from kiali_qe.rest.openshift_api import OpenshiftAPI
 from kiali_qe.utils.log import logger
 
 
 @pytest.fixture(scope='session')
-def rest_client(cfg):
-    logger.debug('Creating rest client')
+def kiali_client(cfg):
+    logger.debug('Creating kiali rest client')
     _client = KialiExtendedClient(
         host=cfg.kiali.hostname, username=cfg.kiali.username, password=cfg.kiali.password)
     # update kiali version details
@@ -26,3 +27,9 @@ def rest_client(cfg):
     cfg.selenium.capabilities.zalenium.build = '{}'.format(cfg.kiali.version.core)
     logger.info('Kiali versions:\n{}'.format(json.dumps(_response, indent=2)))
     return _client
+
+
+@pytest.fixture(scope='session')
+def openshift_client(cfg):
+    logger.debug('Creating openshift rest client')
+    return OpenshiftAPI()

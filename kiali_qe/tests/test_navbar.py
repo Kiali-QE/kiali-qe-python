@@ -4,7 +4,7 @@ from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
 
 
-def test_about(browser, rest_client):
+def test_about(browser, kiali_client):
     # load root page
     page = RootPage(browser)
     _about = page.navbar.about()
@@ -18,7 +18,7 @@ def test_about(browser, rest_client):
 
     # compare each versions
     # get version details from REST API
-    _response = rest_client.status()
+    _response = kiali_client.status()
     # kiali core version
     _core_rest = '{} ({})'.format(
         _response['status']['Kiali core version'], _response['status']['Kiali core commit hash'])
