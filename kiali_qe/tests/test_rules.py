@@ -17,7 +17,7 @@ def get_ui_rules_set(rules):
     Return the set of rules which contains only necessary fields,
     such as 'name' and 'namespace'
     """
-    return set((rule.name, rule.namespace, rule.handler, rule.instances) for rule in rules)
+    return set((rule.name, rule.namespace) for rule in rules)
 
 
 def get_rest_rules_set(rules):
@@ -25,6 +25,4 @@ def get_rest_rules_set(rules):
     Return the set of rules which contains only necessary fields,
     such as 'name' and 'namespace'
     """
-    return set((rule.name, rule.namespace,
-                ', '.join(action.handler for action in sorted(rule.actions)),
-                ', '.join(', '.join(instance for instance in sorted(action.instances)) for action in sorted(rule.actions))) for rule in rules)
+    return set((rule.name, rule.namespace) for rule in rules)
