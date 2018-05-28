@@ -29,9 +29,13 @@ _output
 .settings/
 
 .sws-qe/
+.env/
+log/
 
 # IntelliJ
 .idea/
+
+.vscode/
 
 # Config
 conf/*.yaml
