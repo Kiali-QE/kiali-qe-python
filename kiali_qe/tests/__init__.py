@@ -9,8 +9,9 @@ from kiali_qe.pages import ServicesPage, IstioMixerPage
 class AbstractListPageTest(object):
     FILTER_ENUM = None
 
-    def __init__(self, kiali_client, page):
+    def __init__(self, kiali_client, openshift_client, page):
         self.kiali_client = kiali_client
+        self.openshift_client = openshift_client
         self.page = page
 
     def _namespaces_ui(self):
@@ -32,8 +33,12 @@ class AbstractListPageTest(object):
     def assert_namespaces(self):
         namespaces_ui = self._namespaces_ui()
         namespaces_rest = self.kiali_client.namespace_list()
-        logger.debug('Namespaces[UI:{}, REST:{}]'.format(namespaces_ui, namespaces_rest))
+        namespaces_oc = self.openshift_client.namespace_list()
+        logger.debug('Namespaces UI:{}'.format(namespaces_ui))
+        logger.debug('Namespaces REST:{}'.format(namespaces_rest))
+        logger.debug('Namespaces OC:{}'.format(namespaces_oc))
         assert is_equal(namespaces_ui, namespaces_rest)
+        assert is_equal(namespaces_rest, namespaces_oc)
 
     def assert_filter_feature(self):
         # clear filters if any
@@ -140,8 +145,10 @@ class AbstractListPageTest(object):
 class ServicesPageTest(AbstractListPageTest):
     FILTER_ENUM = ServicesPageFilter
 
-    def __init__(self, kiali_client, browser):
-        AbstractListPageTest.__init__(self, kiali_client=kiali_client, page=ServicesPage(browser))
+    def __init__(self, kiali_client, openshift_client, browser):
+        AbstractListPageTest.__init__(
+            self, kiali_client=kiali_client,
+            openshift_client=openshift_client, page=ServicesPage(browser))
         self.browser = browser
 
     def assert_all_items(self, active_filters):
@@ -155,17 +162,32 @@ class ServicesPageTest(AbstractListPageTest):
         logger.debug('Namespaces:{}, Service names:{}'.format(_namespaces, _service_names))
         services_rest = self.kiali_client.service_list(
             namespaces=_namespaces, service_names=_service_names)
-        # compare both result
-        logger.debug('Services UI:{}]'.format(services_ui))
-        logger.debug('Services REST:{}]'.format(services_rest))
+        # get services from OC client
+        services_oc = self.openshift_client.service_list(
+            namespaces=_namespaces, service_names=_service_names)
+
+        # compare all results
+        logger.debug('Namespaces:{}, Service names:{}'.format(_namespaces, _service_names))
+        logger.debug('Services UI:{}'.format(services_ui))
+        logger.debug('Services REST:{}'.format(services_rest))
+        logger.debug('Services OC:{}'.format(services_oc))
+
         assert len(services_ui) == len(services_rest)
+        assert len(services_rest) == len(services_oc)
+
         for service_ui in services_ui:
             found = False
             for service_rest in services_rest:
                 if service_ui.is_equal(service_rest, advanced_check=False):
                     found = True
                     break
-            assert found, '{} not found'
+            assert found, '{} not found in REST'.format(service_ui)
+            found = False
+            for service_oc in services_oc:
+                if service_ui.is_equal(service_oc, advanced_check=False):
+                    found = True
+                    break
+            assert found, '{} not found in OC'.format(service_ui)
 
     def get_additional_filters(self, current_filters):
         logger.debug('Current filters:{}'.format(current_filters))
@@ -189,47 +211,51 @@ class ServicesPageTest(AbstractListPageTest):
 class IstioConfigPageTest(AbstractListPageTest):
     FILTER_ENUM = IstioConfigPageFilter
 
-    def __init__(self, kiali_client, browser):
-        AbstractListPageTest.__init__(self, kiali_client=kiali_client, page=IstioMixerPage(browser))
+    def __init__(self, kiali_client, openshift_client, browser):
+        AbstractListPageTest.__init__(
+            self, kiali_client=kiali_client,
+            openshift_client=openshift_client, page=IstioMixerPage(browser))
         self.browser = browser
 
     def assert_all_items(self, active_filters):
+        logger.debug('Filters:{}'.format(active_filters))
         # get rules from ui
-        rules_ui = self.page.content.all_items
+        config_list_ui = self.page.content.all_items
+        logger.debug('Istio config list UI:{}]'.format(config_list_ui))
+        # UI changed not in use
         # get rules from rest api
-        _ns = self.FILTER_ENUM.NAMESPACE.text
-        _namespaces = [_f['value'] for _f in active_filters if _f['name'] == _ns]
-        _sn = self.FILTER_ENUM.ISTIO_NAME.text
-        _rule_names = [_f['value'] for _f in active_filters if _f['name'] == _sn]
-        logger.debug('Namespaces:{}, Rule names:{}'.format(_namespaces, _rule_names))
-        rules_rest = self.kiali_client.rule_list(
-            namespaces=_namespaces, rule_names=_rule_names)
+        # _ns = self.FILTER_ENUM.NAMESPACE.text
+        # _namespaces = [_f['value'] for _f in active_filters if _f['name'] == _ns]
+        # _sn = self.FILTER_ENUM.ISTIO_NAME.text
+        # _rule_names = [_f['value'] for _f in active_filters if _f['name'] == _sn]
+        config_list_rest = self.kiali_client.istio_config_list(filters=active_filters)
+        logger.debug('Istio config list REST:{}]'.format(config_list_ui))
         # compare both result
-        logger.debug('Rules UI:{}]'.format(rules_ui))
-        logger.debug('Rules REST:{}]'.format(rules_rest))
-        assert len(rules_ui) == len(rules_rest)
-        for rule_ui in rules_ui:
+        assert len(config_list_ui) == len(config_list_ui)
+        for config_ui in config_list_ui:
             found = False
-            for rule_rest in rules_rest:
-                if rule_ui.is_equal(rule_rest, advanced_check=False):
+            for config_rest in config_list_rest:
+                if config_ui.is_equal(config_ui, advanced_check=False):
                     found = True
                     break
-            assert found, '{} not found'
+            assert found, '{} not found in REST'.format(config_ui)
 
     def get_additional_filters(self, current_filters):
         logger.debug('Current filters:{}'.format(current_filters))
         # get rules of a namespace
         _namespace = current_filters[0]['value']
         logger.debug('Running Rules REST query for namespace:{}'.format(_namespace))
-        _rules = self.kiali_client.rule_list(namespaces=[_namespace])
-        logger.debug('Query response, Namespace:{}, Rules:{}'.format(_namespace, _rules))
-        # if we have a rule, select a rule randomly and return it
-        if len(_rules) > 0:
-            _random_rule = random.choice(_rules)
+        _istio_config_list = self.kiali_client.istio_config_list(
+            filters=[{'name': self.FILTER_ENUM.NAMESPACE.text, 'value': _namespace}])
+        logger.debug('Query response, Namespace:{}, Istio config list:{}'.format(
+            _namespace, _istio_config_list))
+        # if we have a config, select a config randomly and return it
+        if len(_istio_config_list) > 0:
+            _random_config = random.choice(_istio_config_list)
             return [
                 {
                     'name': self.FILTER_ENUM.ISTIO_NAME.text,
-                    'value': _random_rule.name
+                    'value': _random_config.name
                 }
             ]
         return []

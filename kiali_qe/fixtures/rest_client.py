@@ -3,6 +3,7 @@ import json
 import pytest
 
 from kiali_qe.rest.kiali_api import KialiExtendedClient
+from kiali_qe.rest.openshift_api import OpenshiftExtendedClient
 from kiali_qe.utils.log import logger
 
 
@@ -25,4 +26,12 @@ def kiali_client(cfg):
     #    _status['Kiali core commit hash'])
     cfg.selenium.capabilities.zalenium.build = '{}'.format(cfg.kiali.version.core)
     logger.info('Kiali versions:\n{}'.format(json.dumps(_response, indent=2)))
+    return _client
+
+
+@pytest.fixture(scope='session')
+def openshift_client(cfg):
+    logger.debug('Creating opeshift rest client')
+    _client = OpenshiftExtendedClient()
+    logger.info('Openshift versions:\n{}'.format(json.dumps(_client.version, indent=2)))
     return _client

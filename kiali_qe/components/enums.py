@@ -89,3 +89,11 @@ class IstioConfigPageFilter(StringEnum):
 class IstioConfigPageSort(StringEnum):
     NAMESPACE = ('Namespace')
     ISTIO_NAME = ('Istio Name')
+
+
+class IstioConfigObjectType(StringEnum):
+    DESTINATION_POLICY = ('DestinationPolicy')
+    DESTINATION_RULE = ('DestinationRule')
+    ROUTE_RULE = ('RouteRule')
+    RULE = ('Rule')
+    VIRTUAL_SERVICE = ('VirtualService')

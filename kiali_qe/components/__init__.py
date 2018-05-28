@@ -3,7 +3,7 @@ from widgetastic.widget import Checkbox, TextInput, Widget
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 from kiali_qe.components.enums import HelpMenuEnum, ApplicationVersionEnum
 from kiali_qe.entities.service import Service
-from kiali_qe.entities.rule import Action, Rule
+from kiali_qe.entities.istio_config import IstioConfig
 from wait_for import wait_for, TimedOutError
 
 
@@ -614,6 +614,7 @@ class ListViewServices(ListViewAbstract):
 class ListViewIstioConfig(ListViewAbstract):
     ACTION_HEADER = ('.//*[contains(@class, "list-group-item-text")]'
                      '//strong[normalize-space(text())="{}"]/..')
+    OBJECT_TYPE = './/*[contains(@class, "list-group-item-text")]'
 
     @property
     def items(self):
@@ -624,9 +625,9 @@ class ListViewIstioConfig(ListViewAbstract):
                 locator=self.ITEM_TEXT, parent=el).text.split('\n')
             _name = name.strip()
             _namespace = namespace.strip()
-            _actions = []
-            _match = None
             # disable handler and other features. UI changed
+            # _actions = []
+            # _match = None
             # get handler
             # _handler = self.browser.element(
             #     locator=self.ACTION_HEADER.format('Handler'),
@@ -642,8 +643,11 @@ class ListViewIstioConfig(ListViewAbstract):
             #         locator=self.ACTION_HEADER.format('Match'),
             #         parent=el).text.split('Match:', 1)[1].strip()
             #     _match = match.strip()
-            # create rule instance
-            _rule = Rule(name=_name, namespace=_namespace, actions=_actions, match=_match)
+
+            # create istio config instance
+            _object_type = self.browser.text(
+                self.browser.element(locator=self.OBJECT_TYPE, parent=el))
+            _rule = IstioConfig(name=_name, namespace=_namespace, object_type=_object_type)
             # append this item to the final list
             _items.append(_rule)
         return _items
