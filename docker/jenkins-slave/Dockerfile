@@ -22,6 +22,7 @@ RUN echo '%wheel ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 
 RUN chown -R 0:0 $HOME && \
     pip install --upgrade pip setuptools urllib3 && \
+    pip install virtualenv && \
     pip install --ignore-installed -r ${HOME}/requirements.txt
 
 RUN chown -R 1001:0 $HOME && \
