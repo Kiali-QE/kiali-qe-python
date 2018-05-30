@@ -1,3 +1,8 @@
+import urllib3
+
+# disable InsecureRequestWarning,
+# https://urllib3.readthedocs.io/en/latest/advanced-usage.html#ssl-warnings
+urllib3.disable_warnings(category=urllib3.exceptions.InsecureRequestWarning)
 
 
 def pytest_configure(config):

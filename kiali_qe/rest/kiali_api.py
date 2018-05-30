@@ -1,6 +1,8 @@
 from kiali.api import KialiClient
 
-from kiali_qe.entities.rule import Action, Rule
+from kiali_qe.components.enums import IstioConfigObjectType as OBJECT_TYPE
+from kiali_qe.components.enums import IstioConfigPageFilter as FILTER_TYPE
+from kiali_qe.entities.istio_config import IstioConfig
 from kiali_qe.entities.service import Health, Service
 
 
@@ -37,7 +39,7 @@ class KialiExtendedClient(KialiClient):
                 _service = Service(
                     namespace=_namespace,
                     name=_service_rest['name'],
-                    istio_sidecar=_service_rest['istio_sidecar'],
+                    istio_sidecar=_service_rest['istioSidecar'],
                     health=_health)
                 items.append(_service)
         # filter by service name
@@ -48,13 +50,24 @@ class KialiExtendedClient(KialiClient):
             return set(filtered_list)
         return items
 
-    def rule_list(self, namespaces=[], rule_names=[]):
+    def istio_config_list(self, filters=[]):
         """Returns list of istio config.
         Args:
             namespaces: can be zero or any number of namespaces
         """
         items = []
         namespace_list = []
+        # filters
+        namespaces = []
+        istio_names = []
+        istio_types = []
+        for _filter in filters:
+            if FILTER_TYPE.NAMESPACE.text in _filter['name']:
+                namespaces.append(_filter['value'])
+            elif FILTER_TYPE.ISTIO_NAME.text in _filter['name']:
+                istio_names.append(_filter['value'])
+            elif FILTER_TYPE.ISTIO_TYPE.text in _filter['name']:
+                istio_types.append(_filter['value'])
         if len(namespaces) > 0:
             namespace_list.extend(namespaces)
         else:
@@ -62,26 +75,69 @@ class KialiExtendedClient(KialiClient):
         # update items
         for _namespace in namespace_list:
             _data = super(KialiExtendedClient, self).istio_config_list(namespace=_namespace)
-            _rules = _data['rules']
-            # update all the rules to our custom entity
-            for _rule_rest in _rules:
-                # update actions
-                _actions = []
-                for _action_r in _rule_rest['actions']:
-                    _actions.append(Action.get_from_rest(_action_r))
-                _match = None
-                if 'match' in _rule_rest:
-                    _match = _rule_rest['match']
-                _rule = Rule(
-                    namespace=_namespace,
-                    name=_rule_rest['name'],
-                    actions=_actions,
-                    match=_match)
-                items.append(_rule)
-        # filter by rule name
-        if len(rule_names) > 0:
+            # update DestinationPolicy
+            if len(_data['destinationPolicies']) > 0:
+                for _policy in _data['destinationPolicies']:
+                    items.append(IstioConfig(
+                        name=_policy['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.DESTINATION_POLICY.text))
+
+            # update DestinationRule
+            if len(_data['destinationRules']) > 0:
+                for _policy in _data['destinationRules']:
+                    items.append(IstioConfig(
+                        name=_policy['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.DESTINATION_RULE.text))
+
+            # update RouteRules
+            if len(_data['routeRules']) > 0:
+                for _policy in _data['routeRules']:
+                    items.append(IstioConfig(
+                        name=_policy['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.ROUTE_RULE.text))
+
+            # update Rule
+            if len(_data['rules']) > 0:
+                for _policy in _data['rules']:
+                    items.append(IstioConfig(
+                        name=_policy['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.RULE.text))
+
+            # update VirtualService
+            if len(_data['virtualServices']) > 0:
+                for _policy in _data['virtualServices']:
+                    items.append(IstioConfig(
+                        name=_policy['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.VIRTUAL_SERVICE.text))
+
+            # not required at this stage. These options not availabe in UI
+            # # update all the rules to our custom entity
+            # for _rule_rest in _rules:
+            #     # update actions
+            #     _actions = []
+            #     for _action_r in _rule_rest['actions']:
+            #         _actions.append(Action.get_from_rest(_action_r))
+            #     _match = None
+            #     if 'match' in _rule_rest:
+            #         _match = _rule_rest['match']
+            #     _rule = Rule(
+            #         namespace=_namespace,
+            #         name=_rule_rest['name'],
+            #         actions=_actions,
+            #         match=_match)
+            #     items.append(_rule)
+
+        # apply filters
+        if len(istio_names) > 0 or len(istio_types) > 0:
             filtered_list = []
-            for _name in rule_names:
+            for _name in istio_names:
                 filtered_list.extend([_i for _i in items if _name in _i.name])
+            for _type in istio_types:
+                filtered_list.extend([_i for _i in items if _type in _i.object_type])
             return set(filtered_list)
         return items
