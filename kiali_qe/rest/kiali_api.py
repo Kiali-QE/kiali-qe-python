@@ -39,7 +39,7 @@ class KialiExtendedClient(KialiClient):
                 _service = Service(
                     namespace=_namespace,
                     name=_service_rest['name'],
-                    istio_sidecar=_service_rest['istio_sidecar'],
+                    istio_sidecar=_service_rest['istioSidecar'],
                     health=_health)
                 items.append(_service)
         # filter by service name
@@ -76,24 +76,24 @@ class KialiExtendedClient(KialiClient):
         for _namespace in namespace_list:
             _data = super(KialiExtendedClient, self).istio_config_list(namespace=_namespace)
             # update DestinationPolicy
-            if len(_data['destination_policies']) > 0:
-                for _policy in _data['destination_policies']:
+            if len(_data['destinationPolicies']) > 0:
+                for _policy in _data['destinationPolicies']:
                     items.append(IstioConfig(
                         name=_policy['name'],
                         namespace=_namespace,
                         object_type=OBJECT_TYPE.DESTINATION_POLICY.text))
 
             # update DestinationRule
-            if len(_data['destination_rules']) > 0:
-                for _policy in _data['destination_rules']:
+            if len(_data['destinationRules']) > 0:
+                for _policy in _data['destinationRules']:
                     items.append(IstioConfig(
                         name=_policy['name'],
                         namespace=_namespace,
                         object_type=OBJECT_TYPE.DESTINATION_RULE.text))
 
             # update RouteRules
-            if len(_data['route_rules']) > 0:
-                for _policy in _data['route_rules']:
+            if len(_data['routeRules']) > 0:
+                for _policy in _data['routeRules']:
                     items.append(IstioConfig(
                         name=_policy['name'],
                         namespace=_namespace,
@@ -108,8 +108,8 @@ class KialiExtendedClient(KialiClient):
                         object_type=OBJECT_TYPE.RULE.text))
 
             # update VirtualService
-            if len(_data['virtual_services']) > 0:
-                for _policy in _data['virtual_services']:
+            if len(_data['virtualServices']) > 0:
+                for _policy in _data['virtualServices']:
                     items.append(IstioConfig(
                         name=_policy['name'],
                         namespace=_namespace,
