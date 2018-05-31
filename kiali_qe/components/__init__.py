@@ -14,6 +14,12 @@ def wait_displayed(obj, timout='3s'):
         pass
 
 
+def wait_to_spinner_disappear(browser, timeout='5s', very_quiet=True):
+    def _is_displayed(browser):
+        return len(browser.elements(locator='//*[contains(@class, " spinner ")]')) == 0
+    wait_for(_is_displayed, func_args=[browser], timeout=timeout, delay=0.2, very_quiet=very_quiet)
+
+
 class Button(Widget):
     ROOT = '//button'
 
@@ -288,12 +294,18 @@ class Filter(Widget):
             _dropdown.select(value)
         else:
             raise NoSuchElementException('There is no "Input" or "Dropdown" component found!')
+        # wait to Spinner disappear
+        wait_to_spinner_disappear(self.browser)
 
     def remove(self, filter_name, value):
         self._filter_list.remove(filter_name, value)
+        # wait to Spinner disappear
+        wait_to_spinner_disappear(self.browser)
 
     def clear_all(self):
         self._filter_list.clear_all()
+        # wait to Spinner disappear
+        wait_to_spinner_disappear(self.browser)
 
     @property
     def active_filters(self):
@@ -567,8 +579,8 @@ class Login(Widget):
         self.submit = Button(parent=self.parent, locator=self.SUBMIT, logger=logger)
 
     def login(self, username, password):
-        self.username.fill(username + '\n')
-        self.password.fill(password + '\n')
+        self.username.fill(username)
+        self.password.fill(password)
         self.browser.click(self.submit)
 
 
