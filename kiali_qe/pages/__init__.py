@@ -6,6 +6,7 @@ from kiali_qe.components import (
     Filter,
     ListViewIstioConfig,
     ListViewServices,
+    Login,
     MainMenu,
     Pagination,
     SortDropDown,
@@ -24,10 +25,14 @@ class RootPage(View):
         View.__init__(self, parent, logger=logger)
         self.load()
 
+    login = Login()
     main_menu = MainMenu()
     page_header = Text(locator='//*[contains(@class, "container-fluid")]//h2')
 
     def load(self):
+        # if login page displayed, do login
+        if self.login.is_displayed:
+            self.login.login(username='admin', password='admin')
         # load page only if PAGE_MENU is available
         if self.PAGE_MENU is not None and self.main_menu.selected != self.PAGE_MENU:
             self.main_menu.select(self.PAGE_MENU)

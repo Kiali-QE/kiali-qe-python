@@ -495,12 +495,17 @@ class About(Widget):
 class NavBar(Widget):
     ROOT = '//*[contains(@class, "navbar")]'
     TOGGLE_NAVIGATION = './/*[contains(@class, "navbar-toggle")]'
-    NAVBAR_RIGHT_MENU = '//*[contains(@class, "navbar-right")]//*[contains(@class, "dropdown")]'
+    NAVBAR_RIGHT_MENU = ('//*[contains(@class, "navbar-right")]'
+                         '//*[contains(@class, "dropdown")]//*[@id="{}"]/..')
 
     def __init__(self, parent, logger=None):
         Widget.__init__(self, parent, logger=logger)
         self.help_menu = DropDown(
-            parent=self, locator=self.NAVBAR_RIGHT_MENU, logger=logger, force_open=True)
+            parent=self, locator=self.NAVBAR_RIGHT_MENU.format('help'),
+            logger=logger, force_open=True)
+        self.user_menu = DropDown(
+            parent=self, locator=self.NAVBAR_RIGHT_MENU.format('user'),
+            logger=logger, force_open=True)
 
     def about(self):
         self.help_menu.select(HelpMenuEnum.ABOUT.text)
@@ -547,6 +552,24 @@ class MainMenu(Widget):
     def expand(self):
         if self.is_collapsed:
             self.navbar.toggle()
+
+
+class Login(Widget):
+    ROOT = '//*[@id="kiali-login"]'
+    USERNAME = './/input[@name="username"]'
+    PASSWORD = './/input[@name="password"]'
+    SUBMIT = './/button[@type="submit"]'
+
+    def __init__(self, parent, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.username = TextInput(parent=self, locator=self.USERNAME)
+        self.password = TextInput(parent=self, locator=self.PASSWORD)
+        self.submit = Button(parent=self.parent, locator=self.SUBMIT, logger=logger)
+
+    def login(self, username, password):
+        self.username.fill(username + '\n')
+        self.password.fill(password + '\n')
+        self.browser.click(self.submit)
 
 
 class ListViewAbstract(Widget):
