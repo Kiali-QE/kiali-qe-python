@@ -168,6 +168,8 @@ class ServicesPageTest(AbstractListPageTest):
 
         # compare all results
         logger.debug('Namespaces:{}, Service names:{}'.format(_namespaces, _service_names))
+        logger.debug('Items count[UI:{}, REST:{}, OC:{}]'.format(
+            len(services_ui), len(services_rest), len(services_oc)))
         logger.debug('Services UI:{}'.format(services_ui))
         logger.debug('Services REST:{}'.format(services_rest))
         logger.debug('Services OC:{}'.format(services_oc))
