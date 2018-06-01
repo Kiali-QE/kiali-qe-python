@@ -4,9 +4,9 @@ from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
 
 
-def test_menu(browser, cfg):
+def test_menu(browser):
     # load root page
-    page = RootPage(browser, cfg)
+    page = RootPage(browser)
     # test available menus
     options_defined = [item.text for item in MainMenuEnum]
     options_listed = page.main_menu.items
@@ -20,9 +20,9 @@ def test_menu(browser, cfg):
         assert page.main_menu.selected == _menu
 
 
-def test_toggle(browser, cfg):
+def test_toggle(browser):
     # load root page
-    page = RootPage(browser, cfg)
+    page = RootPage(browser)
     page.main_menu.collapse()
     assert page.main_menu.is_collapsed
     page.main_menu.expand()

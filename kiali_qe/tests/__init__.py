@@ -145,10 +145,10 @@ class AbstractListPageTest(object):
 class ServicesPageTest(AbstractListPageTest):
     FILTER_ENUM = ServicesPageFilter
 
-    def __init__(self, kiali_client, openshift_client, browser, cfg):
+    def __init__(self, kiali_client, openshift_client, browser):
         AbstractListPageTest.__init__(
             self, kiali_client=kiali_client,
-            openshift_client=openshift_client, page=ServicesPage(browser, cfg))
+            openshift_client=openshift_client, page=ServicesPage(browser))
         self.browser = browser
 
     def assert_all_items(self, active_filters):
@@ -213,10 +213,10 @@ class ServicesPageTest(AbstractListPageTest):
 class IstioConfigPageTest(AbstractListPageTest):
     FILTER_ENUM = IstioConfigPageFilter
 
-    def __init__(self, kiali_client, openshift_client, browser, cfg):
+    def __init__(self, kiali_client, openshift_client, browser):
         AbstractListPageTest.__init__(
             self, kiali_client=kiali_client,
-            openshift_client=openshift_client, page=IstioMixerPage(browser, cfg))
+            openshift_client=openshift_client, page=IstioMixerPage(browser))
         self.browser = browser
 
     def assert_all_items(self, active_filters):

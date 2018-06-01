@@ -15,7 +15,6 @@ def pytest_configure(config):
 
 pytest_plugins = (
     'kiali_qe.fixtures.browser',
-    'kiali_qe.fixtures.configuration',
     'kiali_qe.fixtures.log',
     'kiali_qe.fixtures.rest_client',
     'kiali_qe.fixtures.zalenium',

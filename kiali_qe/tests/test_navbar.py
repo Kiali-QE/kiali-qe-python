@@ -4,9 +4,9 @@ from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
 
 
-def test_about(browser, cfg, kiali_client):
+def test_about(browser, kiali_client):
     # load root page
-    page = RootPage(browser, cfg)
+    page = RootPage(browser)
     _about = page.navbar.about()
     assert _about.application_name == 'Kiali'
     versions_ui = _about.versions
@@ -48,9 +48,9 @@ def _get_version(versions, key):
             return item['version']
 
 
-def test_help_menu(browser, cfg):
+def test_help_menu(browser):
     # load root page
-    page = RootPage(browser, cfg)
+    page = RootPage(browser)
     # test available menus
     options_defined = [item.text for item in HelpMenuEnum]
     options_listed = page.navbar.help_menu.options

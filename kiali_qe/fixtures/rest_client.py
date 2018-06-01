@@ -4,12 +4,14 @@ import pytest
 
 from kiali_qe.rest.kiali_api import KialiExtendedClient
 from kiali_qe.rest.openshift_api import OpenshiftExtendedClient
+from kiali_qe.utils.conf import env as cfg
 from kiali_qe.utils.log import logger
 
 
 @pytest.fixture(scope='session')
-def kiali_client(cfg):
+def kiali_client():
     logger.debug('Creating kiali rest client')
+    logger.debug('Kiali hostname: {}'.format(cfg.kiali.hostname))
     _client = KialiExtendedClient(
         host=cfg.kiali.hostname, username=cfg.kiali.username, password=cfg.kiali.password)
     # update kiali version details
@@ -30,7 +32,7 @@ def kiali_client(cfg):
 
 
 @pytest.fixture(scope='session')
-def openshift_client(cfg):
+def openshift_client():
     logger.debug('Creating opeshift rest client')
     _client = OpenshiftExtendedClient()
     logger.info('Openshift versions:\n{}'.format(json.dumps(_client.version, indent=2)))

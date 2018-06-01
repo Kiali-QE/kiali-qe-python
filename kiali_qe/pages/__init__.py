@@ -15,6 +15,7 @@ from kiali_qe.components.enums import (
     MainMenuEnum as MENU,
     UserMenuEnum as USER_MENU)
 from kiali_qe.utils.log import logger
+from kiali_qe.utils.conf import env as cfg
 
 XP_DROP_DOWN = '//*[contains(@class, "dropdown")]/*[@id="{}"]/../..'
 XP_BUTTON_SWITCH = '//*[contains(@class, "bootstrap-switch")]//*[text()="{}"]/../..'
@@ -23,9 +24,8 @@ XP_BUTTON_SWITCH = '//*[contains(@class, "bootstrap-switch")]//*[text()="{}"]/..
 class RootPage(View):
     PAGE_MENU = None
 
-    def __init__(self, parent, cfg, logger=logger):
+    def __init__(self, parent, logger=logger):
         View.__init__(self, parent, logger=logger)
-        self.cfg = cfg
         self.load()
 
     _login = Login()
@@ -47,8 +47,8 @@ class RootPage(View):
         if self._login.is_displayed:
             # if username not supplied, take it from configuration
             if username is None:
-                username = self.cfg.kiali.username
-                password = self.cfg.kiali.password
+                username = cfg.kiali.username
+                password = cfg.kiali.password
             self._login.login(username=username, password=password)
         return not self._login.is_displayed
 

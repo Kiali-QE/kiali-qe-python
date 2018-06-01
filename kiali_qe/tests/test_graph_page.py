@@ -4,9 +4,9 @@ from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
 
 
-def test_layout(browser, cfg):
+def test_layout(browser):
     # get page instance
-    page = GraphPage(browser, cfg)
+    page = GraphPage(browser)
     # test options
     options_defined = [item.text for item in GraphPageLayout]
     options_listed = page.layout.options
@@ -14,9 +14,9 @@ def test_layout(browser, cfg):
         ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
 
 
-def test_filter(browser, cfg):
+def test_filter(browser):
     # get page instance
-    page = GraphPage(browser, cfg)
+    page = GraphPage(browser)
     # test available filters
     options_defined = [item.text for item in GraphPageFilter]
     options_listed = page.filter.items
