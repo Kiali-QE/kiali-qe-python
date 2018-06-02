@@ -316,7 +316,7 @@ class CheckBoxFilter(Widget):
     ROOT = ('//*[@role="tooltip" and contains(@class, "popover")]'
             '//*[contains(@class, "popover-content")]')
     ITEMS = './/label'
-    ITEM = './/label[normalize-space(text())="{}"]//input'
+    ITEM = './/label/span[normalize-space(text())="{}"]/../input[@type="checkbox"]'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
