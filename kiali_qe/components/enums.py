@@ -53,6 +53,7 @@ class GraphPageLayout(StringEnum):
 
 
 class GraphPageFilter(StringEnum):
+    LEGEND = ('Legend')
     CIRCUIT_BREAKERS = ('Circuit Breakers')
     ROUTE_RULES = ('Route Rules')
     NODE_LABELS = ('Node Labels')
