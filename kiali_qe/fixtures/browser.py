@@ -9,12 +9,13 @@ from selenium.webdriver.remote.remote_connection import RemoteConnection
 
 from kiali_qe.components.browser import KialiBrowser
 from kiali_qe.fixtures.zalenium import set_browser, update_suite_status
+from kiali_qe.utils.conf import env as cfg
 from kiali_qe.utils.log import logger
 
 
 @pytest.fixture(scope='session')
-def browser(cfg, kiali_client):
-    selenium = _get_selenium(cfg)
+def browser(kiali_client):
+    selenium = _get_selenium()
     selenium.maximize_window()
     logger.debug('Launching kiali instance: {}'.format(cfg.kiali.hostname))
     selenium.get(
@@ -32,7 +33,7 @@ def browser(cfg, kiali_client):
     kiali_browser.selenium.quit()
 
 
-def _get_selenium(cfg):
+def _get_selenium():
     # load desired_capabilities
     capabilities = {}
     for key, value in cfg.selenium.capabilities.items():
@@ -49,7 +50,7 @@ def _get_selenium(cfg):
     for x in range(1, maximum_try):
         try:
             logger.info('Trying to create a web driver. Attempt: {} of {}'.format(x, maximum_try))
-            driver = _get_driver(cfg, capabilities)
+            driver = _get_driver(capabilities)
             break
         except WebDriverException as ex:
             logger.warn('Failed to create driver. Exception:{}'.format(ex))
@@ -58,7 +59,7 @@ def _get_selenium(cfg):
     return driver
 
 
-def _get_driver(cfg, capabilities):
+def _get_driver(capabilities):
     logger.debug('Creating web driver')
     start_time = datetime.now()
     # set resolve_ip to false to make it work in cases when remote driver is running in OpenShift

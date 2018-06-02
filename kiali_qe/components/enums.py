@@ -17,6 +17,10 @@ class HelpMenuEnum(StringEnum):
     ABOUT = ('About')
 
 
+class UserMenuEnum(StringEnum):
+    LOGOUT = ('Logout')
+
+
 class ApplicationVersionEnum(StringEnum):
     KIALI_UI = ("kiali-ui")
     KIALI_CORE = ("kiali")

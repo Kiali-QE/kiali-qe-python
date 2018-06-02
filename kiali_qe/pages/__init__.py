@@ -11,8 +11,11 @@ from kiali_qe.components import (
     Pagination,
     SortDropDown,
     CheckBoxFilter)
-from kiali_qe.components.enums import MainMenuEnum as MENU
+from kiali_qe.components.enums import (
+    MainMenuEnum as MENU,
+    UserMenuEnum as USER_MENU)
 from kiali_qe.utils.log import logger
+from kiali_qe.utils.conf import env as cfg
 
 XP_DROP_DOWN = '//*[contains(@class, "dropdown")]/*[@id="{}"]/../..'
 XP_BUTTON_SWITCH = '//*[contains(@class, "bootstrap-switch")]//*[text()="{}"]/../..'
@@ -25,17 +28,34 @@ class RootPage(View):
         View.__init__(self, parent, logger=logger)
         self.load()
 
-    login = Login()
+    _login = Login()
     main_menu = MainMenu()
     page_header = Text(locator='//*[contains(@class, "container-fluid")]//h2')
 
     def load(self):
         # if login page displayed, do login
-        if self.login.is_displayed:
-            self.login.login(username='admin', password='admin')
-        # load page only if PAGE_MENU is available
+        self.login()
+        # load particular page, only if PAGE_MENU is supplied
         if self.PAGE_MENU is not None and self.main_menu.selected != self.PAGE_MENU:
             self.main_menu.select(self.PAGE_MENU)
+
+    def login(self, username=None, password=None, force_login=False):
+        if force_login:
+            if not self.logout():
+                self.logger.warning('Existing session logout failed!')
+                return False
+        if self._login.is_displayed:
+            # if username not supplied, take it from configuration
+            if username is None:
+                username = cfg.kiali.username
+                password = cfg.kiali.password
+            self._login.login(username=username, password=password)
+        return not self._login.is_displayed
+
+    def logout(self):
+        if not self._login.is_displayed:
+            self.navbar.user_menu.select(USER_MENU.LOGOUT.txt)
+        return self._login.is_displayed
 
     def reload(self):
         self.browser.refresh()
