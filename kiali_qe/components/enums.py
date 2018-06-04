@@ -88,6 +88,7 @@ class ServicesPageRateInterval(StringEnum):
 class IstioConfigPageFilter(StringEnum):
     ISTIO_TYPE = ('Istio Type')
     ISTIO_NAME = ('Istio Name')
+    CONFIG = ('Config')
     NAMESPACE = ('Namespace')
 
 
