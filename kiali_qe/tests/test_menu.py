@@ -1,4 +1,4 @@
-from kiali_qe.components.enums import MainMenuEnum
+from kiali_qe.components.enums import HelpMenuEnum, MainMenuEnum, UserMenuEnum
 from kiali_qe.pages import RootPage
 from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
@@ -27,3 +27,23 @@ def test_toggle(browser):
     assert page.main_menu.is_collapsed
     page.main_menu.expand()
     assert not page.main_menu.is_collapsed
+
+
+def test_help_menu(browser):
+    # load root page
+    page = RootPage(browser)
+    options_defined = [item.text for item in HelpMenuEnum]
+    options_listed = page.navbar.help_menu.options
+    logger.debug('Menus[defined:{}, listed:{}]'.format(options_defined, options_listed))
+    assert is_equal(options_defined, options_listed), \
+        ('Help menu mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
+
+
+def test_user_menu(browser):
+    # load root page
+    page = RootPage(browser)
+    options_defined = [item.text for item in UserMenuEnum]
+    options_listed = page.navbar.user_menu.options
+    logger.debug('Menus[defined:{}, listed:{}]'.format(options_defined, options_listed))
+    assert is_equal(options_defined, options_listed), \
+        ('User menu mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))

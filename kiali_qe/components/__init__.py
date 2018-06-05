@@ -4,20 +4,21 @@ from selenium.common.exceptions import NoSuchElementException, StaleElementRefer
 from kiali_qe.components.enums import HelpMenuEnum, ApplicationVersionEnum
 from kiali_qe.entities.service import Service
 from kiali_qe.entities.istio_config import IstioConfig
-from wait_for import wait_for, TimedOutError
+from wait_for import wait_for
 
 
-def wait_displayed(obj, timout='3s'):
-    try:
-        obj.wait_displayed(timeout=timout)
-    except TimedOutError:
-        pass
+def wait_displayed(obj, timeout='5s'):
+    wait_for(
+        lambda: obj.is_displayed, timeout=timeout,
+        delay=0.2, very_quiet=True, silent_failure=True)
 
 
-def wait_to_spinner_disappear(browser, timeout='5s', very_quiet=True):
+def wait_to_spinner_disappear(browser, timeout='5s', very_quiet=True, silent_failure=True):
     def _is_displayed(browser):
         return len(browser.elements(locator='//*[contains(@class, " spinner ")]')) == 0
-    wait_for(_is_displayed, func_args=[browser], timeout=timeout, delay=0.2, very_quiet=very_quiet)
+    wait_for(
+        _is_displayed, func_args=[browser], timeout=timeout,
+        delay=0.2, very_quiet=very_quiet, silent_failure=silent_failure)
 
 
 class Button(Widget):
@@ -67,6 +68,104 @@ class ButtonSwitch(Button):
     @property
     def text(self):
         return self.browser.text(parent=self, locator=self.TEXT)
+
+
+class Notifications(Widget):
+    ROOT = '//*[contains(@class, "alert-")]'
+
+    def __init__(self, parent, locator=None, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        if locator:
+            self.locator = locator
+        else:
+            self.locator = self.ROOT
+        wait_displayed(self)
+
+    def __locator__(self):
+        return self.locator
+
+    @property
+    def _raw_items(self):
+        return self.browser.elements(
+            parent=self.browser, locator=self.locator, check_visibility=True)
+
+    @property
+    def count(self):
+        return len(self._raw_items)
+
+    @property
+    def items(self):
+        _items = []
+        for _element in self._raw_items:
+            _items.append(Notification(parent=self, element=_element, logger=self.logger))
+        return _items
+
+    def get(self, type=None, text=None):
+        for _item in self.items:
+            if (type is not None) and (type == _item.type):
+                if text is not None:
+                    if text in _item.text:
+                        return _item
+                else:
+                    return _item
+            elif (text is not None) and (text in _item.text):
+                return _item
+        return None
+
+    def close_all(self):
+        for _item in self.items:
+            _item.close()
+
+    def close(self, type=None, text=None):
+        _item = self.get(text=text, type=type)
+        if _item is not None:
+            _item.close()
+
+    def contains(self, type=None, text=None):
+        return self.get(type=type, text=text) is not None
+
+
+class Notification(Widget):
+    TYPE_SUCCESS = 'success'
+    TYPE_INFO = 'info'
+    TYPE_WARNING = 'warning'
+    TYPE_DANGER = 'danger'
+
+    _TYPE_MAP = {
+        'alert-success': TYPE_SUCCESS,
+        'alert-info': TYPE_INFO,
+        'alert-warning': TYPE_WARNING,
+        'alert-danger': TYPE_DANGER,
+    }
+
+    def __init__(self, parent, element, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self._element = element
+
+    def __locator__(self):
+        return self._element
+
+    def __str__(self):
+        return 'type:{}, text:{}'.format(self.type, self.text)
+
+    def __repr__(self):
+        return "{}({}, {})".format(
+            type(self).__name__, repr(self.type), repr(self.text))
+
+    @property
+    def text(self):
+        return self.browser.text(self._element)
+
+    def close(self):
+        if len(self.browser.elements('')) > 0:
+            return self.browser.click('.//button[contains(@class, "close")]', parent=self)
+
+    @property
+    def type(self):
+        for _class in self.browser.classes(self):
+            if _class in self._TYPE_MAP:
+                return self._TYPE_MAP[_class]
+        return
 
 
 class DropDown(Widget):
@@ -242,7 +341,7 @@ class FilterList(Widget):
     @property
     def active_filters(self):
         _filters = []
-        wait_displayed(self)
+        wait_displayed(self, timeout='3s')
         if not self.is_displayed:
             return _filters
         for el in self.browser.elements(parent=self, locator=self.ITEMS, force_check_safe=True):
@@ -342,7 +441,7 @@ class CheckBoxFilter(Widget):
 
             def _is_closed():
                 return not self.is_displayed
-            wait_for(_is_closed, timeout=3, delay=0.2, very_quiet=True)
+            wait_for(_is_closed, timeout='3s', delay=0.2, very_quiet=True, silent_failure=True)
 
     @property
     def items(self):
