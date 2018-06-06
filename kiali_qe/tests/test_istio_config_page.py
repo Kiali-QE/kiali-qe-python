@@ -19,7 +19,7 @@ def test_filter_options(kiali_client, openshift_client, browser):
     tests.assert_filter_options()
 
 
-def test_filter_feature(kiali_client, openshift_client, browser):
+def test_filter_feature_random(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.assert_filter_feature()
+    tests.assert_filter_feature_random()
