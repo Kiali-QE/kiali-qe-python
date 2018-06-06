@@ -17,11 +17,65 @@ class AbstractListPageTest(object):
     def _namespaces_ui(self):
         return self.page.filter.filter_options(filter_name=self.FILTER_ENUM.NAMESPACE.text)
 
-    def assert_all_items(self, active_filters):
+    def assert_all_items(self, filters, force_clear_all=True):
+        """
+        Apply supplied filter in to UI, REST, OC and assert content
+
+        Parameters
+        ----------
+        filters : list
+            A list for filter. filter should be a dict.
+            filter = {'name': 'Namespace', 'value': 'bookinfo'}
+            Take filter name from pre defined enum
+        force_clear_all : boolean
+            Default True.
+            If this value is True, all existing applied filters will be removed.
+            otherwise, will be adjusted with pre filter.
+            on both case final outcome will be same.
+        """
         raise NotImplementedError('This method should be implemented on sub class')
 
     def get_additional_filters(self, current_filters):
         raise NotImplementedError('This method should be implemented on sub class')
+
+    def apply_filters(self, filters, force_clear_all=True):
+        """
+        Apply supplied filter in to UI and assert with supplied and applied filters
+
+        Parameters
+        ----------
+        filters : list
+            A list for filter. filter should be a dict.
+            filter = {'name': 'Namespace', 'value': 'bookinfo'}
+            Take filter name from pre defined enum
+        force_clear_all : boolean
+            Default True.
+            If this value is True, all existing applied filters will be removed.
+            otherwise, will be adjusted with pre filter.
+            on both case final outcome will be same.
+        """
+        _pre_filters = []
+        # clear all filters
+        if force_clear_all:
+            self.page.filter.clear_all()
+            assert len(self.page.filter.active_filters) == 0
+        else:
+            _pre_filters.extend(self.page.filter.active_filters)
+
+        # apply filter
+        for _filter in filters:
+            if _filter not in _pre_filters:
+                self.page.filter.apply(filter_name=_filter['name'], value=_filter['value'])
+            if _filter in _pre_filters:
+                _pre_filters.remove(_filter)
+        # remove filters not in list
+        for _filter in _pre_filters:
+            self.page.filter.remove(filter_name=_filter['name'], value=_filter['value'])
+
+        # validate applied filters
+        _active_filters = self.page.filter.active_filters
+        logger.debug('Filters[applied:{}, active:{}]'.format(filters, _active_filters))
+        assert is_equal(filters, _active_filters)
 
     def assert_filter_options(self):
         # test available options
@@ -40,7 +94,7 @@ class AbstractListPageTest(object):
         assert is_equal(namespaces_ui, namespaces_rest)
         assert is_equal(namespaces_rest, namespaces_oc)
 
-    def assert_filter_feature(self):
+    def assert_filter_feature_random(self):
         # clear filters if any
         # TODO: do we need to fail the test if we have filter defined before test?
         logger.debug('Filters before test:{}'.format(self.page.filter.active_filters))
@@ -69,37 +123,20 @@ class AbstractListPageTest(object):
         # apply filters test
         _applied_filters = []
         for _defined_filter in _defined_filters:
-            # apply filter
-            self.page.filter.apply(
-                filter_name=_defined_filter['name'], value=_defined_filter['value'])
             # add it in to applied list
             _applied_filters.append(_defined_filter)
-            # sleep(3)
-            # validate applied filters
-            _active_filters = self.page.filter.active_filters
-            logger.debug('Filters[applied:{}, active:{}]'.format(_applied_filters, _active_filters))
-            assert is_equal(_applied_filters, _active_filters)
-            # check the contents
-            self.assert_all_items(_active_filters)
+            # apply filter and check the contents
+            self.assert_all_items(filters=_applied_filters, force_clear_all=False)
 
         # remove filters test
         for _defined_filter in _defined_filters:
-            # remove a filter
-            self.page.filter.remove(
-                filter_name=_defined_filter['name'], value=_defined_filter['value'])
             # remove it from our list
             _applied_filters.remove(_defined_filter)
-            # validate applied filters
-            _active_filters = self.page.filter.active_filters
-            logger.debug('Filters[applied:{}, active:{}]'.format(_applied_filters, _active_filters))
-            assert is_equal(_applied_filters, _active_filters)
-            # check the contents
-            self.assert_all_items(_active_filters)
+            # apply filter and check the contents
+            self.assert_all_items(filters=_applied_filters, force_clear_all=False)
             # test remove all
             if len(_applied_filters) == 2:
-                self.page.filter.clear_all()
-                assert len(self.page.filter.active_filters) == 0
-                self.assert_all_items([])
+                self.assert_all_items(filters=[], force_clear_all=True)
                 break
 
     def assert_pagination_feature(self):
@@ -151,14 +188,17 @@ class ServicesPageTest(AbstractListPageTest):
             openshift_client=openshift_client, page=ServicesPage(browser))
         self.browser = browser
 
-    def assert_all_items(self, active_filters):
+    def assert_all_items(self, filters, force_clear_all=True):
+        # apply filters
+        self.apply_filters(filters=filters, force_clear_all=force_clear_all)
+
         # get services from ui
         services_ui = self.page.content.all_items
         # get services from rest api
         _ns = self.FILTER_ENUM.NAMESPACE.text
-        _namespaces = [_f['value'] for _f in active_filters if _f['name'] == _ns]
+        _namespaces = [_f['value'] for _f in filters if _f['name'] == _ns]
         _sn = self.FILTER_ENUM.SERVICE_NAME.text
-        _service_names = [_f['value'] for _f in active_filters if _f['name'] == _sn]
+        _service_names = [_f['value'] for _f in filters if _f['name'] == _sn]
         logger.debug('Namespaces:{}, Service names:{}'.format(_namespaces, _service_names))
         services_rest = self.kiali_client.service_list(
             namespaces=_namespaces, service_names=_service_names)
@@ -219,20 +259,20 @@ class IstioConfigPageTest(AbstractListPageTest):
             openshift_client=openshift_client, page=IstioMixerPage(browser))
         self.browser = browser
 
-    def assert_all_items(self, active_filters):
-        logger.debug('Filters:{}'.format(active_filters))
+    def assert_all_items(self, filters, force_clear_all=True):
+        logger.debug('Filters:{}'.format(filters))
+        # apply filters
+        self.apply_filters(filters=filters, force_clear_all=force_clear_all)
+
         # get rules from ui
         config_list_ui = self.page.content.all_items
         logger.debug('Istio config list UI:{}]'.format(config_list_ui))
-        # UI changed not in use
+
         # get rules from rest api
-        # _ns = self.FILTER_ENUM.NAMESPACE.text
-        # _namespaces = [_f['value'] for _f in active_filters if _f['name'] == _ns]
-        # _sn = self.FILTER_ENUM.ISTIO_NAME.text
-        # _rule_names = [_f['value'] for _f in active_filters if _f['name'] == _sn]
-        config_list_rest = self.kiali_client.istio_config_list(filters=active_filters)
+        config_list_rest = self.kiali_client.istio_config_list(filters=filters)
         logger.debug('Istio config list REST:{}]'.format(config_list_ui))
-        # compare both result
+
+        # compare both results
         assert len(config_list_ui) == len(config_list_ui)
         for config_ui in config_list_ui:
             found = False
