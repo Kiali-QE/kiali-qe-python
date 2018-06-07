@@ -14,10 +14,10 @@ def wait_displayed(obj, timeout='5s'):
 
 
 def wait_to_spinner_disappear(browser, timeout='5s', very_quiet=True, silent_failure=True):
-    def _is_displayed(browser):
+    def _is_disappeared(browser):
         return len(browser.elements(locator='//*[contains(@class, " spinner ")]')) == 0
     wait_for(
-        _is_displayed, func_args=[browser], timeout=timeout,
+        _is_disappeared, func_args=[browser], timeout=timeout,
         delay=0.2, very_quiet=very_quiet, silent_failure=silent_failure)
 
 

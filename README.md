@@ -33,6 +33,12 @@ $ pip install -r requirements.txt
 
 # update conf/emv.yaml (kiali hostname and selenium driver url)
 
+# Tests use OpenShift API.
+# Needs to be logged in once in to OpenShift before to run tests.
+# When we login in to OpenShift, ".kube/config" file will be created with auth token.
+# This token will be used in tests to access OpenShift
+$ oc login https://<openshift>:8443 --username=<username> --password=<password> --insecure-skip-tls-verify=true
+
 # run all tests
 $ pytest -s
 # see the log on log/kiali_qe.log
