@@ -103,3 +103,9 @@ class IstioConfigObjectType(StringEnum):
     ROUTE_RULE = ('RouteRule')
     RULE = ('Rule')
     VIRTUAL_SERVICE = ('VirtualService')
+
+
+class IstioConfigValidationType(StringEnum):
+    VALID = ('Valid')
+    NOT_VALID = ('Not Valid')
+    NOT_VALIDATED = ('Not Validated')

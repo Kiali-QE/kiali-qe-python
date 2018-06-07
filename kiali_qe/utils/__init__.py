@@ -18,9 +18,12 @@ class MyDotMap(DotMap):
 
 
 def get_dict(path, yaml_file):
+    return MyDotMap(get_yaml(path, yaml_file))
+
+
+def get_yaml(path, yaml_file):
     with open(os.path.join(path, yaml_file), 'r') as yaml_data:
-        yaml_dict = yaml.safe_load(yaml_data)
-    return MyDotMap(yaml_dict)
+        return yaml.safe_load(yaml_data)
 
 
 def is_equal(object_a, object_b):

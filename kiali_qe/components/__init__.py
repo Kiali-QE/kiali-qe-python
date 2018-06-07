@@ -341,7 +341,7 @@ class FilterList(Widget):
     @property
     def active_filters(self):
         _filters = []
-        wait_displayed(self, timeout='3s')
+        wait_displayed(self, timeout='5s')
         if not self.is_displayed:
             return _filters
         for el in self.browser.elements(parent=self, locator=self.ITEMS, force_check_safe=True):

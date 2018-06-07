@@ -134,10 +134,18 @@ class KialiExtendedClient(KialiClient):
 
         # apply filters
         if len(istio_names) > 0 or len(istio_types) > 0:
-            filtered_list = []
+            name_filtered_list = []
+            type_filtered_list = []
             for _name in istio_names:
-                filtered_list.extend([_i for _i in items if _name in _i.name])
+                name_filtered_list.extend([_i for _i in items if _name in _i.name])
             for _type in istio_types:
-                filtered_list.extend([_i for _i in items if _type in _i.object_type])
-            return set(filtered_list)
+                type_filtered_list.extend([_i for _i in items if _type in _i.object_type])
+            # If both filters were set, then results must be intersected,
+            # as UI applies AND in filters
+            if len(istio_names) > 0 and len(istio_types) > 0:
+                return set(name_filtered_list).intersection(set(type_filtered_list))
+            elif len(istio_names) > 0:
+                return set(name_filtered_list)
+            elif len(istio_types) > 0:
+                return set(type_filtered_list)
         return items
