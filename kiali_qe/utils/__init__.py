@@ -23,6 +23,11 @@ def get_dict(path, yaml_file):
     return MyDotMap(yaml_dict)
 
 
+def get_yaml(path, yaml_file):
+    with open(os.path.join(path, yaml_file), 'r') as yaml_data:
+        return yaml.safe_load(yaml_data)
+
+
 def is_equal(object_a, object_b):
     if isinstance(object_a, list):
         if len(object_a) == len(object_b):

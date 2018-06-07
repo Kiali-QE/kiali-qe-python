@@ -270,17 +270,17 @@ class IstioConfigPageTest(AbstractListPageTest):
 
         # get rules from rest api
         config_list_rest = self.kiali_client.istio_config_list(filters=filters)
-        logger.debug('Istio config list REST:{}]'.format(config_list_ui))
+        logger.debug('Istio config list REST:{}]'.format(config_list_rest))
 
         # compare both results
-        assert len(config_list_ui) == len(config_list_ui)
+        assert len(config_list_ui) == len(config_list_rest)
         for config_ui in config_list_ui:
             found = False
             for config_rest in config_list_rest:
-                if config_ui.is_equal(config_ui, advanced_check=False):
+                if config_ui.is_equal(config_rest, advanced_check=False):
                     found = True
                     break
-            assert found, '{} not found in REST'.format(config_ui)
+            assert found, '{} not found in REST'.format(config_rest)
 
     def get_additional_filters(self, current_filters):
         logger.debug('Current filters:{}'.format(current_filters))

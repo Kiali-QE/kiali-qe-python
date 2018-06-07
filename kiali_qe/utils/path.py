@@ -14,6 +14,9 @@ conf_path = project_path.join('conf')
 #: datafile storage, ``kiali-qe-pyhton/data/``
 data_path = project_path.join('data')
 
+#: istio objects yaml storage, ``kiali-qe-pyhton/data/resources/istio_objects``
+istio_objects_path = data_path.join('resources/istio_objects')
+
 #: log storage, ``kiali-qe-pyhton/log/``
 log_path = project_path.join('log')
 

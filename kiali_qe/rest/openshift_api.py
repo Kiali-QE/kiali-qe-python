@@ -1,5 +1,6 @@
 from kubernetes import config
 from openshift.dynamic import DynamicClient
+from openshift.dynamic.exceptions import NotFoundError
 
 from kiali_qe.entities.service import Service
 
@@ -24,6 +25,9 @@ class OpenshiftExtendedClient(object):
     @property
     def _service(self):
         return self._resource(kind='Service')
+
+    def _istio_config(self, kind, api_version):
+        return self._resource(kind=kind, api_version=api_version)
 
     def namespace_list(self):
         """ Returns list of namespaces """
@@ -64,3 +68,15 @@ class OpenshiftExtendedClient(object):
                 filtered_list.extend([_i for _i in items if _name in _i.name])
             return set(filtered_list)
         return items
+
+    def delete_istio_config(self, name, namespace, kind, api_version):
+        try:
+            self._istio_config(kind=kind, api_version=api_version).delete(name=name,
+                                                                          namespace=namespace)
+        except NotFoundError:
+            pass
+
+    def create_istio_config(self, body, namespace, kind, api_version):
+        resp = self._istio_config(kind=kind, api_version=api_version).create(body=body,
+                                                                             namespace=namespace)
+        return resp
