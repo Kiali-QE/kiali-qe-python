@@ -31,7 +31,7 @@ def test_about(browser, kiali_client):
     # assert versions_ui[ApplicationVersionEnum.KIALI_UI.text] == _console_rest
 
     # test other product versions
-    _products = _response['products']
+    _products = _response['externalServices']
     # check istio version
     assert versions_ui[ApplicationVersionEnum.ISTIO.text] == _get_version(_products, 'Istio')
     # check Prometheus version
