@@ -5,7 +5,7 @@ metadata:
 spec:
   labels:
     version: v2
-  name: reviews
+  host: reviews
   trafficPolicy:
     connectionPool:
       tcp:

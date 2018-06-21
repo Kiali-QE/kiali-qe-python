@@ -3,19 +3,27 @@ from kiali_qe.entities import EntityBase
 
 class Envoy(EntityBase):
 
-    def __init__(self, healthy, total):
-        self.healthy = healthy
-        self.total = total
+    def __init__(self, i_healthy, i_total, o_healthy, o_total):
+        self.i_healthy = i_healthy
+        self.i_total = i_total
+        self.o_healthy = o_healthy
+        self.o_total = o_total
 
     def __str__(self):
-        return 'healthy:{}, total:{}'.format(self.healthy, self.total)
+        return 'inbound (healthy:{}, total:{}), outbound (healthy:{}, total:{})'.format(
+            self.i_healthy, self.i_total, self.o_healthy, self.o_total)
 
     def __repr__(self):
-        return "{}({}, {})".format(type(self).__name__, repr(self.healthy), repr(self.total))
+        return "{}({}, {})({}, {})".format(type(self).__name__,
+                                           repr(self.i_healthy),
+                                           repr(self.i_total),
+                                           repr(self.o_healthy),
+                                           repr(self.o_total))
 
     def is_equal(self, other):
         return isinstance(other, Envoy)\
-         and self.healthy == other.healthy and self.total == other.total
+         and self.i_healthy == other.i_healthy and self.i_total == other.i_total\
+         and self.o_healthy == other.o_healthy and self.o_total == other.o_total
 
 
 class DeploymentStatus(EntityBase):
@@ -91,7 +99,10 @@ class Health(EntityBase):
     def get_from_rest(cls, health):
         # update envoy
         _e_in_rest = health['envoy']
-        _envoy = Envoy(healthy=_e_in_rest['healthy'], total=_e_in_rest['total'])
+        _envoy = Envoy(i_healthy=_e_in_rest['inbound']['healthy'],
+                       i_total=_e_in_rest['inbound']['total'],
+                       o_healthy=_e_in_rest['outbound']['healthy'],
+                       o_total=_e_in_rest['outbound']['total'])
         # update deployment statuses
         _deployment_status_list = []
         for _d_in_rest in health['deploymentStatuses']:
