@@ -7,7 +7,7 @@ from kiali_qe.entities.istio_config import IstioConfig
 from wait_for import wait_for
 
 
-def wait_displayed(obj, timeout='5s'):
+def wait_displayed(obj, timeout='10s'):
     wait_for(
         lambda: obj.is_displayed, timeout=timeout,
         delay=0.2, very_quiet=True, silent_failure=True)
