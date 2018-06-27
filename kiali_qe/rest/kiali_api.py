@@ -34,8 +34,11 @@ class KialiExtendedClient(KialiClient):
             _services = _data['services']
             # update all the services to our custom entity
             for _service_rest in _services:
-                # update health status
-                _health = Health.get_from_rest(_service_rest['health'])
+                if 'health' in _service_rest:
+                    # update health status
+                    _health = Health.get_from_rest(_service_rest['health'])
+                else:
+                    _health = None
                 _service = Service(
                     namespace=_namespace,
                     name=_service_rest['name'],
