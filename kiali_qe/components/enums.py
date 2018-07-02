@@ -103,6 +103,10 @@ class IstioConfigObjectType(StringEnum):
     ROUTE_RULE = ('RouteRule')
     RULE = ('Rule')
     VIRTUAL_SERVICE = ('VirtualService')
+    GATEWAY = ('Gateway')
+    SERVICE_ENTRY = ('ServiceEntry')
+    QUOTA_SPEC = ('QuotaSpec')
+    QUOTA_SPEC_BINDING = ('QuotaSpecBinding')
 
 
 class IstioConfigValidationType(StringEnum):

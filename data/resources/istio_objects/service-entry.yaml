@@ -1,0 +1,11 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: bookinfo-service-entry-auth
+spec:
+  hosts:
+  - "*"
+  ports:
+  - number: 443
+    name: https
+    protocol: http

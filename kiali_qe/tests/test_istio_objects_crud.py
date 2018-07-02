@@ -17,6 +17,10 @@ VIRTUAL_SERVICE = 'virtual-service.yaml'
 VIRTUAL_SERVICE_BROKEN = 'virtual-service-broken.yaml'
 ROUTE_RULE = 'route-rule.yaml'
 ROUTE_RULE_BROKEN = 'route-rule-broken.yaml'
+QUOTA_SPEC = 'quota-spec.yaml'
+QUOTA_SPEC_BINDING = 'quota-spec-binding.yaml'
+GATEWAY = 'gateway.yaml'
+SERVICE_ENTRY = 'service-entry.yaml'
 
 
 def test_destination_rule(kiali_client, openshift_client, browser):
@@ -169,6 +173,74 @@ def test_route_rule_broken(kiali_client, openshift_client, browser):
                         ],
                        kind='RouteRule',
                        api_version='config.istio.io/v1alpha2')
+
+
+def test_quota_spec(kiali_client, openshift_client, browser):
+    quota_spec = get_yaml(istio_objects_path.strpath, QUOTA_SPEC)
+    quota_spec_dict = get_dict(istio_objects_path.strpath, QUOTA_SPEC)
+
+    _istio_config_test(kiali_client, openshift_client, browser,
+                       quota_spec_dict,
+                       quota_spec,
+                       [
+                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
+                         'value': IstioConfigObjectType.QUOTA_SPEC.text},
+                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
+                         'value': 'quota-spec-auto'}
+                        ],
+                       kind='QuotaSpec',
+                       api_version='config.istio.io/v1alpha2')
+
+
+def test_quota_spec_binding(kiali_client, openshift_client, browser):
+    quota_spec_binding = get_yaml(istio_objects_path.strpath, QUOTA_SPEC_BINDING)
+    quota_spec_binding_dict = get_dict(istio_objects_path.strpath, QUOTA_SPEC_BINDING)
+
+    _istio_config_test(kiali_client, openshift_client, browser,
+                       quota_spec_binding_dict,
+                       quota_spec_binding,
+                       [
+                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
+                         'value': IstioConfigObjectType.QUOTA_SPEC_BINDING.text},
+                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
+                         'value': 'quota-spec-binding-auto'}
+                        ],
+                       kind='QuotaSpecBinding',
+                       api_version='config.istio.io/v1alpha2')
+
+
+def test_gateway(kiali_client, openshift_client, browser):
+    gateway = get_yaml(istio_objects_path.strpath, GATEWAY)
+    gateway_dict = get_dict(istio_objects_path.strpath, GATEWAY)
+
+    _istio_config_test(kiali_client, openshift_client, browser,
+                       gateway_dict,
+                       gateway,
+                       [
+                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
+                         'value': IstioConfigObjectType.GATEWAY.text},
+                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
+                         'value': gateway_dict.metadata.name}
+                        ],
+                       kind='Gateway',
+                       api_version='networking.istio.io/v1alpha3')
+
+
+def test_service_entry(kiali_client, openshift_client, browser):
+    yaml = get_yaml(istio_objects_path.strpath, SERVICE_ENTRY)
+    dict = get_dict(istio_objects_path.strpath, SERVICE_ENTRY)
+
+    _istio_config_test(kiali_client, openshift_client, browser,
+                       dict,
+                       yaml,
+                       [
+                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
+                         'value': IstioConfigObjectType.SERVICE_ENTRY.text},
+                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
+                         'value': dict.metadata.name}
+                        ],
+                       kind='ServiceEntry',
+                       api_version='networking.istio.io/v1alpha3')
 
 
 def _istio_config_test(kiali_client, openshift_client, browser, config_dict,
