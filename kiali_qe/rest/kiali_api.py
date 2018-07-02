@@ -118,6 +118,38 @@ class KialiExtendedClient(KialiClient):
                         namespace=_namespace,
                         object_type=OBJECT_TYPE.VIRTUAL_SERVICE.text))
 
+            # update QuotaSpec
+            if len(_data['quotaSpecs']) > 0:
+                for _policy in _data['quotaSpecs']:
+                    items.append(IstioConfig(
+                        name=_policy['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.QUOTA_SPEC.text))
+
+            # update QuotaSpecBindings
+            if len(_data['quotaSpecBindings']) > 0:
+                for _policy in _data['quotaSpecBindings']:
+                    items.append(IstioConfig(
+                        name=_policy['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.QUOTA_SPEC_BINDING.text))
+
+            # update Gateway
+            if len(_data['gateways']) > 0:
+                for _policy in _data['gateways']:
+                    items.append(IstioConfig(
+                        name=_policy['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.GATEWAY.text))
+
+            # update serviceEntries
+            if len(_data['serviceEntries']) > 0:
+                for _policy in _data['serviceEntries']:
+                    items.append(IstioConfig(
+                        name=_policy['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.SERVICE_ENTRY.text))
+
             # not required at this stage. These options not availabe in UI
             # # update all the rules to our custom entity
             # for _rule_rest in _rules:
