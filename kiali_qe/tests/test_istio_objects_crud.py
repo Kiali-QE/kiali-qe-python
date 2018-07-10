@@ -11,12 +11,10 @@ from kiali_qe.components.enums import (
 BOOKINFO = 'bookinfo'
 DEST_RULE = 'destination-rule-cb.yaml'
 DEST_RULE_BROKEN = 'destination-rule-cb-broken.yaml'
-DEST_POLICY = 'destination-policy.yaml'
-DEST_POLICY_BROKEN = 'destination-policy-broken.yaml'
 VIRTUAL_SERVICE = 'virtual-service.yaml'
 VIRTUAL_SERVICE_BROKEN = 'virtual-service-broken.yaml'
-ROUTE_RULE = 'route-rule.yaml'
-ROUTE_RULE_BROKEN = 'route-rule-broken.yaml'
+VIRTUAL_SERVICE_BROKEN_WEIGHT = 'virtual-service-broken-weight.yaml'
+VIRTUAL_SERVICE_BROKEN_WEIGHT_TEXT = 'virtual-service-broken-weight-text.yaml'
 QUOTA_SPEC = 'quota-spec.yaml'
 QUOTA_SPEC_BINDING = 'quota-spec-binding.yaml'
 GATEWAY = 'gateway.yaml'
@@ -61,44 +59,6 @@ def test_destination_rule_broken(kiali_client, openshift_client, browser):
                        api_version='networking.istio.io/v1alpha3')
 
 
-def test_destination_policy(kiali_client, openshift_client, browser):
-    destination_policy = get_yaml(istio_objects_path.strpath, DEST_POLICY)
-    destination_policy_dict = get_dict(istio_objects_path.strpath, DEST_POLICY)
-
-    _istio_config_test(kiali_client, openshift_client, browser,
-                       destination_policy_dict,
-                       destination_policy,
-                       [
-                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
-                         'value': IstioConfigObjectType.DESTINATION_POLICY.text},
-                        {'name': IstioConfigPageFilter.CONFIG.text,
-                         'value': IstioConfigValidationType.VALID.text},
-                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': destination_policy_dict.metadata.name}
-                        ],
-                       kind='DestinationPolicy',
-                       api_version='config.istio.io/v1alpha2')
-
-
-def test_destination_policy_broken(kiali_client, openshift_client, browser):
-    destination_policy_broken = get_yaml(istio_objects_path.strpath, DEST_POLICY_BROKEN)
-    destination_policy_broken_dict = get_dict(istio_objects_path.strpath, DEST_POLICY_BROKEN)
-
-    _istio_config_test(kiali_client, openshift_client, browser,
-                       destination_policy_broken_dict,
-                       destination_policy_broken,
-                       [
-                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
-                         'value': IstioConfigObjectType.DESTINATION_POLICY.text},
-                        {'name': IstioConfigPageFilter.CONFIG.text,
-                         'value': IstioConfigValidationType.NOT_VALID.text},
-                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': destination_policy_broken_dict.metadata.name}
-                        ],
-                       kind='DestinationPolicy',
-                       api_version='config.istio.io/v1alpha2')
-
-
 def test_virtual_service(kiali_client, openshift_client, browser):
     virtual_service = get_yaml(istio_objects_path.strpath, VIRTUAL_SERVICE)
     virtual_service_dict = get_dict(istio_objects_path.strpath, VIRTUAL_SERVICE)
@@ -137,42 +97,46 @@ def test_virtual_service_broken(kiali_client, openshift_client, browser):
                        api_version='networking.istio.io/v1alpha3')
 
 
-def test_route_rule(kiali_client, openshift_client, browser):
-    route_rule = get_yaml(istio_objects_path.strpath, ROUTE_RULE)
-    route_rule_dict = get_dict(istio_objects_path.strpath, ROUTE_RULE)
+def test_virtual_service_broken_weight(kiali_client, openshift_client, browser):
+    virtual_service_broken = get_yaml(istio_objects_path.strpath,
+                                      VIRTUAL_SERVICE_BROKEN_WEIGHT)
+    virtual_service_broken_dict = get_dict(istio_objects_path.strpath,
+                                           VIRTUAL_SERVICE_BROKEN_WEIGHT)
 
     _istio_config_test(kiali_client, openshift_client, browser,
-                       route_rule_dict,
-                       route_rule,
+                       virtual_service_broken_dict,
+                       virtual_service_broken,
                        [
                         {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
-                         'value': IstioConfigObjectType.ROUTE_RULE.text},
-                        {'name': IstioConfigPageFilter.CONFIG.text,
-                         'value': IstioConfigValidationType.VALID.text},
-                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': route_rule_dict.metadata.name}
-                        ],
-                       kind='RouteRule',
-                       api_version='config.istio.io/v1alpha2')
-
-
-def test_route_rule_broken(kiali_client, openshift_client, browser):
-    route_rule_broken = get_yaml(istio_objects_path.strpath, ROUTE_RULE_BROKEN)
-    route_rule_broken_dict = get_dict(istio_objects_path.strpath, ROUTE_RULE_BROKEN)
-
-    _istio_config_test(kiali_client, openshift_client, browser,
-                       route_rule_broken_dict,
-                       route_rule_broken,
-                       [
-                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
-                         'value': IstioConfigObjectType.ROUTE_RULE.text},
+                         'value': IstioConfigObjectType.VIRTUAL_SERVICE.text},
                         {'name': IstioConfigPageFilter.CONFIG.text,
                          'value': IstioConfigValidationType.NOT_VALID.text},
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': route_rule_broken_dict.metadata.name}
+                         'value': virtual_service_broken_dict.metadata.name}
                         ],
-                       kind='RouteRule',
-                       api_version='config.istio.io/v1alpha2')
+                       kind='VirtualService',
+                       api_version='networking.istio.io/v1alpha3')
+
+
+def test_virtual_service_broken_weight_text(kiali_client, openshift_client, browser):
+    virtual_service_broken = get_yaml(istio_objects_path.strpath,
+                                      VIRTUAL_SERVICE_BROKEN_WEIGHT_TEXT)
+    virtual_service_broken_dict = get_dict(istio_objects_path.strpath,
+                                           VIRTUAL_SERVICE_BROKEN_WEIGHT_TEXT)
+
+    _istio_config_test(kiali_client, openshift_client, browser,
+                       virtual_service_broken_dict,
+                       virtual_service_broken,
+                       [
+                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
+                         'value': IstioConfigObjectType.VIRTUAL_SERVICE.text},
+                        {'name': IstioConfigPageFilter.CONFIG.text,
+                         'value': IstioConfigValidationType.NOT_VALID.text},
+                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
+                         'value': virtual_service_broken_dict.metadata.name}
+                        ],
+                       kind='VirtualService',
+                       api_version='networking.istio.io/v1alpha3')
 
 
 def test_quota_spec(kiali_client, openshift_client, browser):
@@ -243,11 +207,7 @@ def test_service_entry(kiali_client, openshift_client, browser):
                        api_version='networking.istio.io/v1alpha3')
 
 
-def _istio_config_test(kiali_client, openshift_client, browser, config_dict,
-                       config_yaml, filters, kind, api_version):
-    tests = IstioConfigPageTest(
-        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-
+def _istio_config_create(openshift_client, config_dict, config_yaml, kind, api_version):
     openshift_client.delete_istio_config(name=config_dict.metadata.name,
                                          namespace=BOOKINFO,
                                          kind=kind,
@@ -257,10 +217,24 @@ def _istio_config_test(kiali_client, openshift_client, browser, config_dict,
                                          namespace=BOOKINFO,
                                          kind=kind,
                                          api_version=api_version)
-    tests.assert_all_items(filters)
 
+
+def _istio_config_delete(openshift_client, config_dict, kind, api_version):
     openshift_client.delete_istio_config(name=config_dict.metadata.name,
                                          namespace=BOOKINFO,
                                          kind=kind,
                                          api_version=api_version)
+
+
+def _istio_config_test(kiali_client, openshift_client, browser, config_dict,
+                       config_yaml, filters, kind, api_version):
+    tests = IstioConfigPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+
+    _istio_config_create(openshift_client, config_dict, config_yaml, kind, api_version)
+
+    tests.assert_all_items(filters)
+
+    _istio_config_delete(openshift_client, config_dict, kind, api_version)
+
     tests.assert_all_items(filters)
