@@ -78,13 +78,6 @@ class KialiExtendedClient(KialiClient):
         # update items
         for _namespace in namespace_list:
             _data = super(KialiExtendedClient, self).istio_config_list(namespace=_namespace)
-            # update DestinationPolicy
-            if len(_data['destinationPolicies']) > 0:
-                for _policy in _data['destinationPolicies']:
-                    items.append(IstioConfig(
-                        name=_policy['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.DESTINATION_POLICY.text))
 
             # update DestinationRule
             if len(_data['destinationRules']) > 0:
@@ -93,14 +86,6 @@ class KialiExtendedClient(KialiClient):
                         name=_policy['name'],
                         namespace=_namespace,
                         object_type=OBJECT_TYPE.DESTINATION_RULE.text))
-
-            # update RouteRules
-            if len(_data['routeRules']) > 0:
-                for _policy in _data['routeRules']:
-                    items.append(IstioConfig(
-                        name=_policy['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.ROUTE_RULE.text))
 
             # update Rule
             if len(_data['rules']) > 0:

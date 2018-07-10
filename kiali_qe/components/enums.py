@@ -59,7 +59,7 @@ class GraphPageLayout(StringEnum):
 class GraphPageFilter(StringEnum):
     LEGEND = ('Legend')
     CIRCUIT_BREAKERS = ('Circuit Breakers')
-    ROUTE_RULES = ('Route Rules')
+    VIRTUAL_SERVICES = ('Virtual Services')
     NODE_LABELS = ('Node Labels')
     MISSING_SIDECARS = ('Missing Sidecars')
     TRAFFIC_ANIMATION = ('Traffic Animation')
@@ -98,9 +98,7 @@ class IstioConfigPageSort(StringEnum):
 
 
 class IstioConfigObjectType(StringEnum):
-    DESTINATION_POLICY = ('DestinationPolicy')
     DESTINATION_RULE = ('DestinationRule')
-    ROUTE_RULE = ('RouteRule')
     RULE = ('Rule')
     VIRTUAL_SERVICE = ('VirtualService')
     GATEWAY = ('Gateway')

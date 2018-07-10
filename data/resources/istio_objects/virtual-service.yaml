@@ -10,3 +10,8 @@ spec:
     - destination:
         name: reviews
         subset: v1
+      weight: 50
+    - destination:
+        name: reviews
+        subset: v2
+      weight: 50
