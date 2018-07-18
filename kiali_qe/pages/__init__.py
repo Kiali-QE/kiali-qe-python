@@ -89,7 +89,6 @@ class GraphPage(RootPage):
 
     namespace = DropDown(locator=XP_DROP_DOWN.format('namespace-selector'))
     duration = DropDown(locator=XP_DROP_DOWN.format('graph_filter_interval_duration'))
-    layout = DropDown(locator=XP_DROP_DOWN.format('graph_filter_layouts'))
     edge_labels = DropDown(locator=XP_DROP_DOWN.format('graph_filter_edges'))
     filter = CheckBoxFilter()
     refresh = Button(locator='.//button//*[contains(@class, "fa-refresh")]')

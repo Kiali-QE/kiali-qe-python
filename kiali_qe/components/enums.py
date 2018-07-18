@@ -49,20 +49,29 @@ class GraphPageDuration(StringEnum):
 
 
 class GraphPageLayout(StringEnum):
-    BREADTH_FIRST = ('Breadthfirst')
     COLA = ('Cola')
     COSE = ('Cose')
     DAGRE = ('Dagre')
-    KLAY = ('Klay')
 
 
-class GraphPageFilter(StringEnum):
+class GraphPageDisplayFilter(StringEnum):
     LEGEND = ('Legend')
+    NODE_LABELS = ('Node Names')
+    TRAFFIC_ANIMATION = ('Traffic Animation')
+
+
+class GraphPageBadgesFilter(StringEnum):
     CIRCUIT_BREAKERS = ('Circuit Breakers')
     VIRTUAL_SERVICES = ('Virtual Services')
-    NODE_LABELS = ('Node Labels')
     MISSING_SIDECARS = ('Missing Sidecars')
-    TRAFFIC_ANIMATION = ('Traffic Animation')
+
+
+class EdgeLabelsFilter(StringEnum):
+    HIDE = ('Hide')
+    REQUEST_PER_SECOND = ('Requests per second')
+    REQUEST_PERCENT = ('Requests percent of total')
+    RESPONSE_TIME = ('Response time 95th percentile')
+    SECURITY = ('Security')
 
 
 class ServicesPageFilter(StringEnum):

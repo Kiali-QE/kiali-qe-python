@@ -414,8 +414,10 @@ class Filter(Widget):
 class CheckBoxFilter(Widget):
     ROOT = ('//*[@role="tooltip" and contains(@class, "popover")]'
             '//*[contains(@class, "popover-content")]')
-    ITEMS = './/label'
-    ITEM = './/label/span[normalize-space(text())="{}"]/../input[@type="checkbox"]'
+    CB_ITEMS = './/label/input[@type="checkbox"]/..'
+    ITEM = './/label/span[normalize-space(text())="{}"]/../input'
+    RB_ITEMS = './/label/input[@type="radio"]/..'
+    DROP_DOWN = '//*[contains(@class, "dropdown")]/*[@id="{}"]/..'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -425,8 +427,8 @@ class CheckBoxFilter(Widget):
             self.locator = self.ROOT
         self._filter_button = Button(
             parent=self.parent,
-            locator=('//label[normalize-space(text())="Filters:"]/'
-                     '..//*[contains(@class, "fa-filter")]'))
+            locator=('//button[normalize-space(text())="Graph Settings"]/'
+                     '..//*[contains(@class, "fa-angle-down")]'))
 
     def __locator__(self):
         return self.locator
@@ -444,12 +446,27 @@ class CheckBoxFilter(Widget):
             wait_for(_is_closed, timeout='3s', delay=0.2, very_quiet=True, silent_failure=True)
 
     @property
+    def layout(self):
+        self.open()
+        return DropDown(parent=self, locator=self.DROP_DOWN.format('graph_filter_layout'))
+
+    @property
     def items(self):
         self.open()
         try:
             return [
                 self.browser.text(el)
-                for el in self.browser.elements(parent=self, locator=self.ITEMS)]
+                for el in self.browser.elements(parent=self, locator=self.CB_ITEMS)]
+        finally:
+            self.close()
+
+    @property
+    def radio_items(self):
+        self.open()
+        try:
+            return [
+                self.browser.text(el)
+                for el in self.browser.elements(parent=self, locator=self.RB_ITEMS)]
         finally:
             self.close()
 
