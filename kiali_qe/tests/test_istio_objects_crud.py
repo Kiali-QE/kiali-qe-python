@@ -10,6 +10,7 @@ from kiali_qe.components.enums import (
 
 BOOKINFO = 'bookinfo'
 DEST_RULE = 'destination-rule-cb.yaml'
+DEST_RULE_VS = 'destination-rule.yaml'
 DEST_RULE_BROKEN = 'destination-rule-cb-broken.yaml'
 VIRTUAL_SERVICE = 'virtual-service.yaml'
 VIRTUAL_SERVICE_BROKEN = 'virtual-service-broken.yaml'
@@ -62,6 +63,7 @@ def test_destination_rule_broken(kiali_client, openshift_client, browser):
 def test_virtual_service(kiali_client, openshift_client, browser):
     virtual_service = get_yaml(istio_objects_path.strpath, VIRTUAL_SERVICE)
     virtual_service_dict = get_dict(istio_objects_path.strpath, VIRTUAL_SERVICE)
+    _create_dest_rule_vs(openshift_client)
 
     _istio_config_test(kiali_client, openshift_client, browser,
                        virtual_service_dict,
@@ -76,11 +78,13 @@ def test_virtual_service(kiali_client, openshift_client, browser):
                         ],
                        kind='VirtualService',
                        api_version='networking.istio.io/v1alpha3')
+    _delete_dest_rule_vs(openshift_client)
 
 
 def test_virtual_service_broken(kiali_client, openshift_client, browser):
     virtual_service_broken = get_yaml(istio_objects_path.strpath, VIRTUAL_SERVICE_BROKEN)
     virtual_service_broken_dict = get_dict(istio_objects_path.strpath, VIRTUAL_SERVICE_BROKEN)
+    _create_dest_rule_vs(openshift_client)
 
     _istio_config_test(kiali_client, openshift_client, browser,
                        virtual_service_broken_dict,
@@ -95,6 +99,7 @@ def test_virtual_service_broken(kiali_client, openshift_client, browser):
                         ],
                        kind='VirtualService',
                        api_version='networking.istio.io/v1alpha3')
+    _delete_dest_rule_vs(openshift_client)
 
 
 def test_virtual_service_broken_weight(kiali_client, openshift_client, browser):
@@ -102,6 +107,7 @@ def test_virtual_service_broken_weight(kiali_client, openshift_client, browser):
                                       VIRTUAL_SERVICE_BROKEN_WEIGHT)
     virtual_service_broken_dict = get_dict(istio_objects_path.strpath,
                                            VIRTUAL_SERVICE_BROKEN_WEIGHT)
+    _create_dest_rule_vs(openshift_client)
 
     _istio_config_test(kiali_client, openshift_client, browser,
                        virtual_service_broken_dict,
@@ -116,6 +122,7 @@ def test_virtual_service_broken_weight(kiali_client, openshift_client, browser):
                         ],
                        kind='VirtualService',
                        api_version='networking.istio.io/v1alpha3')
+    _delete_dest_rule_vs(openshift_client)
 
 
 def test_virtual_service_broken_weight_text(kiali_client, openshift_client, browser):
@@ -123,6 +130,7 @@ def test_virtual_service_broken_weight_text(kiali_client, openshift_client, brow
                                       VIRTUAL_SERVICE_BROKEN_WEIGHT_TEXT)
     virtual_service_broken_dict = get_dict(istio_objects_path.strpath,
                                            VIRTUAL_SERVICE_BROKEN_WEIGHT_TEXT)
+    _create_dest_rule_vs(openshift_client)
 
     _istio_config_test(kiali_client, openshift_client, browser,
                        virtual_service_broken_dict,
@@ -137,6 +145,7 @@ def test_virtual_service_broken_weight_text(kiali_client, openshift_client, brow
                         ],
                        kind='VirtualService',
                        api_version='networking.istio.io/v1alpha3')
+    _delete_dest_rule_vs(openshift_client)
 
 
 def test_quota_spec(kiali_client, openshift_client, browser):
@@ -224,6 +233,21 @@ def _istio_config_delete(openshift_client, config_dict, kind, api_version):
                                          namespace=BOOKINFO,
                                          kind=kind,
                                          api_version=api_version)
+
+
+def _create_dest_rule_vs(openshift_client):
+    destination_rule = get_yaml(istio_objects_path.strpath, DEST_RULE_VS)
+    destination_rule_dict = get_dict(istio_objects_path.strpath, DEST_RULE_VS)
+    _istio_config_create(openshift_client, destination_rule_dict, destination_rule,
+                         kind='DestinationRule',
+                         api_version='networking.istio.io/v1alpha3')
+
+
+def _delete_dest_rule_vs(openshift_client):
+    destination_rule_dict = get_dict(istio_objects_path.strpath, DEST_RULE_VS)
+    _istio_config_delete(openshift_client, destination_rule_dict,
+                         kind='DestinationRule',
+                         api_version='networking.istio.io/v1alpha3')
 
 
 def _istio_config_test(kiali_client, openshift_client, browser, config_dict,

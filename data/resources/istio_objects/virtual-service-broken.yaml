@@ -4,14 +4,9 @@ metadata:
   name: virtual-service-broken-auto
 spec:
   hosts:
-  - reviews-bad
+  - reviews
   http:
   - route:
     - destination:
-        name: reviews
+        host: reviews-bad
         subset: v1
-      weight: 50
-    - destination:
-        name: reviews
-        subset: v2
-      weight: 50
