@@ -19,7 +19,7 @@ from kiali_qe.utils.log import logger
 from kiali_qe.utils.conf import env as cfg
 from wait_for import wait_for
 
-XP_DROP_DOWN = '//*[contains(@class, "dropdown")]/*[@id="{}"]/../..'
+XP_DROP_DOWN = '//*[contains(@class, "dropdown")]/*[@id="{}"]/..'
 XP_BUTTON_SWITCH = '//*[contains(@class, "bootstrap-switch")]//*[text()="{}"]/../..'
 
 
@@ -89,6 +89,7 @@ class GraphPage(RootPage):
 
     namespace = DropDown(locator=XP_DROP_DOWN.format('namespace-selector'))
     duration = DropDown(locator=XP_DROP_DOWN.format('graph_filter_interval_duration'))
+    interval = DropDown(locator=XP_DROP_DOWN.format('graph_refresh_dropdown'))
     edge_labels = DropDown(locator=XP_DROP_DOWN.format('graph_filter_edges'))
     filter = CheckBoxFilter()
     refresh = Button(locator='.//button//*[contains(@class, "fa-refresh")]')

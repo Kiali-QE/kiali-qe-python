@@ -41,11 +41,22 @@ class GraphPageDuration(StringEnum):
     LAST_10_MINUTES = ('Last 10 minutes')
     LAST_30_MINUTES = ('Last 30 minutes')
     LAST_HOUR = ('Last hour')
+    LAST_3_HOURS = ('Last 3 hours')
     LAST_6_HOURS = ('Last 6 hours')
     LAST_12_HOURS = ('Last 12 hours')
     LAST_DAY = ('Last day')
     LAST_7_DAYS = ('Last 7 days')
     LAST_30_DAYS = ('Last 30 days')
+
+
+class GraphRefreshInterval(StringEnum):
+    PAUSE = ('Pause')
+    IN_5_SECONDS = ('5 seconds')
+    IN_10_SECONDS = ('10 seconds')
+    IN_15_SECONDS = ('15 seconds')
+    IN_30_SECONDS = ('30 seconds')
+    IN_1_MINUTE = ('1 minute')
+    IN_5_MINUTES = ('5 minutes')
 
 
 class GraphPageLayout(StringEnum):
