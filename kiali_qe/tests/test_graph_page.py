@@ -2,11 +2,37 @@ from kiali_qe.components.enums import (
     GraphPageBadgesFilter,
     GraphPageDisplayFilter,
     GraphPageLayout,
-    EdgeLabelsFilter
+    EdgeLabelsFilter,
+    GraphPageDuration,
+    GraphRefreshInterval
 )
 from kiali_qe.pages import GraphPage
 from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
+
+
+def test_duration(browser):
+    # get page instance
+    page = GraphPage(browser)
+    # test options
+    options_defined = [item.text for item in GraphPageDuration]
+    duration = page.duration
+    options_listed = duration.options
+    logger.debug('Options[defined:{}, listed:{}]'.format(options_defined, options_listed))
+    assert is_equal(options_defined, options_listed), \
+        ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
+
+
+def test_refresh_interval(browser):
+    # get page instance
+    page = GraphPage(browser)
+    # test options
+    options_defined = [item.text for item in GraphRefreshInterval]
+    interval = page.interval
+    options_listed = interval.options
+    logger.debug('Options[defined:{}, listed:{}]'.format(options_defined, options_listed))
+    assert is_equal(options_defined, options_listed), \
+        ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
 
 
 def test_layout(browser):
@@ -16,7 +42,7 @@ def test_layout(browser):
     options_defined = [item.text for item in GraphPageLayout]
     layout = page.filter.layout
     options_listed = layout.options
-    assert options_defined == options_listed, \
+    assert is_equal(options_defined, options_listed), \
         ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
 
 
