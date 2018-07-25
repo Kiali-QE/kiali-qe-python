@@ -36,7 +36,7 @@ class RootPage(View):
     page_header = Text(locator='//*[contains(@class, "container-fluid")]//h2')
     notifications = Notifications()
 
-    def load(self):
+    def load(self, force_load=False):
         # if auto login enabled, do login. else do logout
         if self._auto_login:
             # if login page displayed, do login
@@ -44,7 +44,8 @@ class RootPage(View):
         else:
             self.logout()
         # load particular page, only if PAGE_MENU is supplied
-        if self.PAGE_MENU is not None and self.main_menu.selected != self.PAGE_MENU:
+        if self.PAGE_MENU is not None and \
+                (self.main_menu.selected != self.PAGE_MENU or force_load):
             self.main_menu.select(self.PAGE_MENU)
 
     def login(self, username=None, password=None, force_login=False):
@@ -106,7 +107,7 @@ class ServicesPage(RootPage):
     pagination = Pagination()
 
 
-class IstioMixerPage(RootPage):
+class IstioConfigPage(RootPage):
     PAGE_MENU = MENU.ISTIO_CONFIG.text
 
     filter = Filter()

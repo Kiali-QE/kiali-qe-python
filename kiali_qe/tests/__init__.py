@@ -1,9 +1,11 @@
+import random
+import re
+
 from kiali_qe.components.enums import PaginationPerPage, ServicesPageFilter, IstioConfigPageFilter
 from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
-import random
 
-from kiali_qe.pages import ServicesPage, IstioMixerPage
+from kiali_qe.pages import ServicesPage, IstioConfigPage
 
 
 class AbstractListPageTest(object):
@@ -256,11 +258,13 @@ class IstioConfigPageTest(AbstractListPageTest):
     def __init__(self, kiali_client, openshift_client, browser):
         AbstractListPageTest.__init__(
             self, kiali_client=kiali_client,
-            openshift_client=openshift_client, page=IstioMixerPage(browser))
+            openshift_client=openshift_client, page=IstioConfigPage(browser))
         self.browser = browser
 
     def assert_all_items(self, filters, force_clear_all=True):
         logger.debug('Filters:{}'.format(filters))
+        # load the page first
+        self.page.load(force_load=True)
         # apply filters
         self.apply_filters(filters=filters, force_clear_all=force_clear_all)
 
@@ -281,6 +285,51 @@ class IstioConfigPageTest(AbstractListPageTest):
                     found = True
                     break
             assert found, '{} not found in REST'.format(config_rest)
+
+    def assert_details(self, name, namespace=None):
+        logger.debug('Details: {}, {}'.format(name, namespace))
+        # load the page first
+        self.page.load(force_load=True)
+        # load config details page
+        config_details_ui = self.page.content.get_details(name, namespace)
+        assert config_details_ui
+        assert name == config_details_ui.name
+        assert config_details_ui.text
+        # get config detals from rest
+        config_details_rest = self.kiali_client.istio_config_details(
+            namespace=namespace,
+            object_type=config_details_ui.type,
+            object_name=name)
+        assert config_details_rest
+        assert name == config_details_rest.name
+        assert config_details_rest.text
+        # find key: value pairs from UI in a REST
+        for config_ui in re.split(' ',
+                                  str(config_details_ui.text).
+                                  replace('\'', '').replace('~', 'null')):
+            if config_ui.endswith(':'):
+                ui_key = config_ui
+            elif config_ui.strip() != '-':  # skip this line, it was for formatting
+                # the previous one was the key of this value
+                found = False
+                # make the REST result into the same format as shown in UI
+                # to compare only the values
+                for config_rest in str(config_details_rest.text).\
+                        replace('{', '').\
+                        replace('}', '').\
+                        replace('"', '').\
+                        replace(',', '').\
+                        replace('[', '').\
+                        replace(']', '').\
+                        split(' '):
+                    if config_rest.endswith(':'):
+                        rest_key = config_rest
+                    else:
+                        # the previous one was the key of this value
+                        if ui_key == rest_key and config_ui == config_rest:
+                            found = True
+                            break
+                assert found, '{} {} not found in REST'.format(ui_key, config_ui)
 
     def get_additional_filters(self, current_filters):
         logger.debug('Current filters:{}'.format(current_filters))

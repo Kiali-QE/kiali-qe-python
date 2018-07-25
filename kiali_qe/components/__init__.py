@@ -1,9 +1,9 @@
 """ Update this doc"""
 from widgetastic.widget import Checkbox, TextInput, Widget
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
-from kiali_qe.components.enums import HelpMenuEnum, ApplicationVersionEnum
+from kiali_qe.components.enums import HelpMenuEnum, ApplicationVersionEnum, IstioConfigObjectType
 from kiali_qe.entities.service import Service
-from kiali_qe.entities.istio_config import IstioConfig
+from kiali_qe.entities.istio_config import IstioConfig, Rule, IstioConfigDetails
 from wait_for import wait_for
 
 
@@ -724,6 +724,7 @@ class ListViewAbstract(Widget):
                 self.SELECT_ITEM_WITH_NAMESPACE.format(name, namespace), parent=self))
         else:
             self.browser.click(self.browser.element(self.SELECT_ITEM.format(name), parent=self))
+        wait_displayed(self)
 
     @property
     def all_items(self):
@@ -765,7 +766,18 @@ class ListViewServices(ListViewAbstract):
 class ListViewIstioConfig(ListViewAbstract):
     ACTION_HEADER = ('.//*[contains(@class, "list-group-item-text")]'
                      '//strong[normalize-space(text())="{}"]/..')
-    OBJECT_TYPE = './/*[contains(@class, "list-group-item-text")]'
+    OBJECT_TYPE = './/*[contains(@class, "list-group-item-text")]//td'
+    CONFIG_HEADER = './/div[contains(@class, "row")]//h1'
+    CONFIG_TEXT = './/div[contains(@class, "ace_content")]'
+    CONFIG_DETAILS_ROOT = './/div[contains(@class, "container-cards-pf")]'
+
+    def get_details(self, name, namespace=None):
+        self.open(name, namespace)
+        _type, _name = self.browser.text(locator=self.CONFIG_HEADER,
+                                         parent=self.CONFIG_DETAILS_ROOT).split(': ')
+        _text = self.browser.text(locator=self.CONFIG_TEXT,
+                                  parent=self.CONFIG_DETAILS_ROOT)
+        return IstioConfigDetails(name=_name, type=_type, text=_text)
 
     @property
     def items(self):
@@ -798,7 +810,12 @@ class ListViewIstioConfig(ListViewAbstract):
             # create istio config instance
             _object_type = self.browser.text(
                 self.browser.element(locator=self.OBJECT_TYPE, parent=el))
-            _rule = IstioConfig(name=_name, namespace=_namespace, object_type=_object_type)
-            # append this item to the final list
-            _items.append(_rule)
+            if str(_object_type) == IstioConfigObjectType.RULE.text:
+                _rule = Rule(name=_name, namespace=_namespace)
+                # append this item to the final list
+                _items.append(_rule)
+            else:
+                _config = IstioConfig(name=_name, namespace=_namespace, object_type=_object_type)
+                # append this item to the final list
+                _items.append(_config)
         return _items

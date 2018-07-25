@@ -35,6 +35,35 @@ class IstioConfig(EntityBase):
         return True
 
 
+class IstioConfigDetails(EntityBase):
+
+    def __init__(self, name, type, text):
+        self.name = name
+        self.type = type
+        self.text = text
+
+    def __str__(self):
+        return 'name{}, text:{}'.format(
+            self.name, self.text)
+
+    def __repr__(self):
+        return "{}({})".format(
+            type(self).__name__, repr(self.name), repr(self.text))
+
+    def __eq__(self, other):
+        return self.is_equal()
+
+    def is_equal(self, other):
+        # basic check
+        if not isinstance(other, IstioConfigDetails):
+            return False
+        if self.name != other.name:
+            return False
+        if self.text != other.text:
+            return False
+        return True
+
+
 class Action(EntityBase):
 
     def __init__(self, handler, instances):
@@ -61,20 +90,18 @@ class Action(EntityBase):
 
 class Rule(EntityBase):
 
-    def __init__(self, name, namespace, actions, match=None):
+    def __init__(self, name, namespace):
         self.name = name
         self.namespace = namespace
-        self.actions = actions
-        self.match = match
 
     def __str__(self):
-        return 'name:{}, namespace:{}, match:{}, actions:{}'.format(
-            self.name, self.namespace, self.match, self.actions)
+        return 'name:{}, namespace:{}'.format(
+            self.name, self.namespace)
 
     def __repr__(self):
-        return "{}({}, {}, {}, {})".format(
+        return "{}({}, {})".format(
             type(self).__name__,
-            repr(self.name), repr(self.namespace), repr(self.actions), repr(self.match))
+            repr(self.name), repr(self.namespace))
 
     def __hash__(self):
         return (hash(self.name) ^ hash(self.namespace))
@@ -93,6 +120,4 @@ class Rule(EntityBase):
         # advanced check
         if not advanced_check:
             return True
-        if not is_equal(self.actions, other.actions):
-            return False
         return True

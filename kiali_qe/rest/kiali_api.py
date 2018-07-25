@@ -1,8 +1,9 @@
+import json
 from kiali.api import KialiClient
 
 from kiali_qe.components.enums import IstioConfigObjectType as OBJECT_TYPE
 from kiali_qe.components.enums import IstioConfigPageFilter as FILTER_TYPE
-from kiali_qe.entities.istio_config import IstioConfig
+from kiali_qe.entities.istio_config import IstioConfig, IstioConfigDetails
 from kiali_qe.entities.service import Health, Service
 
 
@@ -169,3 +170,52 @@ class KialiExtendedClient(KialiClient):
             elif len(istio_types) > 0:
                 return set(type_filtered_list)
         return items
+
+    def istio_config_details(self, namespace, object_type, object_name):
+        """Returns details of istio config.
+        Args:
+            namespaces: namespace where istio config is located
+            object_type: type of istio config
+            object_name: name of istio config
+        """
+
+        _data = super(KialiExtendedClient, self).istio_config_details(
+            namespace=namespace,
+            object_type=object_type,
+            object_name=object_name)
+        config = None
+        config_data = None
+        if _data:
+            # get DestinationRule
+            if _data['destinationRule']:
+                config_data = _data['destinationRule']
+
+            # get Rule
+            if _data['rule']:
+                config_data = _data['rule']
+
+            # get VirtualService
+            if _data['virtualService']:
+                config_data = _data['virtualService']
+
+            # get QuotaSpec
+            if _data['quotaSpec']:
+                config_data = _data['quotaSpec']
+
+            # get QuotaSpecBindings
+            if _data['quotaSpecBinding']:
+                config_data = _data['quotaSpecBinding']
+
+            # get Gateway
+            if _data['gateway']:
+                config_data = _data['gateway']
+
+            # get serviceEntry
+            if _data['serviceEntry']:
+                config_data = _data['serviceEntry']
+
+            if config_data:
+                config = IstioConfigDetails(name=config_data['name'],
+                                            type=_data['objectType'],
+                                            text=json.dumps(config_data))
+        return config
