@@ -259,6 +259,22 @@ def _istio_config_test(kiali_client, openshift_client, browser, config_dict,
 
     tests.assert_all_items(filters)
 
+    _istio_config_details_test(kiali_client,
+                               openshift_client,
+                               browser,
+                               config_dict,
+                               config_yaml,
+                               kind,
+                               api_version)
+
     _istio_config_delete(openshift_client, config_dict, kind, api_version)
 
     tests.assert_all_items(filters)
+
+
+def _istio_config_details_test(kiali_client, openshift_client, browser, config_dict,
+                               config_yaml, kind, api_version):
+    tests = IstioConfigPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+
+    tests.assert_details(name=config_dict.metadata.name, namespace=BOOKINFO)
