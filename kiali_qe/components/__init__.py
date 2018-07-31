@@ -2,7 +2,7 @@
 from widgetastic.widget import Checkbox, TextInput, Widget
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 from kiali_qe.components.enums import HelpMenuEnum, ApplicationVersionEnum, IstioConfigObjectType
-from kiali_qe.entities.service import Service
+from kiali_qe.entities.service import Service, ServiceDetails
 from kiali_qe.entities.istio_config import IstioConfig, Rule, IstioConfigDetails
 from wait_for import wait_for
 
@@ -704,7 +704,7 @@ class ListViewAbstract(Widget):
     ROOT = '//*[contains(@class, "list-view-pf") and contains(@class, "list-view-pf-view")]'
     ITEMS = './/*[contains(@class, "list-group-item")]//*[contains(@class, "list-view-pf-body")]'
     ITEM_TEXT = './/*[contains(@class, "list-group-item-heading")]'
-    SELECT_ITEM = ITEMS + '//span[text()="{}"]'
+    SELECT_ITEM = ITEMS + '//*[text()="{}"]'
     SELECT_ITEM_WITH_NAMESPACE = SELECT_ITEM + '/small[text()="{}"]'
 
     def __init__(self, parent, locator=None, logger=None):
@@ -741,6 +741,20 @@ class ListViewAbstract(Widget):
 
 
 class ListViewServices(ListViewAbstract):
+    SERVICE_HEADER = './/div[contains(@class, "card-pf-heading")]//h2'
+    ISTIO_PROPERTIES = ('.//*[contains(@class, "card-pf-body")]'
+                        '//strong[normalize-space(text())="{}"]/..')
+    CONFIG_DETAILS_ROOT = './/div[contains(@class, "card-pf")]'
+    ISTIO_SIDECAR = 'Istio Sidecar'
+
+    def get_details(self, name, namespace=None):
+        self.open(name, namespace)
+        _name = self.browser.text(locator=self.SERVICE_HEADER,
+                                  parent=self.CONFIG_DETAILS_ROOT)
+        _istio_sidecar = len(self.browser.elements(
+                parent=self.ISTIO_PROPERTIES.format(self.ISTIO_SIDECAR),
+                locator='.//img[contains(@class, "IstioLogo")]')) > 0
+        return ServiceDetails(name=_name, istio_sidecar=_istio_sidecar, health=None)
 
     @property
     def items(self):

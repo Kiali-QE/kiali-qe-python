@@ -172,3 +172,51 @@ class Service(object):
         if not self.health.is_equal(other.health):
             return False
         return True
+
+
+class ServiceDetails(object):
+    """
+    Service class provides information details on Service details page.
+
+    Args:
+        name: name of the service
+        istio_sidecar: Is istio side car available
+        health: health status
+    """
+
+    def __init__(self, name, istio_sidecar=False, health=None):
+        if name is None:
+            raise KeyError("'name' should not be 'None'")
+        self.name = name
+        self.istio_sidecar = istio_sidecar
+        self.health = health
+
+    def __str__(self):
+        return 'name:{}, istio_sidecar:{}, health:{}'.format(
+            self.name, self.istio_sidecar, self.health)
+
+    def __repr__(self):
+        return "{}({}, {}, {})".format(
+            type(self).__name__,
+            repr(self.name), repr(self.istio_sidecar), repr(self.health))
+
+    def __hash__(self):
+        return (hash(self.name) ^ hash(self.istio_sidecar))
+
+    def __eq__(self, other):
+        return self.is_equal(advanced_check=True)
+
+    def is_equal(self, other, advanced_check=True):
+        # basic check
+        if not isinstance(other, Service):
+            return False
+        if self.name != other.name:
+            return False
+        # advanced check
+        if not advanced_check:
+            return True
+        if self.istio_sidecar != other.istio_sidecar:
+            return False
+        if not self.health.is_equal(other.health):
+            return False
+        return True
