@@ -3,7 +3,7 @@ from kiali.api import KialiClient
 
 from kiali_qe.components.enums import IstioConfigObjectType as OBJECT_TYPE
 from kiali_qe.components.enums import IstioConfigPageFilter as FILTER_TYPE
-from kiali_qe.entities.istio_config import IstioConfig, IstioConfigDetails
+from kiali_qe.entities.istio_config import IstioConfig, IstioConfigDetails, Rule
 from kiali_qe.entities.service import Health, Service
 
 
@@ -91,7 +91,7 @@ class KialiExtendedClient(KialiClient):
             # update Rule
             if len(_data['rules']) > 0:
                 for _policy in _data['rules']:
-                    items.append(IstioConfig(
+                    items.append(Rule(
                         name=_policy['name'],
                         namespace=_namespace,
                         object_type=OBJECT_TYPE.RULE.text))

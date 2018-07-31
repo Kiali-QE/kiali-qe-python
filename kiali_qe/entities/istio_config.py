@@ -90,18 +90,18 @@ class Action(EntityBase):
 
 class Rule(EntityBase):
 
-    def __init__(self, name, namespace):
+    def __init__(self, name, namespace, object_type):
         self.name = name
         self.namespace = namespace
+        self.object_type = object_type
 
     def __str__(self):
-        return 'name:{}, namespace:{}'.format(
-            self.name, self.namespace)
+        return 'name:{}, namespace:{}, object_type:{}'.format(
+            self.name, self.namespace, self.object_type)
 
     def __repr__(self):
-        return "{}({}, {})".format(
-            type(self).__name__,
-            repr(self.name), repr(self.namespace))
+        return "{}({}, {}, {})".format(
+            type(self).__name__, repr(self.name), repr(self.namespace), repr(self.object_type))
 
     def __hash__(self):
         return (hash(self.name) ^ hash(self.namespace))
@@ -118,6 +118,7 @@ class Rule(EntityBase):
         if self.namespace != other.namespace:
             return False
         # advanced check
-        if not advanced_check:
-            return True
+        if advanced_check:
+            if self.object_type != other.object_type:
+                return False
         return True

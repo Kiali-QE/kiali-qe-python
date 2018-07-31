@@ -811,7 +811,7 @@ class ListViewIstioConfig(ListViewAbstract):
             _object_type = self.browser.text(
                 self.browser.element(locator=self.OBJECT_TYPE, parent=el))
             if str(_object_type) == IstioConfigObjectType.RULE.text:
-                _rule = Rule(name=_name, namespace=_namespace)
+                _rule = Rule(name=_name, namespace=_namespace, object_type=_object_type)
                 # append this item to the final list
                 _items.append(_rule)
             else:
