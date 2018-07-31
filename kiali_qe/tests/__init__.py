@@ -284,7 +284,7 @@ class IstioConfigPageTest(AbstractListPageTest):
                 if config_ui.is_equal(config_rest, advanced_check=False):
                     found = True
                     break
-            assert found, '{} not found in REST'.format(config_rest)
+            assert found, '{} not found in REST'.format(config_ui)
 
     def assert_details(self, name, namespace=None):
         logger.debug('Details: {}, {}'.format(name, namespace))
