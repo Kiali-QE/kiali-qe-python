@@ -219,3 +219,29 @@ class KialiExtendedClient(KialiClient):
                                             type=_data['objectType'],
                                             text=json.dumps(config_data))
         return config
+
+    def service_details(self, namespace, service_name):
+        """Returns details of Service.
+        Args:
+            namespaces: namespace where Service is located
+            service_name: name of Service
+        """
+
+        _service_data = super(KialiExtendedClient, self).service_details(
+            namespace=namespace,
+            service=service_name)
+        _service = None
+        if _service_data:
+            if 'health' in _service_data:
+                    # update health status
+                _health = Health.get_from_rest(_service_data['health'])
+            else:
+                _health = None
+            _service_rest = self.service_list(namespaces=[namespace],
+                                              service_names=[service_name]).pop()
+            _service = Service(
+                    namespace=namespace,
+                    name=_service_data['name'],
+                    istio_sidecar=_service_rest.istio_sidecar,
+                    health=_health)
+        return _service
