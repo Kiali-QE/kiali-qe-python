@@ -1,8 +1,11 @@
 """ Update this doc"""
+import re
+from datetime import datetime
+
 from widgetastic.widget import Checkbox, TextInput, Widget
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 from kiali_qe.components.enums import HelpMenuEnum, ApplicationVersionEnum, IstioConfigObjectType
-from kiali_qe.entities.service import Service, ServiceDetails
+from kiali_qe.entities.service import Service, ServiceDetails, VirtualService, DestinationRule
 from kiali_qe.entities.istio_config import IstioConfig, Rule, IstioConfigDetails
 from wait_for import wait_for
 
@@ -741,20 +744,29 @@ class ListViewAbstract(Widget):
 
 
 class ListViewServices(ListViewAbstract):
+    SERVICE_DETAILS_ROOT = './/div[contains(@class, "card-pf")]'
     SERVICE_HEADER = './/div[contains(@class, "card-pf-heading")]//h2'
     ISTIO_PROPERTIES = ('.//*[contains(@class, "card-pf-body")]'
                         '//strong[normalize-space(text())="{}"]/..')
-    CONFIG_DETAILS_ROOT = './/div[contains(@class, "card-pf")]'
     ISTIO_SIDECAR = 'Istio Sidecar'
 
     def get_details(self, name, namespace=None):
         self.open(name, namespace)
         _name = self.browser.text(locator=self.SERVICE_HEADER,
-                                  parent=self.CONFIG_DETAILS_ROOT)
+                                  parent=self.SERVICE_DETAILS_ROOT)
         _istio_sidecar = len(self.browser.elements(
                 parent=self.ISTIO_PROPERTIES.format(self.ISTIO_SIDECAR),
                 locator='.//img[contains(@class, "IstioLogo")]')) > 0
-        return ServiceDetails(name=_name, istio_sidecar=_istio_sidecar, health=None)
+
+        _table_view_vs = TableViewVirtualServices(self.parent, self.locator, self.logger)
+
+        _table_view_dr = TableViewDestinationRules(self.parent, self.locator, self.logger)
+
+        return ServiceDetails(name=_name, istio_sidecar=_istio_sidecar, health=None,
+                              virtual_services_number=_table_view_vs.number,
+                              destination_rules_number=_table_view_dr.number,
+                              virtual_services=_table_view_vs.all_items,
+                              destination_rules=_table_view_dr.all_items)
 
     @property
     def items(self):
@@ -832,4 +844,113 @@ class ListViewIstioConfig(ListViewAbstract):
                 _config = IstioConfig(name=_name, namespace=_namespace, object_type=_object_type)
                 # append this item to the final list
                 _items.append(_config)
+        return _items
+
+
+class TableViewAbstract(Widget):
+    SERVICE_DETAILS_ROOT = './/div[contains(@class, "card-pf")]'
+    SERVICES_TAB = '//div[@id="service-tabs"]//li//a[contains(text(), "{}")]/..'
+    ROOT = '//[contains(@class, "tab-pane") and contains(@class, "active") and \
+        contains(@class, "in")]'
+    ROWS = '//div[@id="{}"]//table[contains(@class, "table")]//tbody//tr'
+    COLUMN = './/td'
+
+    def __init__(self, parent, locator=None, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        if locator:
+            self.locator = locator
+        else:
+            self.locator = self.ROOT
+
+    def __locator__(self):
+        return self.locator
+
+    @property
+    def all_items(self):
+        return self.items
+
+
+class TableViewVirtualServices(TableViewAbstract):
+    VS_TEXT = 'Virtual Services'
+
+    def open(self):
+        tab = self.browser.element(locator=self.SERVICES_TAB.format(self.VS_TEXT),
+                                   parent=self.SERVICE_DETAILS_ROOT)
+        try:
+            self.browser.click(tab)
+        finally:
+            self.browser.click(tab)
+        wait_displayed(self)
+
+    @property
+    def number(self):
+        _vs_text = self.browser.text(locator=self.SERVICES_TAB.format(self.VS_TEXT),
+                                     parent=self.SERVICE_DETAILS_ROOT)
+        return int(re.search(r'\d+', _vs_text).group())
+
+    @property
+    def items(self):
+        self.open()
+
+        _items = []
+        for el in self.browser.elements(locator=self.ROWS.format(
+            'service-tabs-pane-virtualservices'),
+                                        parent=self.ROOT):
+            _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
+
+            _name = _columns[1].text.strip()
+            _created_at = _columns[2].text.strip()
+            _resource_version = _columns[3].text.strip()
+            # TODO: fetch status information from GUI
+            # create Virtual Service instance
+            _virtual_service = VirtualService(
+                name=_name,
+                created_at=datetime.strptime(_created_at, '%m/%d/%Y, %I:%M:%S %p'),
+                resource_version=_resource_version)
+            # append this item to the final list
+            _items.append(_virtual_service)
+        return _items
+
+
+class TableViewDestinationRules(TableViewAbstract):
+    DR_TEXT = 'Destination Rules'
+
+    def open(self):
+        tab = self.browser.element(locator=self.SERVICES_TAB.format(self.DR_TEXT),
+                                   parent=self.SERVICE_DETAILS_ROOT)
+        try:
+            self.browser.click(tab)
+        finally:
+            self.browser.click(tab)
+        wait_displayed(self)
+
+    @property
+    def number(self):
+        _dr_text = self.browser.text(locator=self.SERVICES_TAB.format(self.DR_TEXT),
+                                     parent=self.SERVICE_DETAILS_ROOT)
+        return int(re.search(r'\d+', _dr_text).group())
+
+    @property
+    def items(self):
+        self.open()
+
+        _items = []
+        for el in self.browser.elements(locator=self.ROWS.format(
+                'service-tabs-pane-destinationrules'),
+                                        parent=self.ROOT):
+            _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
+
+            _name = _columns[0].text.strip()
+            _host = _columns[3].text.strip()
+            _created_at = _columns[4].text.strip()
+            _resource_version = _columns[5].text.strip()
+            # TODO: fetch traffic policy and subset information from GUI
+            # create Virtual Service instance
+            _destination_rule = DestinationRule(
+                name=_name,
+                host=_host,
+                created_at=datetime.strptime(_created_at, '%m/%d/%Y, %I:%M:%S %p'),
+                resource_version=_resource_version)
+            # append this item to the final list
+            _items.append(_destination_rule)
         return _items

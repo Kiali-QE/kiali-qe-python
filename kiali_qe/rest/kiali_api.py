@@ -1,10 +1,17 @@
 import json
-from kiali.api import KialiClient
+from datetime import datetime
 
+from kiali.api import KialiClient
 from kiali_qe.components.enums import IstioConfigObjectType as OBJECT_TYPE
 from kiali_qe.components.enums import IstioConfigPageFilter as FILTER_TYPE
 from kiali_qe.entities.istio_config import IstioConfig, IstioConfigDetails, Rule
-from kiali_qe.entities.service import Health, Service
+from kiali_qe.entities.service import (
+    Health,
+    Service,
+    ServiceDetails,
+    VirtualService,
+    DestinationRule
+)
 
 
 class KialiExtendedClient(KialiClient):
@@ -239,9 +246,25 @@ class KialiExtendedClient(KialiClient):
                 _health = None
             _service_rest = self.service_list(namespaces=[namespace],
                                               service_names=[service_name]).pop()
-            _service = Service(
-                    namespace=namespace,
+            virtual_services = []
+            if _service_data['virtualServices']:
+                for _vs_data in _service_data['virtualServices']:
+                    virtual_services.append(VirtualService(
+                        name=_vs_data['name'],
+                        created_at=datetime.strptime(_vs_data['createdAt'], '%Y-%m-%dT%H:%M:%SZ'),
+                        resource_version=_vs_data['resourceVersion']))
+            destination_rules = []
+            if _service_data['destinationRules']:
+                for _dr_data in _service_data['destinationRules']:
+                    destination_rules.append(DestinationRule(
+                        name=_dr_data['name'],
+                        host=_dr_data['host'],
+                        created_at=datetime.strptime(_dr_data['createdAt'], '%Y-%m-%dT%H:%M:%SZ'),
+                        resource_version=_dr_data['resourceVersion']))
+            _service = ServiceDetails(
                     name=_service_data['name'],
                     istio_sidecar=_service_rest.istio_sidecar,
-                    health=_health)
+                    health=_health,
+                    virtual_services=virtual_services,
+                    destination_rules=destination_rules)
         return _service
