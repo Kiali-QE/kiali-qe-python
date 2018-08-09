@@ -229,8 +229,32 @@ class ServicesPageTest(AbstractListPageTest):
         assert service_details_rest
         assert name == service_details_rest.name
         # TODO add check for service openshift REST details
-        assert service_details_rest.istio_sidecar == service_details_ui.istio_sidecar
-        assert service_details_ui.is_equal(service_details_rest, advanced_check=False)
+        assert service_details_rest.istio_sidecar\
+            == service_details_ui.istio_sidecar
+        assert service_details_ui.is_equal(service_details_rest,
+                                           advanced_check=False)
+        assert service_details_ui.virtual_services_number\
+            == len(service_details_rest.virtual_services)
+        assert service_details_ui.destination_rules_number\
+            == len(service_details_rest.destination_rules)
+        assert service_details_ui.virtual_services_number\
+            == len(service_details_ui.virtual_services)
+        assert service_details_ui.destination_rules_number\
+            == len(service_details_ui.destination_rules)
+        for virtual_service_ui in service_details_ui.virtual_services:
+            found = False
+            for virtual_service_rest in service_details_rest.virtual_services:
+                if virtual_service_ui.is_equal(virtual_service_rest, advanced_check=True):
+                    found = True
+                    break
+            assert found, 'VS {} not found in REST'.format(virtual_service_ui)
+        for destination_rule_ui in service_details_ui.destination_rules:
+            found = False
+            for destination_rule_rest in service_details_rest.destination_rules:
+                if destination_rule_ui.is_equal(destination_rule_rest, advanced_check=True):
+                    found = True
+                    break
+            assert found, 'DR {} not found in REST'.format(destination_rule_ui)
 
     def assert_all_items(self, filters, force_clear_all=True):
         # apply filters
@@ -332,6 +356,11 @@ class IstioConfigPageTest(AbstractListPageTest):
         logger.debug('Details: {}, {}'.format(name, namespace))
         # load the page first
         self.page.load(force_load=True)
+        # TODO apply pagination feature in get_details
+        # apply filters
+        self.apply_filters(filters=[
+            {'name': IstioConfigPageFilter.NAMESPACE.text, 'value': namespace},
+            {'name': IstioConfigPageFilter.ISTIO_NAME.text, 'value': name}])
         # load config details page
         config_details_ui = self.page.content.get_details(name, namespace)
         assert config_details_ui

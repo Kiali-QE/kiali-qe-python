@@ -105,13 +105,14 @@ class Health(EntityBase):
                        o_total=_e_in_rest['outbound']['total'])
         # update deployment statuses
         _deployment_status_list = []
-        for _d_in_rest in health['deploymentStatuses']:
-            deployment_status = DeploymentStatus(
-                name=_d_in_rest['name'],
-                replicas=_d_in_rest['replicas'],
-                available=_d_in_rest['available'])
-            _deployment_status_list.append(deployment_status)
-        # update requests
+        if 'deploymentStatuses' in health:
+            for _d_in_rest in health['deploymentStatuses']:
+                deployment_status = DeploymentStatus(
+                    name=_d_in_rest['name'],
+                    replicas=_d_in_rest['replicas'],
+                    available=_d_in_rest['available'])
+                _deployment_status_list.append(deployment_status)
+            # update requests
         _r_rest = health['requests']
         _requests = Requests(
             request_count=_r_rest['requestCount'],
@@ -184,12 +185,20 @@ class ServiceDetails(object):
         health: health status
     """
 
-    def __init__(self, name, istio_sidecar=False, health=None):
+    def __init__(self, name, istio_sidecar=False, health=None, **kwargs):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
         self.istio_sidecar = istio_sidecar
         self.health = health
+        self.virtual_services_number = kwargs['virtual_services_number']\
+            if 'virtual_services_number' in kwargs else None
+        self.destination_rules_number = kwargs['destination_rules_number']\
+            if 'destination_rules_number' in kwargs else None
+        self.virtual_services = kwargs['virtual_services']\
+            if 'virtual_services' in kwargs else None
+        self.destination_rules = kwargs['destination_rules']\
+            if 'destination_rules' in kwargs else None
 
     def __str__(self):
         return 'name:{}, istio_sidecar:{}, health:{}'.format(
@@ -208,7 +217,7 @@ class ServiceDetails(object):
 
     def is_equal(self, other, advanced_check=True):
         # basic check
-        if not isinstance(other, Service):
+        if not isinstance(other, ServiceDetails):
             return False
         if self.name != other.name:
             return False
@@ -218,5 +227,106 @@ class ServiceDetails(object):
         if self.istio_sidecar != other.istio_sidecar:
             return False
         if not self.health.is_equal(other.health):
+            return False
+        return True
+
+
+class VirtualService(object):
+    """
+    Service class provides information details on VirtualService of Service Details.
+
+    Args:
+        name: name of the virtual service
+        created_at: creation datetime
+        resource_version: resource version
+    """
+
+    def __init__(self, name, created_at, resource_version):
+        if name is None:
+            raise KeyError("'name' should not be 'None'")
+        self.name = name
+        self.created_at = created_at
+        self.resource_version = resource_version
+
+    def __str__(self):
+        return 'name:{}, created_at:{}, resource_version:{}'.format(
+            self.name, self.created_at, self.resource_version)
+
+    def __repr__(self):
+        return "{}({}, {}".format(
+            type(self).__name__,
+            repr(self.name), repr(self.created_at), repr(self.resource_version))
+
+    def __hash__(self):
+        return (hash(self.name) ^ hash(self.created_at) ^ hash(self.resource_version))
+
+    def __eq__(self, other):
+        return self.is_equal(advanced_check=True)
+
+    def is_equal(self, other, advanced_check=True):
+        # basic check
+        if not isinstance(other, VirtualService):
+            return False
+        if self.name != other.name:
+            return False
+        # advanced check
+        if not advanced_check:
+            return True
+        if self.created_at != other.created_at:
+            return False
+        if self.resource_version != other.resource_version:
+            return False
+        return True
+
+
+class DestinationRule(object):
+    """
+    Service class provides information details on DestinationRule of Service Details.
+
+    Args:
+        name: name of the virtual service
+        host: the host of destination rule
+        created_at: creation datetime
+        resource_version: resource version
+    """
+
+    def __init__(self, name, host, created_at, resource_version):
+        if name is None:
+            raise KeyError("'name' should not be 'None'")
+        self.name = name
+        self.host = host
+        self.created_at = created_at
+        self.resource_version = resource_version
+
+    def __str__(self):
+        return 'name:{}, host:{}, created_at:{}, resource_version:{}'.format(
+            self.name, self.host, self.created_at, self.resource_version)
+
+    def __repr__(self):
+        return "{}({}, {}".format(
+            type(self).__name__,
+            repr(self.name), repr(self.host), repr(self.created_at), repr(self.resource_version))
+
+    def __hash__(self):
+        return (hash(self.name) ^ hash(self.host) ^ hash(self.created_at)
+                ^ hash(self.resource_version))
+
+    def __eq__(self, other):
+        return self.is_equal(advanced_check=True)
+
+    def is_equal(self, other, advanced_check=True):
+        # basic check
+        if not isinstance(other, DestinationRule):
+            return False
+        if self.name != other.name:
+            return False
+        if self.host != other.host:
+            return False
+        # advanced check
+        if not advanced_check:
+            return True
+        if self.created_at != other.created_at:
+            return False
+        if self.resource_version != other.resource_version:
             return False
         return True
