@@ -105,13 +105,14 @@ class Health(EntityBase):
                        o_total=_e_in_rest['outbound']['total'])
         # update deployment statuses
         _deployment_status_list = []
-        for _d_in_rest in health['deploymentStatuses']:
-            deployment_status = DeploymentStatus(
-                name=_d_in_rest['name'],
-                replicas=_d_in_rest['replicas'],
-                available=_d_in_rest['available'])
-            _deployment_status_list.append(deployment_status)
-        # update requests
+        if 'deploymentStatuses' in health:
+            for _d_in_rest in health['deploymentStatuses']:
+                deployment_status = DeploymentStatus(
+                    name=_d_in_rest['name'],
+                    replicas=_d_in_rest['replicas'],
+                    available=_d_in_rest['available'])
+                _deployment_status_list.append(deployment_status)
+            # update requests
         _r_rest = health['requests']
         _requests = Requests(
             request_count=_r_rest['requestCount'],
