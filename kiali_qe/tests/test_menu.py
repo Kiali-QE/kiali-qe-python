@@ -1,9 +1,11 @@
+import pytest
+
 from kiali_qe.components.enums import HelpMenuEnum, MainMenuEnum, UserMenuEnum
 from kiali_qe.pages import RootPage
 from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
 
-
+@pytest.mark.p_group9
 def test_menu(browser):
     # load root page
     page = RootPage(browser)
@@ -19,7 +21,7 @@ def test_menu(browser):
         page.main_menu.select(_menu)
         assert page.main_menu.selected == _menu
 
-
+@pytest.mark.p_group9
 def test_toggle(browser):
     # load root page
     page = RootPage(browser)
@@ -28,7 +30,7 @@ def test_toggle(browser):
     page.main_menu.expand()
     assert not page.main_menu.is_collapsed
 
-
+@pytest.mark.p_group9
 def test_help_menu(browser):
     # load root page
     page = RootPage(browser)
@@ -38,7 +40,7 @@ def test_help_menu(browser):
     assert is_equal(options_defined, options_listed), \
         ('Help menu mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
 
-
+@pytest.mark.p_group9
 def test_user_menu(browser):
     # load root page
     page = RootPage(browser)

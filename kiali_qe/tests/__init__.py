@@ -155,6 +155,7 @@ class AbstractListPageTest(object):
             ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
         # test page next, previous, first, last, to page
         total_pages = pagination.total_pages
+        logger.debug('Total pages found:{}'.format(total_pages))
         if total_pages > 1:
             # last page
             pagination.move_to_last_page()
@@ -182,7 +183,10 @@ class AbstractListPageTest(object):
                 assert len(self.page.content.items) == per_page
                 assert pagination.items_per_page == per_page
         # test total items
-        assert pagination.total_items == len(self.page.content.all_items)
+        total_items_pagin = pagination.total_items
+        total_items_page = len(self.page.content.all_items)
+        assert total_items_pagin == total_items_page, \
+            'Total items mismatch: pagination:{}, page:{}'.format(total_items_pagin, total_items_page)
 
 
 class ServicesPageTest(AbstractListPageTest):

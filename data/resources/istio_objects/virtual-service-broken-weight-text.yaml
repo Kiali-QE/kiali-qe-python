@@ -4,14 +4,14 @@ metadata:
   name: virtual-service-broken-weight-text-auto
 spec:
   hosts:
-  - reviews
+  - ratings
   http:
   - route:
     - destination:
-        host: reviews
+        host: ratings
         subset: v1
       weight: 40a
     - destination:
-        host: reviews
+        host: ratings
         subset: v2
       weight: 50
