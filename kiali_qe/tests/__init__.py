@@ -153,6 +153,8 @@ class AbstractListPageTest(object):
         logger.debug('options[defined:{}, listed:{}]'.format(options_defined, options_listed))
         assert is_equal(options_defined, options_listed), \
             ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
+        # set to minimum value so there is more pages to test
+        pagination.set_items_per_page(PaginationPerPage.FIVE.value)
         # test page next, previous, first, last, to page
         total_pages = pagination.total_pages
         logger.debug('Total pages found:{}'.format(total_pages))
