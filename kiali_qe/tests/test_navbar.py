@@ -11,7 +11,7 @@ def test_about(browser, kiali_client):
     # load root page
     page = RootPage(browser)
     _about = page.navbar.about()
-    assert _about.application_name == 'Kiali'
+    assert _about.application_logo
     versions_ui = _about.versions
     logger.debug('Versions information in UI:{}'.format(versions_ui))
     versions_defined = [item.text for item in ApplicationVersionEnum]

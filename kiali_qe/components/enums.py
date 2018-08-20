@@ -68,7 +68,6 @@ class GraphPageLayout(StringEnum):
 
 
 class GraphPageDisplayFilter(StringEnum):
-    LEGEND = ('Legend')
     NODE_LABELS = ('Node Names')
     TRAFFIC_ANIMATION = ('Traffic Animation')
 
@@ -85,6 +84,43 @@ class EdgeLabelsFilter(StringEnum):
     REQUEST_PERCENT = ('Requests percent of total')
     RESPONSE_TIME = ('Response time 95th percentile')
     SECURITY = ('Security')
+
+
+class WorkloadsPageFilter(StringEnum):
+    WORKLOAD_NAME = ('Workload Name')
+    WORKLOAD_TYPE = ('Workload Type')
+    ISTIO_SIDECAR = ('Istio Sidecar')
+    APP_LABEL = ('App Label')
+    VERSION_LABEL = ('Version Label')
+    NAMESPACE = ('Namespace')
+
+
+class WorkloadsPageSort(StringEnum):
+    NAMESPACE = ('Namespace')
+    WORKLOAD_NAME = ('Workload Name')
+    WORKLOAD_TYPE = ('Workload Type')
+    ISTIO_SIDECAR = ('IstioSidecar')
+    APP_LABEL = ('App Label')
+    VERSION_LABEL = ('Version Label')
+
+
+class WorkloadType(StringEnum):
+    DEPLOYMENT = ('Deployment')
+
+
+class IstioSidecar(StringEnum):
+    PRESENT = ('Present')
+    NOT_PRESENT = ('Not Present')
+
+
+class AppLabel(StringEnum):
+    PRESENT = ('Present')
+    NOT_PRESENT = ('Not Present')
+
+
+class VersionLabel(StringEnum):
+    PRESENT = ('Present')
+    NOT_PRESENT = ('Not Present')
 
 
 class ServicesPageFilter(StringEnum):

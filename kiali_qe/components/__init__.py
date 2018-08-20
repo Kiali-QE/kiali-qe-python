@@ -7,6 +7,7 @@ from selenium.common.exceptions import NoSuchElementException, StaleElementRefer
 from kiali_qe.components.enums import HelpMenuEnum, ApplicationVersionEnum, IstioConfigObjectType
 from kiali_qe.entities.service import Service, ServiceDetails, VirtualService, DestinationRule
 from kiali_qe.entities.istio_config import IstioConfig, Rule, IstioConfigDetails
+from kiali_qe.entities.workload import Workload, WorkloadDetails, WorkloadPod
 from wait_for import wait_for
 
 
@@ -18,7 +19,8 @@ def wait_displayed(obj, timeout='10s'):
 
 def wait_to_spinner_disappear(browser, timeout='5s', very_quiet=True, silent_failure=True):
     def _is_disappeared(browser):
-        return len(browser.elements(locator='//*[contains(@class, " spinner ")]')) == 0
+        return len(browser.elements(locator='//*[contains(@class, " spinner ")]',
+                                    parent='//*[contains(@class, "navbar")]')) == 0
     wait_for(
         _is_disappeared, func_args=[browser], timeout=timeout,
         delay=0.2, very_quiet=very_quiet, silent_failure=silent_failure)
@@ -578,7 +580,7 @@ class About(Widget):
     ROOT = '//*[contains(@class, "about-modal-pf")]'
     HEADER = './/*[contains(@class, "modal-header")]'
     BODY = './/*[contains(@class, "modal-body")]'
-    APP_NAME = BODY + '/h1'
+    APP_LOGO = BODY + '/h1/img'
     VERSION = BODY + '//*[contains(@class, "product-versions-pf")]//li'
     VERSION_NAME = './strong'
     TRADEMARK = BODY + '//*[contains(@class, "trademark-pf")]'
@@ -589,8 +591,8 @@ class About(Widget):
         wait_displayed(self)
 
     @property
-    def application_name(self):
-        return self.browser.text(self.browser.element(self.APP_NAME, parent=self))
+    def application_logo(self):
+        return self.browser.element(self.APP_LOGO, parent=self).is_displayed
 
     def close(self):
         self.browser.click(self.browser.element(self.CLOSE, parent=self))
@@ -709,6 +711,21 @@ class ListViewAbstract(Widget):
     ITEM_TEXT = './/*[contains(@class, "list-group-item-heading")]'
     SELECT_ITEM = ITEMS + '//*[text()="{}"]'
     SELECT_ITEM_WITH_NAMESPACE = SELECT_ITEM + '/small[text()="{}"]'
+    OBJECT_TYPE = './/*[contains(@class, "list-group-item-text")]//td'
+    DETAILS_ROOT = './/div[contains(@class, "card-pf")]'
+    HEADER = './/div[contains(@class, "card-pf-heading")]//h2'
+    ISTIO_PROPERTIES = ('.//*[contains(@class, "card-pf-body")]'
+                        '//strong[normalize-space(text())="{}"]/..')
+    PROPERTY_SECTIONS = ('.//*[contains(@class, "card-pf-body")]'
+                         '//strong[normalize-space(text())="{}"]/../..')
+    ISTIO_SIDECAR = 'Istio Sidecar'
+    PODS = 'Pods'
+    SERVICES = 'Services'
+    TYPE = 'Type'
+    IP = 'IP'
+    PORTS = 'Ports'
+    CREATED_AT = 'Created at'
+    RESOURCE_VERSION = 'Resource Version'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -722,11 +739,15 @@ class ListViewAbstract(Widget):
         return self.locator
 
     def open(self, name, namespace=None):
+        # TODO added wait for unstable performance
+        wait_to_spinner_disappear(self.browser)
         if namespace is not None:
             self.browser.click(self.browser.element(
                 self.SELECT_ITEM_WITH_NAMESPACE.format(name, namespace), parent=self))
         else:
             self.browser.click(self.browser.element(self.SELECT_ITEM.format(name), parent=self))
+
+        wait_to_spinner_disappear(self.browser)
         wait_displayed(self)
 
     @property
@@ -743,26 +764,104 @@ class ListViewAbstract(Widget):
         return items
 
 
-class ListViewServices(ListViewAbstract):
-    SERVICE_DETAILS_ROOT = './/div[contains(@class, "card-pf")]'
-    SERVICE_HEADER = './/div[contains(@class, "card-pf-heading")]//h2'
-    ISTIO_PROPERTIES = ('.//*[contains(@class, "card-pf-body")]'
-                        '//strong[normalize-space(text())="{}"]/..')
-    ISTIO_SIDECAR = 'Istio Sidecar'
+class ListViewWorkloads(ListViewAbstract):
 
     def get_details(self, name, namespace=None):
         self.open(name, namespace)
-        _name = self.browser.text(locator=self.SERVICE_HEADER,
-                                  parent=self.SERVICE_DETAILS_ROOT)
+        _name = self.browser.text(locator=self.HEADER,
+                                  parent=self.DETAILS_ROOT)
+        _type = self.browser.text(locator=self.ISTIO_PROPERTIES.format(self.TYPE),
+                                  parent=self.DETAILS_ROOT).replace(self.TYPE, '').strip()
+        _created_at = self.browser.text(locator=self.ISTIO_PROPERTIES.format(self.CREATED_AT),
+                                        parent=self.DETAILS_ROOT).replace(
+                                            self.CREATED_AT, '').strip()
+        _resource_version = self.browser.text(
+            locator=self.ISTIO_PROPERTIES.format(self.RESOURCE_VERSION),
+            parent=self.DETAILS_ROOT).replace(self.RESOURCE_VERSION, '').strip()
         _istio_sidecar = len(self.browser.elements(
                 parent=self.ISTIO_PROPERTIES.format(self.ISTIO_SIDECAR),
                 locator='.//img[contains(@class, "IstioLogo")]')) > 0
+
+        _table_view_pods = TableViewWorkloadPods(self.parent, self.locator, self.logger)
+
+        _table_view_services = TableViewServices(self.parent, self.locator, self.logger)
+
+        return WorkloadDetails(name=str(_name),
+                               workload_type=_type,
+                               created_at=datetime.strptime(_created_at, '%m/%d/%Y, %I:%M:%S %p'),
+                               resource_version=_resource_version,
+                               istio_sidecar=_istio_sidecar,
+                               pods_number=_table_view_pods.number,
+                               services_number=_table_view_services.number,
+                               pods=_table_view_pods.all_items,
+                               services=_table_view_services.all_items)
+
+    @property
+    def items(self):
+        _items = []
+        for el in self.browser.elements(self.ITEMS, parent=self):
+            # get workload name and namespace
+            name, namespace, type = self.browser.element(
+                locator=self.ITEM_TEXT, parent=el).text.split('\n')
+            _name = name.strip()
+            _namespace = namespace.strip()
+            _type = type.strip()
+            # update istio sidecar logo
+            _istio_sidecar = len(self.browser.elements(
+                parent=el, locator='.//img[contains(@class, "IstioLogo")]')) > 0
+            _app_label = len(self.browser.elements(
+                parent=el, locator='.//span[text()="app"]')) > 0
+            _version_label = len(self.browser.elements(
+                parent=el, locator='.//span[text()="version"]')) > 0
+            # workload object creation
+            _workload = Workload(
+                name=_name, namespace=_namespace, workload_type=_type,
+                istio_sidecar=_istio_sidecar,
+                app_label=_app_label,
+                version_label=_version_label)
+            # append this item to the final list
+            _items.append(_workload)
+        return _items
+
+
+class ListViewServices(ListViewAbstract):
+
+    def get_details(self, name, namespace=None):
+        self.open(name, namespace)
+        _name = self.browser.text(locator=self.HEADER,
+                                  parent=self.DETAILS_ROOT)
+        _istio_sidecar = len(self.browser.elements(
+                parent=self.ISTIO_PROPERTIES.format(self.ISTIO_SIDECAR),
+                locator='.//img[contains(@class, "IstioLogo")]')) > 0
+        _type = self.browser.text(locator=self.ISTIO_PROPERTIES.format(self.TYPE),
+                                  parent=self.DETAILS_ROOT).replace(self.TYPE, '').strip()
+        _ip = self.browser.text(locator=self.ISTIO_PROPERTIES.format(self.IP),
+                                parent=self.DETAILS_ROOT).replace(self.IP, '').strip()
+        _created_at = self.browser.text(
+            locator=self.ISTIO_PROPERTIES.format(self.CREATED_AT),
+            parent=self.DETAILS_ROOT).replace(self.CREATED_AT, '').strip()
+        _resource_version = self.browser.text(
+            locator=self.ISTIO_PROPERTIES.format(self.RESOURCE_VERSION),
+            parent=self.DETAILS_ROOT).replace(self.RESOURCE_VERSION, '').strip()
+        _ports = self.browser.text(
+            locator=self.PROPERTY_SECTIONS.format(self.PORTS),
+            parent=self.DETAILS_ROOT).replace(self.PORTS, '').strip()
 
         _table_view_vs = TableViewVirtualServices(self.parent, self.locator, self.logger)
 
         _table_view_dr = TableViewDestinationRules(self.parent, self.locator, self.logger)
 
-        return ServiceDetails(name=_name, istio_sidecar=_istio_sidecar, health=None,
+        return ServiceDetails(name=_name,
+                              created_at=(
+                                  datetime.strptime(
+                                      _created_at, '%m/%d/%Y, %I:%M:%S %p'
+                                      ) if _created_at != '-' else None),
+                              service_type=_type,
+                              resource_version=_resource_version,
+                              ip=_ip,
+                              ports=_ports.replace('\n', ''),
+                              istio_sidecar=_istio_sidecar,
+                              health=None,
                               virtual_services_number=_table_view_vs.number,
                               destination_rules_number=_table_view_dr.number,
                               virtual_services=_table_view_vs.all_items,
@@ -792,7 +891,6 @@ class ListViewServices(ListViewAbstract):
 class ListViewIstioConfig(ListViewAbstract):
     ACTION_HEADER = ('.//*[contains(@class, "list-group-item-text")]'
                      '//strong[normalize-space(text())="{}"]/..')
-    OBJECT_TYPE = './/*[contains(@class, "list-group-item-text")]//td'
     CONFIG_HEADER = './/div[contains(@class, "row")]//h1'
     CONFIG_TEXT = './/div[contains(@class, "ace_content")]'
     CONFIG_DETAILS_ROOT = './/div[contains(@class, "container-cards-pf")]'
@@ -953,4 +1051,92 @@ class TableViewDestinationRules(TableViewAbstract):
                 resource_version=_resource_version)
             # append this item to the final list
             _items.append(_destination_rule)
+        return _items
+
+
+class TableViewWorkloadPods(TableViewAbstract):
+    POD_TEXT = 'Pods'
+
+    def open(self):
+        tab = self.browser.element(locator=self.SERVICES_TAB.format(self.POD_TEXT),
+                                   parent=self.SERVICE_DETAILS_ROOT)
+        try:
+            self.browser.click(tab)
+        finally:
+            self.browser.click(tab)
+        wait_displayed(self)
+
+    @property
+    def number(self):
+        _vs_text = self.browser.text(locator=self.SERVICES_TAB.format(self.POD_TEXT),
+                                     parent=self.SERVICE_DETAILS_ROOT)
+        return int(re.search(r'\d+', _vs_text).group())
+
+    @property
+    def items(self):
+        self.open()
+
+        _items = []
+        for el in self.browser.elements(locator=self.ROWS.format(
+            'service-tabs-pane-pods'),
+                                        parent=self.ROOT):
+            _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
+
+            _name = _columns[1].text.strip()
+            _created_at = _columns[2].text.strip()
+            _created_by = _columns[3].text.strip()
+            _istio_init_containers = _columns[5].text.strip()
+            _istio_containers = _columns[6].text.strip()
+            # TODO: fetch status information from GUI
+            _items.append(WorkloadPod(
+                        name=str(_name),
+                        created_at=_created_at,
+                        created_by=_created_by,
+                        istio_init_containers=_istio_init_containers,
+                        istio_containers=_istio_containers))
+        return _items
+
+
+class TableViewServices(TableViewAbstract):
+    SERVICES_TEXT = 'Services'
+
+    def open(self):
+        tab = self.browser.element(locator=self.SERVICES_TAB.format(self.SERVICES_TEXT),
+                                   parent=self.SERVICE_DETAILS_ROOT)
+        try:
+            self.browser.click(tab)
+        finally:
+            self.browser.click(tab)
+        wait_displayed(self)
+
+    @property
+    def number(self):
+        _vs_text = self.browser.text(locator=self.SERVICES_TAB.format(self.SERVICES_TEXT),
+                                     parent=self.SERVICE_DETAILS_ROOT)
+        return int(re.search(r'\d+', _vs_text).group())
+
+    @property
+    def items(self):
+        self.open()
+
+        _items = []
+        for el in self.browser.elements(locator=self.ROWS.format(
+            'service-tabs-pane-services'),
+                                        parent=self.ROOT):
+            _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
+
+            _name = _columns[0].text.strip()
+            _created_at = _columns[1].text.strip()
+            _type = _columns[2].text.strip()
+            _resource_version = _columns[4].text.strip()
+            _ip = _columns[5].text.strip()
+            _ports = _columns[6].text.strip()
+            # TODO: fetch Label information from GUI
+            _items.append(ServiceDetails(
+                        name=_name,
+                        created_at=datetime.strptime(_created_at, '%m/%d/%Y, %I:%M:%S %p'),
+                        service_type=str(_type),
+                        resource_version=str(_resource_version),
+                        ip=str(_ip),
+                        ports=_ports.replace('\n', '')))
         return _items
