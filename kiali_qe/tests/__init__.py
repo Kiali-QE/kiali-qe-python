@@ -186,7 +186,8 @@ class AbstractListPageTest(object):
         total_items_pagin = pagination.total_items
         total_items_page = len(self.page.content.all_items)
         assert total_items_pagin == total_items_page, \
-            'Total items mismatch: pagination:{}, page:{}'.format(total_items_pagin, total_items_page)
+            'Total items mismatch: pagination:{}, page:{}'.format(total_items_pagin,
+                                                                  total_items_page)
 
 
 class ServicesPageTest(AbstractListPageTest):

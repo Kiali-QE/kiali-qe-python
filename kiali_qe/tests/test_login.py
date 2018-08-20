@@ -3,6 +3,7 @@ from kiali_qe.components import Notification
 from kiali_qe.pages import RootPage
 from kiali_qe.utils.log import logger
 
+
 @pytest.mark.p_group8
 def test_login(browser):
     # load root page
@@ -15,6 +16,7 @@ def test_login(browser):
     logger.debug('Notifications on screen:{}'.format(page.notifications.items))
     assert not page.notifications.contains(type=Notification.TYPE_DANGER)
     assert not page.notifications.contains(type=Notification.TYPE_WARNING)
+
 
 @pytest.mark.p_group8
 def test_invalid_login(browser):

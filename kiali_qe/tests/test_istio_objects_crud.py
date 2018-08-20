@@ -31,6 +31,7 @@ QUOTA_SPEC_BINDING = 'quota-spec-binding.yaml'
 GATEWAY = 'gateway.yaml'
 SERVICE_ENTRY = 'service-entry.yaml'
 
+
 @pytest.mark.p_group1
 def test_destination_rule(kiali_client, openshift_client, browser):
     destination_rule = get_yaml(istio_objects_path.strpath, DEST_RULE)
@@ -50,6 +51,7 @@ def test_destination_rule(kiali_client, openshift_client, browser):
                        kind='DestinationRule',
                        api_version='networking.istio.io/v1alpha3',
                        service_name=DETAILS)
+
 
 @pytest.mark.p_group1
 def test_destination_rule_broken(kiali_client, openshift_client, browser):
@@ -71,11 +73,12 @@ def test_destination_rule_broken(kiali_client, openshift_client, browser):
                        api_version='networking.istio.io/v1alpha3',
                        service_name=DETAILS)
 
+
 @pytest.mark.p_group2
 def test_virtual_service(kiali_client, openshift_client, browser):
     virtual_service = get_yaml(istio_objects_path.strpath, VIRTUAL_SERVICE)
     virtual_service_dict = get_dict(istio_objects_path.strpath, VIRTUAL_SERVICE)
-    _create_dest_rule_vs(openshift_client,DEST_RULE_VS_REVIEWS)
+    _create_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
     _istio_config_test(kiali_client, openshift_client, browser,
                        virtual_service_dict,
@@ -91,7 +94,8 @@ def test_virtual_service(kiali_client, openshift_client, browser):
                        kind='VirtualService',
                        api_version='networking.istio.io/v1alpha3',
                        service_name=REVIEWS)
-    _delete_dest_rule_vs(openshift_client,DEST_RULE_VS_REVIEWS)
+    _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
+
 
 @pytest.mark.p_group2
 def test_virtual_service_broken(kiali_client, openshift_client, browser):
@@ -113,7 +117,8 @@ def test_virtual_service_broken(kiali_client, openshift_client, browser):
                        kind='VirtualService',
                        api_version='networking.istio.io/v1alpha3',
                        service_name=REVIEWS)
-    _delete_dest_rule_vs(openshift_client,DEST_RULE_VS_REVIEWS)
+    _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
+
 
 @pytest.mark.p_group2
 def test_virtual_service_broken_weight(kiali_client, openshift_client, browser):
@@ -137,7 +142,8 @@ def test_virtual_service_broken_weight(kiali_client, openshift_client, browser):
                        kind='VirtualService',
                        api_version='networking.istio.io/v1alpha3',
                        service_name=REVIEWS)
-    _delete_dest_rule_vs(openshift_client,DEST_RULE_VS_REVIEWS)
+    _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
+
 
 @pytest.mark.p_group3
 def test_virtual_service_broken_weight_text(kiali_client, openshift_client, browser):
@@ -145,7 +151,7 @@ def test_virtual_service_broken_weight_text(kiali_client, openshift_client, brow
                                       VIRTUAL_SERVICE_BROKEN_WEIGHT_TEXT)
     virtual_service_broken_dict = get_dict(istio_objects_path.strpath,
                                            VIRTUAL_SERVICE_BROKEN_WEIGHT_TEXT)
-    _create_dest_rule_vs(openshift_client,DEST_RULE_VS_RATINGS)
+    _create_dest_rule_vs(openshift_client, DEST_RULE_VS_RATINGS)
 
     _istio_config_test(kiali_client, openshift_client, browser,
                        virtual_service_broken_dict,
@@ -162,6 +168,7 @@ def test_virtual_service_broken_weight_text(kiali_client, openshift_client, brow
                        api_version='networking.istio.io/v1alpha3',
                        service_name=RATINGS)
     _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_RATINGS)
+
 
 @pytest.mark.p_group3
 def test_quota_spec(kiali_client, openshift_client, browser):
@@ -181,6 +188,7 @@ def test_quota_spec(kiali_client, openshift_client, browser):
                        api_version='config.istio.io/v1alpha2',
                        service_name=RATINGS)
 
+
 @pytest.mark.p_group3
 def test_quota_spec_binding(kiali_client, openshift_client, browser):
     quota_spec_binding = get_yaml(istio_objects_path.strpath, QUOTA_SPEC_BINDING)
@@ -199,6 +207,7 @@ def test_quota_spec_binding(kiali_client, openshift_client, browser):
                        api_version='config.istio.io/v1alpha2',
                        service_name=RATINGS)
 
+
 @pytest.mark.p_group2
 def test_gateway(kiali_client, openshift_client, browser):
     gateway = get_yaml(istio_objects_path.strpath, GATEWAY)
@@ -216,6 +225,7 @@ def test_gateway(kiali_client, openshift_client, browser):
                        kind='Gateway',
                        api_version='networking.istio.io/v1alpha3',
                        service_name=REVIEWS)
+
 
 @pytest.mark.p_group1
 def test_service_entry(kiali_client, openshift_client, browser):

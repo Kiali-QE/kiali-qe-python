@@ -67,7 +67,9 @@ def _get_driver(capabilities):
     command_executor = RemoteConnection(cfg.selenium.web_driver, resolve_ip=False)
     # increase the timeout because we are waiting for new pod to be created which takes some time
     command_executor.set_timeout(120)
-    # using keep_alive=True which should save some connections https://github.com/SeleniumHQ/selenium/issues/5758 and https://github.com/seleniumhq/selenium/issues/3457
+    # using keep_alive=True which should save some connections
+    # https://github.com/SeleniumHQ/selenium/issues/5758
+    # and https://github.com/seleniumhq/selenium/issues/3457
     driver = webdriver.Remote(command_executor, desired_capabilities=capabilities, keep_alive=True)
     # reset the timeout to default, only driver creation is taking so much time
     command_executor.reset_timeout()

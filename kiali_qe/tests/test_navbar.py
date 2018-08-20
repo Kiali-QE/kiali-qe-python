@@ -5,6 +5,7 @@ from kiali_qe.pages import RootPage
 from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
 
+
 @pytest.mark.p_group10
 def test_about(browser, kiali_client):
     # load root page
@@ -48,6 +49,7 @@ def _get_version(versions, key):
     for item in versions:
         if item['name'] == key:
             return item['version']
+
 
 @pytest.mark.p_group10
 def test_help_menu(browser):
