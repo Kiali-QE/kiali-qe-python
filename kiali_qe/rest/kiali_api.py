@@ -262,7 +262,7 @@ class KialiExtendedClient(KialiClient):
                         created_at=datetime.strptime(_dr_data['createdAt'], '%Y-%m-%dT%H:%M:%SZ'),
                         resource_version=_dr_data['resourceVersion']))
             _service = ServiceDetails(
-                    name=_service_data['name'],
+                    name=_service_data['service']['name'],
                     istio_sidecar=_service_rest.istio_sidecar,
                     health=_health,
                     virtual_services=virtual_services,
