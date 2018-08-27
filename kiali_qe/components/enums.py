@@ -8,6 +8,8 @@ class StringEnum(Enum):
 
 class MainMenuEnum(StringEnum):
     GRAPH = ('Graph')
+    APPLICATIONS = ('Applications')
+    WORKLOADS = ('Workloads')
     SERVICES = ('Services')
     ISTIO_CONFIG = ('Istio Config')
     DISTRIBUTED_TRACING = ('Distributed Tracing')
