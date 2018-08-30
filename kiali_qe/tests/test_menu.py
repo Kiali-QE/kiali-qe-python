@@ -18,6 +18,8 @@ def test_menu(browser):
         ('Menus mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
     # navigate to menus
     for _menu in options_listed:
+        if str(_menu) == MainMenuEnum.DISTRIBUTED_TRACING.text:
+            continue
         logger.debug('Testing menu: {}'.format(_menu))
         page.main_menu.select(_menu)
         assert page.main_menu.selected == _menu
