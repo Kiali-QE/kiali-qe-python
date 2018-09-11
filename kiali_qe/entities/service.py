@@ -121,7 +121,7 @@ class Health(EntityBase):
             envoy=_envoy, deployment_statuses=_deployment_status_list, requests=_requests)
 
 
-class Service(object):
+class Service(EntityBase):
     """
     Service class provides information details on Services list page.
 
@@ -155,7 +155,7 @@ class Service(object):
         return (hash(self.name) ^ hash(self.namespace) ^ hash(self.istio_sidecar))
 
     def __eq__(self, other):
-        return self.is_equal(advanced_check=True)
+        return self.is_equal(other, advanced_check=True)
 
     def is_equal(self, other, advanced_check=True):
         # basic check
@@ -175,7 +175,7 @@ class Service(object):
         return True
 
 
-class ServiceDetails(object):
+class ServiceDetails(EntityBase):
     """
     Service class provides information details on Service details page.
 
@@ -185,12 +185,23 @@ class ServiceDetails(object):
         health: health status
     """
 
-    def __init__(self, name, istio_sidecar=False, health=None, **kwargs):
+    def __init__(self, name, created_at, service_type,
+                 resource_version, ip, ports,
+                 istio_sidecar=False, health=None, **kwargs):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
         self.istio_sidecar = istio_sidecar
         self.health = health
+        self.created_at = created_at
+        self.service_type = service_type
+        self.resource_version = resource_version
+        self.ip = ip
+        self.ports = ports
+        self.workloads_number = kwargs['workloads_number']\
+            if 'workloads_number' in kwargs else None
+        self.source_services_number = kwargs['source_services_number']\
+            if 'source_services_number' in kwargs else None
         self.virtual_services_number = kwargs['virtual_services_number']\
             if 'virtual_services_number' in kwargs else None
         self.destination_rules_number = kwargs['destination_rules_number']\
@@ -199,6 +210,10 @@ class ServiceDetails(object):
             if 'virtual_services' in kwargs else None
         self.destination_rules = kwargs['destination_rules']\
             if 'destination_rules' in kwargs else None
+        self.workloads = kwargs['workloads']\
+            if 'workloads' in kwargs else None
+        self.source_services = kwargs['source_services']\
+            if 'source_services' in kwargs else None
 
     def __str__(self):
         return 'name:{}, istio_sidecar:{}, health:{}'.format(
@@ -213,7 +228,7 @@ class ServiceDetails(object):
         return (hash(self.name) ^ hash(self.istio_sidecar))
 
     def __eq__(self, other):
-        return self.is_equal(advanced_check=True)
+        return self.is_equal(other, advanced_check=True)
 
     def is_equal(self, other, advanced_check=True):
         # basic check
@@ -221,17 +236,28 @@ class ServiceDetails(object):
             return False
         if self.name != other.name:
             return False
+        if self.created_at != other.created_at:
+            return False
+        if self.service_type != other.service_type:
+            return False
+        if self.resource_version != other.resource_version:
+            return False
+        if self.ip != other.ip:
+            return False
+        if self.ports != other.ports:
+            return False
         # advanced check
         if not advanced_check:
             return True
         if self.istio_sidecar != other.istio_sidecar:
             return False
-        if not self.health.is_equal(other.health):
-            return False
+        # TODO check health
+        # if not self.health.is_equal(other.health):
+        #    return False
         return True
 
 
-class VirtualService(object):
+class VirtualService(EntityBase):
     """
     Service class provides information details on VirtualService of Service Details.
 
@@ -261,7 +287,7 @@ class VirtualService(object):
         return (hash(self.name) ^ hash(self.created_at) ^ hash(self.resource_version))
 
     def __eq__(self, other):
-        return self.is_equal(advanced_check=True)
+        return self.is_equal(other, advanced_check=True)
 
     def is_equal(self, other, advanced_check=True):
         # basic check
@@ -279,7 +305,7 @@ class VirtualService(object):
         return True
 
 
-class DestinationRule(object):
+class DestinationRule(EntityBase):
     """
     Service class provides information details on DestinationRule of Service Details.
 
@@ -312,7 +338,7 @@ class DestinationRule(object):
                 ^ hash(self.resource_version))
 
     def __eq__(self, other):
-        return self.is_equal(advanced_check=True)
+        return self.is_equal(other, advanced_check=True)
 
     def is_equal(self, other, advanced_check=True):
         # basic check

@@ -12,6 +12,11 @@ from kiali_qe.entities.service import (
     VirtualService,
     DestinationRule
 )
+from kiali_qe.entities.workload import (
+    Workload,
+    WorkloadDetails,
+    WorkloadPod
+)
 
 
 class KialiExtendedClient(KialiClient):
@@ -57,6 +62,40 @@ class KialiExtendedClient(KialiClient):
         if len(service_names) > 0:
             filtered_list = []
             for _name in service_names:
+                filtered_list.extend([_i for _i in items if _name in _i.name])
+            return set(filtered_list)
+        return items
+
+    def workload_list(self, namespaces=[], workload_names=[]):
+        """Returns list of workloads.
+        Args:
+            namespaces: can be zero or any number of namespaces
+            workload_names: can be zero or any number of workloads
+        """
+        items = []
+        namespace_list = []
+        if len(namespaces) > 0:
+            namespace_list.extend(namespaces)
+        else:
+            namespace_list = self.namespace_list()
+        # update items
+        for _namespace in namespace_list:
+            _data = super(KialiExtendedClient, self).workload_list(namespace=_namespace)
+            _workloads = _data['workloads']
+            if _workloads:
+                for _workload_rest in _workloads:
+                    _workload = Workload(
+                        namespace=_namespace,
+                        name=_workload_rest['name'],
+                        workload_type=_workload_rest['type'],
+                        istio_sidecar=_workload_rest['istioSidecar'],
+                        app_label=_workload_rest['appLabel'],
+                        version_label=_workload_rest['versionLabel'])
+                    items.append(_workload)
+        # filter by workload name
+        if len(workload_names) > 0:
+            filtered_list = []
+            for _name in workload_names:
                 filtered_list.extend([_i for _i in items if _name in _i.name])
             return set(filtered_list)
         return items
@@ -261,10 +300,99 @@ class KialiExtendedClient(KialiClient):
                         host=_dr_data['host'],
                         created_at=datetime.strptime(_dr_data['createdAt'], '%Y-%m-%dT%H:%M:%SZ'),
                         resource_version=_dr_data['resourceVersion']))
+            _ports = ''
+            for _port in _service_data['service']['ports']:
+                _ports += '{} {} ({})'.format(_port['protocol'], _port['name'], _port['port'])
             _service = ServiceDetails(
                     name=_service_data['service']['name'],
                     istio_sidecar=_service_rest.istio_sidecar,
+                    created_at=datetime.strptime(
+                        _service_data['service']['createdAt'], '%Y-%m-%dT%H:%M:%SZ'),
+                    resource_version=_service_data['service']['resourceVersion'],
+                    service_type=_service_data['service']['type'],
+                    ip=_service_data['service']['ip'],
+                    ports=_ports,
                     health=_health,
                     virtual_services=virtual_services,
                     destination_rules=destination_rules)
         return _service
+
+    def workload_details(self, namespace, workload_name):
+        """Returns details of Workload.
+        Args:
+            namespaces: namespace where Workload is located
+            workload_name: name of Workload
+        """
+
+        _workload_data = super(KialiExtendedClient, self).workload_details(
+            namespace=namespace,
+            workload=workload_name)
+        _workload = None
+        if _workload_data:
+            _workload_rest = self.workload_list(namespaces=[namespace],
+                                                workload_names=[workload_name]).pop()
+            _services = []
+            if _workload_data['services']:
+                for _ws_data in _workload_data['services']:
+                    _ports = ''
+                    for _port in _ws_data['ports']:
+                        _ports += '{} {} ({})'.format(
+                            _port['protocol'], _port['name'], _port['port'])
+                    _services.append(ServiceDetails(
+                        name=_ws_data['name'],
+                        created_at=datetime.strptime(_ws_data['createdAt'], '%Y-%m-%dT%H:%M:%SZ'),
+                        service_type=_ws_data['type'],
+                        ip=_ws_data['ip'],
+                        ports=_ports,
+                        resource_version=_ws_data['resourceVersion']))
+            _workload_pods = []
+            if _workload_data['pods']:
+                for _pod_data in _workload_data['pods']:
+                    _istio_init_containers = ''
+                    _istio_containers = ''
+                    if _pod_data['istioContainers']:
+                        _istio_containers = _pod_data['istioContainers'][0]['image']
+                    if _pod_data['istioInitContainers']:
+                        _istio_init_containers = _pod_data['istioInitContainers'][0]['image']
+                    _created_by = '{} ({})'.format(_pod_data['createdBy'][0]['name'],
+                                                   _pod_data['createdBy'][0]['kind'])
+                    _pod = WorkloadPod(
+                        name=str(_pod_data['name']),
+                        created_at=datetime.strptime(
+                            _pod_data['createdAt'],
+                            '%Y-%m-%dT%H:%M:%SZ').strftime('%m/%d/%Y, %I:%M:%S %p'),
+                        created_by=_created_by,
+                        istio_init_containers=str(_istio_init_containers),
+                        istio_containers=str(_istio_containers))
+                    _workload_pods.append(_pod)
+
+            _pods = []
+            if len(_workload_pods) > 1:
+                _pod = WorkloadPod(
+                    name='{}... ({} replicas)'.format(_pod.name[:-5], len(_workload_pods)),
+                    created_at='{} and {}'.format(
+                        _pod.created_at, _workload_pods[len(_workload_pods)-1].created_at),
+                    created_by=_workload_pods[0].created_by,
+                    istio_init_containers=_workload_pods[0].istio_init_containers,
+                    istio_containers=_workload_pods[0].istio_containers)
+                _pods.append(_pod)
+            elif len(_workload_pods) == 1:
+                _pod = WorkloadPod(
+                    name='{} (1 replica)'.format(_workload_pods[0].name),
+                    created_at=_workload_pods[0].created_at,
+                    created_by=_workload_pods[0].created_by,
+                    istio_init_containers=_workload_pods[0].istio_init_containers,
+                    istio_containers=_workload_pods[0].istio_containers)
+                _pods.append(_pod)
+            # TODO get labels
+            _workload = WorkloadDetails(
+                name=_workload_data['name'],
+                istio_sidecar=_workload_rest.istio_sidecar,
+                workload_type=_workload_data['type'],
+                created_at=datetime.strptime(_workload_data['createdAt'], '%Y-%m-%dT%H:%M:%SZ'),
+                resource_version=_workload_data['resourceVersion'],
+                pods_number=len(_workload_pods),
+                services_number=len(_services),
+                pods=_pods,
+                services=_services)
+        return _workload

@@ -18,7 +18,7 @@ class IstioConfig(EntityBase):
             type(self).__name__, repr(self.name), repr(self.namespace), repr(self.object_type))
 
     def __eq__(self, other):
-        return self.is_equal(advanced_check=True)
+        return self.is_equal(other, advanced_check=True)
 
     def is_equal(self, other, advanced_check=True):
         # basic check
@@ -107,7 +107,7 @@ class Rule(EntityBase):
         return (hash(self.name) ^ hash(self.namespace))
 
     def __eq__(self, other):
-        return self.is_equal(advanced_check=True)
+        return self.is_equal(other, advanced_check=True)
 
     def is_equal(self, other, advanced_check=True):
         # basic check

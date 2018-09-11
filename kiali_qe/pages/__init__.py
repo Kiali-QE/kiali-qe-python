@@ -6,6 +6,7 @@ from kiali_qe.components import (
     Filter,
     ListViewIstioConfig,
     ListViewServices,
+    ListViewWorkloads,
     Login,
     MainMenu,
     Notifications,
@@ -95,6 +96,15 @@ class GraphPage(RootPage):
     filter = CheckBoxFilter()
     refresh = Button(locator='.//button//*[contains(@class, "fa-refresh")]')
     # TODO: implement graph control code
+
+
+class WorkloadsPage(RootPage):
+    PAGE_MENU = MENU.WORKLOADS.text
+
+    filter = Filter()
+    sort = SortDropDown(locator=XP_DROP_DOWN.format('sortTypeMenu'))
+    content = ListViewWorkloads()
+    pagination = Pagination()
 
 
 class ServicesPage(RootPage):
