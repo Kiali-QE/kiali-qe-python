@@ -5,12 +5,18 @@ from kiali_qe.components.enums import (
     PaginationPerPage,
     ServicesPageFilter,
     IstioConfigPageFilter,
-    WorkloadsPageFilter
+    WorkloadsPageFilter,
+    ApplicationsPageFilter
 )
 from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
 
-from kiali_qe.pages import ServicesPage, IstioConfigPage, WorkloadsPage
+from kiali_qe.pages import (
+    ServicesPage,
+    IstioConfigPage,
+    WorkloadsPage,
+    ApplicationsPage
+)
 
 
 class AbstractListPageTest(object):
@@ -193,6 +199,98 @@ class AbstractListPageTest(object):
                                                                   total_items_page)
 
 
+class ApplicationsPageTest(AbstractListPageTest):
+    FILTER_ENUM = ApplicationsPageFilter
+
+    def __init__(self, kiali_client, openshift_client, browser):
+        AbstractListPageTest.__init__(
+            self, kiali_client=kiali_client,
+            openshift_client=openshift_client, page=ApplicationsPage(browser))
+        self.browser = browser
+
+    def assert_random_details(self, filters, force_clear_all=True):
+        # apply filters
+        self.apply_filters(filters=filters, force_clear_all=force_clear_all)
+        # get applications from ui
+        applications_ui = self.page.content.all_items
+        # random applications filters
+        assert len(applications_ui) > 0
+        if len(applications_ui) > 3:
+            _random_applications = random.sample(applications_ui, 3)
+        else:
+            _random_applications = applications_ui
+        # create filters
+        for _selected_application in _random_applications:
+            self.assert_details(_selected_application.name, _selected_application.namespace)
+
+    def assert_details(self, name, namespace):
+        logger.debug('Details: {}, {}'.format(name, namespace))
+        # load the page first
+        self.page.load(force_load=True)
+        # TODO apply pagination feature in get_details
+        # apply filters
+        self.apply_filters(filters=[
+            {'name': ApplicationsPageFilter.NAMESPACE.text, 'value': namespace},
+            {'name': ApplicationsPageFilter.APP_NAME.text, 'value': name}])
+        # load application details page
+        application_details_ui = self.page.content.get_details(name, namespace)
+        assert application_details_ui
+        assert name == application_details_ui.name
+        # get application detals from rest
+        application_details_rest = self.kiali_client.application_details(
+            namespace=namespace,
+            application_name=name)
+        assert application_details_rest
+        assert name == application_details_rest.name
+        # TODO add check for application openshift REST details
+        assert application_details_ui.is_equal(application_details_rest,
+                                               advanced_check=True), \
+            'Application UI {} not equal to REST {}'\
+            .format(application_details_ui, application_details_rest)
+        for workload_ui in application_details_ui.workloads:
+            found = False
+            for workload_rest in application_details_rest.workloads:
+                if workload_ui.is_equal(workload_rest,
+                                        advanced_check=True):
+                    found = True
+                    break
+            assert found, 'Workload {} not found in REST {}'.format(workload_ui, workload_rest)
+
+    def assert_all_items(self, filters, force_clear_all=True):
+        # apply filters
+        self.apply_filters(filters=filters, force_clear_all=force_clear_all)
+
+        # get applications from ui
+        applications_ui = self.page.content.all_items
+        # get applications from rest api
+        _ns = self.FILTER_ENUM.NAMESPACE.text
+        _namespaces = [_f['value'] for _f in filters if _f['name'] == _ns]
+        _sn = self.FILTER_ENUM.APP_NAME.text
+        _application_names = [_f['value'] for _f in filters if _f['name'] == _sn]
+        logger.debug('Namespaces:{}, Application names:{}'.format(_namespaces, _application_names))
+        applications_rest = self.kiali_client.application_list(
+            namespaces=_namespaces, application_names=_application_names)
+        # TODO get applications from OC client
+
+        # compare all results
+        logger.debug('Namespaces:{}, Service names:{}'.format(_namespaces, _application_names))
+        logger.debug('Items count[UI:{}, REST:{}]'.format(
+            len(applications_ui), len(applications_rest)))
+        logger.debug('Applications UI:{}'.format(applications_ui))
+        logger.debug('Applications REST:{}'.format(applications_rest))
+
+        assert len(applications_ui) == len(applications_rest)
+
+        for application_ui in applications_ui:
+            found = False
+            for application_rest in applications_rest:
+                if application_ui.is_equal(application_rest, advanced_check=True):
+                    found = True
+                    break
+            assert found, '{} not found in REST'.format(application_ui)
+            found = False
+
+
 class WorkloadsPageTest(AbstractListPageTest):
     FILTER_ENUM = WorkloadsPageFilter
 
@@ -238,7 +336,9 @@ class WorkloadsPageTest(AbstractListPageTest):
         assert name == workload_details_rest.name
         # TODO add check for workload openshift REST details
         assert workload_details_ui.is_equal(workload_details_rest,
-                                            advanced_check=True)
+                                            advanced_check=True), \
+            'Workload UI {} not equal to REST {}'\
+            .format(workload_details_ui, workload_details_rest)
         if workload_details_ui.pods_number != workload_details_rest.pods_number:
             return False
         if workload_details_ui.services_number != workload_details_rest.services_number:
@@ -250,7 +350,7 @@ class WorkloadsPageTest(AbstractListPageTest):
                                    advanced_check=True):
                     found = True
                     break
-            assert found, 'Pod {} not found in REST'.format(pod_ui)
+            assert found, 'Pod {} not found in REST {}'.format(pod_ui, pod_rest)
         for service_ui in workload_details_ui.services:
             found = False
             for service_rest in workload_details_rest.services:
@@ -258,7 +358,7 @@ class WorkloadsPageTest(AbstractListPageTest):
                                        advanced_check=True):
                     found = True
                     break
-            assert found, 'Service {} not found in REST'.format(service_ui)
+            assert found, 'Service {} not found in REST {}'.format(service_ui, service_rest)
 
     def assert_all_items(self, filters, force_clear_all=True):
         # apply filters
@@ -351,7 +451,9 @@ class ServicesPageTest(AbstractListPageTest):
         assert service_details_rest.istio_sidecar\
             == service_details_ui.istio_sidecar
         assert service_details_ui.is_equal(service_details_rest,
-                                           advanced_check=True)
+                                           advanced_check=True), \
+            'Service UI {} not equal to REST {}'\
+            .format(service_details_ui, service_details_rest)
         assert service_details_ui.virtual_services_number\
             == len(service_details_rest.virtual_services)
         assert service_details_ui.destination_rules_number\
@@ -366,14 +468,16 @@ class ServicesPageTest(AbstractListPageTest):
                 if virtual_service_ui.is_equal(virtual_service_rest, advanced_check=True):
                     found = True
                     break
-            assert found, 'VS {} not found in REST'.format(virtual_service_ui)
+            assert found, 'VS {} not found in REST {}'.format(virtual_service_ui,
+                                                              virtual_service_rest)
         for destination_rule_ui in service_details_ui.destination_rules:
             found = False
             for destination_rule_rest in service_details_rest.destination_rules:
                 if destination_rule_ui.is_equal(destination_rule_rest, advanced_check=True):
                     found = True
                     break
-            assert found, 'DR {} not found in REST'.format(destination_rule_ui)
+            assert found, 'DR {} not found in REST {}'.format(destination_rule_ui,
+                                                              destination_rule_rest)
 
     def assert_all_items(self, filters, force_clear_all=True):
         # apply filters
