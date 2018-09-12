@@ -105,9 +105,9 @@ class Notifications(Widget):
             _items.append(Notification(parent=self, element=_element, logger=self.logger))
         return _items
 
-    def get(self, type=None, text=None):
+    def get(self, _type=None, text=None):
         for _item in self.items:
-            if (type is not None) and (type == _item.type):
+            if (_type is not None) and (_type == _item._type):
                 if text is not None:
                     if text in _item.text:
                         return _item
@@ -121,13 +121,13 @@ class Notifications(Widget):
         for _item in self.items:
             _item.close()
 
-    def close(self, type=None, text=None):
-        _item = self.get(text=text, type=type)
+    def close(self, _type=None, text=None):
+        _item = self.get(text=text, _type=_type)
         if _item is not None:
             _item.close()
 
-    def contains(self, type=None, text=None):
-        return self.get(type=type, text=text) is not None
+    def contains(self, _type=None, text=None):
+        return self.get(_type=_type, text=text) is not None
 
 
 class Notification(Widget):
@@ -151,11 +151,11 @@ class Notification(Widget):
         return self._element
 
     def __str__(self):
-        return 'type:{}, text:{}'.format(self.type, self.text)
+        return 'type:{}, text:{}'.format(self._type, self.text)
 
     def __repr__(self):
         return "{}({}, {})".format(
-            type(self).__name__, repr(self.type), repr(self.text))
+            type(self).__name__, repr(self._type), repr(self.text))
 
     @property
     def text(self):
@@ -166,7 +166,7 @@ class Notification(Widget):
             return self.browser.click('.//button[contains(@class, "close")]', parent=self)
 
     @property
-    def type(self):
+    def _type(self):
         for _class in self.browser.classes(self):
             if _class in self._TYPE_MAP:
                 return self._TYPE_MAP[_class]
@@ -219,7 +219,7 @@ class DropDown(Widget):
                 self._close()
 
         # sometime options are not displayed, needs to do retry
-        for retry in range(1, 3):
+        for retry in range(1, 3):  # @UnusedVariable
             _update_options()
             if len(options) > 0:
                 break
@@ -801,11 +801,11 @@ class ListViewWorkloads(ListViewAbstract):
         _items = []
         for el in self.browser.elements(self.ITEMS, parent=self):
             # get workload name and namespace
-            name, namespace, type = self.browser.element(
+            name, namespace, _type = self.browser.element(
                 locator=self.ITEM_TEXT, parent=el).text.split('\n')
             _name = name.strip()
             _namespace = namespace.strip()
-            _type = type.strip()
+            _type = _type.strip()
             # update istio sidecar logo
             _istio_sidecar = len(self.browser.elements(
                 parent=el, locator='.//img[contains(@class, "IstioLogo")]')) > 0
@@ -901,7 +901,7 @@ class ListViewIstioConfig(ListViewAbstract):
                                          parent=self.CONFIG_DETAILS_ROOT).split(': ')
         _text = self.browser.text(locator=self.CONFIG_TEXT,
                                   parent=self.CONFIG_DETAILS_ROOT)
-        return IstioConfigDetails(name=_name, type=_type, text=_text)
+        return IstioConfigDetails(name=_name, _type=_type, text=_text)
 
     @property
     def items(self):

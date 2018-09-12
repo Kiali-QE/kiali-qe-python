@@ -14,8 +14,8 @@ def test_login(browser):
     assert _login
     # assert notifications
     logger.debug('Notifications on screen:{}'.format(page.notifications.items))
-    assert not page.notifications.contains(type=Notification.TYPE_DANGER)
-    assert not page.notifications.contains(type=Notification.TYPE_WARNING)
+    assert not page.notifications.contains(_type=Notification.TYPE_DANGER)
+    assert not page.notifications.contains(_type=Notification.TYPE_WARNING)
 
 
 @pytest.mark.p_group8
@@ -28,4 +28,4 @@ def test_invalid_login(browser):
     logger.debug('Notifications on screen:{}'.format(page.notifications.items))
     assert not _login
     assert page.notifications.contains(
-        type='danger', text='Unauthorized. Error in username or password')
+        _type='danger', text='Unauthorized. Error in username or password')

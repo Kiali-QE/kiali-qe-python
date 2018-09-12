@@ -488,7 +488,7 @@ class IstioConfigPageTest(AbstractListPageTest):
         # get config detals from rest
         config_details_rest = self.kiali_client.istio_config_details(
             namespace=namespace,
-            object_type=config_details_ui.type,
+            object_type=config_details_ui._type,
             object_name=name)
         assert config_details_rest
         assert name == config_details_rest.name

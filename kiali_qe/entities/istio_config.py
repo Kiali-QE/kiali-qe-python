@@ -37,9 +37,9 @@ class IstioConfig(EntityBase):
 
 class IstioConfigDetails(EntityBase):
 
-    def __init__(self, name, type, text):
+    def __init__(self, name, _type, text):
         self.name = name
-        self.type = type
+        self._type = _type
         self.text = text
 
     def __str__(self):
