@@ -262,7 +262,7 @@ class KialiExtendedClient(KialiClient):
 
             if config_data:
                 config = IstioConfigDetails(name=config_data['name'],
-                                            type=_data['objectType'],
+                                            _type=_data['objectType'],
                                             text=json.dumps(config_data))
         return config
 

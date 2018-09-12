@@ -21,7 +21,7 @@ def pytest_configure(config):
 
 @pytest.mark.hookwrapper
 def pytest_runtest_setup(item):
-    path, lineno, domaininfo = item.location
+    path, lineno, domaininfo = item.location  # @UnusedVariable
     logger().info(
         log.format_marker(_format_nodeid(item.nodeid), mark="-"),
         extra={'source_file': path, 'source_lineno': lineno})
@@ -47,7 +47,7 @@ class LogExtraData(object):
         yield
         test_tracking[_format_nodeid(report.nodeid, False)][report.when] = report.outcome
         if report.when == 'teardown':
-            path, lineno, domaininfo = report.location
+            path, lineno, domaininfo = report.location  # @UnusedVariable
             test_status = _test_status(_format_nodeid(report.nodeid, False))
             logger().info(log.format_marker('{} result: {}'.format(
                 _format_nodeid(report.nodeid), test_status)),

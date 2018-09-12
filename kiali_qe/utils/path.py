@@ -1,6 +1,6 @@
 import imp
 
-from py.path import local
+from py.path import local  # @UnresolvedImport
 
 _kiali_qe_package_dir = local(imp.find_module('kiali_qe')[1])
 

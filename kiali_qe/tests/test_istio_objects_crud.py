@@ -230,16 +230,16 @@ def test_gateway(kiali_client, openshift_client, browser):
 @pytest.mark.p_group1
 def test_service_entry(kiali_client, openshift_client, browser):
     yaml = get_yaml(istio_objects_path.strpath, SERVICE_ENTRY)
-    dict = get_dict(istio_objects_path.strpath, SERVICE_ENTRY)
+    _dict = get_dict(istio_objects_path.strpath, SERVICE_ENTRY)
 
     _istio_config_test(kiali_client, openshift_client, browser,
-                       dict,
+                       _dict,
                        yaml,
                        [
                         {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
                          'value': IstioConfigObjectType.SERVICE_ENTRY.text},
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': dict.metadata.name}
+                         'value': _dict.metadata.name}
                         ],
                        kind='ServiceEntry',
                        api_version='networking.istio.io/v1alpha3',
