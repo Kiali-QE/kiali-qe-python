@@ -1,6 +1,5 @@
 """ Update this doc"""
 import re
-from datetime import datetime
 
 from widgetastic.widget import Checkbox, TextInput, Widget
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
@@ -8,6 +7,8 @@ from kiali_qe.components.enums import HelpMenuEnum, ApplicationVersionEnum, Isti
 from kiali_qe.entities.service import Service, ServiceDetails, VirtualService, DestinationRule
 from kiali_qe.entities.istio_config import IstioConfig, Rule, IstioConfigDetails
 from kiali_qe.entities.workload import Workload, WorkloadDetails, WorkloadPod
+from kiali_qe.entities.applications import Application, ApplicationDetails, AppWorkload
+from kiali_qe.utils.date import parse_from_ui
 from wait_for import wait_for
 
 
@@ -764,6 +765,44 @@ class ListViewAbstract(Widget):
         return items
 
 
+class ListViewApplications(ListViewAbstract):
+
+    def get_details(self, name, namespace=None):
+        self.open(name, namespace)
+        _name = self.browser.text(locator=self.HEADER,
+                                  parent=self.DETAILS_ROOT)
+        _istio_sidecar = len(self.browser.elements(
+                parent=self.ISTIO_PROPERTIES.format(self.ISTIO_SIDECAR),
+                locator='.//img[contains(@class, "IstioLogo")]')) > 0
+
+        _table_view_workloads = TableViewAppWorkloads(self.parent, self.locator, self.logger)
+
+        return ApplicationDetails(name=str(_name),
+                                  istio_sidecar=_istio_sidecar,
+                                  workloads=_table_view_workloads.all_items)
+
+    @property
+    def items(self):
+        _items = []
+        for el in self.browser.elements(self.ITEMS, parent=self):
+            # get application name and namespace
+            name, namespace = self.browser.element(
+                locator=self.ITEM_TEXT, parent=el).text.split('\n')
+            _name = name.strip()
+            _namespace = namespace.strip()
+            # update istio sidecar logo
+            _istio_sidecar = len(self.browser.elements(
+                parent=el, locator='.//img[contains(@class, "IstioLogo")]')) > 0
+            # TODO Health and Error Rate
+            # application object creation
+            _application = Application(
+                name=_name, namespace=_namespace,
+                istio_sidecar=_istio_sidecar,)
+            # append this item to the final list
+            _items.append(_application)
+        return _items
+
+
 class ListViewWorkloads(ListViewAbstract):
 
     def get_details(self, name, namespace=None):
@@ -788,7 +827,7 @@ class ListViewWorkloads(ListViewAbstract):
 
         return WorkloadDetails(name=str(_name),
                                workload_type=_type,
-                               created_at=datetime.strptime(_created_at, '%m/%d/%Y, %I:%M:%S %p'),
+                               created_at=parse_from_ui(_created_at),
                                resource_version=_resource_version,
                                istio_sidecar=_istio_sidecar,
                                pods_number=_table_view_pods.number,
@@ -852,14 +891,11 @@ class ListViewServices(ListViewAbstract):
         _table_view_dr = TableViewDestinationRules(self.parent, self.locator, self.logger)
 
         return ServiceDetails(name=_name,
-                              created_at=(
-                                  datetime.strptime(
-                                      _created_at, '%m/%d/%Y, %I:%M:%S %p'
-                                      ) if _created_at != '-' else None),
+                              created_at=parse_from_ui(_created_at),
                               service_type=_type,
                               resource_version=_resource_version,
                               ip=_ip,
-                              ports=_ports.replace('\n', ''),
+                              ports=str(_ports.replace('\n', ' ')),
                               istio_sidecar=_istio_sidecar,
                               health=None,
                               virtual_services_number=_table_view_vs.number,
@@ -968,6 +1004,32 @@ class TableViewAbstract(Widget):
         return self.items
 
 
+class TableViewAppWorkloads(TableViewAbstract):
+    ROWS = '//div[contains(@class, "list-view-pf-view")]\
+    //div[contains(@class, "list-group-item")]\
+    //div[contains(@class, "list-view-pf-main-info")]'
+    COLUMN = './/div[contains(@class, "list-view-pf-description")]'
+
+    @property
+    def items(self):
+
+        _items = []
+        for el in self.browser.elements(locator=self.ROWS,
+                                        parent=self.ROOT):
+            _values = self.browser.element(
+                locator=self.COLUMN, parent=el).text.split('\n')
+            _istio_sidecar = len(self.browser.elements(
+                parent=el, locator='.//img[contains(@class, "IstioLogo")]')) > 0
+            # create Workload instance
+            _workload = AppWorkload(
+                name=_values[1] if len(_values) >= 2 else '',
+                istio_sidecar=_istio_sidecar,
+                services=_values[3] if len(_values) == 4 else '')
+            # append this item to the final list
+            _items.append(_workload)
+        return _items
+
+
 class TableViewVirtualServices(TableViewAbstract):
     VS_TEXT = 'Virtual Services'
 
@@ -1003,7 +1065,7 @@ class TableViewVirtualServices(TableViewAbstract):
             # create Virtual Service instance
             _virtual_service = VirtualService(
                 name=_name,
-                created_at=datetime.strptime(_created_at, '%m/%d/%Y, %I:%M:%S %p'),
+                created_at=parse_from_ui(_created_at),
                 resource_version=_resource_version)
             # append this item to the final list
             _items.append(_virtual_service)
@@ -1047,7 +1109,7 @@ class TableViewDestinationRules(TableViewAbstract):
             _destination_rule = DestinationRule(
                 name=_name,
                 host=_host,
-                created_at=datetime.strptime(_created_at, '%m/%d/%Y, %I:%M:%S %p'),
+                created_at=parse_from_ui(_created_at),
                 resource_version=_resource_version)
             # append this item to the final list
             _items.append(_destination_rule)
@@ -1134,9 +1196,9 @@ class TableViewServices(TableViewAbstract):
             # TODO: fetch Label information from GUI
             _items.append(ServiceDetails(
                         name=_name,
-                        created_at=datetime.strptime(_created_at, '%m/%d/%Y, %I:%M:%S %p'),
+                        created_at=parse_from_ui(_created_at),
                         service_type=str(_type),
                         resource_version=str(_resource_version),
                         ip=str(_ip),
-                        ports=_ports.replace('\n', '')))
+                        ports=str(_ports.replace('\n', ' '))))
         return _items

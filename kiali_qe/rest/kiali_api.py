@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 
 from kiali.api import KialiClient
 from kiali_qe.components.enums import IstioConfigObjectType as OBJECT_TYPE
@@ -17,6 +16,12 @@ from kiali_qe.entities.workload import (
     WorkloadDetails,
     WorkloadPod
 )
+from kiali_qe.entities.applications import (
+    Application,
+    ApplicationDetails,
+    AppWorkload
+)
+from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
 
 
 class KialiExtendedClient(KialiClient):
@@ -62,6 +67,37 @@ class KialiExtendedClient(KialiClient):
         if len(service_names) > 0:
             filtered_list = []
             for _name in service_names:
+                filtered_list.extend([_i for _i in items if _name in _i.name])
+            return set(filtered_list)
+        return items
+
+    def application_list(self, namespaces=[], application_names=[]):
+        """Returns list of applications.
+        Args:
+            namespaces: can be zero or any number of namespaces
+            application_names: can be zero or any number of applications
+        """
+        items = []
+        namespace_list = []
+        if len(namespaces) > 0:
+            namespace_list.extend(namespaces)
+        else:
+            namespace_list = self.namespace_list()
+        # update items
+        for _namespace in namespace_list:
+            _data = super(KialiExtendedClient, self).app_list(namespace=_namespace)
+            _applications = _data['applications']
+            if _applications:
+                for _application_rest in _applications:
+                    _application = Application(
+                        namespace=_namespace,
+                        name=_application_rest['name'],
+                        istio_sidecar=_application_rest['istioSidecar'])
+                    items.append(_application)
+        # filter by application name
+        if len(application_names) > 0:
+            filtered_list = []
+            for _name in application_names:
                 filtered_list.extend([_i for _i in items if _name in _i.name])
             return set(filtered_list)
         return items
@@ -290,7 +326,7 @@ class KialiExtendedClient(KialiClient):
                 for _vs_data in _service_data['virtualServices']:
                     virtual_services.append(VirtualService(
                         name=_vs_data['name'],
-                        created_at=datetime.strptime(_vs_data['createdAt'], '%Y-%m-%dT%H:%M:%SZ'),
+                        created_at=parse_from_rest(_vs_data['createdAt']),
                         resource_version=_vs_data['resourceVersion']))
             destination_rules = []
             if _service_data['destinationRules']:
@@ -298,20 +334,22 @@ class KialiExtendedClient(KialiClient):
                     destination_rules.append(DestinationRule(
                         name=_dr_data['name'],
                         host=_dr_data['host'],
-                        created_at=datetime.strptime(_dr_data['createdAt'], '%Y-%m-%dT%H:%M:%SZ'),
+                        created_at=parse_from_rest(_dr_data['createdAt']),
                         resource_version=_dr_data['resourceVersion']))
             _ports = ''
             for _port in _service_data['service']['ports']:
-                _ports += '{} {} ({})'.format(_port['protocol'], _port['name'], _port['port'])
+                _ports += '{}{} ({}) '.format(_port['protocol'],
+                                              ' ' + _port['name'] if _port['name'] != '' else '',
+                                              _port['port'])
             _service = ServiceDetails(
                     name=_service_data['service']['name'],
                     istio_sidecar=_service_rest.istio_sidecar,
-                    created_at=datetime.strptime(
-                        _service_data['service']['createdAt'], '%Y-%m-%dT%H:%M:%SZ'),
+                    created_at=parse_from_rest(
+                        _service_data['service']['createdAt']),
                     resource_version=_service_data['service']['resourceVersion'],
                     service_type=_service_data['service']['type'],
                     ip=_service_data['service']['ip'],
-                    ports=_ports,
+                    ports=_ports.strip(),
                     health=_health,
                     virtual_services=virtual_services,
                     destination_rules=destination_rules)
@@ -336,14 +374,16 @@ class KialiExtendedClient(KialiClient):
                 for _ws_data in _workload_data['services']:
                     _ports = ''
                     for _port in _ws_data['ports']:
-                        _ports += '{} {} ({})'.format(
-                            _port['protocol'], _port['name'], _port['port'])
+                        _ports += '{}{} ({}) '.format(_port['protocol'],
+                                                      ' ' + _port['name']
+                                                      if _port['name'] != '' else '',
+                                                      _port['port'])
                     _services.append(ServiceDetails(
                         name=_ws_data['name'],
-                        created_at=datetime.strptime(_ws_data['createdAt'], '%Y-%m-%dT%H:%M:%SZ'),
+                        created_at=parse_from_rest(_ws_data['createdAt']),
                         service_type=_ws_data['type'],
                         ip=_ws_data['ip'],
-                        ports=_ports,
+                        ports=_ports.strip(),
                         resource_version=_ws_data['resourceVersion']))
             _workload_pods = []
             if _workload_data['pods']:
@@ -358,9 +398,7 @@ class KialiExtendedClient(KialiClient):
                                                    _pod_data['createdBy'][0]['kind'])
                     _pod = WorkloadPod(
                         name=str(_pod_data['name']),
-                        created_at=datetime.strptime(
-                            _pod_data['createdAt'],
-                            '%Y-%m-%dT%H:%M:%SZ').strftime('%m/%d/%Y, %I:%M:%S %p'),
+                        created_at=from_rest_to_ui(_pod_data['createdAt']),
                         created_by=_created_by,
                         istio_init_containers=str(_istio_init_containers),
                         istio_containers=str(_istio_containers))
@@ -389,10 +427,41 @@ class KialiExtendedClient(KialiClient):
                 name=_workload_data['name'],
                 istio_sidecar=_workload_rest.istio_sidecar,
                 workload_type=_workload_data['type'],
-                created_at=datetime.strptime(_workload_data['createdAt'], '%Y-%m-%dT%H:%M:%SZ'),
+                created_at=parse_from_rest(_workload_data['createdAt']),
                 resource_version=_workload_data['resourceVersion'],
                 pods_number=len(_workload_pods),
                 services_number=len(_services),
                 pods=_pods,
                 services=_services)
         return _workload
+
+    def application_details(self, namespace, application_name):
+        """Returns details of Application.
+        Args:
+            namespaces: namespace where Workload is located
+            application_name: name of Application
+        """
+
+        _application_data = super(KialiExtendedClient, self).app_details(
+            namespace=namespace,
+            app=application_name)
+        _application = None
+        if _application_data:
+            _application_rest = self.application_list(namespaces=[namespace],
+                                                      application_names=[application_name]).pop()
+            _workloads = []
+            if _application_data['workloads']:
+                for _wl_data in _application_data['workloads']:
+                    _services = ''
+                    for _service in _wl_data['serviceNames']:
+                        _services += '{}{}'.format(_service,
+                                                   ' ' if len(_wl_data['serviceNames']) > 1 else '')
+                    _workloads.append(AppWorkload(
+                        name=_wl_data['workloadName'],
+                        istio_sidecar=_wl_data['istioSidecar'],
+                        services=_services))
+            _application = ApplicationDetails(
+                name=_application_data['name'],
+                istio_sidecar=_application_rest.istio_sidecar,
+                workloads=_workloads)
+        return _application

@@ -216,8 +216,12 @@ class ServiceDetails(EntityBase):
             if 'source_services' in kwargs else None
 
     def __str__(self):
-        return 'name:{}, istio_sidecar:{}, health:{}'.format(
-            self.name, self.istio_sidecar, self.health)
+        return 'name:{}, created_at: {}, service_type: {}, resource_version: {}, \
+        ip: {}, ports: {}, istio_sidecar:{}, health:{}'.format(
+            self.name, self.created_at,
+            self.service_type, self.resource_version,
+            self.ip, self.ports,
+            self.istio_sidecar, self.health)
 
     def __repr__(self):
         return "{}({}, {}, {})".format(

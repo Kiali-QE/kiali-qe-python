@@ -86,6 +86,19 @@ class EdgeLabelsFilter(StringEnum):
     SECURITY = ('Security')
 
 
+class ApplicationsPageFilter(StringEnum):
+    APP_NAME = ('App Name')
+    ISTIO_SIDECAR = ('Istio Sidecar')
+    NAMESPACE = ('Namespace')
+
+
+class ApplicationsPageSort(StringEnum):
+    NAMESPACE = ('Namespace')
+    APP_NAME = ('App Name')
+    ISTIO_SIDECAR = ('IstioSidecar')
+    ERROR_RATE = ('Error Rate')
+
+
 class WorkloadsPageFilter(StringEnum):
     WORKLOAD_NAME = ('Workload Name')
     WORKLOAD_TYPE = ('Workload Type')

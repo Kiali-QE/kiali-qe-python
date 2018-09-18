@@ -96,9 +96,8 @@ class WorkloadDetails(EntityBase):
         # basic check
         if not isinstance(other, WorkloadDetails):
             return False
-        # TODO compare names
-        # if self.name != other.name:
-        #    return False
+        if self.name != other.name:
+            return False
         if self.workload_type != other.workload_type:
             return False
         if self.created_at != other.created_at:
