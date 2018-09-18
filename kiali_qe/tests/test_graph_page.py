@@ -2,7 +2,7 @@ import pytest
 from kiali_qe.components.enums import (
     GraphPageBadgesFilter,
     GraphPageDisplayFilter,
-    GraphPageLayout,
+    GraphType,
     EdgeLabelsFilter,
     GraphPageDuration,
     GraphRefreshInterval
@@ -39,13 +39,13 @@ def test_refresh_interval(browser):
 
 
 @pytest.mark.p_group5
-def test_layout(browser):
+def test_type(browser):
     # get page instance
     page = GraphPage(browser)
     # test options
-    options_defined = [item.text for item in GraphPageLayout]
-    layout = page.filter.layout
-    options_listed = layout.options
+    options_defined = [item.text for item in GraphType]
+    type = page.type
+    options_listed = type.options
     assert is_equal(options_defined, options_listed), \
         ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
 
