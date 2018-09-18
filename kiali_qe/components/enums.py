@@ -62,9 +62,15 @@ class GraphRefreshInterval(StringEnum):
 
 
 class GraphPageLayout(StringEnum):
-    COLA = ('Cola')
-    COSE = ('Cose')
-    DAGRE = ('Dagre')
+    COLA = ('cola')
+    COSE = ('cose-bilkent')
+    DAGRE = ('dagre')
+
+
+class GraphType(StringEnum):
+    APP = ('App')
+    VERSIONED_APP = ('Versioned app')
+    WORKLOAD = ('Workload')
 
 
 class GraphPageDisplayFilter(StringEnum):
