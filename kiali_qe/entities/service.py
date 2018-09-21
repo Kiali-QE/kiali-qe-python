@@ -200,8 +200,8 @@ class ServiceDetails(EntityBase):
         self.ports = ports
         self.workloads_number = kwargs['workloads_number']\
             if 'workloads_number' in kwargs else None
-        self.source_services_number = kwargs['source_services_number']\
-            if 'source_services_number' in kwargs else None
+        self.source_workloads_number = kwargs['source_workloads_number']\
+            if 'source_workloads_number' in kwargs else None
         self.virtual_services_number = kwargs['virtual_services_number']\
             if 'virtual_services_number' in kwargs else None
         self.destination_rules_number = kwargs['destination_rules_number']\
@@ -212,8 +212,8 @@ class ServiceDetails(EntityBase):
             if 'destination_rules' in kwargs else None
         self.workloads = kwargs['workloads']\
             if 'workloads' in kwargs else None
-        self.source_services = kwargs['source_services']\
-            if 'source_services' in kwargs else None
+        self.source_workloads = kwargs['source_workloads']\
+            if 'source_workloads' in kwargs else None
 
     def __str__(self):
         return 'name:{}, created_at: {}, service_type: {}, resource_version: {}, \
@@ -358,5 +358,49 @@ class DestinationRule(EntityBase):
         if self.created_at != other.created_at:
             return False
         if self.resource_version != other.resource_version:
+            return False
+        return True
+
+
+class SourceWorkload(EntityBase):
+    """
+    Service class provides information details on SourceWorkloads of Service Details.
+
+    Args:
+        to: workload destination
+        workloads: list of workload names
+    """
+
+    def __init__(self, to, workloads):
+        if to is None:
+            raise KeyError("'to' should not be 'None'")
+        self.to = to
+        self.workloads = workloads
+
+    def __str__(self):
+        return 'to:{}, workloads:{}'.format(
+            self.to, self.workloads)
+
+    def __repr__(self):
+        return "{}({}, {}".format(
+            type(self).__name__,
+            repr(self.to), repr(self.workloads))
+
+    def __hash__(self):
+        return (hash(self.to) ^ hash(self.workloads))
+
+    def __eq__(self, other):
+        return self.is_equal(other, advanced_check=True)
+
+    def is_equal(self, other, advanced_check=True):
+        # basic check
+        if not isinstance(other, SourceWorkload):
+            return False
+        if self.to != other.to:
+            return False
+        # advanced check
+        if not advanced_check:
+            return True
+        if self.workloads != other.workloads:
             return False
         return True

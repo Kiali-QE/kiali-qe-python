@@ -454,14 +454,38 @@ class ServicesPageTest(AbstractListPageTest):
                                            advanced_check=True), \
             'Service UI {} not equal to REST {}'\
             .format(service_details_ui, service_details_rest)
+        assert service_details_ui.workloads_number\
+            == len(service_details_rest.workloads)
+        assert service_details_ui.source_workloads_number\
+            == len(service_details_rest.source_workloads)
         assert service_details_ui.virtual_services_number\
             == len(service_details_rest.virtual_services)
         assert service_details_ui.destination_rules_number\
             == len(service_details_rest.destination_rules)
+        assert service_details_ui.workloads_number\
+            == len(service_details_rest.workloads)
+        assert service_details_ui.source_workloads_number\
+            == len(service_details_rest.source_workloads)
         assert service_details_ui.virtual_services_number\
             == len(service_details_ui.virtual_services)
         assert service_details_ui.destination_rules_number\
             == len(service_details_ui.destination_rules)
+        for workload_ui in service_details_ui.workloads:
+            found = False
+            for workload_rest in service_details_rest.workloads:
+                if workload_ui.is_equal(workload_rest, advanced_check=True):
+                    found = True
+                    break
+            assert found, 'Workload {} not found in REST {}'.format(workload_ui,
+                                                                    workload_rest)
+        for workload_ui in service_details_ui.source_workloads:
+            found = False
+            for workload_rest in service_details_rest.source_workloads:
+                if workload_ui.is_equal(workload_rest, advanced_check=True):
+                    found = True
+                    break
+            assert found, 'Source Workload {} not found in REST {}'.format(workload_ui,
+                                                                           workload_rest)
         for virtual_service_ui in service_details_ui.virtual_services:
             found = False
             for virtual_service_rest in service_details_rest.virtual_services:

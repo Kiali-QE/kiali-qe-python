@@ -4,9 +4,19 @@ import re
 from widgetastic.widget import Checkbox, TextInput, Widget
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 from kiali_qe.components.enums import HelpMenuEnum, ApplicationVersionEnum, IstioConfigObjectType
-from kiali_qe.entities.service import Service, ServiceDetails, VirtualService, DestinationRule
+from kiali_qe.entities.service import (
+    Service,
+    ServiceDetails,
+    VirtualService,
+    DestinationRule,
+    SourceWorkload
+)
 from kiali_qe.entities.istio_config import IstioConfig, Rule, IstioConfigDetails
-from kiali_qe.entities.workload import Workload, WorkloadDetails, WorkloadPod
+from kiali_qe.entities.workload import (
+    Workload,
+    WorkloadDetails,
+    WorkloadPod
+)
 from kiali_qe.entities.applications import Application, ApplicationDetails, AppWorkload
 from kiali_qe.utils.date import parse_from_ui
 from wait_for import wait_for
@@ -886,6 +896,10 @@ class ListViewServices(ListViewAbstract):
             locator=self.PROPERTY_SECTIONS.format(self.PORTS),
             parent=self.DETAILS_ROOT).replace(self.PORTS, '').strip()
 
+        _table_view_wl = TableViewWorkloads(self.parent, self.locator, self.logger)
+
+        _table_view_swl = TableViewSourceWorkloads(self.parent, self.locator, self.logger)
+
         _table_view_vs = TableViewVirtualServices(self.parent, self.locator, self.logger)
 
         _table_view_dr = TableViewDestinationRules(self.parent, self.locator, self.logger)
@@ -898,8 +912,12 @@ class ListViewServices(ListViewAbstract):
                               ports=str(_ports.replace('\n', ' ')),
                               istio_sidecar=_istio_sidecar,
                               health=None,
+                              workloads_number=_table_view_wl.number,
+                              source_workloads_number=_table_view_swl.number,
                               virtual_services_number=_table_view_vs.number,
                               destination_rules_number=_table_view_dr.number,
+                              workloads=_table_view_wl.all_items,
+                              source_workloads=_table_view_swl.all_items,
                               virtual_services=_table_view_vs.all_items,
                               destination_rules=_table_view_dr.all_items)
 
@@ -1025,6 +1043,96 @@ class TableViewAppWorkloads(TableViewAbstract):
                 name=_values[1] if len(_values) >= 2 else '',
                 istio_sidecar=_istio_sidecar,
                 services=_values[3] if len(_values) == 4 else '')
+            # append this item to the final list
+            _items.append(_workload)
+        return _items
+
+
+class TableViewWorkloads(TableViewAbstract):
+    WLD_TEXT = 'Workloads'
+
+    def open(self):
+        tab = self.browser.element(locator=self.SERVICES_TAB.format(self.WLD_TEXT),
+                                   parent=self.SERVICE_DETAILS_ROOT)
+        try:
+            self.browser.click(tab)
+        finally:
+            self.browser.click(tab)
+        wait_displayed(self)
+
+    @property
+    def number(self):
+        _wl_text = self.browser.text(locator=self.SERVICES_TAB.format(self.WLD_TEXT),
+                                     parent=self.SERVICE_DETAILS_ROOT)
+        return int(re.search(r'\d+', _wl_text).group())
+
+    @property
+    def items(self):
+        self.open()
+
+        _items = []
+        for el in self.browser.elements(locator=self.ROWS.format(
+            'service-tabs-pane-workloads'),
+                                        parent=self.ROOT):
+            _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
+
+            _name = _columns[0].text.strip()
+            _type = _columns[1].text.strip()
+            # TODO labels
+            _created_at = _columns[3].text.strip()
+            _resource_version = _columns[4].text.strip()
+
+            # workload object creation
+            _workload = WorkloadDetails(
+                name=_name,
+                workload_type=_type,
+                created_at=parse_from_ui(_created_at),
+                resource_version=_resource_version)
+            # append this item to the final list
+            _items.append(_workload)
+        return _items
+
+
+class TableViewSourceWorkloads(TableViewAbstract):
+    WLD_TEXT = 'Source Workloads'
+    ROWS = '//div[contains(@class, "card-pf")]\
+    //div[contains(@class, "row-cards-pf")]\
+    //div[contains(@class, "card-pf-body")]'
+    DEST = './/div[contains(@class, "progress-description")]'
+    COLUMN = './/li'
+
+    def open(self):
+        tab = self.browser.element(locator=self.SERVICES_TAB.format(self.WLD_TEXT),
+                                   parent=self.SERVICE_DETAILS_ROOT)
+        try:
+            self.browser.click(tab)
+        finally:
+            self.browser.click(tab)
+        wait_displayed(self)
+
+    @property
+    def number(self):
+        _wl_text = self.browser.text(locator=self.SERVICES_TAB.format(self.WLD_TEXT),
+                                     parent=self.SERVICE_DETAILS_ROOT)
+        return int(re.search(r'\d+', _wl_text).group())
+
+    @property
+    def items(self):
+        self.open()
+
+        _items = []
+        for el in self.browser.elements(locator=self.ROWS.format(
+            'service-tabs-pane-sources'),
+                                        parent=self.ROOT):
+            _to = self.browser.element(locator=self.DEST, parent=el).text.replace('To:', '').strip()
+            _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
+            _workloads = []
+            for _column in _columns:
+                _workloads.append(_column.text.strip())
+            # source workload object creation
+            _workload = SourceWorkload(
+                to=_to,
+                workloads=_workloads)
             # append this item to the final list
             _items.append(_workload)
         return _items
