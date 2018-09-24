@@ -443,7 +443,7 @@ class CheckBoxFilter(Widget):
             self.locator = self.ROOT
         self._filter_button = Button(
             parent=self.parent,
-            locator=('//button[normalize-space(text())="Graph Settings"]/'
+            locator=('//button[normalize-space(text())="Display"]/'
                      '..//*[contains(@class, "fa-angle-down")]'))
 
     def __locator__(self):

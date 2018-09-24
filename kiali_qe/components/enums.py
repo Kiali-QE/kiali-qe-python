@@ -7,6 +7,7 @@ class StringEnum(Enum):
 
 
 class MainMenuEnum(StringEnum):
+    OVERVIEW = ('Overview')
     GRAPH = ('Graph')
     APPLICATIONS = ('Applications')
     WORKLOADS = ('Workloads')
@@ -38,10 +39,10 @@ class PaginationPerPage(Enum):
 
 
 class GraphPageDuration(StringEnum):
-    LAST_MINUTE = ('Last minute')
-    LAST_5_MINUTES = ('Last 5 minutes')
-    LAST_10_MINUTES = ('Last 10 minutes')
-    LAST_30_MINUTES = ('Last 30 minutes')
+    LAST_MINUTE = ('Last min')
+    LAST_5_MINUTES = ('Last 5 min')
+    LAST_10_MINUTES = ('Last 10 min')
+    LAST_30_MINUTES = ('Last 30 min')
     LAST_HOUR = ('Last hour')
     LAST_3_HOURS = ('Last 3 hours')
     LAST_6_HOURS = ('Last 6 hours')
@@ -53,12 +54,12 @@ class GraphPageDuration(StringEnum):
 
 class GraphRefreshInterval(StringEnum):
     PAUSE = ('Pause')
-    IN_5_SECONDS = ('5 seconds')
-    IN_10_SECONDS = ('10 seconds')
-    IN_15_SECONDS = ('15 seconds')
-    IN_30_SECONDS = ('30 seconds')
-    IN_1_MINUTE = ('1 minute')
-    IN_5_MINUTES = ('5 minutes')
+    IN_5_SECONDS = ('Every 5 sec')
+    IN_10_SECONDS = ('Every 10 sec')
+    IN_15_SECONDS = ('Every 15 sec')
+    IN_30_SECONDS = ('Every 30 sec')
+    IN_1_MINUTE = ('Every 1 min')
+    IN_5_MINUTES = ('Every 5 min')
 
 
 class GraphPageLayout(StringEnum):
@@ -75,6 +76,7 @@ class GraphType(StringEnum):
 
 class GraphPageDisplayFilter(StringEnum):
     NODE_LABELS = ('Node Names')
+    SERVICE_NODES = ('Service Nodes')
     TRAFFIC_ANIMATION = ('Traffic Animation')
 
 
