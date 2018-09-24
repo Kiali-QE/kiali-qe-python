@@ -9,7 +9,8 @@ from kiali_qe.entities.service import (
     Service,
     ServiceDetails,
     VirtualService,
-    DestinationRule
+    DestinationRule,
+    SourceWorkload
 )
 from kiali_qe.entities.workload import (
     Workload,
@@ -321,6 +322,24 @@ class KialiExtendedClient(KialiClient):
                 _health = None
             _service_rest = self.service_list(namespaces=[namespace],
                                               service_names=[service_name]).pop()
+            workloads = []
+            if _service_data['workloads']:
+                for _wl_data in _service_data['workloads']:
+                    # TODO get labels
+                    workloads.append(WorkloadDetails(
+                        name=_wl_data['name'],
+                        workload_type=_wl_data['type'],
+                        created_at=parse_from_rest(_wl_data['createdAt']),
+                        resource_version=_wl_data['resourceVersion']))
+            source_workloads = []
+            if _service_data['dependencies']:
+                for _wl_data in _service_data['dependencies']:
+                    _wl_names = []
+                    for _wl_name in _service_data['dependencies'][_wl_data]:
+                        _wl_names.append(_wl_name['name'])
+                    source_workloads.append(SourceWorkload(
+                        to=_wl_data,
+                        workloads=_wl_names))
             virtual_services = []
             if _service_data['virtualServices']:
                 for _vs_data in _service_data['virtualServices']:
@@ -351,6 +370,8 @@ class KialiExtendedClient(KialiClient):
                     ip=_service_data['service']['ip'],
                     ports=_ports.strip(),
                     health=_health,
+                    workloads=workloads,
+                    source_workloads=source_workloads,
                     virtual_services=virtual_services,
                     destination_rules=destination_rules)
         return _service
