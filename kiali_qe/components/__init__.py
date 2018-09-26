@@ -18,6 +18,7 @@ from kiali_qe.entities.workload import (
     WorkloadPod
 )
 from kiali_qe.entities.applications import Application, ApplicationDetails, AppWorkload
+from kiali_qe.entities.overview import Overview
 from kiali_qe.utils.date import parse_from_ui
 from wait_for import wait_for
 
@@ -773,6 +774,55 @@ class ListViewAbstract(Widget):
             self._pagination.move_to_page(_page)
             items.extend(self.items)
         return items
+
+
+class ListViewOverview(ListViewAbstract):
+    ROOT = '//*[contains(@class, "cards-pf") and contains(@class, "container-cards-pf")]'
+    ITEMS = './/*[contains(@class, "row")]//*[contains(@class, "card-pf-accented")]'
+    ITEM_TEXT = './/*[contains(@class, "card-pf-title")]'
+    APP_TEXT = './/*[contains(@class, "card-pf-body")]/a'
+    UNHEALTHY_TEXT = './/*[contains(@class, "pficon-error-circle-o")]/..'
+    HEALTHY_TEXT = './/*[contains(@class, "pficon-ok")]/..'
+    DEGRADED_TEXT = './/*[contains(@class, "pficon-warning-triangle-o")]/..'
+
+    @property
+    def all_items(self):
+        return self.items
+
+    @property
+    def items(self):
+        _items = []
+        for el in self.browser.elements(self.ITEMS, parent=self):
+            _namespace = self.browser.element(
+                locator=self.ITEM_TEXT, parent=el).text
+            _applications = int(re.search(r'\d+', self.browser.element(
+                locator=self.APP_TEXT, parent=el).text).group())
+            _unhealthy = 0
+            _healthy = 0
+            _degraded = 0
+            # update health
+            if len(self.browser.elements(
+                    parent=el, locator=self.UNHEALTHY_TEXT)) > 0:
+                _unhealthy = int(self.browser.element(
+                    locator=self.UNHEALTHY_TEXT, parent=el).text)
+            if len(self.browser.elements(
+                    parent=el, locator=self.DEGRADED_TEXT)) > 0:
+                _degraded = int(self.browser.element(
+                    locator=self.DEGRADED_TEXT, parent=el).text)
+            if len(self.browser.elements(
+                    parent=el, locator=self.HEALTHY_TEXT)) > 0:
+                _healthy = int(self.browser.element(
+                    locator=self.HEALTHY_TEXT, parent=el).text)
+            # overview object creation
+            _overview = Overview(
+                namespace=_namespace,
+                applications=_applications,
+                healthy=_healthy,
+                unhealthy=_unhealthy,
+                degraded=_degraded)
+            # append this item to the final list
+            _items.append(_overview)
+        return _items
 
 
 class ListViewApplications(ListViewAbstract):
