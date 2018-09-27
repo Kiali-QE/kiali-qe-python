@@ -22,6 +22,7 @@ from kiali_qe.entities.applications import (
     ApplicationDetails,
     AppWorkload
 )
+from kiali_qe.entities.overview import Overview
 from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
 
 
@@ -70,6 +71,28 @@ class KialiExtendedClient(KialiClient):
             for _name in service_names:
                 filtered_list.extend([_i for _i in items if _name in _i.name])
             return set(filtered_list)
+        return items
+
+    def overview_list(self, namespaces=[]):
+        """Returns list of overviews.
+        Args:
+            namespaces: can be zero or any number of namespaces
+        """
+        items = []
+        namespace_list = []
+        if len(namespaces) > 0:
+            namespace_list.extend(namespaces)
+        else:
+            namespace_list = self.namespace_list()
+        # update items
+        for _namespace in namespace_list:
+            _applications = self.application_list([_namespace])
+            if _applications:
+                # TODO add health
+                _overview = Overview(
+                    namespace=_namespace,
+                    applications=len(_applications))
+                items.append(_overview)
         return items
 
     def application_list(self, namespaces=[], application_names=[]):

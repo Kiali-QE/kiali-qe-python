@@ -107,6 +107,16 @@ class ApplicationsPageSort(StringEnum):
     ERROR_RATE = ('Error Rate')
 
 
+class OverviewPageFilter(StringEnum):
+    NAME = ('Name')
+    HEALTH = ('Health')
+
+
+class OverviewPageSort(StringEnum):
+    NAME = ('Name')
+    STATUS = ('Status')
+
+
 class WorkloadsPageFilter(StringEnum):
     WORKLOAD_NAME = ('Workload Name')
     WORKLOAD_TYPE = ('Workload Type')

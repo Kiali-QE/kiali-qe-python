@@ -6,7 +6,8 @@ from kiali_qe.components.enums import (
     ServicesPageFilter,
     IstioConfigPageFilter,
     WorkloadsPageFilter,
-    ApplicationsPageFilter
+    ApplicationsPageFilter,
+    OverviewPageFilter
 )
 from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
@@ -15,7 +16,8 @@ from kiali_qe.pages import (
     ServicesPage,
     IstioConfigPage,
     WorkloadsPage,
-    ApplicationsPage
+    ApplicationsPage,
+    OverviewPage
 )
 
 
@@ -197,6 +199,49 @@ class AbstractListPageTest(object):
         assert total_items_pagin == total_items_page, \
             'Total items mismatch: pagination:{}, page:{}'.format(total_items_pagin,
                                                                   total_items_page)
+
+
+class OverviewPageTest(AbstractListPageTest):
+    FILTER_ENUM = OverviewPageFilter
+
+    def _namespaces_ui(self):
+        return self.page.filter.filter_options(filter_name=self.FILTER_ENUM.NAME.text)
+
+    def __init__(self, kiali_client, openshift_client, browser):
+        AbstractListPageTest.__init__(
+            self, kiali_client=kiali_client,
+            openshift_client=openshift_client, page=OverviewPage(browser))
+        self.browser = browser
+
+    def assert_all_items(self, filters, force_clear_all=True):
+        # apply filters
+        self.apply_filters(filters=filters, force_clear_all=force_clear_all)
+
+        # get overviews from ui
+        overviews_ui = self.page.content.all_items
+        # get overviews from rest api
+        _ns = self.FILTER_ENUM.NAME.text
+        _namespaces = [_f['value'] for _f in filters if _f['name'] == _ns]
+        logger.debug('Namespaces:{}'.format(_namespaces))
+        overviews_rest = self.kiali_client.overview_list(
+            namespaces=_namespaces)
+
+        # compare all results
+        logger.debug('Namespaces:{}'.format(_namespaces))
+        logger.debug('Items count[UI:{}, REST:{}]'.format(
+            len(overviews_ui), len(overviews_rest)))
+        logger.debug('overviews UI:{}'.format(overviews_ui))
+        logger.debug('overviews REST:{}'.format(overviews_rest))
+
+        assert len(overviews_ui) == len(overviews_rest)
+
+        for overview_ui in overviews_ui:
+            found = False
+            for overview_rest in overviews_rest:
+                if overview_ui.is_equal(overview_rest, advanced_check=False):
+                    found = True
+                    break
+            assert found, '{} not found in REST'.format(overview_ui)
 
 
 class ApplicationsPageTest(AbstractListPageTest):
