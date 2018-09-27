@@ -1,4 +1,6 @@
 # Kiali GUI Automation
+Kiali 0.7.2 TP Release Testing.
+
 Kiali GUI QE automation framework. This framework based on pytest Testing Framework, using Widgetastic testing tools.
 
 ### Project structure
