@@ -580,7 +580,7 @@ class ServicesPageTest(AbstractListPageTest):
         for service_ui in services_ui:
             found = False
             for service_rest in services_rest:
-                if service_ui.is_equal(service_rest, advanced_check=False):
+                if service_ui.is_equal(service_rest, advanced_check=True):
                     found = True
                     break
             assert found, '{} not found in REST'.format(service_ui)

@@ -1,4 +1,5 @@
 from kiali_qe.entities import EntityBase
+from kiali_qe.components.enums import HealthType
 
 
 class Envoy(EntityBase):
@@ -19,6 +20,14 @@ class Envoy(EntityBase):
                                            repr(self.i_total),
                                            repr(self.o_healthy),
                                            repr(self.o_total))
+
+    def is_healthy(self):
+        if self.i_total + self.o_total == 0:
+            return HealthType.NA
+        elif self.i_total + self.o_total == self.i_healthy + self.o_healthy:
+            return HealthType.HEALTHY
+        else:
+            return HealthType.NOT_HEALTHY
 
     def is_equal(self, other):
         return isinstance(other, Envoy)\
@@ -62,6 +71,14 @@ class Requests(EntityBase):
         return "{}({}, {})".format(
             type(self).__name__, repr(self.request_count), repr(self.request_error_count))
 
+    def is_healthy(self):
+        if self.request_count + self.request_error_count == 0:
+            return HealthType.NA
+        elif self.request_error_count == 0:
+            return HealthType.HEALTHY
+        else:
+            return HealthType.NOT_HEALTHY
+
     def is_equal(self, other):
         return isinstance(other, Requests)\
          and self.request_count == other.request_count\
@@ -83,6 +100,16 @@ class Health(EntityBase):
         return "{}({}, {}, {})".format(
             type(self).__name__,
             repr(self.envoy), repr(self.deployment_statuses), repr(self.requests))
+
+    def is_healthy(self):
+        if self.envoy.is_healthy() == HealthType.NA \
+                and self.requests.is_healthy() == HealthType.NA:
+            return HealthType.NA
+        elif self.envoy.is_healthy() == HealthType.FAILURE \
+                or self.requests.is_healthy() == HealthType.FAILURE:
+            return HealthType.FAILURE
+        else:
+            return HealthType.HEALTHY
 
     def is_equal(self, other):
         if not isinstance(other, Health):
@@ -170,7 +197,7 @@ class Service(EntityBase):
             return True
         if self.istio_sidecar != other.istio_sidecar:
             return False
-        if not self.health.is_equal(other.health):
+        if self.health != other.health:
             return False
         return True
 
@@ -255,9 +282,8 @@ class ServiceDetails(EntityBase):
             return True
         if self.istio_sidecar != other.istio_sidecar:
             return False
-        # TODO check health
-        # if not self.health.is_equal(other.health):
-        #    return False
+        if self.health != other.health:
+            return False
         return True
 
 

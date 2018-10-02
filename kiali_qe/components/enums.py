@@ -200,3 +200,9 @@ class IstioConfigValidationType(StringEnum):
     VALID = ('Valid')
     NOT_VALID = ('Not Valid')
     NOT_VALIDATED = ('Not Validated')
+
+
+class HealthType(StringEnum):
+    NA = ('N/A')
+    HEALTHY = ('Healthy')
+    FAILURE = ('Failure')
