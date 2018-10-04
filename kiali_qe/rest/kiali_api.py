@@ -1,5 +1,7 @@
 import json
 
+from itertools import groupby
+
 from kiali.api import KialiClient
 from kiali_qe.components.enums import IstioConfigObjectType as OBJECT_TYPE
 from kiali_qe.components.enums import IstioConfigPageFilter as FILTER_TYPE
@@ -429,7 +431,7 @@ class KialiExtendedClient(KialiClient):
                         ip=_ws_data['ip'],
                         ports=_ports.strip(),
                         resource_version=_ws_data['resourceVersion']))
-            _workload_pods = []
+            _all_pods = []
             if _workload_data['pods']:
                 for _pod_data in _workload_data['pods']:
                     _istio_init_containers = ''
@@ -446,26 +448,34 @@ class KialiExtendedClient(KialiClient):
                         created_by=_created_by,
                         istio_init_containers=str(_istio_init_containers),
                         istio_containers=str(_istio_containers))
-                    _workload_pods.append(_pod)
+                    _all_pods.append(_pod)
+
+            def get_created_by(nodeid):
+                return nodeid.created_by
 
             _pods = []
-            if len(_workload_pods) > 1:
-                _pod = WorkloadPod(
-                    name='{}... ({} replicas)'.format(_pod.name[:-5], len(_workload_pods)),
-                    created_at='{} and {}'.format(
-                        _pod.created_at, _workload_pods[len(_workload_pods)-1].created_at),
-                    created_by=_workload_pods[0].created_by,
-                    istio_init_containers=_workload_pods[0].istio_init_containers,
-                    istio_containers=_workload_pods[0].istio_containers)
-                _pods.append(_pod)
-            elif len(_workload_pods) == 1:
-                _pod = WorkloadPod(
-                    name='{} (1 replica)'.format(_workload_pods[0].name),
-                    created_at=_workload_pods[0].created_at,
-                    created_by=_workload_pods[0].created_by,
-                    istio_init_containers=_workload_pods[0].istio_init_containers,
-                    istio_containers=_workload_pods[0].istio_containers)
-                _pods.append(_pod)
+            # group by created_by fielts, as it is shown grouped in UI
+            for _created_by, _grouped_pods in groupby(_all_pods, key=get_created_by):
+                _workload_pods = []
+                for _grouped_pod in _grouped_pods:
+                    _workload_pods.append(_grouped_pod)
+                if len(_workload_pods) > 1:
+                    _pod = WorkloadPod(
+                        name='{}... ({} replicas)'.format(_pod.name[:-5], len(_workload_pods)),
+                        created_at='{} and {}'.format(
+                            _pod.created_at, _workload_pods[len(_workload_pods)-1].created_at),
+                        created_by=_created_by,
+                        istio_init_containers=_workload_pods[0].istio_init_containers,
+                        istio_containers=_workload_pods[0].istio_containers)
+                    _pods.append(_pod)
+                elif len(_workload_pods) == 1:
+                    _pod = WorkloadPod(
+                        name='{} (1 replica)'.format(_workload_pods[0].name),
+                        created_at=_workload_pods[0].created_at,
+                        created_by=_created_by,
+                        istio_init_containers=_workload_pods[0].istio_init_containers,
+                        istio_containers=_workload_pods[0].istio_containers)
+                    _pods.append(_pod)
             # TODO get labels
             _workload = WorkloadDetails(
                 name=_workload_data['name'],
@@ -499,7 +509,7 @@ class KialiExtendedClient(KialiClient):
                     _services = ''
                     for _service in _wl_data['serviceNames']:
                         _services += '{}{}'.format(_service,
-                                                   ' ' if len(_wl_data['serviceNames']) > 1 else '')
+                                                   '' if len(_wl_data['serviceNames']) > 1 else '')
                     _workloads.append(AppWorkload(
                         name=_wl_data['workloadName'],
                         istio_sidecar=_wl_data['istioSidecar'],
