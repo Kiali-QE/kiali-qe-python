@@ -70,6 +70,7 @@ class GraphPageLayout(StringEnum):
 
 class GraphType(StringEnum):
     APP = ('App')
+    SERVICE = ('Service')
     VERSIONED_APP = ('Versioned app')
     WORKLOAD = ('Workload')
 
@@ -84,6 +85,7 @@ class GraphPageBadgesFilter(StringEnum):
     CIRCUIT_BREAKERS = ('Circuit Breakers')
     VIRTUAL_SERVICES = ('Virtual Services')
     MISSING_SIDECARS = ('Missing Sidecars')
+    SECURITY = ('Security')
 
 
 class EdgeLabelsFilter(StringEnum):
@@ -91,7 +93,6 @@ class EdgeLabelsFilter(StringEnum):
     REQUEST_PER_SECOND = ('Requests per second')
     REQUEST_PERCENT = ('Requests percent of total')
     RESPONSE_TIME = ('Response time 95th percentile')
-    SECURITY = ('Security')
 
 
 class ApplicationsPageFilter(StringEnum):
