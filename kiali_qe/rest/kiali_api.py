@@ -56,16 +56,13 @@ class KialiExtendedClient(KialiClient):
             _services = _data['services']
             # update all the services to our custom entity
             for _service_rest in _services:
-                if 'health' in _service_rest:
-                    # update health status
-                    _health = Health.get_from_rest(_service_rest['health'])
-                else:
-                    _health = None
                 _service = Service(
                     namespace=_namespace,
                     name=_service_rest['name'],
                     istio_sidecar=_service_rest['istioSidecar'],
-                    health=_health)
+                    health=self.get_service_health(
+                        namespace=_namespace,
+                        service_name=_service_rest['name']))
                 items.append(_service)
         # filter by service name
         if len(service_names) > 0:
@@ -340,11 +337,6 @@ class KialiExtendedClient(KialiClient):
             service=service_name)
         _service = None
         if _service_data:
-            if 'health' in _service_data:
-                    # update health status
-                _health = Health.get_from_rest(_service_data['health'])
-            else:
-                _health = None
             _service_rest = self.service_list(namespaces=[namespace],
                                               service_names=[service_name]).pop()
             workloads = []
@@ -394,7 +386,9 @@ class KialiExtendedClient(KialiClient):
                     service_type=_service_data['service']['type'],
                     ip=_service_data['service']['ip'],
                     ports=_ports.strip(),
-                    health=_health,
+                    health=self.get_service_health(
+                        namespace=namespace,
+                        service_name=service_name),
                     workloads=workloads,
                     source_workloads=source_workloads,
                     virtual_services=virtual_services,
@@ -519,3 +513,18 @@ class KialiExtendedClient(KialiClient):
                 istio_sidecar=_application_rest.istio_sidecar,
                 workloads=_workloads)
         return _application
+
+    def get_service_health(self, namespace, service_name):
+        """Returns Health of Service.
+        Args:
+            namespaces: namespace where Service is located
+            service_name: name of Service
+        """
+
+        _health_data = super(KialiExtendedClient, self).service_health(
+            namespace=namespace,
+            service=service_name)
+        if _health_data:
+            return Health.get_from_rest(_health_data).is_healthy()
+        else:
+            return None

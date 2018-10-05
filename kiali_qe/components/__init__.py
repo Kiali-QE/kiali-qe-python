@@ -3,7 +3,12 @@ import re
 
 from widgetastic.widget import Checkbox, TextInput, Widget
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
-from kiali_qe.components.enums import HelpMenuEnum, ApplicationVersionEnum, IstioConfigObjectType
+from kiali_qe.components.enums import (
+    HelpMenuEnum,
+    ApplicationVersionEnum,
+    IstioConfigObjectType,
+    HealthType
+)
 from kiali_qe.entities.service import (
     Service,
     ServiceDetails,
@@ -945,6 +950,22 @@ class ListViewServices(ListViewAbstract):
         _ports = self.browser.text(
             locator=self.PROPERTY_SECTIONS.format(self.PORTS),
             parent=self.DETAILS_ROOT).replace(self.PORTS, '').strip()
+        _healthy = len(self.browser.elements(
+            parent=self.DETAILS_ROOT,
+            locator='.//*[contains(@class, "pficon-ok")]')) > 0
+        _not_healthy = len(self.browser.elements(
+            parent=self.DETAILS_ROOT,
+            locator='.//*[contains(@class, "pficon-error-circle-o")]')) > 0
+        _not_available = len(self.browser.elements(
+            parent=self.DETAILS_ROOT,
+            locator='.//*[text()="N/A"]')) > 0
+        _health = None
+        if _healthy:
+            _health = HealthType.HEALTHY
+        elif _not_healthy:
+            _health = HealthType.FAILURE
+        elif _not_available:
+            _health = HealthType.NA
 
         _table_view_wl = TableViewWorkloads(self.parent, self.locator, self.logger)
 
@@ -961,7 +982,7 @@ class ListViewServices(ListViewAbstract):
                               ip=_ip,
                               ports=str(_ports.replace('\n', ' ')),
                               istio_sidecar=_istio_sidecar,
-                              health=None,
+                              health=_health,
                               workloads_number=_table_view_wl.number,
                               source_workloads_number=_table_view_swl.number,
                               virtual_services_number=_table_view_vs.number,
@@ -983,10 +1004,25 @@ class ListViewServices(ListViewAbstract):
             # update istio sidecar logo
             _istio_sidecar = len(self.browser.elements(
                 parent=el, locator='.//img[contains(@class, "IstioLogo")]')) > 0
-            # TODO: fetch health information from GUI
+            _healthy = len(self.browser.elements(
+                parent=el,
+                locator='.//*[contains(@class, "pficon-ok")]')) > 0
+            _not_healthy = len(self.browser.elements(
+                parent=el,
+                locator='.//*[contains(@class, "pficon-error-circle-o")]')) > 0
+            _not_available = len(self.browser.elements(
+                parent=el,
+                locator='.//*[text()="N/A"]')) > 0
+            _health = None
+            if _healthy:
+                _health = HealthType.HEALTHY
+            elif _not_healthy:
+                _health = HealthType.FAILURE
+            elif _not_available:
+                _health = HealthType.NA
             # create service instance
             _service = Service(
-                name=_name, namespace=_namespace, istio_sidecar=_istio_sidecar, health=None)
+                name=_name, namespace=_namespace, istio_sidecar=_istio_sidecar, health=_health)
             # append this item to the final list
             _items.append(_service)
         return _items
