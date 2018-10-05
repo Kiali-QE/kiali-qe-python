@@ -440,7 +440,8 @@ class WorkloadsPageTest(AbstractListPageTest):
                 if workload_ui.is_equal(workload_rest, advanced_check=True):
                     found = True
                     break
-            assert found, '{} not found in REST'.format(workload_ui)
+            if not found:
+                assert found, '{} not found in REST'.format(workload_ui)
             found = False
             for workload_oc in workloads_oc:
                 if workload_ui.is_equal(workload_oc, advanced_check=False):

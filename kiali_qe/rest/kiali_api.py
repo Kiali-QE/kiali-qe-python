@@ -7,7 +7,7 @@ from kiali_qe.components.enums import IstioConfigObjectType as OBJECT_TYPE
 from kiali_qe.components.enums import IstioConfigPageFilter as FILTER_TYPE
 from kiali_qe.entities.istio_config import IstioConfig, IstioConfigDetails, Rule
 from kiali_qe.entities.service import (
-    Health,
+    ServiceHealth,
     Service,
     ServiceDetails,
     VirtualService,
@@ -17,7 +17,8 @@ from kiali_qe.entities.service import (
 from kiali_qe.entities.workload import (
     Workload,
     WorkloadDetails,
-    WorkloadPod
+    WorkloadPod,
+    WorkloadHealth
 )
 from kiali_qe.entities.applications import (
     Application,
@@ -149,7 +150,10 @@ class KialiExtendedClient(KialiClient):
                         workload_type=_workload_rest['type'],
                         istio_sidecar=_workload_rest['istioSidecar'],
                         app_label=_workload_rest['appLabel'],
-                        version_label=_workload_rest['versionLabel'])
+                        version_label=_workload_rest['versionLabel'],
+                        health=self.get_workload_health(
+                            namespace=_namespace,
+                            workload_name=_workload_rest['name']))
                     items.append(_workload)
         # filter by workload name
         if len(workload_names) > 0:
@@ -477,7 +481,10 @@ class KialiExtendedClient(KialiClient):
                 workload_type=_workload_data['type'],
                 created_at=parse_from_rest(_workload_data['createdAt']),
                 resource_version=_workload_data['resourceVersion'],
-                pods_number=len(_workload_pods),
+                health=self.get_workload_health(
+                        namespace=namespace,
+                        workload_name=_workload_data['name']),
+                pods_number=len(_pods),
                 services_number=len(_services),
                 pods=_pods,
                 services=_services)
@@ -525,6 +532,21 @@ class KialiExtendedClient(KialiClient):
             namespace=namespace,
             service=service_name)
         if _health_data:
-            return Health.get_from_rest(_health_data).is_healthy()
+            return ServiceHealth.get_from_rest(_health_data).is_healthy()
+        else:
+            return None
+
+    def get_workload_health(self, namespace, workload_name):
+        """Returns Health of Workload.
+        Args:
+            namespaces: namespace where Workload is located
+            workload_name: name of Workload
+        """
+
+        _health_data = super(KialiExtendedClient, self).workload_health(
+            namespace=namespace,
+            workload=workload_name)
+        if _health_data:
+            return WorkloadHealth.get_from_rest(_health_data).is_healthy()
         else:
             return None
