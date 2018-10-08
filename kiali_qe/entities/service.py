@@ -1,4 +1,4 @@
-from kiali_qe.entities import EntityBase
+from kiali_qe.entities import EntityBase, DeploymentStatus, Requests
 from kiali_qe.components.enums import HealthType
 
 
@@ -27,7 +27,7 @@ class Envoy(EntityBase):
         elif self.i_total + self.o_total == self.i_healthy + self.o_healthy:
             return HealthType.HEALTHY
         else:
-            return HealthType.NOT_HEALTHY
+            return HealthType.FAILURE
 
     def is_equal(self, other):
         return isinstance(other, Envoy)\
@@ -35,57 +35,7 @@ class Envoy(EntityBase):
          and self.o_healthy == other.o_healthy and self.o_total == other.o_total
 
 
-class DeploymentStatus(EntityBase):
-
-    def __init__(self, name, replicas, available):
-        self.name = name
-        self.replicas = replicas
-        self.available = available
-
-    def __str__(self):
-        return 'name:{}, replicas:{}, available:{}'.format(
-            self.name, self.replicas, self.available)
-
-    def __repr__(self):
-        return "{}({}, {}, {})".format(
-            type(self).__name__, repr(self.name), repr(self.replicas), repr(self.available))
-
-    def is_equal(self, other):
-        return isinstance(other, DeploymentStatus)\
-         and self.name == other.name\
-         and self.replicas == other.replicas\
-         and self.available == other.available
-
-
-class Requests(EntityBase):
-
-    def __init__(self, request_count, request_error_count):
-        self.request_count = request_count
-        self.request_error_count = request_error_count
-
-    def __str__(self):
-        return 'request_count:{}, request_error_count:{}'.format(
-            self.request_count, self.request_error_count)
-
-    def __repr__(self):
-        return "{}({}, {})".format(
-            type(self).__name__, repr(self.request_count), repr(self.request_error_count))
-
-    def is_healthy(self):
-        if self.request_count + self.request_error_count == 0:
-            return HealthType.NA
-        elif self.request_error_count == 0:
-            return HealthType.HEALTHY
-        else:
-            return HealthType.NOT_HEALTHY
-
-    def is_equal(self, other):
-        return isinstance(other, Requests)\
-         and self.request_count == other.request_count\
-         and self.request_error_count == other.request_error_count
-
-
-class Health(EntityBase):
+class ServiceHealth(EntityBase):
 
     def __init__(self, envoy, deployment_statuses, requests):
         self.envoy = envoy
@@ -112,7 +62,7 @@ class Health(EntityBase):
             return HealthType.HEALTHY
 
     def is_equal(self, other):
-        if not isinstance(other, Health):
+        if not isinstance(other, ServiceHealth):
             return False
         if not self.envoy.is_equal(other.envoy):
             return False
@@ -144,7 +94,7 @@ class Health(EntityBase):
         _requests = Requests(
             request_count=_r_rest['requestCount'],
             request_error_count=_r_rest['requestErrorCount'])
-        return Health(
+        return ServiceHealth(
             envoy=_envoy, deployment_statuses=_deployment_status_list, requests=_requests)
 
 

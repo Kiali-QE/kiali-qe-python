@@ -1,26 +1,30 @@
-from kiali_qe.entities import EntityBase
+from kiali_qe.entities import EntityBase, DeploymentStatus, Requests
+from kiali_qe.components.enums import HealthType
 
 
 class Workload(EntityBase):
 
     def __init__(self, name, namespace, workload_type,
-                 istio_sidecar=None, app_label=None, version_label=None):
+                 istio_sidecar=None, app_label=None, version_label=None, health=None):
         self.name = name
         self.namespace = namespace
         self.workload_type = workload_type
         self.istio_sidecar = istio_sidecar
         self.app_label = app_label
         self.version_label = version_label
+        self.health = health
 
     def __str__(self):
-        return 'name:{}, namespace:{}, type:{}, sidecar:{}, app:{}, version:{}'.format(
+        return 'name:{}, namespace:{}, type:{}, sidecar:{}, app:{}, version:{}, health:{}'.format(
             self.name, self.namespace, self.workload_type,
-            self.istio_sidecar, self.app_label, self.version_label)
+            self.istio_sidecar, self.app_label, self.version_label, self.health)
 
     def __repr__(self):
-        return "{}({}, {}, {}, {}, {}, {})".format(
-            type(self).__name__, repr(self.name), repr(self.namespace), repr(self.workload_type),
-            repr(self.istio_sidecar), repr(self.app_label), repr(self.version_label))
+        return "{}({}, {}, {}, {}, {}, {}, {})".format(
+            type(self).__name__, repr(self.name),
+            repr(self.namespace), repr(self.workload_type),
+            repr(self.istio_sidecar), repr(self.app_label),
+            repr(self.version_label), repr(self.health))
 
     def __eq__(self, other):
         return self.is_equal(other, advanced_check=True)
@@ -43,18 +47,21 @@ class Workload(EntityBase):
                 return False
             if self.version_label != other.version_label:
                 return False
+            if self.health != other.health:
+                return False
         return True
 
 
 class WorkloadDetails(EntityBase):
 
     def __init__(self, name, workload_type, created_at, resource_version,
-                 istio_sidecar=False, **kwargs):
+                 istio_sidecar=False, health=None, **kwargs):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
         self.workload_type = workload_type
         self.istio_sidecar = istio_sidecar
+        self.health = health
         self.created_at = created_at
         self.resource_version = resource_version
         self.replicas = kwargs['replicas']\
@@ -79,15 +86,15 @@ class WorkloadDetails(EntityBase):
             if 'pods' in kwargs else None
 
     def __str__(self):
-        return 'name:{}, type:{}, sidecar:{}, createdAt:{}, resourceVersion:{}'.format(
+        return 'name:{}, type:{}, sidecar:{}, createdAt:{}, resourceVersion:{}, health{}'.format(
             self.name, self.workload_type,
-            self.istio_sidecar, self.created_at, self.resource_version)
+            self.istio_sidecar, self.created_at, self.resource_version, self.health)
 
     def __repr__(self):
-        return "{}({}, {}, {}, {}, {})".format(
+        return "{}({}, {}, {}, {}, {}, {})".format(
             type(self).__name__, repr(self.name), repr(self.workload_type),
             repr(self.istio_sidecar), repr(self.created_at),
-            repr(self.resource_version))
+            repr(self.resource_version), repr(self.health))
 
     def __eq__(self, other):
         return self.is_equal(other, advanced_check=True)
@@ -107,6 +114,8 @@ class WorkloadDetails(EntityBase):
         # advanced check
         if advanced_check:
             if self.istio_sidecar != other.istio_sidecar:
+                return False
+            if self.health != other.health:
                 return False
         return True
 
@@ -154,3 +163,55 @@ class WorkloadPod(EntityBase):
             if self.istio_containers != other.istio_containers:
                 return False
         return True
+
+
+class WorkloadHealth(EntityBase):
+
+    def __init__(self, deployment_status, requests):
+        self.deployment_status = deployment_status
+        self.requests = requests
+
+    def __str__(self):
+        return 'deployment_status:{}, requests:{}'.format(
+            self.deployment_status, self.requests)
+
+    def __repr__(self):
+        return "{}({}, {}, {})".format(
+            type(self).__name__,
+            repr(self.deployment_status), repr(self.requests))
+
+    def is_healthy(self):
+        if self.deployment_status.is_healthy() == HealthType.NA \
+                and self.requests.is_healthy() == HealthType.NA:
+            return HealthType.NA
+        elif self.deployment_status.is_healthy() == HealthType.FAILURE \
+                or self.requests.is_healthy() == HealthType.FAILURE:
+            return HealthType.FAILURE
+        else:
+            return HealthType.HEALTHY
+
+    def is_equal(self, other):
+        if not isinstance(other, WorkloadHealth):
+            return False
+        if not self.deployment_status.is_equal(other.deployment_status):
+            return False
+        if not self.requests.is_equal(other.requests):
+            return False
+        return True
+
+    @classmethod
+    def get_from_rest(cls, health):
+        # update deployment status
+        _deployment_status = None
+        if 'deploymentStatus' in health:
+            _deployment_status = DeploymentStatus(
+                name=health['deploymentStatus']['name'],
+                replicas=health['deploymentStatus']['replicas'],
+                available=health['deploymentStatus']['available'])
+            # update requests
+        _r_rest = health['requests']
+        _requests = Requests(
+            request_count=_r_rest['requestCount'],
+            request_error_count=_r_rest['requestErrorCount'])
+        return WorkloadHealth(
+            deployment_status=_deployment_status, requests=_requests)

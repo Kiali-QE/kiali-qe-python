@@ -79,6 +79,7 @@ class GraphPageDisplayFilter(StringEnum):
     NODE_LABELS = ('Node Names')
     SERVICE_NODES = ('Service Nodes')
     TRAFFIC_ANIMATION = ('Traffic Animation')
+    UNUSED_NODES = ('Unused Nodes')
 
 
 class GraphPageBadgesFilter(StringEnum):

@@ -767,6 +767,45 @@ class ListViewAbstract(Widget):
         wait_to_spinner_disappear(self.browser)
         wait_displayed(self)
 
+    def _get_details_health(self):
+        _healthy = len(self.browser.elements(
+            parent=self.DETAILS_ROOT,
+            locator='.//*[contains(@class, "pficon-ok")]')) > 0
+        _not_healthy = len(self.browser.elements(
+            parent=self.DETAILS_ROOT,
+            locator='.//*[contains(@class, "pficon-error-circle-o")]')) > 0
+        _not_available = len(self.browser.elements(
+            parent=self.DETAILS_ROOT,
+            locator='.//*[text()="N/A"]')) > 0
+        _health = None
+        if _healthy:
+            _health = HealthType.HEALTHY
+        elif _not_healthy:
+            _health = HealthType.FAILURE
+        elif _not_available:
+            _health = HealthType.NA
+        return _health
+
+    def _get_item_health(self, element):
+        wait_displayed(self)
+        _healthy = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@class, "pficon-ok")]')) > 0
+        _not_healthy = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@class, "pficon-error-circle-o")]')) > 0
+        _not_available = len(self.browser.elements(
+            parent=element,
+            locator='.//*[text()="N/A"]')) > 0
+        _health = None
+        if _healthy:
+            _health = HealthType.HEALTHY
+        elif _not_healthy:
+            _health = HealthType.FAILURE
+        elif _not_available:
+            _health = HealthType.NA
+        return _health
+
     @property
     def all_items(self):
         items = []
@@ -777,6 +816,7 @@ class ListViewAbstract(Widget):
         self._pagination.set_items_per_page(5)
         for _page in range(1, self._pagination.total_pages + 1):
             self._pagination.move_to_page(_page)
+            wait_to_spinner_disappear(self.browser)
             items.extend(self.items)
         return items
 
@@ -895,6 +935,7 @@ class ListViewWorkloads(ListViewAbstract):
                                created_at=parse_from_ui(_created_at),
                                resource_version=_resource_version,
                                istio_sidecar=_istio_sidecar,
+                               health=self._get_details_health(),
                                pods_number=_table_view_pods.number,
                                services_number=_table_view_services.number,
                                pods=_table_view_pods.all_items,
@@ -922,7 +963,8 @@ class ListViewWorkloads(ListViewAbstract):
                 name=_name, namespace=_namespace, workload_type=_type,
                 istio_sidecar=_istio_sidecar,
                 app_label=_app_label,
-                version_label=_version_label)
+                version_label=_version_label,
+                health=self._get_item_health(element=el))
             # append this item to the final list
             _items.append(_workload)
         return _items
@@ -950,22 +992,6 @@ class ListViewServices(ListViewAbstract):
         _ports = self.browser.text(
             locator=self.PROPERTY_SECTIONS.format(self.PORTS),
             parent=self.DETAILS_ROOT).replace(self.PORTS, '').strip()
-        _healthy = len(self.browser.elements(
-            parent=self.DETAILS_ROOT,
-            locator='.//*[contains(@class, "pficon-ok")]')) > 0
-        _not_healthy = len(self.browser.elements(
-            parent=self.DETAILS_ROOT,
-            locator='.//*[contains(@class, "pficon-error-circle-o")]')) > 0
-        _not_available = len(self.browser.elements(
-            parent=self.DETAILS_ROOT,
-            locator='.//*[text()="N/A"]')) > 0
-        _health = None
-        if _healthy:
-            _health = HealthType.HEALTHY
-        elif _not_healthy:
-            _health = HealthType.FAILURE
-        elif _not_available:
-            _health = HealthType.NA
 
         _table_view_wl = TableViewWorkloads(self.parent, self.locator, self.logger)
 
@@ -982,7 +1008,7 @@ class ListViewServices(ListViewAbstract):
                               ip=_ip,
                               ports=str(_ports.replace('\n', ' ')),
                               istio_sidecar=_istio_sidecar,
-                              health=_health,
+                              health=self._get_details_health(),
                               workloads_number=_table_view_wl.number,
                               source_workloads_number=_table_view_swl.number,
                               virtual_services_number=_table_view_vs.number,
@@ -1004,25 +1030,11 @@ class ListViewServices(ListViewAbstract):
             # update istio sidecar logo
             _istio_sidecar = len(self.browser.elements(
                 parent=el, locator='.//img[contains(@class, "IstioLogo")]')) > 0
-            _healthy = len(self.browser.elements(
-                parent=el,
-                locator='.//*[contains(@class, "pficon-ok")]')) > 0
-            _not_healthy = len(self.browser.elements(
-                parent=el,
-                locator='.//*[contains(@class, "pficon-error-circle-o")]')) > 0
-            _not_available = len(self.browser.elements(
-                parent=el,
-                locator='.//*[text()="N/A"]')) > 0
-            _health = None
-            if _healthy:
-                _health = HealthType.HEALTHY
-            elif _not_healthy:
-                _health = HealthType.FAILURE
-            elif _not_available:
-                _health = HealthType.NA
+
             # create service instance
             _service = Service(
-                name=_name, namespace=_namespace, istio_sidecar=_istio_sidecar, health=_health)
+                name=_name, namespace=_namespace, istio_sidecar=_istio_sidecar,
+                health=self._get_item_health(element=el))
             # append this item to the final list
             _items.append(_service)
         return _items
