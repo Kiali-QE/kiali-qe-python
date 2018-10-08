@@ -4,8 +4,8 @@
 dotmap==1.2.20
 enum34==1.1.6
 flake8==3.5.0
-kiali-client==0.4.8
-openshift==0.7.2
+kiali-client
+openshift
 pytest==3.5.1
 pytest_jira==0.3.6
 pyyaml==3.12
