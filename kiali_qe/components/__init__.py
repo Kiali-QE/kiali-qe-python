@@ -884,6 +884,7 @@ class ListViewApplications(ListViewAbstract):
 
         return ApplicationDetails(name=str(_name),
                                   istio_sidecar=_istio_sidecar,
+                                  health=self._get_details_health(),
                                   workloads=_table_view_workloads.all_items)
 
     @property
@@ -898,11 +899,12 @@ class ListViewApplications(ListViewAbstract):
             # update istio sidecar logo
             _istio_sidecar = len(self.browser.elements(
                 parent=el, locator='.//img[contains(@class, "IstioLogo")]')) > 0
-            # TODO Health and Error Rate
+            # TODO Error Rate
             # application object creation
             _application = Application(
                 name=_name, namespace=_namespace,
-                istio_sidecar=_istio_sidecar,)
+                istio_sidecar=_istio_sidecar,
+                health=self._get_item_health(element=el))
             # append this item to the final list
             _items.append(_application)
         return _items
