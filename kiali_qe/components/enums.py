@@ -208,3 +208,10 @@ class HealthType(StringEnum):
     NA = ('N/A')
     HEALTHY = ('Healthy')
     FAILURE = ('Failure')
+
+
+class IstioConfigValidation(StringEnum):
+    NA = ('N/A')
+    VALID = ('Valid')
+    WARNING = ('Warning')
+    NOT_VALID = ('Not Valid')

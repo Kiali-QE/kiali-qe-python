@@ -7,7 +7,9 @@ from kiali_qe.components.enums import (
     IstioConfigPageFilter,
     WorkloadsPageFilter,
     ApplicationsPageFilter,
-    OverviewPageFilter
+    OverviewPageFilter,
+    IstioConfigObjectType as OBJECT_TYPE,
+    IstioConfigValidation
 )
 from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
@@ -640,10 +642,26 @@ class IstioConfigPageTest(AbstractListPageTest):
         for config_ui in config_list_ui:
             found = False
             for config_rest in config_list_rest:
-                if config_ui.is_equal(config_rest, advanced_check=False):
+                if config_ui.is_equal(config_rest, advanced_check=True):
                     found = True
                     break
             assert found, '{} not found in REST'.format(config_ui)
+
+    def assert_random_details(self, filters, force_clear_all=True):
+        # apply filters
+        self.apply_filters(filters=filters, force_clear_all=force_clear_all)
+        # get configs from ui
+        configs_ui = self.page.content.all_items
+        # random configs filters
+        assert len(configs_ui) > 0
+        if len(configs_ui) > 3:
+            _random_configs = random.sample(configs_ui, 10)
+        else:
+            _random_configs = configs_ui
+        # create filters
+        for _selected_config in _random_configs:
+            if _selected_config.object_type != OBJECT_TYPE.RULE.text:
+                self.assert_details(_selected_config.name, _selected_config.namespace)
 
     def assert_details(self, name, namespace=None):
         logger.debug('Details: {}, {}'.format(name, namespace))
@@ -667,6 +685,12 @@ class IstioConfigPageTest(AbstractListPageTest):
         assert config_details_rest
         assert name == config_details_rest.name
         assert config_details_rest.text
+        # TODO for Gateways there is no way to check in UI if it is valid or N/A
+        assert config_details_ui.is_equal(
+            config_details_rest,
+            advanced_check=True if
+            config_details_rest.validation != IstioConfigValidation.NA
+            else False)
         # find key: value pairs from UI in a REST
         for config_ui in re.split(' ',
                                   str(config_details_ui.text).

@@ -34,3 +34,17 @@ def test_filter_feature_random(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_filter_feature_random()
+
+
+@pytest.mark.p_group_last
+def test_all_configs(kiali_client, openshift_client, browser):
+    tests = IstioConfigPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.assert_all_items(filters=[])
+
+
+@pytest.mark.p_group_last
+def test_config_details_random(kiali_client, openshift_client, browser):
+    tests = IstioConfigPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.assert_random_details(filters=[])

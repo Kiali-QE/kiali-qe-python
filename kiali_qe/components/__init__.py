@@ -7,7 +7,8 @@ from kiali_qe.components.enums import (
     HelpMenuEnum,
     ApplicationVersionEnum,
     IstioConfigObjectType,
-    HealthType
+    HealthType,
+    IstioConfigValidation
 )
 from kiali_qe.entities.service import (
     Service,
@@ -806,6 +807,40 @@ class ListViewAbstract(Widget):
             _health = HealthType.NA
         return _health
 
+    def _get_item_validation(self, element):
+        wait_displayed(self)
+        _valid = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@class, "pficon-ok")]')) > 0
+        _not_valid = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@class, "pficon-error-circle-o")]')) > 0
+        _warning = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@class, "pficon-warning-triangle-o")]')) > 0
+        if _valid:
+            return IstioConfigValidation.VALID
+        elif _not_valid:
+            return IstioConfigValidation.NOT_VALID
+        elif _warning:
+            return IstioConfigValidation.WARNING
+        else:
+            return IstioConfigValidation.NA
+
+    def _get_details_validation(self):
+        _not_valid = len(self.browser.elements(
+            parent=self.DETAILS_ROOT,
+            locator='.//*[contains(@class, "ace_error")]')) > 0
+        _warning = len(self.browser.elements(
+            parent=self.DETAILS_ROOT,
+            locator='.//*[contains(@class, "ace_warning")]')) > 0
+        if _not_valid:
+            return IstioConfigValidation.NOT_VALID
+        elif _warning:
+            return IstioConfigValidation.WARNING
+        else:
+            return IstioConfigValidation.VALID
+
     @property
     def all_items(self):
         items = []
@@ -1055,7 +1090,8 @@ class ListViewIstioConfig(ListViewAbstract):
                                          parent=self.CONFIG_DETAILS_ROOT).split(': ')
         _text = self.browser.text(locator=self.CONFIG_TEXT,
                                   parent=self.CONFIG_DETAILS_ROOT)
-        return IstioConfigDetails(name=_name, _type=_type, text=_text)
+        return IstioConfigDetails(name=_name, _type=_type, text=_text,
+                                  validation=self._get_details_validation())
 
     @property
     def items(self):
@@ -1093,7 +1129,10 @@ class ListViewIstioConfig(ListViewAbstract):
                 # append this item to the final list
                 _items.append(_rule)
             else:
-                _config = IstioConfig(name=_name, namespace=_namespace, object_type=_object_type)
+                _config = IstioConfig(name=_name,
+                                      namespace=_namespace,
+                                      object_type=_object_type,
+                                      validation=self._get_item_validation(el))
                 # append this item to the final list
                 _items.append(_config)
         return _items
