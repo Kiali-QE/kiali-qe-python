@@ -1,38 +1,5 @@
-from kiali_qe.entities import EntityBase, DeploymentStatus, Requests
+from kiali_qe.entities import EntityBase, DeploymentStatus, Requests, Envoy
 from kiali_qe.components.enums import HealthType
-
-
-class Envoy(EntityBase):
-
-    def __init__(self, i_healthy, i_total, o_healthy, o_total):
-        self.i_healthy = i_healthy
-        self.i_total = i_total
-        self.o_healthy = o_healthy
-        self.o_total = o_total
-
-    def __str__(self):
-        return 'inbound (healthy:{}, total:{}), outbound (healthy:{}, total:{})'.format(
-            self.i_healthy, self.i_total, self.o_healthy, self.o_total)
-
-    def __repr__(self):
-        return "{}({}, {})({}, {})".format(type(self).__name__,
-                                           repr(self.i_healthy),
-                                           repr(self.i_total),
-                                           repr(self.o_healthy),
-                                           repr(self.o_total))
-
-    def is_healthy(self):
-        if self.i_total + self.o_total == 0:
-            return HealthType.NA
-        elif self.i_total + self.o_total == self.i_healthy + self.o_healthy:
-            return HealthType.HEALTHY
-        else:
-            return HealthType.FAILURE
-
-    def is_equal(self, other):
-        return isinstance(other, Envoy)\
-         and self.i_healthy == other.i_healthy and self.i_total == other.i_total\
-         and self.o_healthy == other.o_healthy and self.o_total == other.o_total
 
 
 class ServiceHealth(EntityBase):

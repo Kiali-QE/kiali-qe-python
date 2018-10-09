@@ -23,7 +23,8 @@ from kiali_qe.entities.workload import (
 from kiali_qe.entities.applications import (
     Application,
     ApplicationDetails,
-    AppWorkload
+    AppWorkload,
+    ApplicationHealth
 )
 from kiali_qe.entities.overview import Overview
 from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
@@ -116,7 +117,10 @@ class KialiExtendedClient(KialiClient):
                     _application = Application(
                         namespace=_namespace,
                         name=_application_rest['name'],
-                        istio_sidecar=_application_rest['istioSidecar'])
+                        istio_sidecar=_application_rest['istioSidecar'],
+                        health=self.get_app_health(
+                            namespace=_namespace,
+                            app_name=_application_rest['name']))
                     items.append(_application)
         # filter by application name
         if len(application_names) > 0:
@@ -518,6 +522,9 @@ class KialiExtendedClient(KialiClient):
             _application = ApplicationDetails(
                 name=_application_data['name'],
                 istio_sidecar=_application_rest.istio_sidecar,
+                health=self.get_app_health(
+                            namespace=namespace,
+                            app_name=_application_data['name']),
                 workloads=_workloads)
         return _application
 
@@ -548,5 +555,20 @@ class KialiExtendedClient(KialiClient):
             workload=workload_name)
         if _health_data:
             return WorkloadHealth.get_from_rest(_health_data).is_healthy()
+        else:
+            return None
+
+    def get_app_health(self, namespace, app_name):
+        """Returns Health of Application.
+        Args:
+            namespaces: namespace where Application is located
+            workload_name: name of Application
+        """
+
+        _health_data = super(KialiExtendedClient, self).app_health(
+            namespace=namespace,
+            app=app_name)
+        if _health_data:
+            return ApplicationHealth.get_from_rest(_health_data).is_healthy()
         else:
             return None
