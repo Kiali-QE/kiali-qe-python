@@ -3,8 +3,11 @@ import json
 from itertools import groupby
 
 from kiali.api import KialiClient
-from kiali_qe.components.enums import IstioConfigObjectType as OBJECT_TYPE
-from kiali_qe.components.enums import IstioConfigPageFilter as FILTER_TYPE
+from kiali_qe.components.enums import (
+    IstioConfigObjectType as OBJECT_TYPE,
+    IstioConfigPageFilter as FILTER_TYPE,
+    IstioConfigValidation
+)
 from kiali_qe.entities.istio_config import IstioConfig, IstioConfigDetails, Rule
 from kiali_qe.entities.service import (
     ServiceHealth,
@@ -199,7 +202,10 @@ class KialiExtendedClient(KialiClient):
                     items.append(IstioConfig(
                         name=_policy['name'],
                         namespace=_namespace,
-                        object_type=OBJECT_TYPE.DESTINATION_RULE.text))
+                        object_type=OBJECT_TYPE.DESTINATION_RULE.text,
+                        validation=self.get_istio_config_validation(_namespace,
+                                                                    'destinationrules',
+                                                                    _policy['name'])))
 
             # update Rule
             if len(_data['rules']) > 0:
@@ -215,7 +221,10 @@ class KialiExtendedClient(KialiClient):
                     items.append(IstioConfig(
                         name=_policy['name'],
                         namespace=_namespace,
-                        object_type=OBJECT_TYPE.VIRTUAL_SERVICE.text))
+                        object_type=OBJECT_TYPE.VIRTUAL_SERVICE.text,
+                        validation=self.get_istio_config_validation(_namespace,
+                                                                    'virtualservices',
+                                                                    _policy['name'])))
 
             # update QuotaSpec
             if len(_data['quotaSpecs']) > 0:
@@ -223,7 +232,10 @@ class KialiExtendedClient(KialiClient):
                     items.append(IstioConfig(
                         name=_policy['name'],
                         namespace=_namespace,
-                        object_type=OBJECT_TYPE.QUOTA_SPEC.text))
+                        object_type=OBJECT_TYPE.QUOTA_SPEC.text,
+                        validation=self.get_istio_config_validation(_namespace,
+                                                                    'quotaspecs',
+                                                                    _policy['name'])))
 
             # update QuotaSpecBindings
             if len(_data['quotaSpecBindings']) > 0:
@@ -231,7 +243,10 @@ class KialiExtendedClient(KialiClient):
                     items.append(IstioConfig(
                         name=_policy['name'],
                         namespace=_namespace,
-                        object_type=OBJECT_TYPE.QUOTA_SPEC_BINDING.text))
+                        object_type=OBJECT_TYPE.QUOTA_SPEC_BINDING.text,
+                        validation=self.get_istio_config_validation(_namespace,
+                                                                    'quotaspecbindings',
+                                                                    _policy['name'])))
 
             # update Gateway
             if len(_data['gateways']) > 0:
@@ -239,7 +254,10 @@ class KialiExtendedClient(KialiClient):
                     items.append(IstioConfig(
                         name=_policy['name'],
                         namespace=_namespace,
-                        object_type=OBJECT_TYPE.GATEWAY.text))
+                        object_type=OBJECT_TYPE.GATEWAY.text,
+                        validation=self.get_istio_config_validation(_namespace,
+                                                                    'gateways',
+                                                                    _policy['name'])))
 
             # update serviceEntries
             if len(_data['serviceEntries']) > 0:
@@ -247,7 +265,10 @@ class KialiExtendedClient(KialiClient):
                     items.append(IstioConfig(
                         name=_policy['name'],
                         namespace=_namespace,
-                        object_type=OBJECT_TYPE.SERVICE_ENTRY.text))
+                        object_type=OBJECT_TYPE.SERVICE_ENTRY.text,
+                        validation=self.get_istio_config_validation(_namespace,
+                                                                    'serviceentries',
+                                                                    _policy['name'])))
 
             # not required at this stage. These options not availabe in UI
             # # update all the rules to our custom entity
@@ -328,9 +349,13 @@ class KialiExtendedClient(KialiClient):
                 config_data = _data['serviceEntry']
 
             if config_data:
-                config = IstioConfigDetails(name=config_data['name'],
-                                            _type=_data['objectType'],
-                                            text=json.dumps(config_data))
+                config = IstioConfigDetails(
+                    name=config_data['name'],
+                    _type=_data['objectType'],
+                    text=json.dumps(config_data),
+                    validation=self.get_istio_config_validation(namespace,
+                                                                object_type,
+                                                                object_name))
         return config
 
     def service_details(self, namespace, service_name):
@@ -572,3 +597,26 @@ class KialiExtendedClient(KialiClient):
             return ApplicationHealth.get_from_rest(_health_data).is_healthy()
         else:
             return None
+
+    def get_istio_config_validation(self, namespace, object_type, object_name):
+        """Returns Validation of Istio Config.
+        Args:
+            namespaces: namespace where Config is located
+            object_type: type of the Config
+            object: name of Config
+        """
+
+        _health_data = super(KialiExtendedClient, self).istio_object_istio_validations(
+            namespace=namespace,
+            object_type=object_type,
+            object=object_name)
+        if _health_data:
+            _, value = _health_data.popitem()
+            if value[object_name]['valid'] == 'false':
+                return IstioConfigValidation.NOT_VALID
+            elif len(value[object_name]['checks']) > 0:
+                return IstioConfigValidation.WARNING
+            else:
+                return IstioConfigValidation.VALID
+        else:
+            return IstioConfigValidation.NA

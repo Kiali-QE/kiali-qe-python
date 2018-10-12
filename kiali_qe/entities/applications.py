@@ -20,10 +20,12 @@ class ApplicationHealth(EntityBase):
 
     def is_healthy(self):
         if self.envoys_health() == HealthType.NA \
-                and self.requests.is_healthy() == HealthType.NA:
+                and self.requests.is_healthy() == HealthType.NA \
+                and self.deployment_statuses_health() == HealthType.NA:
             return HealthType.NA
         elif self.envoys_health() == HealthType.FAILURE \
-                or self.requests.is_healthy() == HealthType.FAILURE:
+                or self.requests.is_healthy() == HealthType.FAILURE \
+                or self.deployment_statuses_health() == HealthType.FAILURE:
             return HealthType.FAILURE
         else:
             return HealthType.HEALTHY
@@ -34,6 +36,15 @@ class ApplicationHealth(EntityBase):
                 return HealthType.FAILURE
             elif envoy.is_healthy() == HealthType.NA:
                 return HealthType.NA
+        return HealthType.HEALTHY
+
+    def deployment_statuses_health(self):
+        for deployment_status in self.deployment_statuses:
+            if deployment_status.is_healthy() == HealthType.FAILURE:
+                return HealthType.FAILURE
+            elif deployment_status.is_healthy() == HealthType.NA:
+                # if app is not deployed, it is not healthy
+                return HealthType.FAILURE
         return HealthType.HEALTHY
 
     def is_equal(self, other):

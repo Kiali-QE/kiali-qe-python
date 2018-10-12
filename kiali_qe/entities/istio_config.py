@@ -4,18 +4,20 @@ from kiali_qe.utils import is_equal
 
 class IstioConfig(EntityBase):
 
-    def __init__(self, name, namespace, object_type):
+    def __init__(self, name, namespace, object_type, validation=None):
         self.name = name
         self.namespace = namespace
         self.object_type = object_type
+        self.validation = validation
 
     def __str__(self):
-        return 'name:{}, namespace:{}, object_type:{}'.format(
-            self.name, self.namespace, self.object_type)
+        return 'name:{}, namespace:{}, object_type:{}, validation:{}'.format(
+            self.name, self.namespace, self.object_type, self.validation)
 
     def __repr__(self):
-        return "{}({}, {}, {})".format(
-            type(self).__name__, repr(self.name), repr(self.namespace), repr(self.object_type))
+        return "{}({}, {}, {}, {})".format(
+            type(self).__name__, repr(self.name), repr(self.namespace),
+            repr(self.object_type), repr(self.validation))
 
     def __eq__(self, other):
         return self.is_equal(other, advanced_check=True)
@@ -32,35 +34,40 @@ class IstioConfig(EntityBase):
         if advanced_check:
             if self.object_type != other.object_type:
                 return False
+            if self.validation != other.validation:
+                return False
         return True
 
 
 class IstioConfigDetails(EntityBase):
 
-    def __init__(self, name, _type, text):
+    def __init__(self, name, _type, text, validation=None):
         self.name = name
         self._type = _type
         self.text = text
+        self.validation = validation
 
     def __str__(self):
-        return 'name{}, text:{}'.format(
-            self.name, self.text)
+        return 'name{}, text:{}, {}'.format(
+            self.name, self.text, self.validation)
 
     def __repr__(self):
-        return "{}({})".format(
-            type(self).__name__, repr(self.name), repr(self.text))
+        return "{}({}, {})".format(
+            type(self).__name__, repr(self.name), repr(self.text), repr(self.validation))
 
     def __eq__(self, other):
-        return self.is_equal()
+        return self.is_equal(other)
 
-    def is_equal(self, other):
+    def is_equal(self, other, advanced_check=True):
         # basic check
         if not isinstance(other, IstioConfigDetails):
             return False
         if self.name != other.name:
             return False
-        if self.text != other.text:
-            return False
+        # advanced check
+        if advanced_check:
+            if self.validation != other.validation:
+                return False
         return True
 
 
