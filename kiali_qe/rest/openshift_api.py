@@ -28,8 +28,40 @@ class OpenshiftExtendedClient(object):
         return self._resource(kind='Service')
 
     @property
+    def _cronjob(self):
+        return self._resource(kind='CronJob', api_version='v1beta1')
+
+    @property
+    def _daemonset(self):
+        return self._resource(kind='DaemonSet')
+
+    @property
     def _deployment(self):
         return self._resource(kind='Deployment')
+
+    @property
+    def _deploymentconfig(self):
+        return self._resource(kind='DeploymentConfig')
+
+    @property
+    def _job(self):
+        return self._resource(kind='Job', api_version='v1')
+
+    @property
+    def _pod(self):
+        return self._resource(kind='Pod')
+
+    @property
+    def _replicaset(self):
+        return self._resource(kind='ReplicaSet')
+
+    @property
+    def _replicationcontroller(self):
+        return self._resource(kind='ReplicationController')
+
+    @property
+    def _statefulset(self):
+        return self._resource(kind='StatefulSet')
 
     def _istio_config(self, kind, api_version):
         return self._resource(kind=kind, api_version=api_version)
@@ -76,39 +108,65 @@ class OpenshiftExtendedClient(object):
 
     def workload_list(self, namespaces=[], workload_names=[]):
         """ Returns list of workloads """
-        return self._deployment_list(namespaces=namespaces, deployment_names=workload_names)
+        result = []
+        result.extend(self._workload_list('_cronjob', 'CronJob',
+                                          namespaces=namespaces, workload_names=workload_names))
+        result.extend(self._workload_list('_daemonset', 'DaemonSet',
+                                          namespaces=namespaces, workload_names=workload_names))
+        result.extend(self._workload_list('_deployment', 'Deployment',
+                                          namespaces=namespaces, workload_names=workload_names))
+        result.extend(self._workload_list('_deploymentconfig', 'DeploymentConfig',
+                                          namespaces=namespaces, workload_names=workload_names))
+        # TODO apply Job filters
+        result.extend(self._workload_list('_job', 'Job', namespaces=namespaces,
+                                          workload_names=workload_names))
+        # TODO apply Pod filters
+        result.extend(self._workload_list('_pod', 'Pod', namespaces=namespaces,
+                                          workload_names=workload_names))
+        result.extend(self._workload_list('_replicaset', 'ReplicaSet',
+                                          namespaces=namespaces, workload_names=workload_names))
+        result.extend(self._workload_list('_replicationcontroller', 'ReplicationController',
+                                          namespaces=namespaces, workload_names=workload_names))
+        result.extend(self._workload_list('_statefulset', 'StatefulSet',
+                                          namespaces=namespaces, workload_names=workload_names))
+        return result
 
-    def _deployment_list(self, namespaces=[], deployment_names=[]):
-        """ Returns list of deployments
+    def _workload_list(self, attribute_name, workload_type,
+                       namespaces=[], workload_names=[]):
+        """ Returns list of workload
         Args:
-            namespace: Namespace of the deployment, optional
-            deployment_names: Names of the deployments, optional
+            attribute_name: the attribute of class for getting workload
+            workload_type: the type of workload
+            namespace: Namespace of the workload, optional
+            workload_names: Names of the workloads, optional
         """
         items = []
         _raw_items = []
         if len(namespaces) > 0:
             # update items
             for _namespace in namespaces:
-                _response = self._deployment.get(namespace=_namespace)
-                _raw_items.extend(_response.items)
+                _response = getattr(self, attribute_name).get(namespace=_namespace)
+                if hasattr(_response, 'items'):
+                    _raw_items.extend(_response.items)
         else:
-            _response = self._deployment.get()
-            _raw_items.extend(_response.items)
+            _response = getattr(self, attribute_name).get()
+            if hasattr(_response, 'items'):
+                _raw_items.extend(_response.items)
         for _item in _raw_items:
-            # update all the deployments to our custom entity
+            # update all the workloads to our custom entity
             # TODO: istio side car and labels needs to be added
-            _deployment = Workload(
+            _workload = Workload(
                 name=_item.metadata.name,
                 namespace=_item.metadata.namespace,
-                workload_type='Deployment',
+                workload_type=workload_type,
                 istio_sidecar=None,
                 app_label=None,
                 version_label=None)
-            items.append(_deployment)
-        # filter by deployment name
-        if len(deployment_names) > 0:
+            items.append(_workload)
+        # filter by workload name
+        if len(workload_names) > 0:
             filtered_list = []
-            for _name in deployment_names:
+            for _name in workload_names:
                 filtered_list.extend([_i for _i in items if _name in _i.name])
             return set(filtered_list)
         return items
