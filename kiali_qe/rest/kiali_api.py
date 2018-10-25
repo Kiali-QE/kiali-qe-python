@@ -612,7 +612,7 @@ class KialiExtendedClient(KialiClient):
             object=object_name)
         if _health_data:
             _, value = _health_data.popitem()
-            if value[object_name]['valid'] == 'false':
+            if not value[object_name]['valid']:
                 return IstioConfigValidation.NOT_VALID
             elif len(value[object_name]['checks']) > 0:
                 return IstioConfigValidation.WARNING
