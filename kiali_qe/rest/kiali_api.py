@@ -536,21 +536,21 @@ class KialiExtendedClient(KialiClient):
             _workloads = []
             if _application_data['workloads']:
                 for _wl_data in _application_data['workloads']:
-                    _services = ''
-                    for _service in _wl_data['serviceNames']:
-                        _services += '{}{}'.format(_service,
-                                                   '' if len(_wl_data['serviceNames']) > 1 else '')
                     _workloads.append(AppWorkload(
                         name=_wl_data['workloadName'],
-                        istio_sidecar=_wl_data['istioSidecar'],
-                        services=_services))
+                        istio_sidecar=_wl_data['istioSidecar']))
+            _services = []
+            if 'serviceNames' in _application_data:
+                for _service in _application_data['serviceNames']:
+                    _services.append(_service)
             _application = ApplicationDetails(
                 name=_application_data['name'],
                 istio_sidecar=_application_rest.istio_sidecar,
                 health=self.get_app_health(
                             namespace=namespace,
                             app_name=_application_data['name']),
-                workloads=_workloads)
+                workloads=_workloads,
+                services=_services)
         return _application
 
     def get_service_health(self, namespace, service_name):

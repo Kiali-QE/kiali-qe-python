@@ -11,7 +11,7 @@ from kiali_qe.components.enums import (
     IstioConfigObjectType as OBJECT_TYPE,
     IstioConfigValidation
 )
-from kiali_qe.utils import is_equal
+from kiali_qe.utils import is_equal, is_sublist
 from kiali_qe.utils.log import logger
 
 from kiali_qe.pages import (
@@ -109,7 +109,7 @@ class AbstractListPageTest(object):
         logger.debug('Namespaces REST:{}'.format(namespaces_rest))
         logger.debug('Namespaces OC:{}'.format(namespaces_oc))
         assert is_equal(namespaces_ui, namespaces_rest)
-        assert is_equal(namespaces_rest, namespaces_oc)
+        assert is_sublist(namespaces_rest, namespaces_oc)
 
     def assert_filter_feature_random(self):
         # clear filters if any
@@ -301,7 +301,12 @@ class ApplicationsPageTest(AbstractListPageTest):
                                         advanced_check=True):
                     found = True
                     break
-            assert found, 'Workload {} not found in REST {}'.format(workload_ui, workload_rest)
+            if not found:
+                assert found, 'Workload {} not found in REST {}'.format(workload_ui, workload_rest)
+        assert application_details_ui.services == application_details_rest.services, \
+        'UI services {} not equal to REST {}'.format(
+            application_details_ui.services,
+            application_details_rest.services)
 
     def assert_all_items(self, filters, force_clear_all=True):
         # apply filters
@@ -334,8 +339,8 @@ class ApplicationsPageTest(AbstractListPageTest):
                 if application_ui.is_equal(application_rest, advanced_check=True):
                     found = True
                     break
-            assert found, '{} not found in REST'.format(application_ui)
-            found = False
+            if not found:
+                assert found, '{} not found in REST'.format(application_ui)
 
 
 class WorkloadsPageTest(AbstractListPageTest):
@@ -397,7 +402,8 @@ class WorkloadsPageTest(AbstractListPageTest):
                                    advanced_check=True):
                     found = True
                     break
-            assert found, 'Pod {} not found in REST {}'.format(pod_ui, pod_rest)
+            if not found:
+                assert found, 'Pod {} not found in REST {}'.format(pod_ui, pod_rest)
         for service_ui in workload_details_ui.services:
             found = False
             for service_rest in workload_details_rest.services:
@@ -405,7 +411,8 @@ class WorkloadsPageTest(AbstractListPageTest):
                                        advanced_check=True):
                     found = True
                     break
-            assert found, 'Service {} not found in REST {}'.format(service_ui, service_rest)
+            if not found:
+                assert found, 'Service {} not found in REST {}'.format(service_ui, service_rest)
 
     def assert_all_items(self, filters, force_clear_all=True):
         # apply filters
@@ -434,7 +441,8 @@ class WorkloadsPageTest(AbstractListPageTest):
         logger.debug('Workloads OC:{}'.format(workloads_oc))
 
         assert len(workloads_ui) == len(workloads_rest)
-        assert len(workloads_rest) == len(workloads_oc)
+        # TODO when workloads are filtered put == here
+        assert len(workloads_rest) <= len(workloads_oc)
 
         for workload_ui in workloads_ui:
             found = False
@@ -578,7 +586,7 @@ class ServicesPageTest(AbstractListPageTest):
         logger.debug('Services OC:{}'.format(services_oc))
 
         assert len(services_ui) == len(services_rest)
-        assert len(services_rest) == len(services_oc)
+        assert len(services_rest) <= len(services_oc)
 
         for service_ui in services_ui:
             found = False

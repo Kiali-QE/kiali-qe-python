@@ -775,6 +775,9 @@ class ListViewAbstract(Widget):
         _not_healthy = len(self.browser.elements(
             parent=self.DETAILS_ROOT,
             locator='.//*[contains(@class, "pficon-error-circle-o")]')) > 0
+        _degraded = len(self.browser.elements(
+            parent=self.DETAILS_ROOT,
+            locator='.//*[contains(@class, "pficon-warning-triangle-o")]')) > 0
         _not_available = len(self.browser.elements(
             parent=self.DETAILS_ROOT,
             locator='.//*[text()="N/A"]')) > 0
@@ -783,6 +786,8 @@ class ListViewAbstract(Widget):
             _health = HealthType.HEALTHY
         elif _not_healthy:
             _health = HealthType.FAILURE
+        elif _degraded:
+            _health = HealthType.DEGRADED
         elif _not_available:
             _health = HealthType.NA
         return _health
@@ -795,6 +800,9 @@ class ListViewAbstract(Widget):
         _not_healthy = len(self.browser.elements(
             parent=element,
             locator='.//*[contains(@class, "pficon-error-circle-o")]')) > 0
+        _degraded = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@class, "pficon-warning-triangle-o")]')) > 0
         _not_available = len(self.browser.elements(
             parent=element,
             locator='.//*[text()="N/A"]')) > 0
@@ -803,6 +811,8 @@ class ListViewAbstract(Widget):
             _health = HealthType.HEALTHY
         elif _not_healthy:
             _health = HealthType.FAILURE
+        elif _degraded:
+            _health = HealthType.DEGRADED
         elif _not_available:
             _health = HealthType.NA
         return _health
@@ -917,10 +927,13 @@ class ListViewApplications(ListViewAbstract):
 
         _table_view_workloads = TableViewAppWorkloads(self.parent, self.locator, self.logger)
 
+        _table_view_services = TableViewAppServices(self.parent, self.locator, self.logger)
+
         return ApplicationDetails(name=str(_name),
                                   istio_sidecar=_istio_sidecar,
                                   health=self._get_details_health(),
-                                  workloads=_table_view_workloads.all_items)
+                                  workloads=_table_view_workloads.all_items,
+                                  services=_table_view_services.all_items)
 
     @property
     def items(self):
@@ -1162,8 +1175,8 @@ class TableViewAbstract(Widget):
 
 
 class TableViewAppWorkloads(TableViewAbstract):
-    ROWS = '//div[contains(@class, "list-view-pf-view")]\
-    //div[contains(@class, "list-group-item")]\
+    ROWS = '//div[contains(@class, "card-pf-body")]\
+    //div[contains(@class, "row")]\
     //div[contains(@class, "list-view-pf-main-info")]'
     COLUMN = './/div[contains(@class, "list-view-pf-description")]'
 
@@ -1178,12 +1191,35 @@ class TableViewAppWorkloads(TableViewAbstract):
             _istio_sidecar = len(self.browser.elements(
                 parent=el, locator='.//img[contains(@class, "IstioLogo")]')) > 0
             # create Workload instance
-            _workload = AppWorkload(
-                name=_values[1] if len(_values) >= 2 else '',
-                istio_sidecar=_istio_sidecar,
-                services=_values[3] if len(_values) == 4 else '')
+            if _values[0] == 'WORKLOAD':
+                _workload = AppWorkload(
+                    name=_values[1] if len(_values) >= 2 else '',
+                    istio_sidecar=_istio_sidecar)
             # append this item to the final list
             _items.append(_workload)
+        return _items
+
+
+class TableViewAppServices(TableViewAbstract):
+    ROWS = '//div[contains(@class, "card-pf-body")]\
+    //div[contains(@class, "row")]\
+    //div[contains(@class, "list-view-pf-main-info")]'
+    COLUMN = './/div[contains(@class, "list-view-pf-description")]'
+
+    @property
+    def items(self):
+
+        _items = []
+        for el in self.browser.elements(locator=self.ROWS,
+                                        parent=self.ROOT):
+            _values = self.browser.element(
+                locator=self.COLUMN, parent=el).text.split('\n')
+            _istio_sidecar = len(self.browser.elements(
+                parent=el, locator='.//img[contains(@class, "IstioLogo")]')) > 0
+            # create Service instance
+            if _values[0] == 'SERVICE':
+                # append this item to the final list
+                _items.append(_values[1])
         return _items
 
 
