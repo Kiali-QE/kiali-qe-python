@@ -59,8 +59,7 @@ class ServiceHealth(EntityBase):
             # update requests
         _r_rest = health['requests']
         _requests = Requests(
-            request_count=_r_rest['requestCount'],
-            request_error_count=_r_rest['requestErrorCount'])
+            errorRatio=_r_rest['errorRatio'])
         return ServiceHealth(
             envoy=_envoy, deployment_statuses=_deployment_status_list, requests=_requests)
 

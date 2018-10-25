@@ -167,24 +167,24 @@ class WorkloadPod(EntityBase):
 
 class WorkloadHealth(EntityBase):
 
-    def __init__(self, deployment_status, requests):
-        self.deployment_status = deployment_status
+    def __init__(self, workload_status, requests):
+        self.workload_status = workload_status
         self.requests = requests
 
     def __str__(self):
-        return 'deployment_status:{}, requests:{}'.format(
-            self.deployment_status, self.requests)
+        return 'workload_status:{}, requests:{}'.format(
+            self.workload_status, self.requests)
 
     def __repr__(self):
         return "{}({}, {}, {})".format(
             type(self).__name__,
-            repr(self.deployment_status), repr(self.requests))
+            repr(self.workload_status), repr(self.requests))
 
     def is_healthy(self):
-        if self.deployment_status.is_healthy() == HealthType.NA \
+        if self.workload_status.is_healthy() == HealthType.NA \
                 and self.requests.is_healthy() == HealthType.NA:
             return HealthType.NA
-        elif self.deployment_status.is_healthy() == HealthType.FAILURE \
+        elif self.workload_status.is_healthy() == HealthType.FAILURE \
                 or self.requests.is_healthy() == HealthType.FAILURE:
             return HealthType.FAILURE
         else:
@@ -193,7 +193,7 @@ class WorkloadHealth(EntityBase):
     def is_equal(self, other):
         if not isinstance(other, WorkloadHealth):
             return False
-        if not self.deployment_status.is_equal(other.deployment_status):
+        if not self.workload_status.is_equal(other.workload_status):
             return False
         if not self.requests.is_equal(other.requests):
             return False
@@ -201,17 +201,16 @@ class WorkloadHealth(EntityBase):
 
     @classmethod
     def get_from_rest(cls, health):
-        # update deployment status
-        _deployment_status = None
-        if 'deploymentStatus' in health:
-            _deployment_status = DeploymentStatus(
-                name=health['deploymentStatus']['name'],
-                replicas=health['deploymentStatus']['replicas'],
-                available=health['deploymentStatus']['available'])
+        # update workload status
+        _workload_status = None
+        if 'workloadStatus' in health:
+            _workload_status = DeploymentStatus(
+                name=health['workloadStatus']['name'],
+                replicas=health['workloadStatus']['replicas'],
+                available=health['workloadStatus']['available'])
             # update requests
         _r_rest = health['requests']
         _requests = Requests(
-            request_count=_r_rest['requestCount'],
-            request_error_count=_r_rest['requestErrorCount'])
+            errorRatio=_r_rest['errorRatio'])
         return WorkloadHealth(
-            deployment_status=_deployment_status, requests=_requests)
+            workload_status=_workload_status, requests=_requests)

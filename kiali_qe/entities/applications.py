@@ -70,8 +70,8 @@ class ApplicationHealth(EntityBase):
             _envoy_list.append(_envoy)
         # update deployment statuses
         _deployment_status_list = []
-        if 'deploymentStatuses' in health:
-            for _d_in_rest in health['deploymentStatuses']:
+        if 'workloadStatuses' in health:
+            for _d_in_rest in health['workloadStatuses']:
                 deployment_status = DeploymentStatus(
                     name=_d_in_rest['name'],
                     replicas=_d_in_rest['replicas'],
@@ -80,8 +80,7 @@ class ApplicationHealth(EntityBase):
             # update requests
         _r_rest = health['requests']
         _requests = Requests(
-            request_count=_r_rest['requestCount'],
-            request_error_count=_r_rest['requestErrorCount'])
+            errorRatio=_r_rest['errorRatio'])
         return ApplicationHealth(
             envoys=_envoy_list, deployment_statuses=_deployment_status_list, requests=_requests)
 
@@ -134,6 +133,8 @@ class ApplicationDetails(EntityBase):
         self.health = health
         self.workloads = kwargs['workloads']\
             if 'workloads' in kwargs else None
+        self.services = kwargs['services']\
+            if 'services' in kwargs else None
 
     def __str__(self):
         return 'name:{}, sidecar:{}, health:{}'.format(
@@ -164,19 +165,18 @@ class ApplicationDetails(EntityBase):
 
 class AppWorkload(EntityBase):
 
-    def __init__(self, name, services, istio_sidecar=False):
+    def __init__(self, name, istio_sidecar=False):
         self.name = name
         self.istio_sidecar = istio_sidecar
-        self.services = services
 
     def __str__(self):
-        return 'name:{}, istio_sidecar:{}, services:{}'.format(
-            self.name, self.istio_sidecar, self.services)
+        return 'name:{}, istio_sidecar:{}'.format(
+            self.name, self.istio_sidecar)
 
     def __repr__(self):
-        return "{}({}, {}, {})".format(
+        return "{}({}, {})".format(
             type(self).__name__, repr(self.name),
-            repr(self.istio_sidecar), repr(self.services))
+            repr(self.istio_sidecar))
 
     def __eq__(self, other):
         return self.is_equal(other)
@@ -186,8 +186,6 @@ class AppWorkload(EntityBase):
         if not isinstance(other, AppWorkload):
             return False
         if self.name != other.name:
-            return False
-        if self.services != other.services:
             return False
         # advanced check
         if advanced_check:

@@ -51,3 +51,7 @@ def is_equal(object_a, object_b):
             return False
     elif isinstance(object_a, dict):
         return cmp(object_a, object_b) == 0
+
+
+def is_sublist(list_a, list_b):
+    return set(list_a).issubset(set(list_b))

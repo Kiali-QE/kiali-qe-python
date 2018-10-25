@@ -48,22 +48,19 @@ class Envoy(EntityBase):
 
 class Requests(EntityBase):
 
-    def __init__(self, request_count, request_error_count):
-        self.request_count = request_count
-        self.request_error_count = request_error_count
+    def __init__(self, errorRatio):
+        self.errorRatio = errorRatio
 
     def __str__(self):
-        return 'request_count:{}, request_error_count:{}'.format(
-            self.request_count, self.request_error_count)
+        return 'errorRatio:{}'.format(
+            self.errorRatio)
 
     def __repr__(self):
-        return "{}({}, {})".format(
-            type(self).__name__, repr(self.request_count), repr(self.request_error_count))
+        return "{}({})".format(
+            type(self).__name__, repr(self.errorRatio))
 
     def is_healthy(self):
-        if self.request_count + self.request_error_count == 0:
-            return HealthType.NA
-        elif self.request_count > self.request_error_count:
+        if self.errorRatio <= 0:
             return HealthType.HEALTHY
         else:
             return HealthType.FAILURE
