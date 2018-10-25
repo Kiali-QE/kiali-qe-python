@@ -304,9 +304,9 @@ class ApplicationsPageTest(AbstractListPageTest):
             if not found:
                 assert found, 'Workload {} not found in REST {}'.format(workload_ui, workload_rest)
         assert application_details_ui.services == application_details_rest.services, \
-        'UI services {} not equal to REST {}'.format(
-            application_details_ui.services,
-            application_details_rest.services)
+            'UI services {} not equal to REST {}'.format(
+                application_details_ui.services,
+                application_details_rest.services)
 
     def assert_all_items(self, filters, force_clear_all=True):
         # apply filters

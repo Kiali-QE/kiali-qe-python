@@ -1214,8 +1214,6 @@ class TableViewAppServices(TableViewAbstract):
                                         parent=self.ROOT):
             _values = self.browser.element(
                 locator=self.COLUMN, parent=el).text.split('\n')
-            _istio_sidecar = len(self.browser.elements(
-                parent=el, locator='.//img[contains(@class, "IstioLogo")]')) > 0
             # create Service instance
             if _values[0] == 'SERVICE':
                 # append this item to the final list
