@@ -365,9 +365,11 @@ class WorkloadsPageTest(AbstractListPageTest):
             _random_workloads = workloads_ui
         # create filters
         for _selected_workload in _random_workloads:
-            self.assert_details(_selected_workload.name, _selected_workload.namespace)
+            self.assert_details(_selected_workload.name,
+                                _selected_workload.namespace,
+                                _selected_workload.workload_type)
 
-    def assert_details(self, name, namespace):
+    def assert_details(self, name, namespace, workload_type):
         logger.debug('Details: {}, {}'.format(name, namespace))
         # load the page first
         self.page.load(force_load=True)
@@ -380,6 +382,8 @@ class WorkloadsPageTest(AbstractListPageTest):
         workload_details_ui = self.page.content.get_details(name, namespace)
         assert workload_details_ui
         assert name == workload_details_ui.name
+        assert workload_type == workload_details_ui.workload_type, \
+            '{} and {} are not equal'.format(workload_type, workload_details_ui.workload_type)
         # get workload detals from rest
         workload_details_rest = self.kiali_client.workload_details(
             namespace=namespace,

@@ -27,6 +27,8 @@ class ApplicationHealth(EntityBase):
                 or self.requests.is_healthy() == HealthType.FAILURE \
                 or self.deployment_statuses_health() == HealthType.FAILURE:
             return HealthType.FAILURE
+        elif self.requests.is_healthy() == HealthType.DEGRADED:
+            return HealthType.DEGRADED
         else:
             return HealthType.HEALTHY
 

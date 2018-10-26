@@ -25,6 +25,8 @@ class ServiceHealth(EntityBase):
         elif self.envoy.is_healthy() == HealthType.FAILURE \
                 or self.requests.is_healthy() == HealthType.FAILURE:
             return HealthType.FAILURE
+        elif self.requests.is_healthy() == HealthType.DEGRADED:
+            return HealthType.DEGRADED
         else:
             return HealthType.HEALTHY
 
