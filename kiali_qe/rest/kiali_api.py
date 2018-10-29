@@ -91,12 +91,11 @@ class KialiExtendedClient(KialiClient):
         # update items
         for _namespace in namespace_list:
             _applications = self.application_list([_namespace])
-            if _applications:
-                # TODO add health
-                _overview = Overview(
-                    namespace=_namespace,
-                    applications=len(_applications))
-                items.append(_overview)
+            # TODO add health
+            _overview = Overview(
+                namespace=_namespace,
+                applications=len(_applications))
+            items.append(_overview)
         return items
 
     def application_list(self, namespaces=[], application_names=[]):

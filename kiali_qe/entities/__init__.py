@@ -60,10 +60,12 @@ class Requests(EntityBase):
             type(self).__name__, repr(self.errorRatio))
 
     def is_healthy(self):
-        if self.errorRatio <= 0:
+        if self.errorRatio < 0.001:
             return HealthType.HEALTHY
-        else:
+        elif self.errorRatio >= 0.20:
             return HealthType.FAILURE
+        else:
+            return HealthType.DEGRADED
 
     def is_equal(self, other):
         return isinstance(other, Requests)\

@@ -70,8 +70,6 @@ class WorkloadDetails(EntityBase):
             if 'availableReplicas' in kwargs else None
         self.unavailableReplicas = kwargs['unavailableReplicas']\
             if 'unavailableReplicas' in kwargs else None
-        self.workload_type = kwargs['workload_type']\
-            if 'workload_type' in kwargs else None
         self.created_at = kwargs['created_at']\
             if 'created_at' in kwargs else None
         self.resource_version = kwargs['resource_version']\
@@ -187,6 +185,8 @@ class WorkloadHealth(EntityBase):
         elif self.workload_status.is_healthy() == HealthType.FAILURE \
                 or self.requests.is_healthy() == HealthType.FAILURE:
             return HealthType.FAILURE
+        elif self.requests.is_healthy() == HealthType.DEGRADED:
+            return HealthType.DEGRADED
         else:
             return HealthType.HEALTHY
 

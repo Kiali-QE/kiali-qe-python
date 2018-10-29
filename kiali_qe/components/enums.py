@@ -30,6 +30,8 @@ class ApplicationVersionEnum(StringEnum):
     ISTIO = ("Istio")
     PROMETHEUS = ("Prometheus")
     KUBERNETES = ("Kubernetes")
+    JAEGER = ("Jaeger")
+    GRAFANA = ("Grafana")
 
 
 class PaginationPerPage(Enum):

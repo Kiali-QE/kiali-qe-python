@@ -769,15 +769,16 @@ class ListViewAbstract(Widget):
         wait_displayed(self)
 
     def _get_details_health(self):
+        _health_sublocator = '/../..//strong[normalize-space(text())="Health"]'
         _healthy = len(self.browser.elements(
             parent=self.DETAILS_ROOT,
-            locator='.//*[contains(@class, "pficon-ok")]')) > 0
+            locator='.//*[contains(@class, "pficon-ok")]' + _health_sublocator)) > 0
         _not_healthy = len(self.browser.elements(
             parent=self.DETAILS_ROOT,
-            locator='.//*[contains(@class, "pficon-error-circle-o")]')) > 0
+            locator='.//*[contains(@class, "pficon-error-circle-o")]' + _health_sublocator)) > 0
         _degraded = len(self.browser.elements(
             parent=self.DETAILS_ROOT,
-            locator='.//*[contains(@class, "pficon-warning-triangle-o")]')) > 0
+            locator='.//*[contains(@class, "pficon-warning-triangle-o")]' + _health_sublocator)) > 0
         _not_available = len(self.browser.elements(
             parent=self.DETAILS_ROOT,
             locator='.//*[text()="N/A"]')) > 0
