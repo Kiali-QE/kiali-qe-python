@@ -43,8 +43,11 @@ def test_all_configs(kiali_client, openshift_client, browser):
     tests.assert_all_items(filters=[])
 
 
-@pytest.mark.p_group_last
+@pytest.mark.p_group6
 def test_config_details_random(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.assert_random_details(filters=[])
+    # use only istio-system namespace which is not affected by other CRUD tests which are using
+    # bookinfo
+    tests.assert_random_details(filters=[
+        {'name': IstioConfigPageFilter.NAMESPACE.text, 'value': 'istio-system'}])

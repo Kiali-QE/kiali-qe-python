@@ -9,12 +9,14 @@ from kiali_qe.components.enums import (
     IstioConfigPageFilter,
     IstioConfigValidationType
 )
+
 '''
-Tests are divided into 3 groups each using different service. This way the group of tests
+Tests are divided into groups using different services and namespaces. This way the group of tests
 can be run in parallel.
 '''
 
-BOOKINFO = 'bookinfo'
+BOOKINFO_1 = 'bookinfo'
+BOOKINFO_2 = 'bookinfo2'
 REVIEWS = 'reviews'
 DETAILS = 'details'
 RATINGS = 'ratings'
@@ -46,7 +48,9 @@ def test_destination_rule(kiali_client, openshift_client, browser):
                         {'name': IstioConfigPageFilter.CONFIG.text,
                          'value': IstioConfigValidationType.VALID.text},
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': destination_rule_dict.metadata.name}
+                         'value': destination_rule_dict.metadata.name},
+                        {'name': IstioConfigPageFilter.NAMESPACE.text,
+                         'value': BOOKINFO_1}
                         ],
                        kind='DestinationRule',
                        api_version='networking.istio.io/v1alpha3',
@@ -67,7 +71,9 @@ def test_destination_rule_broken(kiali_client, openshift_client, browser):
                         {'name': IstioConfigPageFilter.CONFIG.text,
                          'value': IstioConfigValidationType.NOT_VALID.text},
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': destination_rule_broken_dict.metadata.name}
+                         'value': destination_rule_broken_dict.metadata.name},
+                        {'name': IstioConfigPageFilter.NAMESPACE.text,
+                         'value': BOOKINFO_1}
                         ],
                        kind='DestinationRule',
                        api_version='networking.istio.io/v1alpha3',
@@ -89,7 +95,9 @@ def test_virtual_service(kiali_client, openshift_client, browser):
                         {'name': IstioConfigPageFilter.CONFIG.text,
                          'value': IstioConfigValidationType.VALID.text},
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': virtual_service_dict.metadata.name}
+                         'value': virtual_service_dict.metadata.name},
+                        {'name': IstioConfigPageFilter.NAMESPACE.text,
+                         'value': BOOKINFO_1}
                         ],
                        kind='VirtualService',
                        api_version='networking.istio.io/v1alpha3',
@@ -112,7 +120,9 @@ def test_virtual_service_broken(kiali_client, openshift_client, browser):
                         {'name': IstioConfigPageFilter.CONFIG.text,
                          'value': IstioConfigValidationType.NOT_VALID.text},
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': virtual_service_broken_dict.metadata.name}
+                         'value': virtual_service_broken_dict.metadata.name},
+                        {'name': IstioConfigPageFilter.NAMESPACE.text,
+                         'value': BOOKINFO_1}
                         ],
                        kind='VirtualService',
                        api_version='networking.istio.io/v1alpha3',
@@ -137,7 +147,9 @@ def test_virtual_service_broken_weight(kiali_client, openshift_client, browser):
                         {'name': IstioConfigPageFilter.CONFIG.text,
                          'value': IstioConfigValidationType.NOT_VALID.text},
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': virtual_service_broken_dict.metadata.name}
+                         'value': virtual_service_broken_dict.metadata.name},
+                        {'name': IstioConfigPageFilter.NAMESPACE.text,
+                         'value': BOOKINFO_1}
                         ],
                        kind='VirtualService',
                        api_version='networking.istio.io/v1alpha3',
@@ -162,7 +174,9 @@ def test_virtual_service_broken_weight_text(kiali_client, openshift_client, brow
                         {'name': IstioConfigPageFilter.CONFIG.text,
                          'value': IstioConfigValidationType.NOT_VALID.text},
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': virtual_service_broken_dict.metadata.name}
+                         'value': virtual_service_broken_dict.metadata.name},
+                        {'name': IstioConfigPageFilter.NAMESPACE.text,
+                         'value': BOOKINFO_1}
                         ],
                        kind='VirtualService',
                        api_version='networking.istio.io/v1alpha3',
@@ -182,7 +196,9 @@ def test_quota_spec(kiali_client, openshift_client, browser):
                         {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
                          'value': IstioConfigObjectType.QUOTA_SPEC.text},
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': 'quota-spec-auto'}
+                         'value': 'quota-spec-auto'},
+                        {'name': IstioConfigPageFilter.NAMESPACE.text,
+                         'value': BOOKINFO_1}
                         ],
                        kind='QuotaSpec',
                        api_version='config.istio.io/v1alpha2',
@@ -201,17 +217,20 @@ def test_quota_spec_binding(kiali_client, openshift_client, browser):
                         {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
                          'value': IstioConfigObjectType.QUOTA_SPEC_BINDING.text},
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': 'quota-spec-binding-auto'}
+                         'value': 'quota-spec-binding-auto'},
+                        {'name': IstioConfigPageFilter.NAMESPACE.text,
+                         'value': BOOKINFO_1}
                         ],
                        kind='QuotaSpecBinding',
                        api_version='config.istio.io/v1alpha2',
                        service_name=RATINGS)
 
 
-@pytest.mark.p_group2
-def test_gateway(kiali_client, openshift_client, browser):
+@pytest.mark.p_group8
+def test_gateway(kiali_client, openshift_client, browser, pick_namespace):
     gateway = get_yaml(istio_objects_path.strpath, GATEWAY)
     gateway_dict = get_dict(istio_objects_path.strpath, GATEWAY)
+    namespace = pick_namespace(BOOKINFO_2)
 
     _istio_config_test(kiali_client, openshift_client, browser,
                        gateway_dict,
@@ -220,7 +239,9 @@ def test_gateway(kiali_client, openshift_client, browser):
                         {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
                          'value': IstioConfigObjectType.GATEWAY.text},
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': gateway_dict.metadata.name}
+                         'value': gateway_dict.metadata.name},
+                        {'name': IstioConfigPageFilter.NAMESPACE.text,
+                         'value': namespace}
                         ],
                        kind='Gateway',
                        api_version='networking.istio.io/v1alpha3',
@@ -239,45 +260,50 @@ def test_service_entry(kiali_client, openshift_client, browser):
                         {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
                          'value': IstioConfigObjectType.SERVICE_ENTRY.text},
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': _dict.metadata.name}
+                         'value': _dict.metadata.name},
+                        {'name': IstioConfigPageFilter.NAMESPACE.text,
+                         'value': BOOKINFO_1}
                         ],
                        kind='ServiceEntry',
                        api_version='networking.istio.io/v1alpha3',
                        service_name=DETAILS)
 
 
-def _istio_config_create(openshift_client, config_dict, config_yaml, kind, api_version):
+def _istio_config_create(openshift_client, config_dict, config_yaml, kind, api_version,
+                         namespace=BOOKINFO_1):
     openshift_client.delete_istio_config(name=config_dict.metadata.name,
-                                         namespace=BOOKINFO,
+                                         namespace=namespace,
                                          kind=kind,
                                          api_version=api_version)
 
     openshift_client.create_istio_config(body=config_yaml,
-                                         namespace=BOOKINFO,
+                                         namespace=namespace,
                                          kind=kind,
                                          api_version=api_version)
 
 
-def _istio_config_delete(openshift_client, config_dict, kind, api_version):
+def _istio_config_delete(openshift_client, config_dict, kind, api_version, namespace=BOOKINFO_1):
     openshift_client.delete_istio_config(name=config_dict.metadata.name,
-                                         namespace=BOOKINFO,
+                                         namespace=namespace,
                                          kind=kind,
                                          api_version=api_version)
 
 
-def _create_dest_rule_vs(openshift_client, destination_rule_conf):
+def _create_dest_rule_vs(openshift_client, destination_rule_conf, namespace=BOOKINFO_1):
     destination_rule = get_yaml(istio_objects_path.strpath, destination_rule_conf)
     destination_rule_dict = get_dict(istio_objects_path.strpath, destination_rule_conf)
     _istio_config_create(openshift_client, destination_rule_dict, destination_rule,
-                         kind='DestinationRule',
-                         api_version='networking.istio.io/v1alpha3')
+                         'DestinationRule',
+                         'networking.istio.io/v1alpha3',
+                         namespace)
 
 
-def _delete_dest_rule_vs(openshift_client, destination_rule_conf):
+def _delete_dest_rule_vs(openshift_client, destination_rule_conf, namespace=BOOKINFO_1):
     destination_rule_dict = get_dict(istio_objects_path.strpath, destination_rule_conf)
     _istio_config_delete(openshift_client, destination_rule_dict,
-                         kind='DestinationRule',
-                         api_version='networking.istio.io/v1alpha3')
+                         'DestinationRule',
+                         'networking.istio.io/v1alpha3',
+                         namespace)
 
 
 def _istio_config_test(kiali_client, openshift_client, browser, config_dict,
@@ -285,8 +311,14 @@ def _istio_config_test(kiali_client, openshift_client, browser, config_dict,
                        service_name, check_service_details=True):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    namespace = next((item for item in filters if item["name"] ==
+                      IstioConfigPageFilter.NAMESPACE.text), False)
+    if namespace:
+        namespace = namespace["value"]
+    else:
+        namespace = BOOKINFO_1
 
-    _istio_config_create(openshift_client, config_dict, config_yaml, kind, api_version)
+    _istio_config_create(openshift_client, config_dict, config_yaml, kind, api_version, namespace)
 
     tests.assert_all_items(filters)
 
@@ -296,7 +328,8 @@ def _istio_config_test(kiali_client, openshift_client, browser, config_dict,
                                config_dict,
                                config_yaml,
                                kind,
-                               api_version)
+                               api_version,
+                               namespace)
 
     if check_service_details:
         _service_details_test(kiali_client,
@@ -306,24 +339,25 @@ def _istio_config_test(kiali_client, openshift_client, browser, config_dict,
                               config_yaml,
                               kind,
                               api_version,
-                              service_name)
+                              service_name,
+                              namespace)
 
-    _istio_config_delete(openshift_client, config_dict, kind, api_version)
+    _istio_config_delete(openshift_client, config_dict, kind, api_version, namespace)
 
     tests.assert_all_items(filters)
 
 
 def _istio_config_details_test(kiali_client, openshift_client, browser, config_dict,
-                               config_yaml, kind, api_version):
+                               config_yaml, kind, api_version, namespace=BOOKINFO_1):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
 
-    tests.assert_details(name=config_dict.metadata.name, namespace=BOOKINFO)
+    tests.assert_details(name=config_dict.metadata.name, namespace=namespace)
 
 
 def _service_details_test(kiali_client, openshift_client, browser, config_dict,
-                          config_yaml, kind, api_version, service_name):
+                          config_yaml, kind, api_version, service_name, namespace=BOOKINFO_1):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
 
-    tests.assert_details(name=service_name, namespace=BOOKINFO)
+    tests.assert_details(name=service_name, namespace=namespace)
