@@ -167,9 +167,9 @@ class OpenshiftExtendedClient(object):
                 name=_item.metadata.name,
                 namespace=_item.metadata.namespace,
                 workload_type=workload_type,
-                istio_sidecar=None,
-                app_label=None,
-                version_label=None)
+                istio_sidecar=self._contains_sidecar(_item),
+                app_label=self._contains_label(_item, 'app'),
+                version_label=self._contains_label(_item, 'version'))
             items.append(_workload)
         # filter by workload name
         if len(workload_names) > 0:
@@ -178,6 +178,18 @@ class OpenshiftExtendedClient(object):
                 filtered_list.extend([_i for _i in items if _name in _i.name])
             return set(filtered_list)
         return items
+
+    def _contains_sidecar(self, item):
+        try:
+            return item.spec.template.metadata.annotations['sidecar.istio.io/status'] is not None
+        except (KeyError, AttributeError, TypeError):
+            return False
+
+    def _contains_label(self, item, label):
+        try:
+            return item.metadata.labels[label] is not None
+        except (KeyError, AttributeError, TypeError):
+            return False
 
     def delete_istio_config(self, name, namespace, kind, api_version):
         try:

@@ -39,15 +39,15 @@ class Workload(EntityBase):
             return False
         if self.workload_type != other.workload_type:
             return False
+        if self.istio_sidecar != other.istio_sidecar:
+            return False
         # advanced check
         if advanced_check:
-            if self.istio_sidecar != other.istio_sidecar:
+            if self.health != other.health:
                 return False
             if self.app_label != other.app_label:
                 return False
             if self.version_label != other.version_label:
-                return False
-            if self.health != other.health:
                 return False
         return True
 
@@ -64,6 +64,8 @@ class WorkloadDetails(EntityBase):
         self.health = health
         self.created_at = created_at
         self.resource_version = resource_version
+        self.labels = kwargs['labels']\
+            if 'labels' in kwargs else {}
         self.replicas = kwargs['replicas']\
             if 'replicas' in kwargs else None
         self.availableReplicas = kwargs['availableReplicas']\
@@ -84,15 +86,18 @@ class WorkloadDetails(EntityBase):
             if 'pods' in kwargs else None
 
     def __str__(self):
-        return 'name:{}, type:{}, sidecar:{}, createdAt:{}, resourceVersion:{}, health{}'.format(
-            self.name, self.workload_type,
-            self.istio_sidecar, self.created_at, self.resource_version, self.health)
+        return 'name:{}, type:{}, sidecar:{}, createdAt:{}, \
+            resourceVersion:{}, health:{}, labels:{labels}'.format(
+                self.name, self.workload_type,
+                self.istio_sidecar, self.created_at,
+                self.resource_version, self.health, self.labels)
 
     def __repr__(self):
-        return "{}({}, {}, {}, {}, {}, {})".format(
+        return "{}({}, {}, {}, {}, {}, {}, {})".format(
             type(self).__name__, repr(self.name), repr(self.workload_type),
             repr(self.istio_sidecar), repr(self.created_at),
-            repr(self.resource_version), repr(self.health))
+            repr(self.resource_version), repr(self.health),
+            repr(self.labels))
 
     def __eq__(self, other):
         return self.is_equal(other, advanced_check=True)
@@ -113,6 +118,8 @@ class WorkloadDetails(EntityBase):
         if advanced_check:
             if self.istio_sidecar != other.istio_sidecar:
                 return False
+            if self.labels != other.labels:
+                return False
             if self.health != other.health:
                 return False
         return True
@@ -120,24 +127,26 @@ class WorkloadDetails(EntityBase):
 
 class WorkloadPod(EntityBase):
 
-    def __init__(self, name, created_at, created_by,
+    def __init__(self, name, created_at, created_by, labels={},
                  istio_init_containers=None, istio_containers=None):
         self.name = name
         self.created_at = created_at
         self.created_by = created_by
+        self.labels = labels
         self.istio_init_containers = istio_init_containers
         self.istio_containers = istio_containers
 
     def __str__(self):
-        return 'name:{}, created_at:{}, created_by:{},\
+        return 'name:{}, created_at:{}, created_by:{}, labels: {}\
             istio_init_containers:{}, istio_containers:{}'.format(
-            self.name, self.created_at, self.created_by,
+            self.name, self.created_at, self.created_by, self.labels,
             self.istio_init_containers, self.istio_containers)
 
     def __repr__(self):
-        return "{}({}, {}, {}, {}, {}, {})".format(
+        return "{}({}, {}, {}, {}, {}, {}, {})".format(
             type(self).__name__, repr(self.name),
             repr(self.created_at), repr(self.created_by),
+            repr(self.labels),
             repr(self.istio_init_containers), repr(self.istio_containers))
 
     def __eq__(self, other):
@@ -153,6 +162,8 @@ class WorkloadPod(EntityBase):
         # if self.created_at != other.created_at:
         #    return False
         if self.created_by != other.created_by:
+            return False
+        if self.labels != other.labels:
             return False
         # advanced check
         if advanced_check:
