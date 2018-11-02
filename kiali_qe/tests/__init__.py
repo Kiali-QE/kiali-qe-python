@@ -667,7 +667,7 @@ class IstioConfigPageTest(AbstractListPageTest):
         # random configs filters
         assert len(configs_ui) > 0
         if len(configs_ui) > 3:
-            _random_configs = random.sample(configs_ui, 10)
+            _random_configs = random.sample(configs_ui, 3)
         else:
             _random_configs = configs_ui
         # create filters
