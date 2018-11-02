@@ -2,6 +2,8 @@ import pytest
 from kiali_qe.tests import IstioConfigPageTest
 from kiali_qe.components.enums import IstioConfigPageFilter
 
+BOOKINFO_2 = 'bookinfo2'
+
 
 @pytest.mark.p_group6
 def test_pagination_feature(kiali_client, openshift_client, browser):
@@ -43,8 +45,11 @@ def test_all_configs(kiali_client, openshift_client, browser):
     tests.assert_all_items(filters=[])
 
 
-@pytest.mark.p_group_last
-def test_config_details_random(kiali_client, openshift_client, browser):
+@pytest.mark.p_group5
+def test_config_details_random(kiali_client, openshift_client, browser, pick_namespace):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.assert_random_details(filters=[])
+    # use only bookinfo2 namespace where colliding tests are in the same p_group
+    namespace = pick_namespace(BOOKINFO_2)
+    tests.assert_random_details(filters=[
+        {'name': IstioConfigPageFilter.NAMESPACE.text, 'value': namespace}])

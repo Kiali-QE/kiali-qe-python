@@ -18,4 +18,5 @@ pytest_plugins = (
     'kiali_qe.fixtures.log',
     'kiali_qe.fixtures.rest_client',
     'kiali_qe.fixtures.zalenium',
+    'kiali_qe.fixtures.checkers'
 )

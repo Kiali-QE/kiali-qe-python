@@ -74,6 +74,14 @@ class OpenshiftExtendedClient(object):
             namespaces.append(_item.metadata.name)
         return namespaces
 
+    def namespace_exists(self, namespace):
+        """ Returns True if given namespace exists. False otherwise. """
+        try:
+            self._namespace.get(name=namespace)
+            return True
+        except NotFoundError:
+            return False
+
     def service_list(self, namespaces=[], service_names=[]):
         """ Returns list of services
         Args:
