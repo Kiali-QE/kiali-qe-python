@@ -461,7 +461,8 @@ class WorkloadsPageTest(AbstractListPageTest):
                 if workload_ui.is_equal(workload_oc, advanced_check=False):
                     found = True
                     break
-            assert found, '{} not found in OC'.format(workload_ui)
+            if not found:
+                assert found, '{} not found in OC'.format(workload_ui)
 
 
 class ServicesPageTest(AbstractListPageTest):

@@ -854,6 +854,36 @@ class ListViewAbstract(Widget):
         else:
             return IstioConfigValidation.VALID
 
+    def _get_item_label_keys(self, element):
+        _label_keys = []
+        wait_displayed(self)
+        _labels = self.browser.elements(
+            parent=element,
+            locator='.//strong[normalize-space(text())="Label Validation :"]\
+                /../*[contains(@class, "badge")]')
+        if _labels:
+            for _label in _labels:
+                _label_keys.append(_label.text)
+        return _label_keys
+
+    def _get_details_labels(self):
+        _label_dict = {}
+        wait_displayed(self)
+        _labels = self.browser.elements(
+            parent=self.DETAILS_ROOT,
+            locator='.//strong[normalize-space(text())="Labels"]\
+                /../..//*[contains(@class, "label-pair")]')
+        if _labels:
+            for _label in _labels:
+                _label_key = self.browser.element(
+                    parent=_label,
+                    locator='.//*[contains(@class, "label-key")]').text
+                _label_value = self.browser.element(
+                    parent=_label,
+                    locator='.//*[contains(@class, "label-value")]').text
+                _label_dict[_label_key] = _label_value
+        return _label_dict
+
     @property
     def all_items(self):
         items = []
@@ -992,7 +1022,8 @@ class ListViewWorkloads(ListViewAbstract):
                                pods_number=_table_view_pods.number,
                                services_number=_table_view_services.number,
                                pods=_table_view_pods.all_items,
-                               services=_table_view_services.all_items)
+                               services=_table_view_services.all_items,
+                               labels=self._get_details_labels())
 
     @property
     def items(self):
@@ -1007,16 +1038,13 @@ class ListViewWorkloads(ListViewAbstract):
             # update istio sidecar logo
             _istio_sidecar = len(self.browser.elements(
                 parent=el, locator='.//img[contains(@class, "IstioLogo")]')) > 0
-            _app_label = len(self.browser.elements(
-                parent=el, locator='.//span[text()="app"]')) > 0
-            _version_label = len(self.browser.elements(
-                parent=el, locator='.//span[text()="version"]')) > 0
+            _label_keys = self._get_item_label_keys(el)
             # workload object creation
             _workload = Workload(
                 name=_name, namespace=_namespace, workload_type=_type,
                 istio_sidecar=_istio_sidecar,
-                app_label=_app_label,
-                version_label=_version_label,
+                app_label='app' in _label_keys,
+                version_label='version' in _label_keys,
                 health=self._get_item_health(element=el))
             # append this item to the final list
             _items.append(_workload)
@@ -1060,8 +1088,9 @@ class ListViewServices(ListViewAbstract):
                               resource_version=_resource_version,
                               ip=_ip,
                               ports=str(_ports.replace('\n', ' ')),
-                              istio_sidecar=_istio_sidecar,
                               health=self._get_details_health(),
+                              istio_sidecar=_istio_sidecar,
+                              labels=self._get_details_labels(),
                               workloads_number=_table_view_wl.number,
                               source_workloads_number=_table_view_swl.number,
                               virtual_services_number=_table_view_vs.number,
@@ -1172,6 +1201,23 @@ class TableViewAbstract(Widget):
     def __locator__(self):
         return self.locator
 
+    def _get_labels(self, el):
+        _label_dict = {}
+        wait_displayed(self)
+        _labels = self.browser.elements(
+            parent=el,
+            locator='.//*[contains(@class, "label-pair")]')
+        if _labels:
+            for _label in _labels:
+                _label_key = self.browser.element(
+                    parent=_label,
+                    locator='.//*[contains(@class, "label-key")]').text
+                _label_value = self.browser.element(
+                    parent=_label,
+                    locator='.//*[contains(@class, "label-value")]').text
+                _label_dict[_label_key] = _label_value
+        return _label_dict
+
     @property
     def all_items(self):
         return self.items
@@ -1262,6 +1308,7 @@ class TableViewWorkloads(TableViewAbstract):
             _workload = WorkloadDetails(
                 name=_name,
                 workload_type=_type,
+                labels=self._get_labels(_columns[2]),
                 created_at=parse_from_ui(_created_at),
                 resource_version=_resource_version)
             # append this item to the final list
@@ -1438,6 +1485,7 @@ class TableViewWorkloadPods(TableViewAbstract):
                         name=str(_name),
                         created_at=_created_at,
                         created_by=_created_by,
+                        labels=self._get_labels(_columns[4]),
                         istio_init_containers=_istio_init_containers,
                         istio_containers=_istio_containers))
         return _items
@@ -1482,6 +1530,7 @@ class TableViewServices(TableViewAbstract):
                         name=_name,
                         created_at=parse_from_ui(_created_at),
                         service_type=str(_type),
+                        labels=self._get_labels(_columns[3]),
                         resource_version=str(_resource_version),
                         ip=str(_ip),
                         ports=str(_ports.replace('\n', ' '))))

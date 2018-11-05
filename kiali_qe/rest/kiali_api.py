@@ -150,13 +150,14 @@ class KialiExtendedClient(KialiClient):
             _workloads = _data['workloads']
             if _workloads:
                 for _workload_rest in _workloads:
+                    _labels = self.get_labels(_workload_rest)
                     _workload = Workload(
                         namespace=_namespace,
                         name=_workload_rest['name'],
                         workload_type=_workload_rest['type'],
                         istio_sidecar=_workload_rest['istioSidecar'],
-                        app_label=_workload_rest['appLabel'],
-                        version_label=_workload_rest['versionLabel'],
+                        app_label='app' in _labels.keys(),
+                        version_label='version' in _labels.keys(),
                         health=self.get_workload_health(
                             namespace=_namespace,
                             workload_name=_workload_rest['name']))
@@ -378,6 +379,7 @@ class KialiExtendedClient(KialiClient):
                     workloads.append(WorkloadDetails(
                         name=_wl_data['name'],
                         workload_type=_wl_data['type'],
+                        labels=self.get_labels(_wl_data),
                         created_at=parse_from_rest(_wl_data['createdAt']),
                         resource_version=_wl_data['resourceVersion']))
             source_workloads = []
@@ -418,6 +420,7 @@ class KialiExtendedClient(KialiClient):
                     service_type=_service_data['service']['type'],
                     ip=_service_data['service']['ip'],
                     ports=_ports.strip(),
+                    labels=self.get_labels(_service_data['service']),
                     health=self.get_service_health(
                         namespace=namespace,
                         service_name=service_name),
@@ -456,6 +459,7 @@ class KialiExtendedClient(KialiClient):
                         service_type=_ws_data['type'],
                         ip=_ws_data['ip'],
                         ports=_ports.strip(),
+                        labels=self.get_labels(_ws_data),
                         resource_version=_ws_data['resourceVersion']))
             _all_pods = []
             if _workload_data['pods']:
@@ -472,6 +476,7 @@ class KialiExtendedClient(KialiClient):
                         name=str(_pod_data['name']),
                         created_at=from_rest_to_ui(_pod_data['createdAt']),
                         created_by=_created_by,
+                        labels=self.get_labels(_pod_data),
                         istio_init_containers=str(_istio_init_containers),
                         istio_containers=str(_istio_containers))
                     _all_pods.append(_pod)
@@ -491,6 +496,7 @@ class KialiExtendedClient(KialiClient):
                         created_at='{} and {}'.format(
                             _pod.created_at, _workload_pods[len(_workload_pods)-1].created_at),
                         created_by=_created_by,
+                        labels=_workload_pods[0].labels,
                         istio_init_containers=_workload_pods[0].istio_init_containers,
                         istio_containers=_workload_pods[0].istio_containers)
                     _pods.append(_pod)
@@ -499,6 +505,7 @@ class KialiExtendedClient(KialiClient):
                         name='{} (1 replica)'.format(_workload_pods[0].name),
                         created_at=_workload_pods[0].created_at,
                         created_by=_created_by,
+                        labels=_workload_pods[0].labels,
                         istio_init_containers=_workload_pods[0].istio_init_containers,
                         istio_containers=_workload_pods[0].istio_containers)
                     _pods.append(_pod)
@@ -512,6 +519,7 @@ class KialiExtendedClient(KialiClient):
                 health=self.get_workload_health(
                         namespace=namespace,
                         workload_name=_workload_data['name']),
+                labels=self.get_labels(_workload_data),
                 pods_number=len(_pods),
                 services_number=len(_services),
                 pods=_pods,
@@ -619,3 +627,9 @@ class KialiExtendedClient(KialiClient):
                 return IstioConfigValidation.VALID
         else:
             return IstioConfigValidation.NA
+
+    def get_labels(self, object_rest):
+        _labels = {}
+        if 'labels' in object_rest:
+            _labels = object_rest['labels']
+        return _labels
