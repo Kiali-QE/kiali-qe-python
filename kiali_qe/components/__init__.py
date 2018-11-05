@@ -553,6 +553,7 @@ class Pagination(Widget):
 
     def _move_to_page(self, page):
         self.browser.click(self._element(locator=page))
+        wait_to_spinner_disappear(self.browser)
 
     def move_to_first_page(self):
         self._move_to_page(self.FIRST_PAGE)
@@ -568,6 +569,7 @@ class Pagination(Widget):
 
     def move_to_page(self, page_number):
         self._page_input.fill('{}\n'.format(page_number))
+        wait_to_spinner_disappear(self.browser)
 
     @property
     def total_items(self):
