@@ -196,8 +196,8 @@ class KialiExtendedClient(KialiClient):
             _data = super(KialiExtendedClient, self).istio_config_list(namespace=_namespace)
 
             # update DestinationRule
-            if len(_data['destinationRules']) > 0:
-                for _policy in _data['destinationRules']:
+            if len(_data['destinationRules']) > 0 and len(_data['destinationRules']['items']) > 0:
+                for _policy in _data['destinationRules']['items']:
                     items.append(IstioConfig(
                         name=_policy['name'],
                         namespace=_namespace,
@@ -215,8 +215,8 @@ class KialiExtendedClient(KialiClient):
                         object_type=OBJECT_TYPE.RULE.text))
 
             # update VirtualService
-            if len(_data['virtualServices']) > 0:
-                for _policy in _data['virtualServices']:
+            if len(_data['virtualServices']) > 0 and len(_data['virtualServices']['items']) > 0:
+                for _policy in _data['virtualServices']['items']:
                     items.append(IstioConfig(
                         name=_policy['name'],
                         namespace=_namespace,
