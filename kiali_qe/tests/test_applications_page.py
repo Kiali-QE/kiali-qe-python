@@ -1,12 +1,16 @@
 import pytest
 
 from kiali_qe.tests import ApplicationsPageTest
+from kiali_qe.components.enums import ApplicationsPageFilter
 
 
 @pytest.mark.p_group9
 def test_pagination_feature(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    # use only istio-system namespace which contains sufficient number of items for this test
+    tests.apply_filters(filters=[
+        {'name': ApplicationsPageFilter.NAMESPACE.text, 'value': 'istio-system'}])
     tests.assert_pagination_feature()
 
 

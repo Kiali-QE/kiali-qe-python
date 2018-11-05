@@ -10,7 +10,9 @@ BOOKINFO_2 = 'bookinfo2'
 def test_pagination_feature(kiali_client, openshift_client, browser):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.apply_filters(filters=[])
+    # use only istio-system namespace which contains sufficient number of items for this test
+    tests.apply_filters(filters=[
+        {'name': ServicesPageFilter.NAMESPACE.text, 'value': 'istio-system'}])
     tests.assert_pagination_feature()
 
 
