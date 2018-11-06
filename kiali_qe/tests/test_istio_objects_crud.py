@@ -34,6 +34,7 @@ GATEWAY = 'gateway.yaml'
 SERVICE_ENTRY = 'service-entry.yaml'
 
 
+@pytest.mark.p_crud_resource
 @pytest.mark.p_group1
 def test_destination_rule(kiali_client, openshift_client, browser):
     destination_rule = get_yaml(istio_objects_path.strpath, DEST_RULE)
@@ -57,6 +58,7 @@ def test_destination_rule(kiali_client, openshift_client, browser):
                        service_name=DETAILS)
 
 
+@pytest.mark.p_crud_resource
 @pytest.mark.p_group1
 def test_destination_rule_broken(kiali_client, openshift_client, browser):
     destination_rule_broken = get_yaml(istio_objects_path.strpath, DEST_RULE_BROKEN)
@@ -80,6 +82,7 @@ def test_destination_rule_broken(kiali_client, openshift_client, browser):
                        service_name=DETAILS)
 
 
+@pytest.mark.p_crud_resource
 @pytest.mark.p_group2
 def test_virtual_service(kiali_client, openshift_client, browser):
     virtual_service = get_yaml(istio_objects_path.strpath, VIRTUAL_SERVICE)
@@ -105,6 +108,7 @@ def test_virtual_service(kiali_client, openshift_client, browser):
     _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
 
+@pytest.mark.p_crud_resource
 @pytest.mark.p_group2
 def test_virtual_service_broken(kiali_client, openshift_client, browser):
     virtual_service_broken = get_yaml(istio_objects_path.strpath, VIRTUAL_SERVICE_BROKEN)
@@ -130,6 +134,7 @@ def test_virtual_service_broken(kiali_client, openshift_client, browser):
     _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
 
+@pytest.mark.p_crud_resource
 @pytest.mark.p_group2
 def test_virtual_service_broken_weight(kiali_client, openshift_client, browser):
     virtual_service_broken = get_yaml(istio_objects_path.strpath,
@@ -157,6 +162,7 @@ def test_virtual_service_broken_weight(kiali_client, openshift_client, browser):
     _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
 
+@pytest.mark.p_crud_resource
 @pytest.mark.p_group3
 def test_virtual_service_broken_weight_text(kiali_client, openshift_client, browser):
     virtual_service_broken = get_yaml(istio_objects_path.strpath,
@@ -184,6 +190,7 @@ def test_virtual_service_broken_weight_text(kiali_client, openshift_client, brow
     _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_RATINGS)
 
 
+@pytest.mark.p_crud_resource
 @pytest.mark.p_group3
 def test_quota_spec(kiali_client, openshift_client, browser):
     quota_spec = get_yaml(istio_objects_path.strpath, QUOTA_SPEC)
@@ -205,6 +212,7 @@ def test_quota_spec(kiali_client, openshift_client, browser):
                        service_name=RATINGS)
 
 
+@pytest.mark.p_crud_resource
 @pytest.mark.p_group3
 def test_quota_spec_binding(kiali_client, openshift_client, browser):
     quota_spec_binding = get_yaml(istio_objects_path.strpath, QUOTA_SPEC_BINDING)
@@ -226,6 +234,7 @@ def test_quota_spec_binding(kiali_client, openshift_client, browser):
                        service_name=RATINGS)
 
 
+@pytest.mark.p_crud_resource
 @pytest.mark.p_group5
 def test_gateway(kiali_client, openshift_client, browser, pick_namespace):
     gateway = get_yaml(istio_objects_path.strpath, GATEWAY)
@@ -248,6 +257,7 @@ def test_gateway(kiali_client, openshift_client, browser, pick_namespace):
                        service_name=REVIEWS)
 
 
+@pytest.mark.p_crud_resource
 @pytest.mark.p_group1
 def test_service_entry(kiali_client, openshift_client, browser):
     yaml = get_yaml(istio_objects_path.strpath, SERVICE_ENTRY)

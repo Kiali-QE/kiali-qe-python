@@ -4,6 +4,7 @@ from kiali_qe.pages import RootPage
 from kiali_qe.utils.log import logger
 
 
+@pytest.mark.p_atomic
 @pytest.mark.p_group8
 def test_login(browser):
     # load root page
@@ -18,6 +19,7 @@ def test_login(browser):
     assert not page.notifications.contains(_type=Notification.TYPE_WARNING)
 
 
+@pytest.mark.p_atomic
 @pytest.mark.p_group8
 def test_invalid_login(browser):
     # load root page
