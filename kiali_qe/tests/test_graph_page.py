@@ -12,6 +12,7 @@ from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
 
 
+@pytest.mark.p_atomic
 @pytest.mark.p_group8
 def test_duration(browser):
     # get page instance
@@ -25,6 +26,7 @@ def test_duration(browser):
         ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
 
 
+@pytest.mark.p_atomic
 @pytest.mark.p_group8
 def test_refresh_interval(browser):
     # get page instance
@@ -38,6 +40,7 @@ def test_refresh_interval(browser):
         ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
 
 
+@pytest.mark.p_atomic
 @pytest.mark.p_group8
 def test_type(browser):
     # get page instance
@@ -50,6 +53,7 @@ def test_type(browser):
         ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
 
 
+@pytest.mark.p_atomic
 @pytest.mark.p_group8
 def test_filter(browser):
     # get page instance

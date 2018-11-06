@@ -5,6 +5,7 @@ from kiali_qe.components.enums import IstioConfigPageFilter
 BOOKINFO_2 = 'bookinfo2'
 
 
+@pytest.mark.p_ro_namespace
 @pytest.mark.p_group6
 def test_pagination_feature(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
@@ -16,6 +17,7 @@ def test_pagination_feature(kiali_client, openshift_client, browser):
     tests.assert_pagination_feature()
 
 
+@pytest.mark.p_ro_top_safe
 @pytest.mark.p_group7
 def test_namespaces(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
@@ -23,6 +25,7 @@ def test_namespaces(kiali_client, openshift_client, browser):
     tests.assert_namespaces()
 
 
+@pytest.mark.p_atomic
 @pytest.mark.p_group7
 def test_filter_options(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
@@ -31,6 +34,7 @@ def test_filter_options(kiali_client, openshift_client, browser):
 
 
 # p_group_last is used for tests which must be run at the end when all other test are done
+@pytest.mark.p_ro_top
 @pytest.mark.p_group_last
 def test_filter_feature_random(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
@@ -38,6 +42,7 @@ def test_filter_feature_random(kiali_client, openshift_client, browser):
     tests.assert_filter_feature_random()
 
 
+@pytest.mark.p_ro_top
 @pytest.mark.p_group_last
 def test_all_configs(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
@@ -45,6 +50,7 @@ def test_all_configs(kiali_client, openshift_client, browser):
     tests.assert_all_items(filters=[])
 
 
+@pytest.mark.p_ro_namespace
 @pytest.mark.p_group5
 def test_config_details_random(kiali_client, openshift_client, browser, pick_namespace):
     tests = IstioConfigPageTest(
