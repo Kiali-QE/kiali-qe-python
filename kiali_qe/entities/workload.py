@@ -87,7 +87,7 @@ class WorkloadDetails(EntityBase):
 
     def __str__(self):
         return 'name:{}, type:{}, sidecar:{}, createdAt:{}, \
-            resourceVersion:{}, health:{}, labels:{labels}'.format(
+            resourceVersion:{}, health:{}, labels:{}'.format(
                 self.name, self.workload_type,
                 self.istio_sidecar, self.created_at,
                 self.resource_version, self.health, self.labels)
