@@ -392,15 +392,17 @@ class KialiExtendedClient(KialiClient):
                         to=_wl_data,
                         workloads=_wl_names))
             virtual_services = []
-            if _service_data['virtualServices']:
-                for _vs_data in _service_data['virtualServices']:
+            if _service_data['virtualServices'] \
+                    and len(_service_data['virtualServices']['items']) > 0:
+                for _vs_data in _service_data['virtualServices']['items']:
                     virtual_services.append(VirtualService(
                         name=_vs_data['name'],
                         created_at=parse_from_rest(_vs_data['createdAt']),
                         resource_version=_vs_data['resourceVersion']))
             destination_rules = []
-            if _service_data['destinationRules']:
-                for _dr_data in _service_data['destinationRules']:
+            if _service_data['destinationRules'] \
+                    and len(_service_data['destinationRules']['items']) > 0:
+                for _dr_data in _service_data['destinationRules']['items']:
                     destination_rules.append(DestinationRule(
                         name=_dr_data['name'],
                         host=_dr_data['host'],
