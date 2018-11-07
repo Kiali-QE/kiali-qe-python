@@ -30,8 +30,8 @@ class ApplicationVersionEnum(StringEnum):
     ISTIO = ("Istio")
     PROMETHEUS = ("Prometheus")
     KUBERNETES = ("Kubernetes")
-    JAEGER = ("Jaeger")
-    GRAFANA = ("Grafana")
+    JAEGER = ("JaegerURL")
+    GRAFANA = ("GrafanaURL")
 
 
 class PaginationPerPage(Enum):
@@ -102,6 +102,7 @@ class ApplicationsPageFilter(StringEnum):
     APP_NAME = ('App Name')
     ISTIO_SIDECAR = ('Istio Sidecar')
     NAMESPACE = ('Namespace')
+    HEALTH = ('Health')
 
 
 class ApplicationsPageSort(StringEnum):
@@ -125,6 +126,7 @@ class WorkloadsPageFilter(StringEnum):
     WORKLOAD_NAME = ('Workload Name')
     WORKLOAD_TYPE = ('Workload Type')
     ISTIO_SIDECAR = ('Istio Sidecar')
+    HEALTH = ('Health')
     APP_LABEL = ('App Label')
     VERSION_LABEL = ('Version Label')
     NAMESPACE = ('Namespace')
@@ -159,9 +161,10 @@ class VersionLabel(StringEnum):
 
 
 class ServicesPageFilter(StringEnum):
+    NAMESPACE = ('Namespace')
     SERVICE_NAME = ('Service Name')
     ISTIO_SIDECAR = ('Istio Sidecar')
-    NAMESPACE = ('Namespace')
+    HEALTH = ('Health')
 
 
 class ServicesPageSort(StringEnum):
