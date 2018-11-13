@@ -89,10 +89,7 @@ class AbstractListPageTest(object):
         for _filter in _pre_filters:
             self.page.filter.remove(filter_name=_filter['name'], value=_filter['value'])
 
-        # validate applied filters
-        _active_filters = self.page.filter.active_filters
-        logger.debug('Filters[applied:{}, active:{}]'.format(filters, _active_filters))
-        assert is_equal(filters, _active_filters)
+        self.assert_applied_filters(filters)
 
     def assert_filter_options(self):
         # test available options
@@ -100,6 +97,12 @@ class AbstractListPageTest(object):
         options_listed = self.page.filter.filters
         logger.debug('Options[defined:{}, defined:{}]'.format(options_defined, options_listed))
         assert is_equal(options_defined, options_listed)
+
+    def assert_applied_filters(self, filters):
+        # validate applied filters
+        _active_filters = self.page.filter.active_filters
+        logger.debug('Filters[applied:{}, active:{}]'.format(filters, _active_filters))
+        assert is_equal(filters, _active_filters)
 
     def assert_namespaces(self):
         namespaces_ui = self._namespaces_ui()

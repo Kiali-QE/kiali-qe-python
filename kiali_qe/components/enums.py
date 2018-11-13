@@ -142,7 +142,15 @@ class WorkloadsPageSort(StringEnum):
 
 
 class WorkloadType(StringEnum):
+    CRON_JOB = ('CronJob')
+    DAEMON_SET = ('DaemonSet')
     DEPLOYMENT = ('Deployment')
+    DEPLOYMENT_CONFIG = ('DeploymentConfig')
+    JOB = ('Job')
+    POD = ('Pod')
+    REPLICA_SET = ('ReplicaSet')
+    REPLICATION_CONTROLLER = ('ReplicationController')
+    STATEFUL_SET = ('StatefulSet')
 
 
 class IstioSidecar(StringEnum):
