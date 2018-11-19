@@ -442,7 +442,7 @@ class CheckBoxFilter(Widget):
     RB_ITEMS = './/label/input[@type="radio"]/..'
     DROP_DOWN = '//*[contains(@class, "dropdown")]/*[@id="{}"]/..'
 
-    def __init__(self, parent, locator=None, logger=None):
+    def __init__(self, parent, filter_name, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
         if locator:
             self.locator = locator
@@ -450,8 +450,8 @@ class CheckBoxFilter(Widget):
             self.locator = self.ROOT
         self._filter_button = Button(
             parent=self.parent,
-            locator=('//button[normalize-space(text())="Display"]/'
-                     '..//*[contains(@class, "fa-angle-down")]'))
+            locator=('//button[normalize-space(text())="{}"]/'
+                     '..//*[contains(@class, "fa-angle-down")]'.format(filter_name)))
 
     def __locator__(self):
         return self.locator
@@ -746,6 +746,8 @@ class ListViewAbstract(Widget):
     PORTS = 'Ports'
     CREATED_AT = 'Created at'
     RESOURCE_VERSION = 'Resource Version'
+    INBOUND_METRICS = 'Inbound Metrics'
+    OUTBOUND_METRICS = 'Outbound Metrics'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -962,11 +964,20 @@ class ListViewApplications(ListViewAbstract):
 
         _table_view_services = TableViewAppServices(self.parent, self.locator, self.logger)
 
+        _inbound_metrics = MetricsView(self.parent, self.INBOUND_METRICS, self.locator, self.logger)
+
+        _outbound_metrics = MetricsView(self.parent,
+                                        self.OUTBOUND_METRICS,
+                                        self.locator,
+                                        self.logger)
+
         return ApplicationDetails(name=str(_name),
                                   istio_sidecar=_istio_sidecar,
                                   health=self._get_details_health(),
                                   workloads=_table_view_workloads.all_items,
-                                  services=_table_view_services.all_items)
+                                  services=_table_view_services.all_items,
+                                  inbound_metrics=_inbound_metrics,
+                                  outbound_metrics=_outbound_metrics)
 
     @property
     def items(self):
@@ -1013,6 +1024,13 @@ class ListViewWorkloads(ListViewAbstract):
 
         _table_view_services = TableViewServices(self.parent, self.locator, self.logger)
 
+        _inbound_metrics = MetricsView(self.parent, self.INBOUND_METRICS, self.locator, self.logger)
+
+        _outbound_metrics = MetricsView(self.parent,
+                                        self.OUTBOUND_METRICS,
+                                        self.locator,
+                                        self.logger)
+
         return WorkloadDetails(name=str(_name),
                                workload_type=_type,
                                created_at=parse_from_ui(_created_at),
@@ -1023,7 +1041,9 @@ class ListViewWorkloads(ListViewAbstract):
                                services_number=_table_view_services.number,
                                pods=_table_view_pods.all_items,
                                services=_table_view_services.all_items,
-                               labels=self._get_details_labels())
+                               labels=self._get_details_labels(),
+                               inbound_metrics=_inbound_metrics,
+                               outbound_metrics=_outbound_metrics)
 
     @property
     def items(self):
@@ -1082,6 +1102,8 @@ class ListViewServices(ListViewAbstract):
 
         _table_view_dr = TableViewDestinationRules(self.parent, self.locator, self.logger)
 
+        _inbound_metrics = MetricsView(self.parent, self.INBOUND_METRICS, self.locator, self.logger)
+
         return ServiceDetails(name=_name,
                               created_at=parse_from_ui(_created_at),
                               service_type=_type,
@@ -1098,7 +1120,8 @@ class ListViewServices(ListViewAbstract):
                               workloads=_table_view_wl.all_items,
                               source_workloads=_table_view_swl.all_items,
                               virtual_services=_table_view_vs.all_items,
-                              destination_rules=_table_view_dr.all_items)
+                              destination_rules=_table_view_dr.all_items,
+                              inbound_metrics=_inbound_metrics)
 
     @property
     def items(self):
@@ -1433,10 +1456,10 @@ class TableViewDestinationRules(TableViewAbstract):
                                         parent=self.ROOT):
             _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
 
-            _name = _columns[0].text.strip()
-            _host = _columns[3].text.strip()
-            _created_at = _columns[4].text.strip()
-            _resource_version = _columns[5].text.strip()
+            _name = _columns[1].text.strip()
+            _host = _columns[4].text.strip()
+            _created_at = _columns[5].text.strip()
+            _resource_version = _columns[6].text.strip()
             # TODO: fetch traffic policy and subset information from GUI
             # create Virtual Service instance
             _destination_rule = DestinationRule(
@@ -1537,3 +1560,35 @@ class TableViewServices(TableViewAbstract):
                         ip=str(_ip),
                         ports=str(_ports.replace('\n', ' '))))
         return _items
+
+
+class MetricsView(Widget):
+    METRICS_TAB = '//ul[contains(@class, "nav-tabs-pf")]//li//a//div[contains(text(), "{}")]/..'
+    ROOT = '//div[@id="basic-tabs"]'
+    DROP_DOWN = '//*[contains(@class, "dropdown")]/*[@id="{}"]/..'
+
+    filter = CheckBoxFilter("Metrics Settings")
+    destination = DropDown(locator=DROP_DOWN.format('metrics_filter_reporter'))
+    duration = DropDown(locator=DROP_DOWN.format('metrics_filter_interval_duration'))
+    interval = DropDown(locator=DROP_DOWN.format('metrics-refresh'))
+    refresh = Button(locator='.//button//*[contains(@class, "fa-refresh")]')
+
+    def __init__(self, parent, tab_name, locator=None, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        self.tab_name = tab_name
+        if locator:
+            self.locator = locator
+        else:
+            self.locator = self.ROOT
+
+    def __locator__(self):
+        return self.locator
+
+    def open(self):
+        tab = self.browser.element(locator=self.METRICS_TAB.format(self.tab_name),
+                                   parent=self.ROOT)
+        try:
+            self.browser.click(tab)
+        finally:
+            self.browser.click(tab)
+        wait_displayed(self)

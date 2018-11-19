@@ -137,6 +137,10 @@ class ApplicationDetails(EntityBase):
             if 'workloads' in kwargs else None
         self.services = kwargs['services']\
             if 'services' in kwargs else None
+        self.inbound_metrics = kwargs['inbound_metrics']\
+            if 'inbound_metrics' in kwargs else None
+        self.outbound_metrics = kwargs['outbound_metrics']\
+            if 'outbound_metrics' in kwargs else None
 
     def __str__(self):
         return 'name:{}, sidecar:{}, health:{}'.format(
