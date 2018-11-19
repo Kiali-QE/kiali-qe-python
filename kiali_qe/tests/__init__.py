@@ -521,7 +521,7 @@ class ServicesPageTest(AbstractListPageTest):
         assert service_details_ui.workloads_number\
             == len(service_details_rest.workloads)
         assert service_details_ui.source_workloads_number\
-            == len(service_details_rest.source_workloads)
+            == len(self.get_workload_names_set(service_details_rest.source_workloads))
         assert service_details_ui.virtual_services_number\
             == len(service_details_rest.virtual_services)
         assert service_details_ui.destination_rules_number\
@@ -529,7 +529,7 @@ class ServicesPageTest(AbstractListPageTest):
         assert service_details_ui.workloads_number\
             == len(service_details_rest.workloads)
         assert service_details_ui.source_workloads_number\
-            == len(service_details_rest.source_workloads)
+            == len(self.get_workload_names_set(service_details_ui.source_workloads))
         assert service_details_ui.virtual_services_number\
             == len(service_details_ui.virtual_services)
         assert service_details_ui.destination_rules_number\
@@ -566,6 +566,13 @@ class ServicesPageTest(AbstractListPageTest):
                     break
             assert found, 'DR {} not found in REST {}'.format(destination_rule_ui,
                                                               destination_rule_rest)
+
+    def get_workload_names_set(self, source_workloads):
+        workload_names = []
+        for source_workload in source_workloads:
+            for workload in source_workload.workloads:
+                workload_names.append(workload)
+        return set(workload_names)
 
     def assert_all_items(self, filters, force_clear_all=True):
         # apply filters
