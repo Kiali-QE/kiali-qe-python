@@ -72,10 +72,6 @@ class WorkloadDetails(EntityBase):
             if 'availableReplicas' in kwargs else None
         self.unavailableReplicas = kwargs['unavailableReplicas']\
             if 'unavailableReplicas' in kwargs else None
-        self.created_at = kwargs['created_at']\
-            if 'created_at' in kwargs else None
-        self.resource_version = kwargs['resource_version']\
-            if 'resource_version' in kwargs else None
         self.pods_number = kwargs['pods_number']\
             if 'pods_number' in kwargs else None
         self.services_number = kwargs['services_number']\

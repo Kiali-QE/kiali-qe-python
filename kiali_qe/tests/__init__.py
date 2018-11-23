@@ -367,10 +367,9 @@ class ApplicationsPageTest(AbstractListPageTest):
                 application_details_ui.services,
                 application_details_rest.services)
 
-        # TODO
-        # self.assert_metrics_options(application_details_ui.inbound_metrics)
+        self.assert_metrics_options(application_details_ui.inbound_metrics)
 
-        # self.assert_metrics_options(application_details_ui.outbound_metrics)
+        self.assert_metrics_options(application_details_ui.outbound_metrics)
 
     def assert_all_items(self, filters, force_clear_all=True):
         # apply filters
@@ -482,10 +481,9 @@ class WorkloadsPageTest(AbstractListPageTest):
             if not found:
                 assert found, 'Service {} not found in REST {}'.format(service_ui, service_rest)
 
-        # TODO
-        # self.assert_metrics_options(workload_details_ui.inbound_metrics)
+        self.assert_metrics_options(workload_details_ui.inbound_metrics)
 
-        # self.assert_metrics_options(workload_details_ui.outbound_metrics)
+        self.assert_metrics_options(workload_details_ui.outbound_metrics)
 
     def assert_all_items(self, filters, force_clear_all=True):
         # apply filters
@@ -633,8 +631,7 @@ class ServicesPageTest(AbstractListPageTest):
             assert found, 'DR {} not found in REST {}'.format(destination_rule_ui,
                                                               destination_rule_rest)
 
-        # TODO
-        # self.assert_metrics_options(service_details_ui.inbound_metrics)
+        self.assert_metrics_options(service_details_ui.inbound_metrics)
 
     def get_workload_names_set(self, source_workloads):
         workload_names = []

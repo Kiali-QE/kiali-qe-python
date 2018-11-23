@@ -457,6 +457,8 @@ class CheckBoxFilter(Widget):
         return self.locator
 
     def open(self):
+        # TODO necessary workaround for remote zalenium webdriver execution
+        self.browser.execute_script("window.scrollTo(0,0);")
         if not self.is_displayed:
             self._filter_button.click()
 
@@ -964,12 +966,10 @@ class ListViewApplications(ListViewAbstract):
 
         _table_view_services = TableViewAppServices(self.parent, self.locator, self.logger)
 
-        _inbound_metrics = MetricsView(self.parent, self.INBOUND_METRICS, self.locator, self.logger)
+        _inbound_metrics = MetricsView(self.parent, self.INBOUND_METRICS)
 
         _outbound_metrics = MetricsView(self.parent,
-                                        self.OUTBOUND_METRICS,
-                                        self.locator,
-                                        self.logger)
+                                        self.OUTBOUND_METRICS)
 
         return ApplicationDetails(name=str(_name),
                                   istio_sidecar=_istio_sidecar,
@@ -1024,12 +1024,10 @@ class ListViewWorkloads(ListViewAbstract):
 
         _table_view_services = TableViewServices(self.parent, self.locator, self.logger)
 
-        _inbound_metrics = MetricsView(self.parent, self.INBOUND_METRICS, self.locator, self.logger)
+        _inbound_metrics = MetricsView(self.parent, self.INBOUND_METRICS)
 
         _outbound_metrics = MetricsView(self.parent,
-                                        self.OUTBOUND_METRICS,
-                                        self.locator,
-                                        self.logger)
+                                        self.OUTBOUND_METRICS)
 
         return WorkloadDetails(name=str(_name),
                                workload_type=_type,
@@ -1102,7 +1100,7 @@ class ListViewServices(ListViewAbstract):
 
         _table_view_dr = TableViewDestinationRules(self.parent, self.locator, self.logger)
 
-        _inbound_metrics = MetricsView(self.parent, self.INBOUND_METRICS, self.locator, self.logger)
+        _inbound_metrics = MetricsView(self.parent, self.INBOUND_METRICS)
 
         return ServiceDetails(name=_name,
                               created_at=parse_from_ui(_created_at),
@@ -1550,7 +1548,7 @@ class TableViewServices(TableViewAbstract):
             _resource_version = _columns[4].text.strip()
             _ip = _columns[5].text.strip()
             _ports = _columns[6].text.strip()
-            # TODO: fetch Label information from GUI
+
             _items.append(ServiceDetails(
                         name=_name,
                         created_at=parse_from_ui(_created_at),
@@ -1567,7 +1565,7 @@ class MetricsView(Widget):
     ROOT = '//div[@id="basic-tabs"]'
     DROP_DOWN = '//*[contains(@class, "dropdown")]/*[@id="{}"]/..'
 
-    filter = CheckBoxFilter("Metrics Settings")
+    filter = CheckBoxFilter(filter_name="Metrics Settings")
     destination = DropDown(locator=DROP_DOWN.format('metrics_filter_reporter'))
     duration = DropDown(locator=DROP_DOWN.format('metrics_filter_interval_duration'))
     interval = DropDown(locator=DROP_DOWN.format('metrics-refresh'))
