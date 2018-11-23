@@ -9,7 +9,12 @@ from kiali_qe.components.enums import (
     ApplicationsPageFilter,
     OverviewPageFilter,
     IstioConfigObjectType as OBJECT_TYPE,
-    IstioConfigValidation
+    IstioConfigValidation,
+    MetricsSource,
+    MetricsHistograms,
+    MetricsFilter,
+    MetricsDuration,
+    MetricsRefreshInterval
 )
 from kiali_qe.utils import is_equal, is_sublist
 from kiali_qe.utils.log import logger
@@ -205,6 +210,57 @@ class AbstractListPageTest(object):
             'Total items mismatch: pagination:{}, page:{}'.format(total_items_pagin,
                                                                   total_items_page)
 
+    def assert_metrics_options(self, metrics_page):
+        metrics_page.open()
+        self._assert_metrics_settings(metrics_page)
+        self._assert_metrics_destination(metrics_page)
+        self._assert_metrics_duration(metrics_page)
+        self._assert_metrics_interval(metrics_page)
+
+    def _assert_metrics_settings(self, metrics_page):
+        # test available filters
+        options_defined = [item.text for item in MetricsFilter]
+        for item in MetricsHistograms:
+            options_defined.append(item.text)
+        options_listed = metrics_page.filter.items
+        logger.debug('Filter options[defined:{}, listed:{}]'
+                     .format(options_defined, options_listed))
+        assert is_equal(options_defined, options_listed), \
+            ('Filter Options mismatch: defined:{}, listed:{}'
+             .format(options_defined, options_listed))
+        # enable disable each filter
+        for filter_name in options_listed:
+            self._filter_test(metrics_page, filter_name)
+
+    def _filter_test(self, page, filter_name, uncheck=True):
+        # TODO 'Quantile 0.nnn' item's text is 2 lines
+        if "Quantile" in str(filter_name):
+            return
+        # test filter checked
+        page.filter.check(filter_name)
+        assert page.filter.is_checked(filter_name) is True
+        if uncheck:
+            # test filter unchecked
+            page.filter.uncheck(filter_name)
+            assert page.filter.is_checked(filter_name) is False
+
+    def _assert_metrics_destination(self, metrics_page):
+        self._assert_metrics_options(metrics_page, MetricsSource, 'destination')
+
+    def _assert_metrics_duration(self, metrics_page):
+        self._assert_metrics_options(metrics_page, MetricsDuration, 'duration')
+
+    def _assert_metrics_interval(self, metrics_page):
+        self._assert_metrics_options(metrics_page, MetricsRefreshInterval, 'interval')
+
+    def _assert_metrics_options(self, metrics_page, enum, attr_name):
+        options_defined = [item.text for item in enum]
+        attr = getattr(metrics_page, attr_name)
+        options_listed = attr.options
+        logger.debug('Options[defined:{}, listed:{}]'.format(options_defined, options_listed))
+        assert is_equal(options_defined, options_listed), \
+            ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
+
 
 class OverviewPageTest(AbstractListPageTest):
     FILTER_ENUM = OverviewPageFilter
@@ -310,6 +366,11 @@ class ApplicationsPageTest(AbstractListPageTest):
             'UI services {} not equal to REST {}'.format(
                 application_details_ui.services,
                 application_details_rest.services)
+
+        # TODO
+        # self.assert_metrics_options(application_details_ui.inbound_metrics)
+
+        # self.assert_metrics_options(application_details_ui.outbound_metrics)
 
     def assert_all_items(self, filters, force_clear_all=True):
         # apply filters
@@ -420,6 +481,11 @@ class WorkloadsPageTest(AbstractListPageTest):
                     break
             if not found:
                 assert found, 'Service {} not found in REST {}'.format(service_ui, service_rest)
+
+        # TODO
+        # self.assert_metrics_options(workload_details_ui.inbound_metrics)
+
+        # self.assert_metrics_options(workload_details_ui.outbound_metrics)
 
     def assert_all_items(self, filters, force_clear_all=True):
         # apply filters
@@ -566,6 +632,9 @@ class ServicesPageTest(AbstractListPageTest):
                     break
             assert found, 'DR {} not found in REST {}'.format(destination_rule_ui,
                                                               destination_rule_rest)
+
+        # TODO
+        # self.assert_metrics_options(service_details_ui.inbound_metrics)
 
     def get_workload_names_set(self, source_workloads):
         workload_names = []

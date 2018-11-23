@@ -160,6 +160,8 @@ class ServiceDetails(EntityBase):
             if 'workloads' in kwargs else None
         self.source_workloads = kwargs['source_workloads']\
             if 'source_workloads' in kwargs else None
+        self.inbound_metrics = kwargs['inbound_metrics']\
+            if 'inbound_metrics' in kwargs else None
 
     def __str__(self):
         return 'name:{}, created_at: {}, service_type: {}, resource_version: {}, \

@@ -231,3 +231,47 @@ class IstioConfigValidation(StringEnum):
     VALID = ('Valid')
     WARNING = ('Warning')
     NOT_VALID = ('Not Valid')
+
+
+class MetricsFilter(StringEnum):
+    LOCAL_VERSION = ('Local version')
+    REMOTE_APP = ('Remote app')
+    REMOTE_VERSION = ('Remote version')
+    RESPONSE_CODE = ('Response code')
+
+
+class MetricsHistograms(StringEnum):
+    AVERAGE = ('Average')
+    QUANTILE_05 = ('Quantile 0.5')
+    QUANTILE_095 = ('Quantile 0.95')
+    QUANTILE_099 = ('Quantile 0.99')
+    QUANTILE_0999 = ('Quantile 0.999')
+
+
+class MetricsSource(StringEnum):
+    SOURCE = ('Source')
+    DESTINATION = ('Destination')
+
+
+class MetricsDuration(StringEnum):
+    LAST_MINUTE = ('Last min')
+    LAST_5_MINUTES = ('Last 5 min')
+    LAST_10_MINUTES = ('Last 10 min')
+    LAST_30_MINUTES = ('Last 30 min')
+    LAST_HOUR = ('Last hour')
+    LAST_3_HOURS = ('Last 3 hours')
+    LAST_6_HOURS = ('Last 6 hours')
+    LAST_12_HOURS = ('Last 12 hours')
+    LAST_DAY = ('Last day')
+    LAST_7_DAYS = ('Last 7 days')
+    LAST_30_DAYS = ('Last 30 days')
+
+
+class MetricsRefreshInterval(StringEnum):
+    PAUSE = ('Pause')
+    IN_5_SECONDS = ('5 sec')
+    IN_10_SECONDS = ('10 sec')
+    IN_15_SECONDS = ('15 sec')
+    IN_30_SECONDS = ('30 sec')
+    IN_1_MINUTE = ('1 min')
+    IN_5_MINUTES = ('5 min')
