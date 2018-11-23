@@ -204,6 +204,8 @@ class IstioConfigPageSort(StringEnum):
 class IstioConfigObjectType(StringEnum):
     DESTINATION_RULE = ('DestinationRule')
     RULE = ('Rule')
+    ADAPTER = ('Adapter')
+    TEMPLATE = ('Template')
     VIRTUAL_SERVICE = ('VirtualService')
     GATEWAY = ('Gateway')
     SERVICE_ENTRY = ('ServiceEntry')

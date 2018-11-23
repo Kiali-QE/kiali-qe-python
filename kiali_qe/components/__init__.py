@@ -1169,7 +1169,9 @@ class ListViewIstioConfig(ListViewAbstract):
             # create istio config instance
             _object_type = self.browser.text(
                 self.browser.element(locator=self.OBJECT_TYPE, parent=el))
-            if str(_object_type) == IstioConfigObjectType.RULE.text:
+            if str(_object_type) == IstioConfigObjectType.RULE.text or \
+                    '{}: '.format(IstioConfigObjectType.ADAPTER.text) in str(_object_type) or \
+                    '{}: '.format(IstioConfigObjectType.TEMPLATE.text) in str(_object_type):
                 _rule = Rule(name=_name, namespace=_namespace, object_type=_object_type)
                 # append this item to the final list
                 _items.append(_rule)
