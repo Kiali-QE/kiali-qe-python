@@ -215,6 +215,23 @@ class KialiExtendedClient(KialiClient):
                         namespace=_namespace,
                         object_type=OBJECT_TYPE.RULE.text))
 
+            # update Rule with Adapter
+            if len(_data['adapters']) > 0:
+                for _policy in _data['adapters']:
+                    items.append(Rule(
+                        name=_policy['name'],
+                        namespace=_namespace,
+                        object_type='{}: {}'.format(OBJECT_TYPE.ADAPTER.text, _policy['adapter'])))
+
+            # update Rule with Template
+            if len(_data['templates']) > 0:
+                for _policy in _data['templates']:
+                    items.append(Rule(
+                        name=_policy['name'],
+                        namespace=_namespace,
+                        object_type='{}: {}'.format(
+                            OBJECT_TYPE.TEMPLATE.text, _policy['template'])))
+
             # update VirtualService
             if len(_data['virtualServices']) > 0 and len(_data['virtualServices']['items']) > 0:
                 for _policy in _data['virtualServices']['items']:
