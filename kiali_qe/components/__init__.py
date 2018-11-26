@@ -964,12 +964,10 @@ class ListViewApplications(ListViewAbstract):
 
         _table_view_services = TableViewAppServices(self.parent, self.locator, self.logger)
 
-        _inbound_metrics = MetricsView(self.parent, self.INBOUND_METRICS, self.locator, self.logger)
+        _inbound_metrics = MetricsView(self.parent, self.INBOUND_METRICS)
 
         _outbound_metrics = MetricsView(self.parent,
-                                        self.OUTBOUND_METRICS,
-                                        self.locator,
-                                        self.logger)
+                                        self.OUTBOUND_METRICS)
 
         return ApplicationDetails(name=str(_name),
                                   istio_sidecar=_istio_sidecar,
@@ -1024,12 +1022,10 @@ class ListViewWorkloads(ListViewAbstract):
 
         _table_view_services = TableViewServices(self.parent, self.locator, self.logger)
 
-        _inbound_metrics = MetricsView(self.parent, self.INBOUND_METRICS, self.locator, self.logger)
+        _inbound_metrics = MetricsView(self.parent, self.INBOUND_METRICS)
 
         _outbound_metrics = MetricsView(self.parent,
-                                        self.OUTBOUND_METRICS,
-                                        self.locator,
-                                        self.logger)
+                                        self.OUTBOUND_METRICS)
 
         return WorkloadDetails(name=str(_name),
                                workload_type=_type,
@@ -1102,7 +1098,7 @@ class ListViewServices(ListViewAbstract):
 
         _table_view_dr = TableViewDestinationRules(self.parent, self.locator, self.logger)
 
-        _inbound_metrics = MetricsView(self.parent, self.INBOUND_METRICS, self.locator, self.logger)
+        _inbound_metrics = MetricsView(self.parent, self.INBOUND_METRICS)
 
         return ServiceDetails(name=_name,
                               created_at=parse_from_ui(_created_at),
