@@ -200,18 +200,18 @@ class KialiExtendedClient(KialiClient):
             if len(_data['destinationRules']) > 0 and len(_data['destinationRules']['items']) > 0:
                 for _policy in _data['destinationRules']['items']:
                     items.append(IstioConfig(
-                        name=_policy['name'],
+                        name=_policy['metadata']['name'],
                         namespace=_namespace,
                         object_type=OBJECT_TYPE.DESTINATION_RULE.text,
                         validation=self.get_istio_config_validation(_namespace,
                                                                     'destinationrules',
-                                                                    _policy['name'])))
+                                                                    _policy['metadata']['name'])))
 
             # update Rule
             if len(_data['rules']) > 0:
                 for _policy in _data['rules']:
                     items.append(Rule(
-                        name=_policy['name'],
+                        name=_policy['metadata']['name'],
                         namespace=_namespace,
                         object_type=OBJECT_TYPE.RULE.text))
 
@@ -219,7 +219,7 @@ class KialiExtendedClient(KialiClient):
             if len(_data['adapters']) > 0:
                 for _policy in _data['adapters']:
                     items.append(Rule(
-                        name=_policy['name'],
+                        name=_policy['metadata']['name'],
                         namespace=_namespace,
                         object_type='{}: {}'.format(OBJECT_TYPE.ADAPTER.text, _policy['adapter'])))
 
@@ -227,7 +227,7 @@ class KialiExtendedClient(KialiClient):
             if len(_data['templates']) > 0:
                 for _policy in _data['templates']:
                     items.append(Rule(
-                        name=_policy['name'],
+                        name=_policy['metadata']['name'],
                         namespace=_namespace,
                         object_type='{}: {}'.format(
                             OBJECT_TYPE.TEMPLATE.text, _policy['template'])))
@@ -236,56 +236,56 @@ class KialiExtendedClient(KialiClient):
             if len(_data['virtualServices']) > 0 and len(_data['virtualServices']['items']) > 0:
                 for _policy in _data['virtualServices']['items']:
                     items.append(IstioConfig(
-                        name=_policy['name'],
+                        name=_policy['metadata']['name'],
                         namespace=_namespace,
                         object_type=OBJECT_TYPE.VIRTUAL_SERVICE.text,
                         validation=self.get_istio_config_validation(_namespace,
                                                                     'virtualservices',
-                                                                    _policy['name'])))
+                                                                    _policy['metadata']['name'])))
 
             # update QuotaSpec
             if len(_data['quotaSpecs']) > 0:
                 for _policy in _data['quotaSpecs']:
                     items.append(IstioConfig(
-                        name=_policy['name'],
+                        name=_policy['metadata']['name'],
                         namespace=_namespace,
                         object_type=OBJECT_TYPE.QUOTA_SPEC.text,
                         validation=self.get_istio_config_validation(_namespace,
                                                                     'quotaspecs',
-                                                                    _policy['name'])))
+                                                                    _policy['metadata']['name'])))
 
             # update QuotaSpecBindings
             if len(_data['quotaSpecBindings']) > 0:
                 for _policy in _data['quotaSpecBindings']:
                     items.append(IstioConfig(
-                        name=_policy['name'],
+                        name=_policy['metadata']['name'],
                         namespace=_namespace,
                         object_type=OBJECT_TYPE.QUOTA_SPEC_BINDING.text,
                         validation=self.get_istio_config_validation(_namespace,
                                                                     'quotaspecbindings',
-                                                                    _policy['name'])))
+                                                                    _policy['metadata']['name'])))
 
             # update Gateway
             if len(_data['gateways']) > 0:
                 for _policy in _data['gateways']:
                     items.append(IstioConfig(
-                        name=_policy['name'],
+                        name=_policy['metadata']['name'],
                         namespace=_namespace,
                         object_type=OBJECT_TYPE.GATEWAY.text,
                         validation=self.get_istio_config_validation(_namespace,
                                                                     'gateways',
-                                                                    _policy['name'])))
+                                                                    _policy['metadata']['name'])))
 
             # update serviceEntries
             if len(_data['serviceEntries']) > 0:
                 for _policy in _data['serviceEntries']:
                     items.append(IstioConfig(
-                        name=_policy['name'],
+                        name=_policy['metadata']['name'],
                         namespace=_namespace,
                         object_type=OBJECT_TYPE.SERVICE_ENTRY.text,
                         validation=self.get_istio_config_validation(_namespace,
                                                                     'serviceentries',
-                                                                    _policy['name'])))
+                                                                    _policy['metadata']['name'])))
 
             # not required at this stage. These options not availabe in UI
             # # update all the rules to our custom entity
@@ -367,7 +367,7 @@ class KialiExtendedClient(KialiClient):
 
             if config_data:
                 config = IstioConfigDetails(
-                    name=config_data['name'],
+                    name=config_data['metadata']['name'],
                     _type=_data['objectType'],
                     text=json.dumps(config_data),
                     validation=self.get_istio_config_validation(namespace,
@@ -413,18 +413,18 @@ class KialiExtendedClient(KialiClient):
                     and len(_service_data['virtualServices']['items']) > 0:
                 for _vs_data in _service_data['virtualServices']['items']:
                     virtual_services.append(VirtualService(
-                        name=_vs_data['name'],
-                        created_at=parse_from_rest(_vs_data['createdAt']),
-                        resource_version=_vs_data['resourceVersion']))
+                        name=_vs_data['metadata']['name'],
+                        created_at=parse_from_rest(_vs_data['metadata']['creationTimestamp']),
+                        resource_version=_vs_data['metadata']['resourceVersion']))
             destination_rules = []
             if _service_data['destinationRules'] \
                     and len(_service_data['destinationRules']['items']) > 0:
                 for _dr_data in _service_data['destinationRules']['items']:
                     destination_rules.append(DestinationRule(
-                        name=_dr_data['name'],
-                        host=_dr_data['host'],
-                        created_at=parse_from_rest(_dr_data['createdAt']),
-                        resource_version=_dr_data['resourceVersion']))
+                        name=_dr_data['metadata']['name'],
+                        host=_dr_data['spec']['host'],
+                        created_at=parse_from_rest(_dr_data['metadata']['creationTimestamp']),
+                        resource_version=_dr_data['metadata']['resourceVersion']))
             _ports = ''
             for _port in _service_data['service']['ports']:
                 _ports += '{}{} ({}) '.format(_port['protocol'],
@@ -638,10 +638,11 @@ class KialiExtendedClient(KialiClient):
             object=object_name)
         if _health_data:
             _, value = _health_data.popitem()
-            if not value[object_name]['valid']:
-                return IstioConfigValidation.NOT_VALID
-            elif len(value[object_name]['checks']) > 0:
-                return IstioConfigValidation.WARNING
+            if len(value[object_name]['checks']) > 0:
+                if 'error' in set(check['severity'] for check in value[object_name]['checks']):
+                    return IstioConfigValidation.NOT_VALID
+                else:
+                    return IstioConfigValidation.WARNING
             else:
                 return IstioConfigValidation.VALID
         else:
