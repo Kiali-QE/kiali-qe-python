@@ -737,7 +737,8 @@ class IstioConfigPageTest(AbstractListPageTest):
                 if config_ui.is_equal(config_rest, advanced_check=True):
                     found = True
                     break
-            assert found, '{} not found in REST'.format(config_ui)
+            if not found:
+                assert found, '{} not found in REST'.format(config_ui)
 
     def assert_random_details(self, filters, force_clear_all=True):
         # apply filters
@@ -786,7 +787,17 @@ class IstioConfigPageTest(AbstractListPageTest):
         # find key: value pairs from UI in a REST
         for config_ui in re.split(' ',
                                   str(config_details_ui.text).
-                                  replace('\'', '').replace('~', 'null')):
+                                  replace('\'', '').
+                                  replace('~', 'null').
+                                  replace('selfLink: >- ', 'selfLink: ').
+                                  replace(': > ', ': ').
+                                  replace('{', '').
+                                  replace('}', '').
+                                  replace('"', '').
+                                  replace(',', '').
+                                  replace('[', '').
+                                  replace(']', '').
+                                  replace('\\', '')):
             if config_ui.endswith(':'):
                 ui_key = config_ui
             elif config_ui.strip() != '-':  # skip this line, it was for formatting
@@ -795,6 +806,8 @@ class IstioConfigPageTest(AbstractListPageTest):
                 # make the REST result into the same format as shown in UI
                 # to compare only the values
                 for config_rest in str(config_details_rest.text).\
+                        replace('\\n', '').\
+                        replace('\\', '').\
                         replace('{', '').\
                         replace('}', '').\
                         replace('"', '').\
@@ -809,7 +822,8 @@ class IstioConfigPageTest(AbstractListPageTest):
                         if ui_key == rest_key and config_ui == config_rest:
                             found = True
                             break
-                assert found, '{} {} not found in REST'.format(ui_key, config_ui)
+                if not found:
+                    assert found, '{} {} not found in REST'.format(ui_key, config_ui)
 
     def get_additional_filters(self, current_filters):
         logger.debug('Current filters:{}'.format(current_filters))

@@ -10,7 +10,7 @@ class EntityBase(object):
         return False
 
     def is_equal(self, item):
-        raise NotImplemented('Should be implemented on sub class')
+        raise NotImplementedError('Should be implemented on sub class')
 
 
 class Envoy(EntityBase):
