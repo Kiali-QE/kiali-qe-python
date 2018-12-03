@@ -916,11 +916,12 @@ class ListViewAbstract(Widget):
 class ListViewOverview(ListViewAbstract):
     ROOT = '//*[contains(@class, "cards-pf") and contains(@class, "container-cards-pf")]'
     ITEMS = './/*[contains(@class, "row")]//*[contains(@class, "card-pf-accented")]'
-    ITEM_TEXT = './/*[contains(@class, "card-pf-title")]'
-    APP_TEXT = './/*[contains(@class, "card-pf-body")]/a'
+    ITEM_TITLE = './/*[contains(@class, "card-pf-title")]'
+    ITEM_TEXT = './/*[contains(@class, "card-pf-body")]/a'
     UNHEALTHY_TEXT = './/*[contains(@class, "pficon-error-circle-o")]/..'
     HEALTHY_TEXT = './/*[contains(@class, "pficon-ok")]/..'
     DEGRADED_TEXT = './/*[contains(@class, "pficon-warning-triangle-o")]/..'
+    OVERVIEW_TYPE = './/*[@id="overview-type"]'
 
     @property
     def all_items(self):
@@ -929,11 +930,13 @@ class ListViewOverview(ListViewAbstract):
     @property
     def items(self):
         _items = []
+        _overview_type = self.browser.element(
+                locator=self.OVERVIEW_TYPE, parent=self.ROOT).text
         for el in self.browser.elements(self.ITEMS, parent=self):
             _namespace = self.browser.element(
-                locator=self.ITEM_TEXT, parent=el).text
-            _applications = int(re.search(r'\d+', self.browser.element(
-                locator=self.APP_TEXT, parent=el).text).group())
+                locator=self.ITEM_TITLE, parent=el).text
+            _item_numbers = int(re.search(r'\d+', self.browser.element(
+                locator=self.ITEM_TEXT, parent=el).text).group())
             _unhealthy = 0
             _healthy = 0
             _degraded = 0
@@ -952,8 +955,9 @@ class ListViewOverview(ListViewAbstract):
                     locator=self.HEALTHY_TEXT, parent=el).text)
             # overview object creation
             _overview = Overview(
+                overview_type=_overview_type,
                 namespace=_namespace,
-                applications=_applications,
+                items=_item_numbers,
                 healthy=_healthy,
                 unhealthy=_unhealthy,
                 degraded=_degraded)

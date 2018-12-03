@@ -107,6 +107,10 @@ class OverviewPage(RootPage):
 
     filter = Filter()
     sort = SortDropDown(locator=XP_DROP_DOWN.format('sortTypeMenu'))
+    type = DropDown(locator=XP_DROP_DOWN.format('overview-type'))
+    duration = DropDown(locator=XP_DROP_DOWN.format('overvoew-duration'))
+    interval = DropDown(locator=XP_DROP_DOWN.format('overview-refresh'))
+    refresh = Button(locator='.//button//*[contains(@class, "fa-refresh")]')
     content = ListViewOverview()
 
 
