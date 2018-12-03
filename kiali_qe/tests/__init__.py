@@ -326,10 +326,13 @@ class ApplicationsPageTest(AbstractListPageTest):
         else:
             _random_applications = applications_ui
         # create filters
-        for _selected_application in _random_applications:
-            self.assert_details(_selected_application.name, _selected_application.namespace)
+        for _idx, _selected_application in enumerate(_random_applications):
+            self.assert_details(
+                _selected_application.name,
+                _selected_application.namespace,
+                check_metrics=True if _idx == 0 else False)
 
-    def assert_details(self, name, namespace):
+    def assert_details(self, name, namespace, check_metrics=False):
         logger.debug('Details: {}, {}'.format(name, namespace))
         # load the page first
         self.page.load(force_load=True)
@@ -357,7 +360,7 @@ class ApplicationsPageTest(AbstractListPageTest):
             found = False
             for workload_rest in application_details_rest.workloads:
                 if workload_ui.is_equal(workload_rest,
-                                        advanced_check=True):
+                                        advanced_check=False):
                     found = True
                     break
             if not found:
@@ -367,9 +370,10 @@ class ApplicationsPageTest(AbstractListPageTest):
                 application_details_ui.services,
                 application_details_rest.services)
 
-        self.assert_metrics_options(application_details_ui.inbound_metrics)
+        if check_metrics:
+            self.assert_metrics_options(application_details_ui.inbound_metrics)
 
-        self.assert_metrics_options(application_details_ui.outbound_metrics)
+            self.assert_metrics_options(application_details_ui.outbound_metrics)
 
     def assert_all_items(self, filters, force_clear_all=True):
         # apply filters
@@ -427,12 +431,13 @@ class WorkloadsPageTest(AbstractListPageTest):
         else:
             _random_workloads = workloads_ui
         # create filters
-        for _selected_workload in _random_workloads:
+        for _idx, _selected_workload in enumerate(_random_workloads):
             self.assert_details(_selected_workload.name,
                                 _selected_workload.namespace,
-                                _selected_workload.workload_type)
+                                _selected_workload.workload_type,
+                                check_metrics=True if _idx == 0 else False)
 
-    def assert_details(self, name, namespace, workload_type):
+    def assert_details(self, name, namespace, workload_type, check_metrics=False):
         logger.debug('Details: {}, {}'.format(name, namespace))
         # load the page first
         self.page.load(force_load=True)
@@ -481,9 +486,10 @@ class WorkloadsPageTest(AbstractListPageTest):
             if not found:
                 assert found, 'Service {} not found in REST {}'.format(service_ui, service_rest)
 
-        self.assert_metrics_options(workload_details_ui.inbound_metrics)
+        if check_metrics:
+            self.assert_metrics_options(workload_details_ui.inbound_metrics)
 
-        self.assert_metrics_options(workload_details_ui.outbound_metrics)
+            self.assert_metrics_options(workload_details_ui.outbound_metrics)
 
     def assert_all_items(self, filters, force_clear_all=True):
         # apply filters
@@ -553,10 +559,11 @@ class ServicesPageTest(AbstractListPageTest):
         else:
             _random_services = services_ui
         # create filters
-        for _selected_service in _random_services:
-            self.assert_details(_selected_service.name, _selected_service.namespace)
+        for _idx, _selected_service in enumerate(_random_services):
+            self.assert_details(_selected_service.name, _selected_service.namespace,
+                                check_metrics=True if _idx == 0 else False)
 
-    def assert_details(self, name, namespace):
+    def assert_details(self, name, namespace, check_metrics=False):
         logger.debug('Details: {}, {}'.format(name, namespace))
         # load the page first
         self.page.load(force_load=True)
@@ -631,7 +638,8 @@ class ServicesPageTest(AbstractListPageTest):
             assert found, 'DR {} not found in REST {}'.format(destination_rule_ui,
                                                               destination_rule_rest)
 
-        self.assert_metrics_options(service_details_ui.inbound_metrics)
+        if check_metrics:
+            self.assert_metrics_options(service_details_ui.inbound_metrics)
 
     def get_workload_names_set(self, source_workloads):
         workload_names = []

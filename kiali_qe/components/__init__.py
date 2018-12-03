@@ -740,7 +740,6 @@ class ListViewAbstract(Widget):
                         '//strong[normalize-space(text())="{}"]/..')
     PROPERTY_SECTIONS = ('.//*[contains(@class, "card-pf-body")]'
                          '//strong[normalize-space(text())="{}"]/../..')
-    ISTIO_SIDECAR = 'Istio Sidecar'
     PODS = 'Pods'
     SERVICES = 'Services'
     TYPE = 'Type'
@@ -750,6 +749,8 @@ class ListViewAbstract(Widget):
     RESOURCE_VERSION = 'Resource Version'
     INBOUND_METRICS = 'Inbound Metrics'
     OUTBOUND_METRICS = 'Outbound Metrics'
+    MISSING_SIDECAR_TEXT = 'Missing Sidecar'
+    MISSING_SIDECAR = './/span[normalize-space(text())="{}"]'.format(MISSING_SIDECAR_TEXT)
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -773,6 +774,15 @@ class ListViewAbstract(Widget):
 
         wait_to_spinner_disappear(self.browser)
         wait_displayed(self)
+
+    def _item_sidecar(self, element):
+        return not len(self.browser.elements(
+                parent=element, locator=self.MISSING_SIDECAR)) > 0
+
+    def _details_sidecar(self):
+        return not len(self.browser.elements(
+            parent=self.DETAILS_ROOT,
+            locator=self.MISSING_SIDECAR)) > 0
 
     def _get_details_health(self):
         _health_sublocator = '/../..//strong[normalize-space(text())="Health"]'
@@ -956,11 +966,9 @@ class ListViewApplications(ListViewAbstract):
 
     def get_details(self, name, namespace=None):
         self.open(name, namespace)
-        _name = self.browser.text(locator=self.HEADER,
-                                  parent=self.DETAILS_ROOT)
-        _istio_sidecar = len(self.browser.elements(
-                parent=self.ISTIO_PROPERTIES.format(self.ISTIO_SIDECAR),
-                locator='.//img[contains(@class, "IstioLogo")]')) > 0
+        _name = self.browser.text(
+            locator=self.HEADER,
+            parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '').strip()
 
         _table_view_workloads = TableViewAppWorkloads(self.parent, self.locator, self.logger)
 
@@ -972,7 +980,7 @@ class ListViewApplications(ListViewAbstract):
                                         self.OUTBOUND_METRICS)
 
         return ApplicationDetails(name=str(_name),
-                                  istio_sidecar=_istio_sidecar,
+                                  istio_sidecar=self._details_sidecar(),
                                   health=self._get_details_health(),
                                   workloads=_table_view_workloads.all_items,
                                   services=_table_view_services.all_items,
@@ -988,14 +996,11 @@ class ListViewApplications(ListViewAbstract):
                 locator=self.ITEM_TEXT, parent=el).text.split('\n')
             _name = name.strip()
             _namespace = namespace.strip()
-            # update istio sidecar logo
-            _istio_sidecar = len(self.browser.elements(
-                parent=el, locator='.//img[contains(@class, "IstioLogo")]')) > 0
             # TODO Error Rate
             # application object creation
             _application = Application(
                 name=_name, namespace=_namespace,
-                istio_sidecar=_istio_sidecar,
+                istio_sidecar=self._item_sidecar(el),
                 health=self._get_item_health(element=el))
             # append this item to the final list
             _items.append(_application)
@@ -1006,8 +1011,9 @@ class ListViewWorkloads(ListViewAbstract):
 
     def get_details(self, name, namespace=None):
         self.open(name, namespace)
-        _name = self.browser.text(locator=self.HEADER,
-                                  parent=self.DETAILS_ROOT)
+        _name = self.browser.text(
+            locator=self.HEADER,
+            parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '').strip()
         _type = self.browser.text(locator=self.ISTIO_PROPERTIES.format(self.TYPE),
                                   parent=self.DETAILS_ROOT).replace(self.TYPE, '').strip()
         _created_at = self.browser.text(locator=self.ISTIO_PROPERTIES.format(self.CREATED_AT),
@@ -1016,9 +1022,6 @@ class ListViewWorkloads(ListViewAbstract):
         _resource_version = self.browser.text(
             locator=self.ISTIO_PROPERTIES.format(self.RESOURCE_VERSION),
             parent=self.DETAILS_ROOT).replace(self.RESOURCE_VERSION, '').strip()
-        _istio_sidecar = len(self.browser.elements(
-                parent=self.ISTIO_PROPERTIES.format(self.ISTIO_SIDECAR),
-                locator='.//img[contains(@class, "IstioLogo")]')) > 0
 
         _table_view_pods = TableViewWorkloadPods(self.parent, self.locator, self.logger)
 
@@ -1033,7 +1036,7 @@ class ListViewWorkloads(ListViewAbstract):
                                workload_type=_type,
                                created_at=parse_from_ui(_created_at),
                                resource_version=_resource_version,
-                               istio_sidecar=_istio_sidecar,
+                               istio_sidecar=self._details_sidecar(),
                                health=self._get_details_health(),
                                pods_number=_table_view_pods.number,
                                services_number=_table_view_services.number,
@@ -1053,14 +1056,11 @@ class ListViewWorkloads(ListViewAbstract):
             _name = name.strip()
             _namespace = namespace.strip()
             _type = _type.strip()
-            # update istio sidecar logo
-            _istio_sidecar = len(self.browser.elements(
-                parent=el, locator='.//img[contains(@class, "IstioLogo")]')) > 0
             _label_keys = self._get_item_label_keys(el)
             # workload object creation
             _workload = Workload(
                 name=_name, namespace=_namespace, workload_type=_type,
-                istio_sidecar=_istio_sidecar,
+                istio_sidecar=self._item_sidecar(el),
                 app_label='app' in _label_keys,
                 version_label='version' in _label_keys,
                 health=self._get_item_health(element=el))
@@ -1073,11 +1073,9 @@ class ListViewServices(ListViewAbstract):
 
     def get_details(self, name, namespace=None):
         self.open(name, namespace)
-        _name = self.browser.text(locator=self.HEADER,
-                                  parent=self.DETAILS_ROOT)
-        _istio_sidecar = len(self.browser.elements(
-                parent=self.ISTIO_PROPERTIES.format(self.ISTIO_SIDECAR),
-                locator='.//img[contains(@class, "IstioLogo")]')) > 0
+        _name = self.browser.text(
+            locator=self.HEADER,
+            parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '').strip()
         _type = self.browser.text(locator=self.ISTIO_PROPERTIES.format(self.TYPE),
                                   parent=self.DETAILS_ROOT).replace(self.TYPE, '').strip()
         _ip = self.browser.text(locator=self.ISTIO_PROPERTIES.format(self.IP),
@@ -1109,7 +1107,7 @@ class ListViewServices(ListViewAbstract):
                               ip=_ip,
                               ports=str(_ports.replace('\n', ' ')),
                               health=self._get_details_health(),
-                              istio_sidecar=_istio_sidecar,
+                              istio_sidecar=self._details_sidecar(),
                               labels=self._get_details_labels(),
                               workloads_number=_table_view_wl.number,
                               source_workloads_number=_table_view_swl.number,
@@ -1130,13 +1128,12 @@ class ListViewServices(ListViewAbstract):
                 locator=self.ITEM_TEXT, parent=el).text.split('\n')
             _name = name.strip()
             _namespace = namespace.strip()
-            # update istio sidecar logo
-            _istio_sidecar = len(self.browser.elements(
-                parent=el, locator='.//img[contains(@class, "IstioLogo")]')) > 0
 
             # create service instance
             _service = Service(
-                name=_name, namespace=_namespace, istio_sidecar=_istio_sidecar,
+                name=_name,
+                namespace=_namespace,
+                istio_sidecar=self._item_sidecar(el),
                 health=self._get_item_health(element=el))
             # append this item to the final list
             _items.append(_service)
@@ -1260,13 +1257,11 @@ class TableViewAppWorkloads(TableViewAbstract):
                                         parent=self.ROOT):
             _values = self.browser.element(
                 locator=self.COLUMN, parent=el).text.split('\n')
-            _istio_sidecar = len(self.browser.elements(
-                parent=el, locator='.//img[contains(@class, "IstioLogo")]')) > 0
             # create Workload instance
+            # TODO add istio sidecar when KIALI-1200 IS DONE
             if _values[0] == 'WORKLOAD':
                 _workload = AppWorkload(
-                    name=_values[1] if len(_values) >= 2 else '',
-                    istio_sidecar=_istio_sidecar)
+                    name=_values[1] if len(_values) >= 2 else '')
             # append this item to the final list
             _items.append(_workload)
         return _items
