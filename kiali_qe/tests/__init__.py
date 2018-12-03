@@ -14,7 +14,8 @@ from kiali_qe.components.enums import (
     MetricsHistograms,
     MetricsFilter,
     MetricsDuration,
-    MetricsRefreshInterval
+    MetricsRefreshInterval,
+    OverviewPageType
 )
 from kiali_qe.utils import is_equal, is_sublist
 from kiali_qe.utils.log import logger
@@ -264,6 +265,7 @@ class AbstractListPageTest(object):
 
 class OverviewPageTest(AbstractListPageTest):
     FILTER_ENUM = OverviewPageFilter
+    TYPE_ENUM = OverviewPageType
 
     def _namespaces_ui(self):
         return self.page.filter.filter_options(filter_name=self.FILTER_ENUM.NAME.text)
@@ -274,7 +276,17 @@ class OverviewPageTest(AbstractListPageTest):
             openshift_client=openshift_client, page=OverviewPage(browser))
         self.browser = browser
 
-    def assert_all_items(self, filters, force_clear_all=True):
+    def assert_type_options(self):
+        # test available type options
+        options_defined = [item.text for item in self.TYPE_ENUM]
+        options_listed = self.page.type.options
+        logger.debug('Options[defined:{}, defined:{}]'.format(options_defined, options_listed))
+        assert is_equal(options_defined, options_listed)
+
+    def assert_all_items(self, filters, overview_type=TYPE_ENUM.APPS, force_clear_all=True):
+        # apply overview type
+        self.page.type.select(overview_type.text)
+
         # apply filters
         self.apply_filters(filters=filters, force_clear_all=force_clear_all)
 
@@ -285,7 +297,8 @@ class OverviewPageTest(AbstractListPageTest):
         _namespaces = [_f['value'] for _f in filters if _f['name'] == _ns]
         logger.debug('Namespaces:{}'.format(_namespaces))
         overviews_rest = self.kiali_client.overview_list(
-            namespaces=_namespaces)
+            namespaces=_namespaces,
+            overview_type=overview_type)
 
         # compare all results
         logger.debug('Namespaces:{}'.format(_namespaces))

@@ -122,6 +122,12 @@ class OverviewPageSort(StringEnum):
     STATUS = ('Status')
 
 
+class OverviewPageType(StringEnum):
+    APPS = ('Apps')
+    SERVICES = ('Services')
+    WORKLOADS = ('Workloads')
+
+
 class WorkloadsPageFilter(StringEnum):
     WORKLOAD_NAME = ('Workload Name')
     WORKLOAD_TYPE = ('Workload Type')

@@ -6,7 +6,8 @@ from kiali.api import KialiClient
 from kiali_qe.components.enums import (
     IstioConfigObjectType as OBJECT_TYPE,
     IstioConfigPageFilter as FILTER_TYPE,
-    IstioConfigValidation
+    IstioConfigValidation,
+    OverviewPageType
 )
 from kiali_qe.entities.istio_config import IstioConfig, IstioConfigDetails, Rule
 from kiali_qe.entities.service import (
@@ -77,12 +78,12 @@ class KialiExtendedClient(KialiClient):
             return set(filtered_list)
         return items
 
-    def overview_list(self, namespaces=[]):
+    def overview_list(self, namespaces=[], overview_type=OverviewPageType.APPS):
         """Returns list of overviews.
         Args:
             namespaces: can be zero or any number of namespaces
         """
-        items = []
+        overviews = []
         namespace_list = []
         if len(namespaces) > 0:
             namespace_list.extend(namespaces)
@@ -90,13 +91,19 @@ class KialiExtendedClient(KialiClient):
             namespace_list = self.namespace_list()
         # update items
         for _namespace in namespace_list:
-            _applications = self.application_list([_namespace])
+            if overview_type == OverviewPageType.SERVICES:
+                _items = self.service_list([_namespace])
+            elif overview_type == OverviewPageType.WORKLOADS:
+                _items = self.workload_list([_namespace])
+            else:
+                _items = self.application_list([_namespace])
             # TODO add health
             _overview = Overview(
+                overview_type=overview_type.text,
                 namespace=_namespace,
-                applications=len(_applications))
-            items.append(_overview)
-        return items
+                items=len(_items))
+            overviews.append(_overview)
+        return overviews
 
     def application_list(self, namespaces=[], application_names=[]):
         """Returns list of applications.
