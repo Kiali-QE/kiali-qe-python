@@ -22,7 +22,8 @@ from kiali_qe.entities.workload import (
     Workload,
     WorkloadDetails,
     WorkloadPod,
-    WorkloadHealth
+    WorkloadHealth,
+    DestinationService
 )
 from kiali_qe.entities.applications import (
     Application,
@@ -487,6 +488,13 @@ class KialiExtendedClient(KialiClient):
                         ports=_ports.strip(),
                         labels=self.get_labels(_ws_data),
                         resource_version=_ws_data['resourceVersion']))
+            _destination_services = []
+            if _workload_data['destinationServices']:
+                for _ds_data in _workload_data['destinationServices']:
+                    _destination_services.append(DestinationService(
+                        _from=workload_name,
+                        name=_ds_data['name'],
+                        namespace=_ds_data['namespace']))
             _all_pods = []
             if _workload_data['pods']:
                 for _pod_data in _workload_data['pods']:
@@ -548,6 +556,8 @@ class KialiExtendedClient(KialiClient):
                 labels=self.get_labels(_workload_data),
                 pods_number=len(_pods),
                 services_number=len(_services),
+                destination_services_number=len(_destination_services),
+                destination_services=_destination_services,
                 pods=_pods,
                 services=_services)
         return _workload
