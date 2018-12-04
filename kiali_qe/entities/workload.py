@@ -76,8 +76,12 @@ class WorkloadDetails(EntityBase):
             if 'pods_number' in kwargs else None
         self.services_number = kwargs['services_number']\
             if 'services_number' in kwargs else None
+        self.destination_services_number = kwargs['destination_services_number']\
+            if 'destination_services_number' in kwargs else None
         self.services = kwargs['services']\
             if 'services' in kwargs else None
+        self.destination_services = kwargs['destination_services']\
+            if 'destination_services' in kwargs else None
         self.pods = kwargs['pods']\
             if 'pods' in kwargs else None
         self.inbound_metrics = kwargs['inbound_metrics']\
@@ -225,3 +229,49 @@ class WorkloadHealth(EntityBase):
             errorRatio=_r_rest['errorRatio'])
         return WorkloadHealth(
             workload_status=_workload_status, requests=_requests)
+
+
+class DestinationService(EntityBase):
+    """
+    Service class provides information details on DestinationService of Workload Details.
+
+    Args:
+        _from: service host
+        name: service name
+        namespace: namespace of service (optional)
+    """
+
+    def __init__(self, _from, name, namespace=None):
+        if _from is None:
+            raise KeyError("'_from' should not be 'None'")
+        self._from = _from
+        self.name = name
+        self.namespace = namespace
+
+    def __str__(self):
+        return '_from:{}, name:{}'.format(
+            self._from, self.name)
+
+    def __repr__(self):
+        return "{}({}, {}".format(
+            type(self).__name__,
+            repr(self._from), repr(self.name))
+
+    def __hash__(self):
+        return (hash(self._from) ^ hash(self.name))
+
+    def __eq__(self, other):
+        return self.is_equal(other, advanced_check=True)
+
+    def is_equal(self, other, advanced_check=True):
+        # basic check
+        if not isinstance(other, DestinationService):
+            return False
+        if self._from != other._from:
+            return False
+        # advanced check
+        if not advanced_check:
+            return True
+        if self.name != other.name:
+            return False
+        return True

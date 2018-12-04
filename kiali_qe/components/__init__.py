@@ -15,13 +15,14 @@ from kiali_qe.entities.service import (
     ServiceDetails,
     VirtualService,
     DestinationRule,
-    SourceWorkload
+    SourceWorkload,
 )
 from kiali_qe.entities.istio_config import IstioConfig, Rule, IstioConfigDetails
 from kiali_qe.entities.workload import (
     Workload,
     WorkloadDetails,
-    WorkloadPod
+    WorkloadPod,
+    DestinationService
 )
 from kiali_qe.entities.applications import Application, ApplicationDetails, AppWorkload
 from kiali_qe.entities.overview import Overview
@@ -1031,6 +1032,9 @@ class ListViewWorkloads(ListViewAbstract):
 
         _table_view_services = TableViewServices(self.parent, self.locator, self.logger)
 
+        _table_view_destination_services = TableViewDestinationServices(
+            self.parent, self.locator, self.logger)
+
         _inbound_metrics = MetricsView(self.parent, self.INBOUND_METRICS)
 
         _outbound_metrics = MetricsView(self.parent,
@@ -1044,8 +1048,10 @@ class ListViewWorkloads(ListViewAbstract):
                                health=self._get_details_health(),
                                pods_number=_table_view_pods.number,
                                services_number=_table_view_services.number,
+                               destination_services_number=_table_view_destination_services.number,
                                pods=_table_view_pods.all_items,
                                services=_table_view_services.all_items,
+                               destination_services=_table_view_destination_services.all_items,
                                labels=self._get_details_labels(),
                                inbound_metrics=_inbound_metrics,
                                outbound_metrics=_outbound_metrics)
@@ -1556,6 +1562,51 @@ class TableViewServices(TableViewAbstract):
                         resource_version=str(_resource_version),
                         ip=str(_ip),
                         ports=str(_ports.replace('\n', ' '))))
+        return _items
+
+
+class TableViewDestinationServices(TableViewAbstract):
+    DESTS_TEXT = 'Destination Services'
+    ROWS = '//div[contains(@class, "card-pf")]\
+    //div[contains(@class, "row-cards-pf")]\
+    //div[contains(@class, "card-pf-body")]'
+    DEST = './/div[contains(@class, "progress-description")]'
+    COLUMN = './/li'
+
+    def open(self):
+        tab = self.browser.element(locator=self.SERVICES_TAB.format(self.DESTS_TEXT),
+                                   parent=self.SERVICE_DETAILS_ROOT)
+        try:
+            self.browser.click(tab)
+        finally:
+            self.browser.click(tab)
+        wait_displayed(self)
+
+    @property
+    def number(self):
+        _wl_text = self.browser.text(locator=self.SERVICES_TAB.format(self.DESTS_TEXT),
+                                     parent=self.SERVICE_DETAILS_ROOT)
+        return int(re.search(r'\d+', _wl_text).group())
+
+    @property
+    def items(self):
+        self.open()
+
+        _items = []
+        for el in self.browser.elements(locator=self.ROWS.format(
+            'service-tabs-pane-destinationServices'),
+                                        parent=self.ROOT):
+            _from = self.browser.element(
+                locator=self.DEST,
+                parent=el).text.replace('From:', '').strip()
+            _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
+            for _column in _columns:
+                # destination service object creation
+                _service = DestinationService(
+                    _from=_from,
+                    name=_column.text.strip())
+                # append this item to the final list
+                _items.append(_service)
         return _items
 
 
