@@ -2,7 +2,7 @@ import json
 
 from itertools import groupby
 
-from kiali.api import KialiClient
+from kiali.client import KialiClient
 from kiali_qe.components.enums import (
     IstioConfigObjectType as OBJECT_TYPE,
     IstioConfigPageFilter as FILTER_TYPE,
@@ -40,7 +40,7 @@ class KialiExtendedClient(KialiClient):
     def namespace_list(self):
         """ Returns list of namespaces """
         entities = []
-        entities_j = super(KialiExtendedClient, self).namespace_list()
+        entities_j = self.get_response('namespaceList')
         if entities_j:
             for entity_j in entities_j:
                 entities.append(entity_j['name'])
@@ -59,7 +59,7 @@ class KialiExtendedClient(KialiClient):
             namespace_list = self.namespace_list()
         # update items
         for _namespace in namespace_list:
-            _data = super(KialiExtendedClient, self).service_list(namespace=_namespace)
+            _data = self.get_response('serviceList', namespace=_namespace)
             _services = _data['services']
             # update all the services to our custom entity
             for _service_rest in _services:
@@ -120,7 +120,7 @@ class KialiExtendedClient(KialiClient):
             namespace_list = self.namespace_list()
         # update items
         for _namespace in namespace_list:
-            _data = super(KialiExtendedClient, self).app_list(namespace=_namespace)
+            _data = self.get_response('appList', namespace=_namespace)
             _applications = _data['applications']
             if _applications:
                 for _application_rest in _applications:
@@ -154,7 +154,7 @@ class KialiExtendedClient(KialiClient):
             namespace_list = self.namespace_list()
         # update items
         for _namespace in namespace_list:
-            _data = super(KialiExtendedClient, self).workload_list(namespace=_namespace)
+            _data = self.get_response('workloadList', namespace=_namespace)
             _workloads = _data['workloads']
             if _workloads:
                 for _workload_rest in _workloads:
@@ -202,7 +202,7 @@ class KialiExtendedClient(KialiClient):
             namespace_list = self.namespace_list()
         # update items
         for _namespace in namespace_list:
-            _data = super(KialiExtendedClient, self).istio_config_list(namespace=_namespace)
+            _data = self.get_response('istioConfigList', namespace=_namespace)
 
             # update DestinationRule
             if len(_data['destinationRules']) > 0 and len(_data['destinationRules']['items']) > 0:
@@ -338,10 +338,10 @@ class KialiExtendedClient(KialiClient):
             object_name: name of istio config
         """
 
-        _data = super(KialiExtendedClient, self).istio_config_details(
-            namespace=namespace,
-            object_type=object_type,
-            object_name=object_name)
+        _data = self.get_response('istioConfigDetails',
+                                  namespace=namespace,
+                                  object_type=object_type,
+                                  object=object_name)
         config = None
         config_data = None
         if _data:
@@ -390,9 +390,9 @@ class KialiExtendedClient(KialiClient):
             service_name: name of Service
         """
 
-        _service_data = super(KialiExtendedClient, self).service_details(
-            namespace=namespace,
-            service=service_name)
+        _service_data = self.get_response('serviceDetails',
+                                          namespace=namespace,
+                                          service=service_name)
         _service = None
         if _service_data:
             _service_rest = self.service_list(namespaces=[namespace],
@@ -464,9 +464,9 @@ class KialiExtendedClient(KialiClient):
             workload_name: name of Workload
         """
 
-        _workload_data = super(KialiExtendedClient, self).workload_details(
-            namespace=namespace,
-            workload=workload_name)
+        _workload_data = self.get_response('workloadDetails',
+                                           namespace=namespace,
+                                           workload=workload_name)
         _workload = None
         if _workload_data:
             _workload_rest = self.workload_list(namespaces=[namespace],
@@ -569,9 +569,9 @@ class KialiExtendedClient(KialiClient):
             application_name: name of Application
         """
 
-        _application_data = super(KialiExtendedClient, self).app_details(
-            namespace=namespace,
-            app=application_name)
+        _application_data = self.get_response('appDetails',
+                                              namespace=namespace,
+                                              app=application_name)
         _application = None
         if _application_data:
             _application_rest = self.application_list(namespaces=[namespace],
@@ -603,9 +603,9 @@ class KialiExtendedClient(KialiClient):
             service_name: name of Service
         """
 
-        _health_data = super(KialiExtendedClient, self).service_health(
-            namespace=namespace,
-            service=service_name)
+        _health_data = self.get_response('serviceHealth',
+                                         namespace=namespace,
+                                         service=service_name)
         if _health_data:
             return ServiceHealth.get_from_rest(_health_data).is_healthy()
         else:
@@ -618,9 +618,9 @@ class KialiExtendedClient(KialiClient):
             workload_name: name of Workload
         """
 
-        _health_data = super(KialiExtendedClient, self).workload_health(
-            namespace=namespace,
-            workload=workload_name)
+        _health_data = self.get_response('workloadHealth',
+                                         namespace=namespace,
+                                         workload=workload_name)
         if _health_data:
             return WorkloadHealth.get_from_rest(_health_data).is_healthy()
         else:
@@ -633,9 +633,9 @@ class KialiExtendedClient(KialiClient):
             workload_name: name of Application
         """
 
-        _health_data = super(KialiExtendedClient, self).app_health(
-            namespace=namespace,
-            app=app_name)
+        _health_data = self.get_response('appHealth',
+                                         namespace=namespace,
+                                         app=app_name)
         if _health_data:
             return ApplicationHealth.get_from_rest(_health_data).is_healthy()
         else:
@@ -649,10 +649,10 @@ class KialiExtendedClient(KialiClient):
             object: name of Config
         """
 
-        _health_data = super(KialiExtendedClient, self).istio_object_istio_validations(
-            namespace=namespace,
-            object_type=object_type,
-            object=object_name)
+        _health_data = self.get_response('objectValidations',
+                                         namespace=namespace,
+                                         object_type=object_type,
+                                         object=object_name)
         if _health_data:
             _, value = _health_data.popitem()
             if len(value[object_name]['checks']) > 0:
@@ -670,3 +670,6 @@ class KialiExtendedClient(KialiClient):
         if 'labels' in object_rest:
             _labels = object_rest['labels']
         return _labels
+
+    def get_response(self, method_name, **kwargs):
+        return super(KialiExtendedClient, self).request(method_name=method_name, path=kwargs).json()

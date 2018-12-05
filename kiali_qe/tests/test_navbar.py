@@ -22,7 +22,7 @@ def test_about(browser, kiali_client):
 
     # compare each versions
     # get version details from REST API
-    _response = kiali_client.status()
+    _response = kiali_client.get_response('getStatus')
     # kiali core version
     _core_rest = '{} ({})'.format(
         _response['status']['Kiali core version'], _response['status']['Kiali core commit hash'])

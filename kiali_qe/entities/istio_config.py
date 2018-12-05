@@ -22,6 +22,9 @@ class IstioConfig(EntityBase):
     def __eq__(self, other):
         return self.is_equal(other, advanced_check=True)
 
+    def __hash__(self):
+        return (hash(self.name) ^ hash(self.namespace) ^ hash(self.object_type))
+
     def is_equal(self, other, advanced_check=True):
         # basic check
         if not isinstance(other, IstioConfig):
@@ -57,6 +60,9 @@ class IstioConfigDetails(EntityBase):
 
     def __eq__(self, other):
         return self.is_equal(other)
+
+    def __hash__(self):
+        return (hash(self.name) ^ hash(self._type))
 
     def is_equal(self, other, advanced_check=True):
         # basic check

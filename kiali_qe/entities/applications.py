@@ -104,6 +104,9 @@ class Application(EntityBase):
             type(self).__name__, repr(self.name), repr(self.namespace),
             repr(self.istio_sidecar), repr(self.health))
 
+    def __hash__(self):
+        return (hash(self.name) ^ hash(self.namespace) ^ hash(self.istio_sidecar))
+
     def __eq__(self, other):
         return self.is_equal(other, advanced_check=True)
 
@@ -151,6 +154,9 @@ class ApplicationDetails(EntityBase):
             type(self).__name__, repr(self.name),
             repr(self.istio_sidecar), repr(self.health))
 
+    def __hash__(self):
+        return (hash(self.name) ^ hash(self.istio_sidecar))
+
     def __eq__(self, other):
         return self.is_equal(other, advanced_check=True)
 
@@ -186,6 +192,9 @@ class AppWorkload(EntityBase):
 
     def __eq__(self, other):
         return self.is_equal(other)
+
+    def __hash__(self):
+        return (hash(self.name) ^ hash(self.istio_sidecar))
 
     def is_equal(self, other, advanced_check=True):
         # basic check
