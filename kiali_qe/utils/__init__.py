@@ -2,6 +2,7 @@ import yaml
 from dotmap import DotMap
 import operator
 import os
+from functools import reduce
 
 
 class MyDotMap(DotMap):
@@ -31,13 +32,13 @@ def is_equal(object_a, object_b):
         if len(object_a) == len(object_b):
             for item_a in object_a:
                 if isinstance(item_a, str) or isinstance(item_a, float)\
-                 or isinstance(item_a, int) or isinstance(item_a, unicode):
+                 or isinstance(item_a, int) or isinstance(item_a, bytes):
                     if item_a not in object_b:
                         return False
                 elif isinstance(item_a, dict):
                     _is_in = False
                     for item_b in object_b:
-                        if cmp(item_a, item_b) == 0:
+                        if _cmp_dict(item_a, item_b):
                             _is_in = True
                             break
                     if not _is_in:
@@ -50,7 +51,11 @@ def is_equal(object_a, object_b):
         else:
             return False
     elif isinstance(object_a, dict):
-        return cmp(object_a, object_b) == 0
+        return _cmp_dict(object_a, object_b)
+
+
+def _cmp_dict(a, b):
+    return a == b
 
 
 def is_sublist(list_a, list_b):

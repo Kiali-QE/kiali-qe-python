@@ -1,5 +1,4 @@
 import json
-import ssl
 import pytest
 
 from kiali_qe.rest.kiali_api import KialiExtendedClient
@@ -12,14 +11,11 @@ from kiali_qe.utils.log import logger
 def kiali_client():
     logger.debug('Creating kiali rest client')
     logger.debug('Kiali hostname: {}'.format(cfg.kiali.hostname))
-    _client = KialiExtendedClient(port='443',
-                                  scheme='https',
-                                  context=ssl._create_unverified_context(),
-                                  host=cfg.kiali.hostname,
+    _client = KialiExtendedClient(hostname=cfg.kiali.hostname,
                                   username=cfg.kiali.username,
                                   password=cfg.kiali.password)
     # update kiali version details
-    _response = _client.status()
+    _response = _client.get_response('getStatus')
     _status = _response['status']
     cfg.kiali.version.core = _status['Kiali core version']
     cfg.kiali.version.console = _status['Kiali console version']
