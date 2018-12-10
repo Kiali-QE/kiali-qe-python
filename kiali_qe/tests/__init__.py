@@ -788,7 +788,7 @@ class IstioConfigPageTest(AbstractListPageTest):
             if _selected_config.object_type != OBJECT_TYPE.RULE.text:
                 self.assert_details(_selected_config.name, _selected_config.namespace)
 
-    def assert_details(self, name, namespace=None):
+    def assert_details(self, name, namespace=None, error_messages=[]):
         logger.debug('Details: {}, {}'.format(name, namespace))
         # load the page first
         self.page.load(force_load=True)
@@ -810,6 +810,10 @@ class IstioConfigPageTest(AbstractListPageTest):
         assert config_details_rest
         assert name == config_details_rest.name
         assert config_details_rest.text
+        for error_message in error_messages:
+            assert error_message in config_details_rest.error_messages, \
+                'Error messages:{} is not in List:{}'.format(error_message,
+                                                             config_details_rest.error_messages)
         # TODO for Gateways there is no way to check in UI if it is valid or N/A
         assert config_details_ui.is_equal(
             config_details_rest,

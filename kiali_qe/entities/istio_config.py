@@ -44,11 +44,12 @@ class IstioConfig(EntityBase):
 
 class IstioConfigDetails(EntityBase):
 
-    def __init__(self, name, _type, text, validation=None):
+    def __init__(self, name, _type, text, validation=None, error_messages=[]):
         self.name = name
         self._type = _type
         self.text = text
         self.validation = validation
+        self.error_messages = error_messages
 
     def __str__(self):
         return 'name{}, text:{}, {}'.format(

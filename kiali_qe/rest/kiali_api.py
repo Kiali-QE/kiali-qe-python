@@ -380,7 +380,10 @@ class KialiExtendedClient(KialiClient):
                     text=json.dumps(config_data),
                     validation=self.get_istio_config_validation(namespace,
                                                                 object_type,
-                                                                object_name))
+                                                                object_name),
+                    error_messages=self.get_istio_config_messages(namespace,
+                                                                  object_type,
+                                                                  object_name))
         return config
 
     def service_details(self, namespace, service_name):
@@ -664,6 +667,26 @@ class KialiExtendedClient(KialiClient):
                 return IstioConfigValidation.VALID
         else:
             return IstioConfigValidation.NA
+
+    def get_istio_config_messages(self, namespace, object_type, object_name):
+        """Returns Validation Messages of Istio Config.
+        Args:
+            namespaces: namespace where Config is located
+            object_type: type of the Config
+            object: name of Config
+        """
+        _error_messages = []
+
+        _health_data = self.get_response('objectValidations',
+                                         namespace=namespace,
+                                         object_type=object_type,
+                                         object=object_name)
+        if _health_data:
+            _, value = _health_data.popitem()
+            if len(value[object_name]['checks']) > 0:
+                for _check in value[object_name]['checks']:
+                    _error_messages.append(_check['message'])
+        return _error_messages
 
     def get_labels(self, object_rest):
         _labels = {}
