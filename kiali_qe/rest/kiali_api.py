@@ -424,6 +424,10 @@ class KialiExtendedClient(KialiClient):
                     and len(_service_data['virtualServices']['items']) > 0:
                 for _vs_data in _service_data['virtualServices']['items']:
                     virtual_services.append(VirtualService(
+                        status=self.get_istio_config_validation(
+                            _vs_data['metadata']['namespace'],
+                            'virtualservices',
+                            _vs_data['metadata']['name']),
                         name=_vs_data['metadata']['name'],
                         created_at=parse_from_rest(_vs_data['metadata']['creationTimestamp']),
                         resource_version=_vs_data['metadata']['resourceVersion']))
@@ -432,6 +436,10 @@ class KialiExtendedClient(KialiClient):
                     and len(_service_data['destinationRules']['items']) > 0:
                 for _dr_data in _service_data['destinationRules']['items']:
                     destination_rules.append(DestinationRule(
+                        status=self.get_istio_config_validation(
+                            _dr_data['metadata']['namespace'],
+                            'destinationrules',
+                            _dr_data['metadata']['name']),
                         name=_dr_data['metadata']['name'],
                         host=_dr_data['spec']['host'],
                         created_at=parse_from_rest(_dr_data['metadata']['creationTimestamp']),
