@@ -55,7 +55,8 @@ def test_destination_rule(kiali_client, openshift_client, browser):
                         ],
                        kind='DestinationRule',
                        api_version='networking.istio.io/v1alpha3',
-                       service_name=DETAILS)
+                       service_name=DETAILS,
+                       check_service_details=True)
 
 
 @pytest.mark.p_crud_resource
@@ -80,7 +81,8 @@ def test_destination_rule_broken(kiali_client, openshift_client, browser):
                        kind='DestinationRule',
                        api_version='networking.istio.io/v1alpha3',
                        service_name=DETAILS,
-                       error_messages=["Host doesn't have a valid service"])
+                       error_messages=["Host doesn't have a valid service"],
+                       check_service_details=True)
 
 
 @pytest.mark.p_crud_resource
@@ -105,7 +107,8 @@ def test_virtual_service(kiali_client, openshift_client, browser):
                         ],
                        kind='VirtualService',
                        api_version='networking.istio.io/v1alpha3',
-                       service_name=REVIEWS)
+                       service_name=REVIEWS,
+                       check_service_details=True)
     _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
 
@@ -135,7 +138,8 @@ def test_virtual_service_broken(kiali_client, openshift_client, browser):
                        error_messages=[
                            "DestinationWeight on route doesn't have a "
                            "valid service (host not found)",
-                            'Subset not found'])
+                            'Subset not found'],
+                       check_service_details=True)
     _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
 
@@ -164,7 +168,8 @@ def test_virtual_service_broken_weight(kiali_client, openshift_client, browser):
                        kind='VirtualService',
                        api_version='networking.istio.io/v1alpha3',
                        service_name=REVIEWS,
-                       error_messages=['Weight sum should be 100'])
+                       error_messages=['Weight sum should be 100'],
+                       check_service_details=False)
     _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
 
@@ -194,7 +199,8 @@ def test_virtual_service_broken_weight_text(kiali_client, openshift_client, brow
                        api_version='networking.istio.io/v1alpha3',
                        service_name=RATINGS,
                        error_messages=['Weight must be a number',
-                                       'Weight sum should be 100'])
+                                       'Weight sum should be 100'],
+                       check_service_details=False)
     _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_RATINGS)
 
 
@@ -217,7 +223,8 @@ def test_quota_spec(kiali_client, openshift_client, browser):
                         ],
                        kind='QuotaSpec',
                        api_version='config.istio.io/v1alpha2',
-                       service_name=RATINGS)
+                       service_name=RATINGS,
+                       check_service_details=False)
 
 
 @pytest.mark.p_crud_resource
@@ -239,7 +246,8 @@ def test_quota_spec_binding(kiali_client, openshift_client, browser):
                         ],
                        kind='QuotaSpecBinding',
                        api_version='config.istio.io/v1alpha2',
-                       service_name=RATINGS)
+                       service_name=RATINGS,
+                       check_service_details=False)
 
 
 @pytest.mark.p_crud_resource
@@ -262,7 +270,8 @@ def test_gateway(kiali_client, openshift_client, browser, pick_namespace):
                         ],
                        kind='Gateway',
                        api_version='networking.istio.io/v1alpha3',
-                       service_name=REVIEWS)
+                       service_name=REVIEWS,
+                       check_service_details=False)
 
 
 @pytest.mark.p_crud_resource
@@ -284,7 +293,8 @@ def test_service_entry(kiali_client, openshift_client, browser):
                         ],
                        kind='ServiceEntry',
                        api_version='networking.istio.io/v1alpha3',
-                       service_name=DETAILS)
+                       service_name=DETAILS,
+                       check_service_details=False)
 
 
 def _istio_config_create(openshift_client, config_dict, config_yaml, kind, api_version,
@@ -326,7 +336,7 @@ def _delete_dest_rule_vs(openshift_client, destination_rule_conf, namespace=BOOK
 
 def _istio_config_test(kiali_client, openshift_client, browser, config_dict,
                        config_yaml, filters, kind, api_version,
-                       service_name, check_service_details=True,
+                       service_name, check_service_details=False,
                        error_messages=[]):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -375,7 +385,8 @@ def _istio_config_details_test(kiali_client, openshift_client, browser, config_d
 
     tests.assert_details(name=config_dict.metadata.name,
                          namespace=namespace,
-                         error_messages=error_messages)
+                         error_messages=error_messages,
+                         apply_filters=False)
 
 
 def _service_details_test(kiali_client, openshift_client, browser, config_dict,

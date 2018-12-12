@@ -788,15 +788,17 @@ class IstioConfigPageTest(AbstractListPageTest):
             if _selected_config.object_type != OBJECT_TYPE.RULE.text:
                 self.assert_details(_selected_config.name, _selected_config.namespace)
 
-    def assert_details(self, name, namespace=None, error_messages=[]):
+    def assert_details(self, name, namespace=None, error_messages=[], apply_filters=True):
         logger.debug('Details: {}, {}'.format(name, namespace))
         # load the page first
         self.page.load(force_load=True)
         # TODO apply pagination feature in get_details
-        # apply filters
-        self.apply_filters(filters=[
-            {'name': IstioConfigPageFilter.NAMESPACE.text, 'value': namespace},
-            {'name': IstioConfigPageFilter.ISTIO_NAME.text, 'value': name}])
+        # this is done for optimization if the necessary item already exists in page
+        if apply_filters:
+            # apply filters
+            self.apply_filters(filters=[
+                {'name': IstioConfigPageFilter.NAMESPACE.text, 'value': namespace},
+                {'name': IstioConfigPageFilter.ISTIO_NAME.text, 'value': name}])
         # load config details page
         config_details_ui = self.page.content.get_details(name, namespace)
         assert config_details_ui
