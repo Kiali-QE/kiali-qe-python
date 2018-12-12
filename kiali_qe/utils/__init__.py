@@ -3,6 +3,7 @@ from dotmap import DotMap
 import operator
 import os
 from functools import reduce
+from kiali_qe.components.enums import IstioConfigValidation
 
 
 class MyDotMap(DotMap):
@@ -60,3 +61,14 @@ def _cmp_dict(a, b):
 
 def is_sublist(list_a, list_b):
     return set(list_a).issubset(set(list_b))
+
+
+def get_validation(_valid, _not_valid, _warning):
+    if _valid:
+        return IstioConfigValidation.VALID
+    elif _not_valid:
+        return IstioConfigValidation.NOT_VALID
+    elif _warning:
+        return IstioConfigValidation.WARNING
+    else:
+        return IstioConfigValidation.NA

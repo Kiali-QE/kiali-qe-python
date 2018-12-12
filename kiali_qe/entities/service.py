@@ -216,26 +216,30 @@ class VirtualService(EntityBase):
     Service class provides information details on VirtualService of Service Details.
 
     Args:
+        status: the validation status of VS
         name: name of the virtual service
         created_at: creation datetime
         resource_version: resource version
     """
 
-    def __init__(self, name, created_at, resource_version):
+    def __init__(self, status, name, created_at, resource_version):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
         self.created_at = created_at
         self.resource_version = resource_version
+        self.status = status
 
     def __str__(self):
-        return 'name:{}, created_at:{}, resource_version:{}'.format(
-            self.name, self.created_at, self.resource_version)
+        return 'name:{}, status:{}, created_at:{}, resource_version:{}'.format(
+            self.name, self.status, self.created_at, self.resource_version)
 
     def __repr__(self):
-        return "{}({}, {}".format(
+        return "{}({}, {}, {})".format(
             type(self).__name__,
-            repr(self.name), repr(self.created_at), repr(self.resource_version))
+            repr(self.name),
+            repr(self.status),
+            repr(self.created_at), repr(self.resource_version))
 
     def __hash__(self):
         return (hash(self.name) ^ hash(self.created_at) ^ hash(self.resource_version))
@@ -252,6 +256,8 @@ class VirtualService(EntityBase):
         # advanced check
         if not advanced_check:
             return True
+        if self.status != other.status:
+            return False
         if self.created_at != other.created_at:
             return False
         if self.resource_version != other.resource_version:
@@ -264,28 +270,31 @@ class DestinationRule(EntityBase):
     Service class provides information details on DestinationRule of Service Details.
 
     Args:
-        name: name of the virtual service
+        status: the validation status of DR
+        name: name of the destination rule
         host: the host of destination rule
         created_at: creation datetime
         resource_version: resource version
     """
 
-    def __init__(self, name, host, created_at, resource_version):
+    def __init__(self, status, name, host, created_at, resource_version):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
         self.host = host
         self.created_at = created_at
         self.resource_version = resource_version
+        self.status = status
 
     def __str__(self):
-        return 'name:{}, host:{}, created_at:{}, resource_version:{}'.format(
-            self.name, self.host, self.created_at, self.resource_version)
+        return 'name:{}, status:{}, host:{}, created_at:{}, resource_version:{}'.format(
+            self.name, self.status, self.host, self.created_at, self.resource_version)
 
     def __repr__(self):
-        return "{}({}, {}".format(
+        return "{}({}, {}, {})".format(
             type(self).__name__,
-            repr(self.name), repr(self.host), repr(self.created_at), repr(self.resource_version))
+            repr(self.name), repr(self.status),
+            repr(self.host), repr(self.created_at), repr(self.resource_version))
 
     def __hash__(self):
         return (hash(self.name) ^ hash(self.host) ^ hash(self.created_at)
@@ -305,6 +314,8 @@ class DestinationRule(EntityBase):
         # advanced check
         if not advanced_check:
             return True
+        if self.status != other.status:
+            return False
         if self.created_at != other.created_at:
             return False
         if self.resource_version != other.resource_version:

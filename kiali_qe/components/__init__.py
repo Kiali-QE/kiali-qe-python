@@ -28,6 +28,7 @@ from kiali_qe.entities.applications import Application, ApplicationDetails, AppW
 from kiali_qe.entities.overview import Overview
 from kiali_qe.utils.date import parse_from_ui
 from wait_for import wait_for
+from kiali_qe.utils import get_validation
 
 
 def wait_displayed(obj, timeout='10s'):
@@ -846,14 +847,7 @@ class ListViewAbstract(Widget):
         _warning = len(self.browser.elements(
             parent=element,
             locator='.//*[contains(@class, "pficon-warning-triangle-o")]')) > 0
-        if _valid:
-            return IstioConfigValidation.VALID
-        elif _not_valid:
-            return IstioConfigValidation.NOT_VALID
-        elif _warning:
-            return IstioConfigValidation.WARNING
-        else:
-            return IstioConfigValidation.NA
+        return get_validation(_valid, _not_valid, _warning)
 
     def _get_details_validation(self):
         _not_valid = len(self.browser.elements(
@@ -1231,6 +1225,19 @@ class TableViewAbstract(Widget):
     def __locator__(self):
         return self.locator
 
+    def _get_item_status(self, element):
+        wait_displayed(self)
+        _valid = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@class, "pficon-ok")]')) > 0
+        _not_valid = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@class, "pficon-error-circle-o")]')) > 0
+        _warning = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@class, "pficon-warning-triangle-o")]')) > 0
+        return get_validation(_valid, _not_valid, _warning)
+
     def _get_labels(self, el):
         _label_dict = {}
         wait_displayed(self)
@@ -1420,9 +1427,9 @@ class TableViewVirtualServices(TableViewAbstract):
             _name = _columns[1].text.strip()
             _created_at = _columns[2].text.strip()
             _resource_version = _columns[3].text.strip()
-            # TODO: fetch status information from GUI
             # create Virtual Service instance
             _virtual_service = VirtualService(
+                status=self._get_item_status(_columns[0]),
                 name=_name,
                 created_at=parse_from_ui(_created_at),
                 resource_version=_resource_version)
@@ -1466,6 +1473,7 @@ class TableViewDestinationRules(TableViewAbstract):
             # TODO: fetch traffic policy and subset information from GUI
             # create Virtual Service instance
             _destination_rule = DestinationRule(
+                status=self._get_item_status(_columns[0]),
                 name=_name,
                 host=_host,
                 created_at=parse_from_ui(_created_at),
