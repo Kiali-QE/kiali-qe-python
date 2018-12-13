@@ -72,3 +72,18 @@ def get_validation(_valid, _not_valid, _warning):
         return IstioConfigValidation.WARNING
     else:
         return IstioConfigValidation.NA
+
+
+def to_linear_string(source):
+    return str(source).\
+            replace('\n', ' ').\
+            replace('{', '').\
+            replace('}', '').\
+            replace('"', '').\
+            replace(',', '').\
+            replace('[', '').\
+            replace(']', '').\
+            replace('{', '').\
+            replace('}', '').\
+            replace(':', '').\
+            replace('\'', '').lower()

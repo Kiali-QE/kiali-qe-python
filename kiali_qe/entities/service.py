@@ -273,28 +273,37 @@ class DestinationRule(EntityBase):
         status: the validation status of DR
         name: name of the destination rule
         host: the host of destination rule
+        traffic_policy: traffic policy as a text
+        subsets: subsets as a plain text
         created_at: creation datetime
         resource_version: resource version
     """
 
-    def __init__(self, status, name, host, created_at, resource_version):
+    def __init__(self, status, name, host, traffic_policy, subsets, created_at, resource_version):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
         self.host = host
+        self.traffic_policy = traffic_policy
+        self.subsets = subsets
         self.created_at = created_at
         self.resource_version = resource_version
         self.status = status
 
     def __str__(self):
-        return 'name:{}, status:{}, host:{}, created_at:{}, resource_version:{}'.format(
-            self.name, self.status, self.host, self.created_at, self.resource_version)
+        return 'name:{}, status:{}, host:{}, traffic_policy:{}, subsets:{}, '\
+            'created_at:{}, resource_version:{}'.format(
+                self.name, self.status, self.host,
+                self.traffic_policy, self.subsets,
+                self.created_at, self.resource_version)
 
     def __repr__(self):
-        return "{}({}, {}, {})".format(
+        return "{}({}, {}, {}, {}, {})".format(
             type(self).__name__,
             repr(self.name), repr(self.status),
-            repr(self.host), repr(self.created_at), repr(self.resource_version))
+            repr(self.host),
+            repr(self.traffic_policy), repr(self.subsets),
+            repr(self.created_at), repr(self.resource_version))
 
     def __hash__(self):
         return (hash(self.name) ^ hash(self.host) ^ hash(self.created_at)
@@ -311,14 +320,18 @@ class DestinationRule(EntityBase):
             return False
         if self.host != other.host:
             return False
+        if self.created_at != other.created_at:
+            return False
+        if self.resource_version != other.resource_version:
+            return False
+        if self.traffic_policy != other.traffic_policy:
+            return False
+        if self.subsets != other.subsets:
+            return False
         # advanced check
         if not advanced_check:
             return True
         if self.status != other.status:
-            return False
-        if self.created_at != other.created_at:
-            return False
-        if self.resource_version != other.resource_version:
             return False
         return True
 
