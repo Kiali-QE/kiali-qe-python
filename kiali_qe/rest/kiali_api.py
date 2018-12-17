@@ -32,6 +32,7 @@ from kiali_qe.entities.applications import (
     ApplicationHealth
 )
 from kiali_qe.entities.overview import Overview
+from kiali_qe.utils import to_linear_string
 from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
 
 
@@ -442,6 +443,9 @@ class KialiExtendedClient(KialiClient):
                             _dr_data['metadata']['name']),
                         name=_dr_data['metadata']['name'],
                         host=_dr_data['spec']['host'],
+                        traffic_policy=to_linear_string(_dr_data['spec']['trafficPolicy']),
+                        subsets=to_linear_string(
+                            self.get_subset_labels(_dr_data['spec']['subsets'])),
                         created_at=parse_from_rest(_dr_data['metadata']['creationTimestamp']),
                         resource_version=_dr_data['metadata']['resourceVersion']))
             _ports = ''
@@ -700,6 +704,20 @@ class KialiExtendedClient(KialiClient):
         _labels = {}
         if 'labels' in object_rest:
             _labels = object_rest['labels']
+        return _labels
+
+    def get_subset_labels(self, subsets):
+        """
+        Returns the labels in subsets as shown in UI: {v1: 'versionv1'}
+        """
+        _labels = {}
+        if subsets:
+            for _subset in subsets:
+                if 'name' in _subset and 'labels' in _subset:
+                    _values = []
+                    for _key, _value in _subset['labels'].items():
+                        _values.append('{}{}'.format(_key, _value))
+                    _labels[_subset['name']] = _values
         return _labels
 
     def get_response(self, method_name, **kwargs):

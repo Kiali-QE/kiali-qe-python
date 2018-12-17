@@ -28,7 +28,7 @@ from kiali_qe.entities.applications import Application, ApplicationDetails, AppW
 from kiali_qe.entities.overview import Overview
 from kiali_qe.utils.date import parse_from_ui
 from wait_for import wait_for
-from kiali_qe.utils import get_validation
+from kiali_qe.utils import get_validation, to_linear_string
 
 
 def wait_displayed(obj, timeout='10s'):
@@ -1098,10 +1098,6 @@ class ListViewServices(ListViewAbstract):
 
         _table_view_swl = TableViewSourceWorkloads(self.parent, self.locator, self.logger)
 
-        _table_view_vs = TableViewVirtualServices(self.parent, self.locator, self.logger)
-
-        _table_view_dr = TableViewDestinationRules(self.parent, self.locator, self.logger)
-
         _inbound_metrics = MetricsView(self.parent, self.INBOUND_METRICS)
 
         return ServiceDetails(name=_name,
@@ -1115,12 +1111,12 @@ class ListViewServices(ListViewAbstract):
                               labels=self._get_details_labels(),
                               workloads_number=_table_view_wl.number,
                               source_workloads_number=_table_view_swl.number,
-                              virtual_services_number=_table_view_vs.number,
-                              destination_rules_number=_table_view_dr.number,
+                              virtual_services_number=self.table_view_vs.number,
+                              destination_rules_number=self.table_view_dr.number,
                               workloads=_table_view_wl.all_items,
                               source_workloads=_table_view_swl.all_items,
-                              virtual_services=_table_view_vs.all_items,
-                              destination_rules=_table_view_dr.all_items,
+                              virtual_services=self.table_view_vs.all_items,
+                              destination_rules=self.table_view_dr.all_items,
                               inbound_metrics=_inbound_metrics)
 
     @property
@@ -1142,6 +1138,14 @@ class ListViewServices(ListViewAbstract):
             # append this item to the final list
             _items.append(_service)
         return _items
+
+    @property
+    def table_view_dr(self):
+        return TableViewDestinationRules(self.parent, self.locator, self.logger)
+
+    @property
+    def table_view_vs(self):
+        return TableViewVirtualServices(self.parent, self.locator, self.logger)
 
 
 class ListViewIstioConfig(ListViewAbstract):
@@ -1209,11 +1213,23 @@ class ListViewIstioConfig(ListViewAbstract):
 
 class TableViewAbstract(Widget):
     SERVICE_DETAILS_ROOT = './/div[contains(@class, "card-pf")]'
+    OVERVIEW_DETAILS_ROOT = './/div[contains(@class, "row-cards-pf")]'
+    OVERVIEW_HEADER = './/h4'
+    OVERVIEW_PROPERTIES = './/div/strong[contains(text(), "{}")]/..'
     SERVICES_TAB = '//div[@id="service-tabs"]//li//a[contains(text(), "{}")]/..'
     ROOT = '//[contains(@class, "tab-pane") and contains(@class, "active") and \
         contains(@class, "in")]'
     ROWS = '//div[@id="{}"]//table[contains(@class, "table")]//tbody//tr'
     COLUMN = './/td'
+    ROW_BY_NAME = \
+        '//div[@id="{}"]//table[contains(@class, "table")]//tbody//tr//a[text()="{}"]/../..'
+    CREATED_AT = 'Created at'
+    RESOURCE_VERSION = 'Resource Version'
+    HOST = 'Host'
+    NAME = 'Name'
+    LABELS = 'Labels'
+    TRAFFIC_POLICY = 'Traffic Policy'
+    SUBSETS = 'Subsets'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -1224,6 +1240,26 @@ class TableViewAbstract(Widget):
 
     def __locator__(self):
         return self.locator
+
+    def back_to_service_info(self):
+        # TODO better way of using breadcrumb
+        self.browser.click('.//a[text()="Service Info"]',
+                           parent='//*[contains(@class, "container-fluid")]')
+
+    def _get_overview_status(self, element):
+        wait_displayed(self)
+        _not_valid = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@class, "pficon-error-circle-o")]')) > 0
+        _warning = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@class, "pficon-warning-triangle-o")]')) > 0
+        if _not_valid:
+            return IstioConfigValidation.NOT_VALID
+        elif _warning:
+            return IstioConfigValidation.WARNING
+        else:
+            return IstioConfigValidation.VALID
 
     def _get_item_status(self, element):
         wait_displayed(self)
@@ -1408,6 +1444,38 @@ class TableViewVirtualServices(TableViewAbstract):
             self.browser.click(tab)
         wait_displayed(self)
 
+    def get_overview(self, name):
+        self.open()
+
+        _row = self.browser.element(locator=self.ROWS.format(
+                'service-tabs-pane-virtualservices', name),
+                                        parent=self.ROOT)
+        _columns = list(self.browser.elements(locator=self.COLUMN, parent=_row))
+
+        self.browser.click('.//a', parent=_columns[1])
+
+        wait_displayed(self)
+
+        _name = self.browser.text(
+            locator=self.OVERVIEW_HEADER,
+            parent=self.OVERVIEW_DETAILS_ROOT).replace('VirtualService:', '').strip()
+        _created_at = self.browser.text(locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
+                                        parent=self.OVERVIEW_DETAILS_ROOT).replace(
+                                            self.CREATED_AT + ':', '').strip()
+        _resource_version = self.browser.text(
+            locator=self.OVERVIEW_PROPERTIES.format(self.RESOURCE_VERSION),
+            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.RESOURCE_VERSION + ':', '').strip()
+        _status = self._get_overview_status(self.OVERVIEW_DETAILS_ROOT)
+
+        # back to service details
+        self.back_to_service_info()
+
+        return VirtualService(
+                status=_status,
+                name=_name,
+                created_at=parse_from_ui(_created_at),
+                resource_version=_resource_version)
+
     @property
     def number(self):
         _vs_text = self.browser.text(locator=self.SERVICES_TAB.format(self.VS_TEXT),
@@ -1450,6 +1518,55 @@ class TableViewDestinationRules(TableViewAbstract):
             self.browser.click(tab)
         wait_displayed(self)
 
+    def get_overview(self, name):
+        self.open()
+
+        _row = self.browser.element(locator=self.ROWS.format(
+                'service-tabs-pane-destinationrules', name),
+                                        parent=self.ROOT)
+        _columns = list(self.browser.elements(locator=self.COLUMN, parent=_row))
+
+        self.browser.click('.//a', parent=_columns[1])
+
+        wait_displayed(self)
+
+        _name = self.browser.text(
+            locator=self.OVERVIEW_HEADER,
+            parent=self.OVERVIEW_DETAILS_ROOT).replace('DestinationRule:', '').strip()
+        _created_at = self.browser.text(locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
+                                        parent=self.OVERVIEW_DETAILS_ROOT).replace(
+                                            self.CREATED_AT + ':', '').strip()
+        _resource_version = self.browser.text(
+            locator=self.OVERVIEW_PROPERTIES.format(self.RESOURCE_VERSION),
+            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.RESOURCE_VERSION + ':', '').strip()
+        _host = self.browser.text(
+            locator=self.OVERVIEW_PROPERTIES.format(self.HOST),
+            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.HOST + ':', '').strip()
+        _traffic_policy = self.browser.text_or_default(
+            locator=self.OVERVIEW_PROPERTIES.format(self.TRAFFIC_POLICY),
+            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.TRAFFIC_POLICY, '').strip()
+        _subsets = self.browser.text_or_default(
+            locator=self.OVERVIEW_PROPERTIES.format(self.SUBSETS),
+            parent=self.OVERVIEW_DETAILS_ROOT).\
+            replace(self.SUBSETS, '').\
+            replace(' :', '').\
+            replace(self.NAME, '').\
+            replace(self.LABELS, '').\
+            replace(self.TRAFFIC_POLICY, '').strip()
+
+        # back to service details
+        self.back_to_service_info()
+
+        return DestinationRule(
+                status=None,
+                name=_name,
+                host=_host,
+                created_at=parse_from_ui(_created_at),
+                resource_version=_resource_version,
+                traffic_policy=to_linear_string(
+                    _traffic_policy if _traffic_policy != 'None' else ''),
+                subsets=to_linear_string(_subsets if _subsets != 'None' else ''))
+
     @property
     def number(self):
         _dr_text = self.browser.text(locator=self.SERVICES_TAB.format(self.DR_TEXT),
@@ -1467,17 +1584,21 @@ class TableViewDestinationRules(TableViewAbstract):
             _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
 
             _name = _columns[1].text.strip()
+            _traffic_policy = _columns[2].text.strip()
+            _subsets = _columns[3].text.strip()
             _host = _columns[4].text.strip()
             _created_at = _columns[5].text.strip()
             _resource_version = _columns[6].text.strip()
-            # TODO: fetch traffic policy and subset information from GUI
-            # create Virtual Service instance
+            # create Destination Rule instance
             _destination_rule = DestinationRule(
                 status=self._get_item_status(_columns[0]),
                 name=_name,
                 host=_host,
                 created_at=parse_from_ui(_created_at),
-                resource_version=_resource_version)
+                resource_version=_resource_version,
+                traffic_policy=to_linear_string(
+                    _traffic_policy if _traffic_policy != 'None' else ''),
+                subsets=to_linear_string(_subsets if _subsets != 'None' else ''))
             # append this item to the final list
             _items.append(_destination_rule)
         return _items

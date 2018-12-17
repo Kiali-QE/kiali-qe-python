@@ -587,7 +587,7 @@ class ServicesPageTest(AbstractListPageTest):
             _random_services = services_ui
         # create filters
         for _idx, _selected_service in enumerate(_random_services):
-            self.assert_details(_selected_service.name, _selected_service.namespace,
+            self.assert_details('ratings', _selected_service.namespace,
                                 check_metrics=True if _idx == 0 else False)
 
     def assert_details(self, name, namespace, check_metrics=False):
@@ -656,6 +656,9 @@ class ServicesPageTest(AbstractListPageTest):
                     break
             assert found, 'VS {} not found in REST {}'.format(virtual_service_ui,
                                                               virtual_service_rest)
+            vs_overview = self.page.content.table_view_vs.get_overview(virtual_service_ui.name)
+            assert vs_overview.is_equal(virtual_service_ui, advanced_check=True)
+
         for destination_rule_ui in service_details_ui.destination_rules:
             found = False
             for destination_rule_rest in service_details_rest.destination_rules:
@@ -664,6 +667,9 @@ class ServicesPageTest(AbstractListPageTest):
                     break
             assert found, 'DR {} not found in REST {}'.format(destination_rule_ui,
                                                               destination_rule_rest)
+            dr_overview = self.page.content.table_view_dr.get_overview(destination_rule_ui.name)
+            # TODO advanced_check=True when KIALI-2152 is done
+            assert dr_overview.is_equal(destination_rule_ui, advanced_check=False)
 
         if check_metrics:
             self.assert_metrics_options(service_details_ui.inbound_metrics)
