@@ -7,7 +7,8 @@ from kiali_qe.components.enums import (
     IstioConfigObjectType as OBJECT_TYPE,
     IstioConfigPageFilter as FILTER_TYPE,
     IstioConfigValidation,
-    OverviewPageType
+    OverviewPageType,
+    HealthType as HEALTH_TYPE
 )
 from kiali_qe.entities.istio_config import IstioConfig, IstioConfigDetails, Rule
 from kiali_qe.entities.service import (
@@ -99,11 +100,28 @@ class KialiExtendedClient(KialiClient):
                 _items = self.workload_list([_namespace])
             else:
                 _items = self.application_list([_namespace])
-            # TODO add health
+
+            _healthy = 0
+            _unhealthy = 0
+            _degraded = 0
+            _na = 0
+            for _item in _items:
+                if _item.health == HEALTH_TYPE.HEALTHY:
+                    _healthy += 1
+                if _item.health == HEALTH_TYPE.DEGRADED:
+                    _degraded += 1
+                if _item.health == HEALTH_TYPE.FAILURE:
+                    _unhealthy += 1
+                if _item.health == HEALTH_TYPE.NA:
+                    _na += 1
             _overview = Overview(
                 overview_type=overview_type.text,
                 namespace=_namespace,
-                items=len(_items))
+                items=len(_items),
+                healthy=_healthy,
+                unhealthy=_unhealthy,
+                degraded=_degraded,
+                na=_na)
             overviews.append(_overview)
         return overviews
 
