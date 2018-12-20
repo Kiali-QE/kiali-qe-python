@@ -955,7 +955,8 @@ class ListViewOverview(ListViewAbstract):
                 items=_item_numbers,
                 healthy=_healthy,
                 unhealthy=_unhealthy,
-                degraded=_degraded)
+                degraded=_degraded,
+                na=(_item_numbers - (_healthy + _unhealthy + _degraded)))
             # append this item to the final list
             _items.append(_overview)
         return _items
