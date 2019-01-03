@@ -545,7 +545,9 @@ class KialiExtendedClient(KialiClient):
                         created_by=_created_by,
                         labels=self.get_labels(_pod_data),
                         istio_init_containers=str(_istio_init_containers),
-                        istio_containers=str(_istio_containers))
+                        istio_containers=str(_istio_containers),
+                        status=self.get_pod_status(_workload_data['istioSidecar'], _pod_data),
+                        phase=_pod_data['status'])
                     _all_pods.append(_pod)
 
             def get_created_by(nodeid):
@@ -565,7 +567,9 @@ class KialiExtendedClient(KialiClient):
                         created_by=_created_by,
                         labels=_workload_pods[0].labels,
                         istio_init_containers=_workload_pods[0].istio_init_containers,
-                        istio_containers=_workload_pods[0].istio_containers)
+                        istio_containers=_workload_pods[0].istio_containers,
+                        status=_workload_pods[0].status,
+                        phase=_workload_pods[0].phase)
                     _pods.append(_pod)
                 elif len(_workload_pods) == 1:
                     _pod = WorkloadPod(
@@ -574,7 +578,9 @@ class KialiExtendedClient(KialiClient):
                         created_by=_created_by,
                         labels=_workload_pods[0].labels,
                         istio_init_containers=_workload_pods[0].istio_init_containers,
-                        istio_containers=_workload_pods[0].istio_containers)
+                        istio_containers=_workload_pods[0].istio_containers,
+                        status=_workload_pods[0].status,
+                        phase=_workload_pods[0].phase)
                     _pods.append(_pod)
             # TODO get labels
             _workload = WorkloadDetails(
@@ -740,3 +746,9 @@ class KialiExtendedClient(KialiClient):
 
     def get_response(self, method_name, **kwargs):
         return super(KialiExtendedClient, self).request(method_name=method_name, path=kwargs).json()
+
+    def get_pod_status(self, istioSidecar, pod_data):
+        if not istioSidecar or not pod_data['versionLabel'] or not pod_data['appLabel']:
+            return IstioConfigValidation.WARNING
+        else:
+            return IstioConfigValidation.VALID
