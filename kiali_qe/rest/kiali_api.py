@@ -17,7 +17,8 @@ from kiali_qe.entities.service import (
     ServiceDetails,
     VirtualService,
     DestinationRule,
-    SourceWorkload
+    SourceWorkload,
+    VirtualServiceWeight
 )
 from kiali_qe.entities.workload import (
     Workload,
@@ -442,6 +443,19 @@ class KialiExtendedClient(KialiClient):
             if _service_data['virtualServices'] \
                     and len(_service_data['virtualServices']['items']) > 0:
                 for _vs_data in _service_data['virtualServices']['items']:
+                    _weights = []
+                    for _route in _vs_data['spec']['http'][0]['route']:
+                        _weights.append(VirtualServiceWeight(
+                            host=_route['destination']['host'],
+                            subset=_route['destination']['subset']
+                            if 'subset' in _route['destination'] else None,
+                            port=_route['destination']['port']['number']
+                            if 'port' in _route['destination'] else None,
+                            status=_route['destination']['status']
+                            if 'status' in _route['destination'] else None,
+                            weight=_route['weight'] if
+                            ('weight' in _route and _route['weight'] != 0) else None)
+                        )
                     virtual_services.append(VirtualService(
                         status=self.get_istio_config_validation(
                             _vs_data['metadata']['namespace'],
@@ -449,7 +463,9 @@ class KialiExtendedClient(KialiClient):
                             _vs_data['metadata']['name']),
                         name=_vs_data['metadata']['name'],
                         created_at=parse_from_rest(_vs_data['metadata']['creationTimestamp']),
-                        resource_version=_vs_data['metadata']['resourceVersion']))
+                        resource_version=_vs_data['metadata']['resourceVersion'],
+                        hosts=_vs_data['spec']['hosts'],
+                        weights=_weights))
             destination_rules = []
             if _service_data['destinationRules'] \
                     and len(_service_data['destinationRules']['items']) > 0:

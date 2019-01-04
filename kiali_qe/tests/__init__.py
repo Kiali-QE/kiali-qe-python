@@ -587,7 +587,7 @@ class ServicesPageTest(AbstractListPageTest):
             _random_services = services_ui
         # create filters
         for _idx, _selected_service in enumerate(_random_services):
-            self.assert_details('ratings', _selected_service.namespace,
+            self.assert_details(_selected_service.name, _selected_service.namespace,
                                 check_metrics=True if _idx == 0 else False)
 
     def assert_details(self, name, namespace, check_metrics=False):
@@ -651,13 +651,13 @@ class ServicesPageTest(AbstractListPageTest):
         for virtual_service_ui in service_details_ui.virtual_services:
             found = False
             for virtual_service_rest in service_details_rest.virtual_services:
-                if virtual_service_ui.is_equal(virtual_service_rest, advanced_check=True):
+                if virtual_service_ui.is_equal(virtual_service_rest, advanced_check=False):
                     found = True
                     break
             assert found, 'VS {} not found in REST {}'.format(virtual_service_ui,
                                                               virtual_service_rest)
             vs_overview = self.page.content.table_view_vs.get_overview(virtual_service_ui.name)
-            assert vs_overview.is_equal(virtual_service_ui, advanced_check=True)
+            assert vs_overview.is_equal(virtual_service_rest, advanced_check=True)
 
         for destination_rule_ui in service_details_ui.destination_rules:
             found = False

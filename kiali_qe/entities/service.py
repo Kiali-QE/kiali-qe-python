@@ -1,5 +1,6 @@
 from kiali_qe.entities import EntityBase, DeploymentStatus, Requests, Envoy
 from kiali_qe.components.enums import HealthType
+from kiali_qe.utils import is_equal as compare_lists
 
 
 class ServiceHealth(EntityBase):
@@ -222,24 +223,29 @@ class VirtualService(EntityBase):
         resource_version: resource version
     """
 
-    def __init__(self, status, name, created_at, resource_version):
+    def __init__(self, status, name, created_at, resource_version, hosts=[], weights=[]):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
         self.created_at = created_at
         self.resource_version = resource_version
         self.status = status
+        self.hosts = hosts
+        self.weights = weights
 
     def __str__(self):
-        return 'name:{}, status:{}, created_at:{}, resource_version:{}'.format(
-            self.name, self.status, self.created_at, self.resource_version)
+        return 'name:{}, status:{}, created_at:{}, '\
+            'resource_version:{}, hosts:{}, weights:{}'.format(
+                self.name, self.status, self.created_at, self.resource_version,
+                self.hosts, self.weights)
 
     def __repr__(self):
-        return "{}({}, {}, {})".format(
+        return "{}({}, {}, {}, {}, {})".format(
             type(self).__name__,
             repr(self.name),
             repr(self.status),
-            repr(self.created_at), repr(self.resource_version))
+            repr(self.created_at), repr(self.resource_version),
+            repr(self.hosts), repr(self.weights))
 
     def __hash__(self):
         return (hash(self.name) ^ hash(self.created_at) ^ hash(self.resource_version))
@@ -253,14 +259,71 @@ class VirtualService(EntityBase):
             return False
         if self.name != other.name:
             return False
+        if self.created_at != other.created_at:
+            return False
+        if self.resource_version != other.resource_version:
+            return False
         # advanced check
         if not advanced_check:
             return True
         if self.status != other.status:
             return False
-        if self.created_at != other.created_at:
+        if not compare_lists(self.hosts, other.hosts):
             return False
-        if self.resource_version != other.resource_version:
+        if not compare_lists(self.weights, other.weights):
+            return False
+        return True
+
+
+class VirtualServiceWeight(EntityBase):
+    """
+    Service class provides information details on VirtualServiceWeight of VS Overview.
+
+    """
+
+    def __init__(self, host, subset=None, port=None, status=None, weight=None):
+        if host is None:
+            raise KeyError("'host' should not be 'None'")
+        self.host = host
+        self.subset = subset
+        self.port = port
+        self.status = status
+        self.weight = weight
+
+    def __str__(self):
+        return 'host:{}, status:{}, subset:{}, port:{}, weight:{}'.format(
+            self.host, self.status, self.subset, self.port, self.weight)
+
+    def __repr__(self):
+        return "{}({}, {}, {}, {}, {})".format(
+            type(self).__name__,
+            repr(self.host),
+            repr(self.status),
+            repr(self.subset), repr(self.port),
+            repr(self.weight))
+
+    def __hash__(self):
+        return (hash(self.host) ^ hash(self.subset))
+
+    def __eq__(self, other):
+        return self.is_equal(other, advanced_check=True)
+
+    def is_equal(self, other, advanced_check=True):
+        # basic check
+        if not isinstance(other, VirtualServiceWeight):
+            return False
+        if self.host != other.host:
+            return False
+        # advanced check
+        if not advanced_check:
+            return True
+        if self.status != other.status:
+            return False
+        if self.subset != other.subset:
+            return False
+        if self.port != other.port:
+            return False
+        if self.weight != other.weight:
             return False
         return True
 

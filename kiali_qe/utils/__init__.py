@@ -87,3 +87,10 @@ def to_linear_string(source):
             replace('}', '').\
             replace(':', '').\
             replace('\'', '').lower()
+
+
+def get_texts_of_elements(elements):
+    texts = []
+    for _element in elements:
+        texts.append(_element.text.strip())
+    return texts
