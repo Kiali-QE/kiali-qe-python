@@ -1638,14 +1638,17 @@ class TableViewWorkloadPods(TableViewAbstract):
             _created_by = _columns[3].text.strip()
             _istio_init_containers = _columns[5].text.strip()
             _istio_containers = _columns[6].text.strip()
-            # TODO: fetch status information from GUI
+            _phase = _columns[7].text.strip()
+
             _items.append(WorkloadPod(
                         name=str(_name),
                         created_at=_created_at,
                         created_by=_created_by,
                         labels=self._get_labels(_columns[4]),
                         istio_init_containers=_istio_init_containers,
-                        istio_containers=_istio_containers))
+                        istio_containers=_istio_containers,
+                        status=self._get_item_status(el),
+                        phase=_phase))
         return _items
 
 

@@ -138,26 +138,31 @@ class WorkloadDetails(EntityBase):
 class WorkloadPod(EntityBase):
 
     def __init__(self, name, created_at, created_by, labels={},
-                 istio_init_containers=None, istio_containers=None):
+                 istio_init_containers=None, istio_containers=None, status=None, phase=None):
         self.name = name
         self.created_at = created_at
         self.created_by = created_by
         self.labels = labels
         self.istio_init_containers = istio_init_containers
         self.istio_containers = istio_containers
+        self.status = status
+        self.phase = phase
 
     def __str__(self):
         return 'name:{}, created_at:{}, created_by:{}, labels: {}\
-            istio_init_containers:{}, istio_containers:{}'.format(
+            istio_init_containers:{}, istio_containers:{}\
+            status:{}, phase:{}'.format(
             self.name, self.created_at, self.created_by, self.labels,
-            self.istio_init_containers, self.istio_containers)
+            self.istio_init_containers, self.istio_containers,
+            self.status, self.phase)
 
     def __repr__(self):
-        return "{}({}, {}, {}, {}, {}, {}, {})".format(
+        return "{}({}, {}, {}, {}, {}, {}, {}, {}, {})".format(
             type(self).__name__, repr(self.name),
             repr(self.created_at), repr(self.created_by),
             repr(self.labels),
-            repr(self.istio_init_containers), repr(self.istio_containers))
+            repr(self.istio_init_containers), repr(self.istio_containers),
+            repr(self.status), repr(self.phase))
 
     def __eq__(self, other):
         return self.is_equal(other, advanced_check=True)
@@ -183,6 +188,10 @@ class WorkloadPod(EntityBase):
             if self.istio_init_containers != other.istio_init_containers:
                 return False
             if self.istio_containers != other.istio_containers:
+                return False
+            if self.status != other.status:
+                return False
+            if self.phase != other.phase:
                 return False
         return True
 
