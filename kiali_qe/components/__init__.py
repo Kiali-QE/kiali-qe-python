@@ -16,6 +16,7 @@ from kiali_qe.entities.service import (
     VirtualService,
     DestinationRule,
     SourceWorkload,
+    VirtualServiceWeight
 )
 from kiali_qe.entities.istio_config import IstioConfig, Rule, IstioConfigDetails
 from kiali_qe.entities.workload import (
@@ -28,7 +29,11 @@ from kiali_qe.entities.applications import Application, ApplicationDetails, AppW
 from kiali_qe.entities.overview import Overview
 from kiali_qe.utils.date import parse_from_ui
 from wait_for import wait_for
-from kiali_qe.utils import get_validation, to_linear_string
+from kiali_qe.utils import (
+    get_validation,
+    to_linear_string,
+    get_texts_of_elements
+)
 
 
 def wait_displayed(obj, timeout='10s'):
@@ -1217,6 +1222,7 @@ class TableViewAbstract(Widget):
     OVERVIEW_DETAILS_ROOT = './/div[contains(@class, "row-cards-pf")]'
     OVERVIEW_HEADER = './/h4'
     OVERVIEW_PROPERTIES = './/div/strong[contains(text(), "{}")]/..'
+    HOSTS_PROPERTIES = './/div/strong[contains(text(), "{}")]/..//li'
     SERVICES_TAB = '//div[@id="service-tabs"]//li//a[contains(text(), "{}")]/..'
     ROOT = '//[contains(@class, "tab-pane") and contains(@class, "active") and \
         contains(@class, "in")]'
@@ -1227,6 +1233,7 @@ class TableViewAbstract(Widget):
     CREATED_AT = 'Created at'
     RESOURCE_VERSION = 'Resource Version'
     HOST = 'Host'
+    HOSTS = 'Hosts'
     NAME = 'Name'
     LABELS = 'Labels'
     TRAFFIC_POLICY = 'Traffic Policy'
@@ -1435,6 +1442,8 @@ class TableViewSourceWorkloads(TableViewAbstract):
 
 class TableViewVirtualServices(TableViewAbstract):
     VS_TEXT = 'Virtual Services'
+    VS_ROWS = '//div[@id="{}"]//table[contains(@class, "table")]'\
+        '//tbody//tr//td//a[text()="{}"]/../..'
 
     def open(self):
         tab = self.browser.element(locator=self.SERVICES_TAB.format(self.VS_TEXT),
@@ -1448,7 +1457,7 @@ class TableViewVirtualServices(TableViewAbstract):
     def get_overview(self, name):
         self.open()
 
-        _row = self.browser.element(locator=self.ROWS.format(
+        _row = self.browser.element(locator=self.VS_ROWS.format(
                 'service-tabs-pane-virtualservices', name),
                                         parent=self.ROOT)
         _columns = list(self.browser.elements(locator=self.COLUMN, parent=_row))
@@ -1466,8 +1475,29 @@ class TableViewVirtualServices(TableViewAbstract):
         _resource_version = self.browser.text(
             locator=self.OVERVIEW_PROPERTIES.format(self.RESOURCE_VERSION),
             parent=self.OVERVIEW_DETAILS_ROOT).replace(self.RESOURCE_VERSION + ':', '').strip()
+        _hosts = get_texts_of_elements(self.browser.elements(
+            locator=self.HOSTS_PROPERTIES.format(self.HOSTS),
+            parent=self.OVERVIEW_DETAILS_ROOT))
         _status = self._get_overview_status(self.OVERVIEW_DETAILS_ROOT)
+        _weights = []
 
+        for el in self.browser.elements(locator=self.ROWS.format(
+                'basic-tabs-pane-overview'),
+                parent=self.OVERVIEW_DETAILS_ROOT):
+            _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
+
+            _weight_status = _columns[0].text.strip()
+            _host = _columns[1].text.strip()
+            _subset = _columns[2].text.strip().replace('-', '')
+            _port = _columns[3].text.strip().replace('-', '')
+            _weight = _columns[4].text.strip().replace('-', '')
+
+            _weights.append(VirtualServiceWeight(host=_host,
+                                                 status=_weight_status
+                                                 if _weight_status != '' else None,
+                                                 subset=_subset if _subset != '' else None,
+                                                 port=int(_port) if _port != '' else None,
+                                                 weight=int(_weight) if _weight != '' else None))
         # back to service details
         self.back_to_service_info()
 
@@ -1475,7 +1505,9 @@ class TableViewVirtualServices(TableViewAbstract):
                 status=_status,
                 name=_name,
                 created_at=parse_from_ui(_created_at),
-                resource_version=_resource_version)
+                resource_version=_resource_version,
+                hosts=_hosts,
+                weights=_weights)
 
     @property
     def number(self):
