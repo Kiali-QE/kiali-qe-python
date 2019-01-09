@@ -1,4 +1,5 @@
 # Kiali GUI Automation
+Test
 Kiali GUI QE automation framework. This framework based on pytest Testing Framework, using Widgetastic testing tools.
 
 ### Project structure
