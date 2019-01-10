@@ -2,6 +2,8 @@ from kubernetes import config
 from openshift.dynamic import DynamicClient
 from openshift.dynamic.exceptions import NotFoundError
 
+from kiali_qe.components.enums import IstioConfigObjectType
+from kiali_qe.entities.istio_config import IstioConfig, Rule
 from kiali_qe.entities.service import Service
 from kiali_qe.entities.workload import Workload
 
@@ -65,6 +67,58 @@ class OpenshiftExtendedClient(object):
 
     def _istio_config(self, kind, api_version):
         return self._resource(kind=kind, api_version=api_version)
+
+    @property
+    def _gateway(self):
+        return self._istio_config(kind='Gateway', api_version='v1alpha3')
+
+    @property
+    def _virtualservice(self):
+        return self._istio_config(kind='VirtualService', api_version='v1alpha3')
+
+    @property
+    def _destinationrule(self):
+        return self._istio_config(kind='DestinationRule', api_version='v1alpha3')
+
+    @property
+    def _serviceentry(self):
+        return self._istio_config(kind='ServiceEntry', api_version='v1alpha3')
+
+    @property
+    def _rule(self):
+        return self._istio_config(kind='rule', api_version='v1alpha2')
+
+    @property
+    def _logentry(self):
+        return self._istio_config(kind='logentry', api_version='v1alpha2')
+
+    @property
+    def _kubernetes(self):
+        return self._istio_config(kind='kubernetes', api_version='v1alpha2')
+
+    @property
+    def _metric(self):
+        return self._istio_config(kind='metric', api_version='v1alpha2')
+
+    @property
+    def _kubernetesenv(self):
+        return self._istio_config(kind='kubernetesenv', api_version='v1alpha2')
+
+    @property
+    def _prometheus(self):
+        return self._istio_config(kind='prometheus', api_version='v1alpha2')
+
+    @property
+    def _stdio(self):
+        return self._istio_config(kind='stdio', api_version='v1alpha2')
+
+    @property
+    def _quotaspec(self):
+        return self._istio_config(kind='QuotaSpec', api_version='v1alpha2')
+
+    @property
+    def _quotaspecbinding(self):
+        return self._istio_config(kind='QuotaSpecBinding', api_version='v1alpha2')
 
     def namespace_list(self):
         """ Returns list of namespaces """
@@ -190,6 +244,88 @@ class OpenshiftExtendedClient(object):
             return item.metadata.labels[label] is not None
         except (KeyError, AttributeError, TypeError):
             return False
+
+    def istio_config_list(self, namespaces=[], config_names=[]):
+        """ Returns list of Istio Configs """
+        result = []
+        result.extend(self._resource_list('_gateway', 'Gateway',
+                                          namespaces=namespaces, resource_names=config_names))
+        result.extend(self._resource_list('_virtualservice', 'VirtualService',
+                                          namespaces=namespaces, resource_names=config_names))
+        result.extend(self._resource_list('_destinationrule', 'DestinationRule',
+                                          namespaces=namespaces, resource_names=config_names))
+        result.extend(self._resource_list('_serviceentry', 'ServiceEntry',
+                                          namespaces=namespaces, resource_names=config_names))
+        result.extend(self._resource_list('_rule', 'Rule',
+                                          namespaces=namespaces, resource_names=config_names))
+        result.extend(self._resource_list('_kubernetesenv', 'Adapter',
+                                          namespaces=namespaces, resource_names=config_names))
+        result.extend(self._resource_list('_prometheus', 'Adapter',
+                                          namespaces=namespaces, resource_names=config_names))
+        result.extend(self._resource_list('_stdio', 'Adapter',
+                                          namespaces=namespaces, resource_names=config_names))
+        result.extend(self._resource_list('_logentry', 'Template',
+                                          namespaces=namespaces, resource_names=config_names))
+        result.extend(self._resource_list('_kubernetes', 'Template',
+                                          namespaces=namespaces, resource_names=config_names))
+        result.extend(self._resource_list('_metric', 'Template',
+                                          namespaces=namespaces, resource_names=config_names))
+        result.extend(self._resource_list('_quotaspec', 'QuotaSpec',
+                                          namespaces=namespaces, resource_names=config_names))
+        result.extend(self._resource_list('_quotaspecbinding', 'QuotaSpecBinding',
+                                          namespaces=namespaces, resource_names=config_names))
+
+        return result
+
+    def _resource_list(self, attribute_name, resource_type,
+                       namespaces=[], resource_names=[]):
+        """ Returns list of Resource
+        Args:
+            attribute_name: the attribute of class for getting resource
+            resource_type: the type of resource
+            namespace: Namespace of the resource, optional
+            resource_names: Names of the r, optional
+        """
+        items = []
+        _raw_items = []
+        if len(namespaces) > 0:
+            # update items
+            for _namespace in namespaces:
+                _response = getattr(self, attribute_name).get(namespace=_namespace)
+                if hasattr(_response, 'items'):
+                    _raw_items.extend(_response.items)
+        else:
+            _response = getattr(self, attribute_name).get()
+            if hasattr(_response, 'items'):
+                _raw_items.extend(_response.items)
+        for _item in _raw_items:
+            if str(resource_type) == IstioConfigObjectType.RULE.text:
+                _rule = Rule(name=_item.metadata.name,
+                             namespace=_item.metadata.namespace,
+                             object_type=resource_type)
+                # append this item to the final list
+                items.append(_rule)
+            elif str(resource_type) == IstioConfigObjectType.ADAPTER.text or\
+                    str(resource_type) == IstioConfigObjectType.TEMPLATE.text:
+                _rule = Rule(name=_item.metadata.name,
+                             namespace=_item.metadata.namespace,
+                             object_type='{}: {}'.format(
+                                 resource_type, _item.kind))
+                # append this item to the final list
+                items.append(_rule)
+            else:
+                _config = IstioConfig(name=_item.metadata.name,
+                                      namespace=_item.metadata.namespace,
+                                      object_type=resource_type)
+                # append this item to the final list
+                items.append(_config)
+        # filter by resource name
+        if len(resource_names) > 0:
+            filtered_list = []
+            for _name in resource_names:
+                filtered_list.extend([_i for _i in items if _name in _i.name])
+            return set(filtered_list)
+        return items
 
     def delete_istio_config(self, name, namespace, kind, api_version):
         try:

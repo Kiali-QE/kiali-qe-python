@@ -131,8 +131,8 @@ class Rule(EntityBase):
             return False
         if self.namespace != other.namespace:
             return False
-        # advanced check
-        if advanced_check:
-            if self.object_type != other.object_type:
-                return False
+        if self.object_type != other.object_type:
+            return False
+        if not advanced_check:
+            return True
         return True

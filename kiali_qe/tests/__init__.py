@@ -759,6 +759,11 @@ class IstioConfigPageTest(AbstractListPageTest):
         # apply filters
         self.apply_filters(filters=filters, force_clear_all=force_clear_all)
 
+        _ns = self.FILTER_ENUM.NAMESPACE.text
+        _namespaces = [_f['value'] for _f in filters if _f['name'] == _ns]
+        _sn = self.FILTER_ENUM.ISTIO_NAME.text
+        _istio_names = [_f['value'] for _f in filters if _f['name'] == _sn]
+
         # get rules from ui
         config_list_ui = self.page.content.all_items
         logger.debug('Istio config list UI:{}]'.format(config_list_ui))
@@ -767,8 +772,14 @@ class IstioConfigPageTest(AbstractListPageTest):
         config_list_rest = self.kiali_client.istio_config_list(filters=filters)
         logger.debug('Istio config list REST:{}]'.format(config_list_rest))
 
-        # compare both results
+        # get configs from OC api
+        config_list_oc = self.openshift_client.istio_config_list(
+            namespaces=_namespaces, config_names=_istio_names)
+        logger.debug('Istio config list OC API:{}]'.format(config_list_oc))
+
+        # compare 3 way results
         assert len(config_list_ui) == len(config_list_rest)
+        assert len(config_list_ui) == len(config_list_oc)
         for config_ui in config_list_ui:
             found = False
             for config_rest in config_list_rest:
@@ -777,6 +788,13 @@ class IstioConfigPageTest(AbstractListPageTest):
                     break
             if not found:
                 assert found, '{} not found in REST'.format(config_ui)
+            found = False
+            for config_oc in config_list_oc:
+                if config_ui.is_equal(config_oc, advanced_check=False):
+                    found = True
+                    break
+            if not found:
+                assert found, '{} not found in OC'.format(config_ui)
 
     def assert_random_details(self, filters, force_clear_all=True):
         # apply filters
