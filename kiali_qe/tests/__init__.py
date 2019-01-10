@@ -392,17 +392,21 @@ class ApplicationsPageTest(AbstractListPageTest):
         # apply filters
         self.apply_filters(filters=filters, force_clear_all=force_clear_all)
 
-        # get applications from ui
-        applications_ui = self.page.content.all_items
         # get applications from rest api
         _ns = self.FILTER_ENUM.NAMESPACE.text
         _namespaces = [_f['value'] for _f in filters if _f['name'] == _ns]
         _sn = self.FILTER_ENUM.APP_NAME.text
         _application_names = [_f['value'] for _f in filters if _f['name'] == _sn]
+
         logger.debug('Namespaces:{}, Application names:{}'.format(_namespaces, _application_names))
+        # get applications from ui
+        applications_ui = self.page.content.all_items
+        # get from REST
         applications_rest = self.kiali_client.application_list(
             namespaces=_namespaces, application_names=_application_names)
-        # TODO get applications from OC client
+        # get from OC
+        applications_oc = self.openshift_client.application_list(
+            namespaces=_namespaces, application_names=_application_names)
 
         # compare all results
         logger.debug('Namespaces:{}, Service names:{}'.format(_namespaces, _application_names))
@@ -410,8 +414,10 @@ class ApplicationsPageTest(AbstractListPageTest):
             len(applications_ui), len(applications_rest)))
         logger.debug('Applications UI:{}'.format(applications_ui))
         logger.debug('Applications REST:{}'.format(applications_rest))
+        logger.debug('Applications OC:{}'.format(applications_oc))
 
         assert len(applications_ui) == len(applications_rest)
+        assert len(applications_rest) <= len(applications_oc)
 
         for application_ui in applications_ui:
             found = False
@@ -421,6 +427,14 @@ class ApplicationsPageTest(AbstractListPageTest):
                     break
             if not found:
                 assert found, '{} not found in REST'.format(application_ui)
+            found = False
+            for application_oc in applications_oc:
+                logger.debug('{} {}'.format(application_oc.name, application_oc.namespace))
+                if application_ui.is_equal(application_oc, advanced_check=False):
+                    found = True
+                    break
+            if not found:
+                assert found, '{} not found in OC'.format(application_ui)
 
 
 class WorkloadsPageTest(AbstractListPageTest):

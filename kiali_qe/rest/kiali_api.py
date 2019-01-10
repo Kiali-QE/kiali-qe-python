@@ -704,14 +704,13 @@ class KialiExtendedClient(KialiClient):
             object: name of Config
         """
 
-        _health_data = self.get_response('objectValidations',
-                                         namespace=namespace,
-                                         object_type=object_type,
-                                         object=object_name)
+        _health_data = self.get_validation('istioConfigDetails',
+                                           namespace=namespace,
+                                           object_type=object_type,
+                                           object=object_name)
         if _health_data:
-            _, value = _health_data.popitem()
-            if len(value[object_name]['checks']) > 0:
-                if 'error' in set(check['severity'] for check in value[object_name]['checks']):
+            if len(_health_data['checks']) > 0:
+                if 'error' in set(check['severity'] for check in _health_data['checks']):
                     return IstioConfigValidation.NOT_VALID
                 else:
                     return IstioConfigValidation.WARNING
@@ -729,14 +728,13 @@ class KialiExtendedClient(KialiClient):
         """
         _error_messages = []
 
-        _health_data = self.get_response('objectValidations',
-                                         namespace=namespace,
-                                         object_type=object_type,
-                                         object=object_name)
+        _health_data = self.get_validation('istioConfigDetails',
+                                           namespace=namespace,
+                                           object_type=object_type,
+                                           object=object_name)
         if _health_data:
-            _, value = _health_data.popitem()
-            if len(value[object_name]['checks']) > 0:
-                for _check in value[object_name]['checks']:
+            if len(_health_data['checks']) > 0:
+                for _check in _health_data['checks']:
                     _error_messages.append(_check['message'])
         return _error_messages
 
@@ -762,6 +760,12 @@ class KialiExtendedClient(KialiClient):
 
     def get_response(self, method_name, **kwargs):
         return super(KialiExtendedClient, self).request(method_name=method_name, path=kwargs).json()
+
+    def get_validation(self, method_name, **kwargs):
+        return super(KialiExtendedClient, self).request(
+            method_name=method_name,
+            path=kwargs,
+            params={'validate': 'true'}).json()['validation']
 
     def get_pod_status(self, istioSidecar, pod_data):
         if not istioSidecar or not pod_data['versionLabel'] or not pod_data['appLabel']:
