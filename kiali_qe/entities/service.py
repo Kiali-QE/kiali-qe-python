@@ -1,30 +1,27 @@
-from kiali_qe.entities import EntityBase, DeploymentStatus, Requests, Envoy
+from kiali_qe.entities import EntityBase, DeploymentStatus, Requests
 from kiali_qe.components.enums import HealthType
 from kiali_qe.utils import is_equal as compare_lists
 
 
 class ServiceHealth(EntityBase):
 
-    def __init__(self, envoy, deployment_statuses, requests):
-        self.envoy = envoy
+    def __init__(self, deployment_statuses, requests):
         self.deployment_statuses = deployment_statuses
         self.requests = requests
 
     def __str__(self):
-        return 'envoy:{}, deployment_statuses:{}, requests:{}'.format(
-            self.envoy, self.deployment_statuses, self.requests)
+        return 'deployment_statuses:{}, requests:{}'.format(
+            self.deployment_statuses, self.requests)
 
     def __repr__(self):
-        return "{}({}, {}, {})".format(
+        return "{}({}, {})".format(
             type(self).__name__,
-            repr(self.envoy), repr(self.deployment_statuses), repr(self.requests))
+            repr(self.deployment_statuses), repr(self.requests))
 
     def is_healthy(self):
-        if self.envoy.is_healthy() == HealthType.NA \
-                and self.requests.is_healthy() == HealthType.NA:
+        if self.requests.is_healthy() == HealthType.NA:
             return HealthType.NA
-        elif self.envoy.is_healthy() == HealthType.FAILURE \
-                or self.requests.is_healthy() == HealthType.FAILURE:
+        elif self.requests.is_healthy() == HealthType.FAILURE:
             return HealthType.FAILURE
         elif self.requests.is_healthy() == HealthType.DEGRADED:
             return HealthType.DEGRADED
@@ -34,8 +31,6 @@ class ServiceHealth(EntityBase):
     def is_equal(self, other):
         if not isinstance(other, ServiceHealth):
             return False
-        if not self.envoy.is_equal(other.envoy):
-            return False
         if not self.deployment_statuses.is_equal(other.deployment_statuses):
             return False
         if not self.requests.is_equal(other.requests):
@@ -44,12 +39,6 @@ class ServiceHealth(EntityBase):
 
     @classmethod
     def get_from_rest(cls, health):
-        # update envoy
-        _e_in_rest = health['envoy']
-        _envoy = Envoy(i_healthy=_e_in_rest['inbound']['healthy'],
-                       i_total=_e_in_rest['inbound']['total'],
-                       o_healthy=_e_in_rest['outbound']['healthy'],
-                       o_total=_e_in_rest['outbound']['total'])
         # update deployment statuses
         _deployment_status_list = []
         if 'deploymentStatuses' in health:
@@ -64,7 +53,7 @@ class ServiceHealth(EntityBase):
         _requests = Requests(
             errorRatio=_r_rest['errorRatio'])
         return ServiceHealth(
-            envoy=_envoy, deployment_statuses=_deployment_status_list, requests=_requests)
+            deployment_statuses=_deployment_status_list, requests=_requests)
 
 
 class Service(EntityBase):

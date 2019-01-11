@@ -1,44 +1,33 @@
-from kiali_qe.entities import EntityBase, DeploymentStatus, Requests, Envoy
+from kiali_qe.entities import EntityBase, DeploymentStatus, Requests
 from kiali_qe.components.enums import HealthType
 
 
 class ApplicationHealth(EntityBase):
 
-    def __init__(self, envoys, deployment_statuses, requests):
-        self.envoys = envoys
+    def __init__(self, deployment_statuses, requests):
         self.deployment_statuses = deployment_statuses
         self.requests = requests
 
     def __str__(self):
-        return 'envoys:{}, deployment_statuses:{}, requests:{}'.format(
-            self.envoys, self.deployment_statuses, self.requests)
+        return 'deployment_statuses:{}, requests:{}'.format(
+            self.deployment_statuses, self.requests)
 
     def __repr__(self):
-        return "{}({}, {}, {})".format(
+        return "{}({}, {})".format(
             type(self).__name__,
-            repr(self.envoys), repr(self.deployment_statuses), repr(self.requests))
+            repr(self.deployment_statuses), repr(self.requests))
 
     def is_healthy(self):
-        if self.envoys_health() == HealthType.NA \
-                and self.requests.is_healthy() == HealthType.NA \
+        if self.requests.is_healthy() == HealthType.NA \
                 and self.deployment_statuses_health() == HealthType.NA:
             return HealthType.NA
-        elif self.envoys_health() == HealthType.FAILURE \
-                or self.requests.is_healthy() == HealthType.FAILURE \
+        elif self.requests.is_healthy() == HealthType.FAILURE \
                 or self.deployment_statuses_health() == HealthType.FAILURE:
             return HealthType.FAILURE
         elif self.requests.is_healthy() == HealthType.DEGRADED:
             return HealthType.DEGRADED
         else:
             return HealthType.HEALTHY
-
-    def envoys_health(self):
-        for envoy in self.envoys:
-            if envoy.is_healthy() == HealthType.FAILURE:
-                return HealthType.FAILURE
-            elif envoy.is_healthy() == HealthType.NA:
-                return HealthType.NA
-        return HealthType.HEALTHY
 
     def deployment_statuses_health(self):
         for deployment_status in self.deployment_statuses:
@@ -52,8 +41,6 @@ class ApplicationHealth(EntityBase):
     def is_equal(self, other):
         if not isinstance(other, ApplicationHealth):
             return False
-        if not self.envoys.is_equal(other.envoys):
-            return False
         if not self.deployment_statuses.is_equal(other.deployment_statuses):
             return False
         if not self.requests.is_equal(other.requests):
@@ -62,14 +49,6 @@ class ApplicationHealth(EntityBase):
 
     @classmethod
     def get_from_rest(cls, health):
-        # update envoys
-        _envoy_list = []
-        for _e_in_rest in health['envoy']:
-            _envoy = Envoy(i_healthy=_e_in_rest['inbound']['healthy'],
-                           i_total=_e_in_rest['inbound']['total'],
-                           o_healthy=_e_in_rest['outbound']['healthy'],
-                           o_total=_e_in_rest['outbound']['total'])
-            _envoy_list.append(_envoy)
         # update deployment statuses
         _deployment_status_list = []
         if 'workloadStatuses' in health:
@@ -84,7 +63,7 @@ class ApplicationHealth(EntityBase):
         _requests = Requests(
             errorRatio=_r_rest['errorRatio'])
         return ApplicationHealth(
-            envoys=_envoy_list, deployment_statuses=_deployment_status_list, requests=_requests)
+            deployment_statuses=_deployment_status_list, requests=_requests)
 
 
 class Application(EntityBase):
