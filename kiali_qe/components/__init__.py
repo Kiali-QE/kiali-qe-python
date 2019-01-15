@@ -782,6 +782,21 @@ class ListViewAbstract(Widget):
         wait_to_spinner_disappear(self.browser)
         wait_displayed(self)
 
+    def has_overview_tab(self):
+        return len(self.browser.elements(locator='.//a[@id="basic-tabs-tab-overview"]',
+                                         parent='.//div[@id="basic-tab"]')) > 0
+
+    def display_overview_editor(self):
+        if self.has_overview_tab():
+            self.browser.click(self.browser.element(locator='.//a[@id="basic-tabs-tab-overview"]',
+                                                    parent='.//div[@id="basic-tab"]'))
+            wait_displayed(self)
+
+    def display_yaml_editor(self):
+        self.browser.click(self.browser.element(locator='.//a[@id="basic-tabs-tab-yaml"]',
+                                                parent='.//div[@id="basic-tab"]'))
+        wait_displayed(self)
+
     def _item_sidecar(self, element):
         return not len(self.browser.elements(
                 parent=element, locator=self.MISSING_SIDECAR)) > 0
@@ -817,7 +832,6 @@ class ListViewAbstract(Widget):
         return _health
 
     def _get_item_health(self, element):
-        wait_displayed(self)
         _healthy = len(self.browser.elements(
             parent=element,
             locator='.//*[contains(@class, "pficon-ok")]')) > 0
@@ -842,7 +856,6 @@ class ListViewAbstract(Widget):
         return _health
 
     def _get_item_validation(self, element):
-        wait_displayed(self)
         _valid = len(self.browser.elements(
             parent=element,
             locator='.//*[contains(@class, "pficon-ok")]')) > 0
@@ -870,7 +883,6 @@ class ListViewAbstract(Widget):
 
     def _get_item_label_keys(self, element):
         _label_keys = []
-        wait_displayed(self)
         _labels = self.browser.elements(
             parent=element,
             locator='.//strong[normalize-space(text())="Label Validation :"]\
@@ -1157,14 +1169,20 @@ class ListViewServices(ListViewAbstract):
 class ListViewIstioConfig(ListViewAbstract):
     ACTION_HEADER = ('.//*[contains(@class, "list-group-item-text")]'
                      '//strong[normalize-space(text())="{}"]/..')
-    CONFIG_HEADER = './/div[contains(@class, "row")]//h1'
+    CONFIG_HEADER = './/div[contains(@class, "row")]//h4'
     CONFIG_TEXT = './/div[contains(@class, "ace_content")]'
-    CONFIG_DETAILS_ROOT = './/div[contains(@class, "container-cards-pf")]'
+    CONFIG_DETAILS_ROOT = './/div[contains(@class, "container-fluid")]'
 
     def get_details(self, name, namespace=None):
         self.open(name, namespace)
-        _type, _name = self.browser.text(locator=self.CONFIG_HEADER,
-                                         parent=self.CONFIG_DETAILS_ROOT).split(': ')
+        if self.has_overview_tab():
+            _type, _name = self.browser.text(locator=self.CONFIG_HEADER,
+                                             parent=self.CONFIG_DETAILS_ROOT).split(': ')
+        else:
+            # TODO with configs without overview
+            _type = None
+            _name = None
+        self.display_yaml_editor()
         _text = self.browser.text(locator=self.CONFIG_TEXT,
                                   parent=self.CONFIG_DETAILS_ROOT)
         return IstioConfigDetails(name=_name, _type=_type, text=_text,
@@ -1249,10 +1267,9 @@ class TableViewAbstract(Widget):
     def __locator__(self):
         return self.locator
 
-    def back_to_service_info(self):
-        # TODO better way of using breadcrumb
-        self.browser.click('.//a[text()="Service Info"]',
-                           parent='//*[contains(@class, "container-fluid")]')
+    def back_to_service_info(self, parent):
+        # TODO find a better way after KIALI-2251
+        self.browser.click('.//a[contains(@href, "/services/")]', parent)
 
     def _get_overview_status(self, element):
         wait_displayed(self)
@@ -1499,7 +1516,7 @@ class TableViewVirtualServices(TableViewAbstract):
                                                  port=int(_port) if _port != '' else None,
                                                  weight=int(_weight) if _weight != '' else None))
         # back to service details
-        self.back_to_service_info()
+        self.back_to_service_info(parent=self.OVERVIEW_DETAILS_ROOT)
 
         return VirtualService(
                 status=_status,
@@ -1588,7 +1605,7 @@ class TableViewDestinationRules(TableViewAbstract):
             replace(self.TRAFFIC_POLICY, '').strip()
 
         # back to service details
-        self.back_to_service_info()
+        self.back_to_service_info(parent=self.OVERVIEW_DETAILS_ROOT)
 
         return DestinationRule(
                 status=None,

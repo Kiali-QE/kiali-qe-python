@@ -745,6 +745,8 @@ class ServicesPageTest(AbstractListPageTest):
 
 class IstioConfigPageTest(AbstractListPageTest):
     FILTER_ENUM = IstioConfigPageFilter
+    ISTIO_CONFIG_TYPES = {'DestinationRule': 'destinationrules',
+                          'VirtualService': 'virtualservices'}
 
     def __init__(self, kiali_client, openshift_client, browser):
         AbstractListPageTest.__init__(
@@ -826,12 +828,14 @@ class IstioConfigPageTest(AbstractListPageTest):
         # load config details page
         config_details_ui = self.page.content.get_details(name, namespace)
         assert config_details_ui
+        if not config_details_ui.name:  # TODO for now skip configs which don't have Overview page
+            return
         assert name == config_details_ui.name
         assert config_details_ui.text
         # get config detals from rest
         config_details_rest = self.kiali_client.istio_config_details(
             namespace=namespace,
-            object_type=config_details_ui._type,
+            object_type=self.ISTIO_CONFIG_TYPES[config_details_ui._type],
             object_name=name)
         assert config_details_rest
         assert name == config_details_rest.name
