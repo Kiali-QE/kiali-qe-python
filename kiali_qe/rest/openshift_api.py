@@ -1,3 +1,4 @@
+import re
 from kubernetes import config
 from openshift.dynamic import DynamicClient
 from openshift.dynamic.exceptions import NotFoundError
@@ -6,6 +7,7 @@ from kiali_qe.components.enums import IstioConfigObjectType
 from kiali_qe.entities.istio_config import IstioConfig, Rule
 from kiali_qe.entities.service import Service
 from kiali_qe.entities.workload import Workload
+from kiali_qe.entities.applications import Application
 
 
 class OpenshiftExtendedClient(object):
@@ -136,6 +138,25 @@ class OpenshiftExtendedClient(object):
         except NotFoundError:
             return False
 
+    def application_list(self, namespaces=[], application_names=[]):
+        """ Returns list of applications """
+        result = {}
+        workloads = []
+        workloads.extend(self.workload_list(namespaces=namespaces))
+
+        regex = re.compile('(-v\\d+-.*)?(-v\\d+$)?(-(\\w{0,7}\\d+\\w{0,7})$)?')
+        for workload in workloads:
+            # TODO: istio side car and health needs to be added
+            name = workload.app_label if workload.app_label else re.sub(regex, '', workload.name)
+            result[name+workload.namespace] = Application(name, workload.namespace)
+        # filter by service name
+        if len(application_names) > 0:
+            filtered_list = []
+            for _name in application_names:
+                filtered_list.extend([_i for _i in result.values() if _name in _i.name])
+            return set(filtered_list)
+        return result.values()
+
     def service_list(self, namespaces=[], service_names=[]):
         """ Returns list of services
         Args:
@@ -222,8 +243,8 @@ class OpenshiftExtendedClient(object):
                 namespace=_item.metadata.namespace,
                 workload_type=workload_type,
                 istio_sidecar=self._contains_sidecar(_item),
-                app_label=self._contains_label(_item, 'app'),
-                version_label=self._contains_label(_item, 'version'))
+                app_label=self._get_label(_item, 'app'),
+                version_label=self._get_label(_item, 'version'))
             items.append(_workload)
         # filter by workload name
         if len(workload_names) > 0:
@@ -239,11 +260,11 @@ class OpenshiftExtendedClient(object):
         except (KeyError, AttributeError, TypeError):
             return False
 
-    def _contains_label(self, item, label):
+    def _get_label(self, item, label):
         try:
-            return item.metadata.labels[label] is not None
+            return item.metadata.labels[label]
         except (KeyError, AttributeError, TypeError):
-            return False
+            return None
 
     def istio_config_list(self, namespaces=[], config_names=[]):
         """ Returns list of Istio Configs """
