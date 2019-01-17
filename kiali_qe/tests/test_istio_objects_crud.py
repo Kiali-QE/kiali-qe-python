@@ -81,7 +81,7 @@ def test_destination_rule_broken(kiali_client, openshift_client, browser):
                        kind='DestinationRule',
                        api_version='networking.istio.io/v1alpha3',
                        service_name=DETAILS,
-                       error_messages=["Host doesn't have a valid service"],
+                       error_messages=["This host has no matching workloads"],
                        check_service_details=True)
 
 
