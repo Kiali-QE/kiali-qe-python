@@ -588,17 +588,21 @@ class ServicesPageTest(AbstractListPageTest):
             openshift_client=openshift_client, page=ServicesPage(browser))
         self.browser = browser
 
-    def assert_random_details(self, filters, force_clear_all=True):
-        # apply filters
-        self.apply_filters(filters=filters, force_clear_all=force_clear_all)
-        # get services from ui
-        services_ui = self.page.content.all_items
+    def assert_random_details(self, filters):
+        # get services from rest api
+        _ns = self.FILTER_ENUM.NAMESPACE.text
+        _namespaces = [_f['value'] for _f in filters if _f['name'] == _ns]
+        _sn = self.FILTER_ENUM.SERVICE_NAME.text
+        _service_names = [_f['value'] for _f in filters if _f['name'] == _sn]
+        logger.debug('Namespaces:{}, Service names:{}'.format(_namespaces, _service_names))
+        services_rest = self.kiali_client.service_list(
+            namespaces=_namespaces, service_names=_service_names)
         # random services filters
-        assert len(services_ui) > 0
-        if len(services_ui) > 3:
-            _random_services = random.sample(services_ui, 3)
+        assert len(services_rest) > 0
+        if len(services_rest) > 3:
+            _random_services = random.sample(services_rest, 3)
         else:
-            _random_services = services_ui
+            _random_services = services_rest
         # create filters
         for _idx, _selected_service in enumerate(_random_services):
             self.assert_details(_selected_service.name, _selected_service.namespace,
@@ -623,13 +627,21 @@ class ServicesPageTest(AbstractListPageTest):
             service_name=name)
         assert service_details_rest
         assert name == service_details_rest.name
-        # TODO add check for service openshift REST details
+        service_details_oc = self.openshift_client.service_details(namespace=namespace,
+                                                                   service_name=name)
+        assert service_details_oc
+        assert name == service_details_oc.name
+
         assert service_details_rest.istio_sidecar\
             == service_details_ui.istio_sidecar
         assert service_details_ui.is_equal(service_details_rest,
                                            advanced_check=True), \
             'Service UI {} not equal to REST {}'\
             .format(service_details_ui, service_details_rest)
+        assert service_details_ui.is_equal(service_details_oc,
+                                           advanced_check=False), \
+            'Service UI {} not equal to OC {}'\
+            .format(service_details_ui, service_details_oc)
         assert service_details_ui.workloads_number\
             == len(service_details_rest.workloads)
         assert service_details_ui.source_workloads_number\
