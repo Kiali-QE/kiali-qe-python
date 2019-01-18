@@ -5,9 +5,10 @@ from openshift.dynamic.exceptions import NotFoundError
 
 from kiali_qe.components.enums import IstioConfigObjectType
 from kiali_qe.entities.istio_config import IstioConfig, Rule
-from kiali_qe.entities.service import Service
+from kiali_qe.entities.service import Service, ServiceDetails
 from kiali_qe.entities.workload import Workload
 from kiali_qe.entities.applications import Application
+from kiali_qe.utils.date import parse_from_rest
 
 
 class OpenshiftExtendedClient(object):
@@ -347,6 +348,33 @@ class OpenshiftExtendedClient(object):
                 filtered_list.extend([_i for _i in items if _name in _i.name])
             return set(filtered_list)
         return items
+
+    def service_details(self, namespace, service_name):
+        """ Returns the details of service
+        Args:
+            namespace: Namespace of the service
+            service_name: Service name
+        """
+        _response = self._service.get(namespace=namespace, name=service_name)
+        _ports = ''
+        for _port in _response.spec.ports:
+            _ports += '{}{} ({}) '.format(_port['protocol'],
+                                          ' ' + _port['name'] if _port['name'] != '' else '',
+                                          _port['port'])
+        _service = ServiceDetails(
+            namespace=_response.metadata.namespace,
+            name=_response.metadata.name,
+            istio_sidecar=None,
+            created_at=parse_from_rest(
+                _response.metadata.creationTimestamp),
+            resource_version=_response.metadata.resourceVersion,
+            service_type=_response.spec.type,
+            ip=_response.spec.clusterIP,
+            ports=_ports.strip(),
+            labels=dict(_response.metadata.labels),
+            health=None)
+
+        return _service
 
     def delete_istio_config(self, name, namespace, kind, api_version):
         try:
