@@ -6,12 +6,24 @@ from openshift.dynamic.exceptions import NotFoundError
 from kiali_qe.components.enums import IstioConfigObjectType
 from kiali_qe.entities.istio_config import IstioConfig, Rule
 from kiali_qe.entities.service import Service, ServiceDetails
-from kiali_qe.entities.workload import Workload
+from kiali_qe.entities.workload import Workload, WorkloadDetails
 from kiali_qe.entities.applications import Application
 from kiali_qe.utils.date import parse_from_rest
 
 
 class OpenshiftExtendedClient(object):
+
+    WORKLOAD_TYPES = {
+        'CronJob': '_cronjob',
+        'DaemonSet': '_daemonset',
+        'Deployment': '_deployment',
+        'DeploymentConfig': '_deploymentconfig',
+        'Job': '_job',
+        'Pod': '_pod',
+        'ReplicaSet': '_replicaset',
+        'ReplicationController': '_replicationcontroller',
+        'StatefulSet': '_statefulset',
+    }
 
     def __init__(self):
         self._k8s_client = config.new_client_from_config()
@@ -193,26 +205,13 @@ class OpenshiftExtendedClient(object):
     def workload_list(self, namespaces=[], workload_names=[]):
         """ Returns list of workloads """
         result = []
-        result.extend(self._workload_list('_cronjob', 'CronJob',
-                                          namespaces=namespaces, workload_names=workload_names))
-        result.extend(self._workload_list('_daemonset', 'DaemonSet',
-                                          namespaces=namespaces, workload_names=workload_names))
-        result.extend(self._workload_list('_deployment', 'Deployment',
-                                          namespaces=namespaces, workload_names=workload_names))
-        result.extend(self._workload_list('_deploymentconfig', 'DeploymentConfig',
-                                          namespaces=namespaces, workload_names=workload_names))
-        # TODO apply Job filters
-        result.extend(self._workload_list('_job', 'Job', namespaces=namespaces,
-                                          workload_names=workload_names))
-        # TODO apply Pod filters
-        result.extend(self._workload_list('_pod', 'Pod', namespaces=namespaces,
-                                          workload_names=workload_names))
-        result.extend(self._workload_list('_replicaset', 'ReplicaSet',
-                                          namespaces=namespaces, workload_names=workload_names))
-        result.extend(self._workload_list('_replicationcontroller', 'ReplicationController',
-                                          namespaces=namespaces, workload_names=workload_names))
-        result.extend(self._workload_list('_statefulset', 'StatefulSet',
-                                          namespaces=namespaces, workload_names=workload_names))
+        for _key, _value in self.WORKLOAD_TYPES.items():
+            # TODO apply Job filters
+            # TODO apply Pod filters
+            result.extend(self._workload_list(_value, _key,
+                                              namespaces=namespaces,
+                                              workload_names=workload_names))
+
         return result
 
     def _workload_list(self, attribute_name, workload_type,
@@ -372,9 +371,34 @@ class OpenshiftExtendedClient(object):
             ip=_response.spec.clusterIP,
             ports=_ports.strip(),
             labels=dict(_response.metadata.labels),
+            # TODO health
             health=None)
 
         return _service
+
+    def workload_details(self, namespace, workload_name, workload_type):
+        """ Returns the details of Workload
+        Args:
+            namespace: Namespace of the service
+            workload_name: Workload name
+            workload_type: Type of workload
+        """
+        _response = getattr(self,
+                            self.WORKLOAD_TYPES[workload_type]).get(
+                                namespace=namespace,
+                                name=workload_name)
+        _workload = WorkloadDetails(
+            workload_type=_response.kind,
+            name=_response.metadata.name,
+            created_at=parse_from_rest(
+                _response.metadata.creationTimestamp),
+            resource_version=_response.metadata.resourceVersion,
+            istio_sidecar=None,
+            labels=dict(_response.metadata.labels),
+            # TODO health
+            health=None)
+
+        return _workload
 
     def delete_istio_config(self, name, namespace, kind, api_version):
         try:
