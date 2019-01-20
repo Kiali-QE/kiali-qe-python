@@ -447,16 +447,20 @@ class WorkloadsPageTest(AbstractListPageTest):
         self.browser = browser
 
     def assert_random_details(self, filters, force_clear_all=True):
-        # apply filters
-        self.apply_filters(filters=filters, force_clear_all=force_clear_all)
-        # get workloads from ui
-        workloads_ui = self.page.content.all_items
+        # get workloads from rest api
+        _ns = self.FILTER_ENUM.NAMESPACE.text
+        _namespaces = [_f['value'] for _f in filters if _f['name'] == _ns]
+        _sn = self.FILTER_ENUM.WORKLOAD_NAME.text
+        _workload_names = [_f['value'] for _f in filters if _f['name'] == _sn]
+        logger.debug('Namespaces:{}, Workload names:{}'.format(_namespaces, _workload_names))
+        workloads_rest = self.kiali_client.workload_list(
+            namespaces=_namespaces, workload_names=_workload_names)
         # random workloads filters
-        assert len(workloads_ui) > 0
-        if len(workloads_ui) > 3:
-            _random_workloads = random.sample(workloads_ui, 3)
+        assert len(workloads_rest) > 0
+        if len(workloads_rest) > 3:
+            _random_workloads = random.sample(workloads_rest, 3)
         else:
-            _random_workloads = workloads_ui
+            _random_workloads = workloads_rest
         # create filters
         for _idx, _selected_workload in enumerate(_random_workloads):
             self.assert_details(_selected_workload.name,
@@ -473,6 +477,7 @@ class WorkloadsPageTest(AbstractListPageTest):
         self.apply_filters(filters=[
             {'name': WorkloadsPageFilter.NAMESPACE.text, 'value': namespace},
             {'name': WorkloadsPageFilter.WORKLOAD_NAME.text, 'value': name}])
+
         # load workload details page
         workload_details_ui = self.page.content.get_details(name, namespace)
         assert workload_details_ui
@@ -485,11 +490,22 @@ class WorkloadsPageTest(AbstractListPageTest):
             workload_name=name)
         assert workload_details_rest
         assert name == workload_details_rest.name
-        # TODO add check for workload openshift REST details
+        # get workload detals from rest
+        workload_details_oc = self.openshift_client.workload_details(
+            namespace=namespace,
+            workload_name=name,
+            workload_type=workload_type)
+        assert workload_details_oc
+        assert name == workload_details_oc.name
+
         assert workload_details_ui.is_equal(workload_details_rest,
                                             advanced_check=True), \
             'Workload UI {} not equal to REST {}'\
             .format(workload_details_ui, workload_details_rest)
+        assert workload_details_ui.is_equal(workload_details_oc,
+                                            advanced_check=False), \
+            'Workload UI {} not equal to OC {}'\
+            .format(workload_details_ui, workload_details_oc)
         if workload_details_ui.pods_number != workload_details_rest.pods_number:
             return False
         if workload_details_ui.services_number != workload_details_rest.services_number:
