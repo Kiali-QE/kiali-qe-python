@@ -14,7 +14,8 @@ from kiali_qe.components import (
     Notifications,
     Pagination,
     SortDropDown,
-    CheckBoxFilter)
+    CheckBoxFilter,
+    NamespaceFilter)
 from kiali_qe.components.enums import (
     MainMenuEnum as MENU,
     UserMenuEnum as USER_MENU)
@@ -91,7 +92,7 @@ class RootPage(View):
 class GraphPage(RootPage):
     PAGE_MENU = MENU.GRAPH.text
 
-    namespace = DropDown(locator=XP_DROP_DOWN.format('namespace-selector'))
+    namespace = NamespaceFilter()
     duration = DropDown(locator=XP_DROP_DOWN.format('graph_filter_duration'))
     interval = DropDown(locator=XP_DROP_DOWN.format('graph_refresh_dropdown'))
     edge_labels = DropDown(locator=XP_DROP_DOWN.format('graph_filter_edges'))
@@ -117,6 +118,7 @@ class OverviewPage(RootPage):
 class ApplicationsPage(RootPage):
     PAGE_MENU = MENU.APPLICATIONS.text
 
+    namespace = NamespaceFilter()
     filter = Filter()
     sort = SortDropDown(locator=XP_DROP_DOWN.format('sortTypeMenu'))
     content = ListViewApplications()
@@ -126,6 +128,7 @@ class ApplicationsPage(RootPage):
 class WorkloadsPage(RootPage):
     PAGE_MENU = MENU.WORKLOADS.text
 
+    namespace = NamespaceFilter()
     filter = Filter()
     sort = SortDropDown(locator=XP_DROP_DOWN.format('sortTypeMenu'))
     content = ListViewWorkloads()
@@ -135,6 +138,7 @@ class WorkloadsPage(RootPage):
 class ServicesPage(RootPage):
     PAGE_MENU = MENU.SERVICES.text
 
+    namespace = NamespaceFilter()
     filter = Filter()
     sort = SortDropDown(locator=XP_DROP_DOWN.format('sortTypeMenu'))
     rate_interval = DropDown(locator=XP_DROP_DOWN.format('rateIntervalDropDown'))
@@ -145,6 +149,7 @@ class ServicesPage(RootPage):
 class IstioConfigPage(RootPage):
     PAGE_MENU = MENU.ISTIO_CONFIG.text
 
+    namespace = NamespaceFilter()
     filter = Filter()
     sort = SortDropDown(locator=XP_DROP_DOWN.format('sortTypeMenu'))
     content = ListViewIstioConfig()
