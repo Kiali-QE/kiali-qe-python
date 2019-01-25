@@ -290,6 +290,17 @@ class KialiExtendedClient(KialiClient):
                                                                     'quotaspecbindings',
                                                                     _policy['metadata']['name'])))
 
+            # update Policy
+            if len(_data['policies']) > 0:
+                for _policy in _data['policies']:
+                    items.append(IstioConfig(
+                        name=_policy['metadata']['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.POLICY.text,
+                        validation=self.get_istio_config_validation(_namespace,
+                                                                    'policies',
+                                                                    _policy['metadata']['name'])))
+
             # update Gateway
             if len(_data['gateways']) > 0:
                 for _policy in _data['gateways']:
