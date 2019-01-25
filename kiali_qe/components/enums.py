@@ -218,7 +218,6 @@ class IstioConfigObjectType(StringEnum):
     SERVICE_ENTRY = ('ServiceEntry')
     QUOTA_SPEC = ('QuotaSpec')
     QUOTA_SPEC_BINDING = ('QuotaSpecBinding')
-    POLICY = ('Policy')
 
 
 class IstioConfigValidationType(StringEnum):
