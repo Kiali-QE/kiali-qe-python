@@ -198,7 +198,7 @@ class KialiExtendedClient(KialiClient):
             return set(filtered_list)
         return items
 
-    def istio_config_list(self, filters=[]):
+    def istio_config_list(self, namespaces=[], filters=[]):
         """Returns list of istio config.
         Args:
             namespaces: can be zero or any number of namespaces
@@ -206,13 +206,10 @@ class KialiExtendedClient(KialiClient):
         items = []
         namespace_list = []
         # filters
-        namespaces = []
         istio_names = []
         istio_types = []
         for _filter in filters:
-            if FILTER_TYPE.NAMESPACE.text in _filter['name']:
-                namespaces.append(_filter['value'])
-            elif FILTER_TYPE.ISTIO_NAME.text in _filter['name']:
+            if FILTER_TYPE.ISTIO_NAME.text in _filter['name']:
                 istio_names.append(_filter['value'])
             elif FILTER_TYPE.ISTIO_TYPE.text in _filter['name']:
                 istio_types.append(_filter['value'])

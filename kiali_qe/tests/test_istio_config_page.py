@@ -1,6 +1,5 @@
 import pytest
 from kiali_qe.tests import IstioConfigPageTest
-from kiali_qe.components.enums import IstioConfigPageFilter
 
 BOOKINFO_2 = 'bookinfo2'
 
@@ -12,8 +11,7 @@ def test_pagination_feature(kiali_client, openshift_client, browser):
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     # use only istio-system namespace which is not affected by other CRUD tests which are using
     # bookinfo
-    tests.apply_filters(filters=[
-            {'name': IstioConfigPageFilter.NAMESPACE.text, 'value': 'istio-system'}])
+    tests.apply_namespaces(['istio-system'])
     tests.assert_pagination_feature()
 
 
@@ -57,5 +55,4 @@ def test_config_details_random(kiali_client, openshift_client, browser, pick_nam
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     # use only bookinfo2 namespace where colliding tests are in the same p_group
     namespace = pick_namespace(BOOKINFO_2)
-    tests.assert_random_details(filters=[
-        {'name': IstioConfigPageFilter.NAMESPACE.text, 'value': namespace}])
+    tests.assert_random_details(namespaces=[namespace])

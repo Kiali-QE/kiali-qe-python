@@ -468,6 +468,7 @@ class CheckBoxFilter(Widget):
         self.browser.execute_script("window.scrollTo(0,0);")
         if not self.is_displayed:
             self._filter_button.click()
+        wait_to_spinner_disappear(self.browser)
 
     def close(self):
         if self.is_displayed:
@@ -502,8 +503,9 @@ class CheckBoxFilter(Widget):
         finally:
             self.close()
 
-    def _cb_action(self, filter_name, action, value=None):
-        self.open()
+    def _cb_action(self, filter_name, action, value=None, skipOpen=False):
+        if not skipOpen:
+            self.open()
         try:
             _cb = Checkbox(locator=self.ITEM.format(filter_name), parent=self)
             if action is 'fill':
@@ -511,7 +513,8 @@ class CheckBoxFilter(Widget):
             elif action is 'read':
                 return _cb.read()
         finally:
-            self.close()
+            if not skipOpen:
+                self.close()
 
     def check(self, filter_name):
         self._cb_action(filter_name, 'fill', True)
@@ -519,8 +522,39 @@ class CheckBoxFilter(Widget):
     def uncheck(self, filter_name):
         self._cb_action(filter_name, 'fill', False)
 
-    def is_checked(self, filter_name):
-        return self._cb_action(filter_name, 'read')
+    def uncheck_all(self):
+        _items = self.items
+        self.open()
+        for _cb_item in _items:
+            self._cb_action(_cb_item, 'fill', False, skipOpen=True)
+        self.close()
+
+    def is_checked(self, filter_name, skipOpen=False):
+        return self._cb_action(filter_name, 'read', skipOpen=skipOpen)
+
+    @property
+    def checked_items(self):
+        _items = self.items
+        checked_items = []
+        self.open()
+        for _cb_item in _items:
+            if self.is_checked(_cb_item, skipOpen=True):
+                checked_items.append(_cb_item)
+        self.close()
+        return checked_items
+
+
+class NamespaceFilter(CheckBoxFilter):
+    def __init__(self, parent, locator=None, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        if locator:
+            self.locator = locator
+        else:
+            self.locator = self.ROOT
+        self._filter_button = Button(
+            parent=self.parent,
+            locator=('//button[@id="namespace-selector"]/'
+                     '..//*[contains(@class, "fa-angle-down")]'))
 
 
 class Pagination(Widget):

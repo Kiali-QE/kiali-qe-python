@@ -17,6 +17,7 @@ class MainMenuEnum(StringEnum):
 
 
 class HelpMenuEnum(StringEnum):
+    VIEW_DEBUG_INFO = ('View Debug Info')
     ABOUT = ('About')
 
 
@@ -102,7 +103,6 @@ class EdgeLabelsFilter(StringEnum):
 class ApplicationsPageFilter(StringEnum):
     APP_NAME = ('App Name')
     ISTIO_SIDECAR = ('Istio Sidecar')
-    NAMESPACE = ('Namespace')
     HEALTH = ('Health')
 
 
@@ -136,7 +136,6 @@ class WorkloadsPageFilter(StringEnum):
     HEALTH = ('Health')
     APP_LABEL = ('App Label')
     VERSION_LABEL = ('Version Label')
-    NAMESPACE = ('Namespace')
 
 
 class WorkloadsPageSort(StringEnum):
@@ -176,7 +175,6 @@ class VersionLabel(StringEnum):
 
 
 class ServicesPageFilter(StringEnum):
-    NAMESPACE = ('Namespace')
     SERVICE_NAME = ('Service Name')
     ISTIO_SIDECAR = ('Istio Sidecar')
     HEALTH = ('Health')
@@ -200,7 +198,6 @@ class IstioConfigPageFilter(StringEnum):
     ISTIO_TYPE = ('Istio Type')
     ISTIO_NAME = ('Istio Name')
     CONFIG = ('Config')
-    NAMESPACE = ('Namespace')
 
 
 class IstioConfigPageSort(StringEnum):

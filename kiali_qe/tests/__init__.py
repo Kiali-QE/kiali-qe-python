@@ -38,14 +38,15 @@ class AbstractListPageTest(object):
         self.page = page
 
     def _namespaces_ui(self):
-        return self.page.filter.filter_options(filter_name=self.FILTER_ENUM.NAMESPACE.text)
+        return self.page.namespace.items
 
-    def assert_all_items(self, filters, force_clear_all=True):
+    def assert_all_items(self, namespaces=[], filters=[], force_clear_all=True):
         """
         Apply supplied filter in to UI, REST, OC and assert content
 
         Parameters
         ----------
+        namespaces: list of namespace names
         filters : list
             A list for filter. filter should be a dict.
             filter = {'name': 'Namespace', 'value': 'bookinfo'}
@@ -58,8 +59,40 @@ class AbstractListPageTest(object):
         """
         raise NotImplementedError('This method should be implemented on sub class')
 
-    def get_additional_filters(self, current_filters):
+    def get_additional_filters(self, namespaces, current_filters):
         raise NotImplementedError('This method should be implemented on sub class')
+
+    def apply_namespaces(self, namespaces, force_clear_all=True):
+        """
+        Apply supplied namespaces in to UI and assert with supplied and applied namespaces
+
+        Parameters
+        ----------
+        namespaces : list
+            A list for namespace names      .
+        force_clear_all : boolean
+            Default True.
+            If this value is True, all existing applied namespaces will be removed.
+        """
+        _pre_filters = []
+        # clear all filters
+        if force_clear_all:
+            self.page.namespace.uncheck_all()
+            assert len(self.page.namespace.checked_items) == 0
+        else:
+            _pre_filters.extend(self.page.namespace.checked_items)
+
+        # apply namespaces
+        for _filter in namespaces:
+            if _filter not in _pre_filters:
+                self.page.namespace.check(_filter)
+            if _filter in _pre_filters:
+                _pre_filters.remove(_filter)
+        # remove filters not in list
+        for _filter in _pre_filters:
+            self.page.namespace.uncheck(_filter)
+
+        self.assert_applied_namespaces(namespaces)
 
     def apply_filters(self, filters, force_clear_all=True):
         """
@@ -69,7 +102,7 @@ class AbstractListPageTest(object):
         ----------
         filters : list
             A list for filter. filter should be a dict.
-            filter = {'name': 'Namespace', 'value': 'bookinfo'}
+            filter = {'name': 'Health', 'value': 'Healthy'}
             Take filter name from pre defined enum
         force_clear_all : boolean
             Default True.
@@ -110,6 +143,12 @@ class AbstractListPageTest(object):
         logger.debug('Filters[applied:{}, active:{}]'.format(filters, _active_filters))
         assert is_equal(filters, _active_filters)
 
+    def assert_applied_namespaces(self, filters):
+        # validate applied namespaces
+        _active_filters = self.page.namespace.checked_items
+        logger.debug('Filters[applied:{}, active:{}]'.format(filters, _active_filters))
+        assert is_equal(filters, _active_filters)
+
     def assert_namespaces(self):
         namespaces_ui = self._namespaces_ui()
         namespaces_rest = self.kiali_client.namespace_list()
@@ -137,13 +176,9 @@ class AbstractListPageTest(object):
             _random_namespaces = random.sample(namespaces_ui, 3)
         else:
             _random_namespaces = namespaces_ui
-        # create filters
-        for _selected_namespace in _random_namespaces:
-            _defined_filters.append(
-                {'name': self.FILTER_ENUM.NAMESPACE.text, 'value': _selected_namespace})
         # add additional filters
         logger.debug('Adding additional filters')
-        _defined_filters.extend(self.get_additional_filters(_defined_filters))
+        _defined_filters.extend(self.get_additional_filters(_random_namespaces, _defined_filters))
         logger.debug('Defined filters with additional filters:{}'.format(_defined_filters))
 
         # apply filters test
@@ -152,17 +187,21 @@ class AbstractListPageTest(object):
             # add it in to applied list
             _applied_filters.append(_defined_filter)
             # apply filter and check the contents
-            self.assert_all_items(filters=_applied_filters, force_clear_all=False)
+            self.assert_all_items(namespaces=_random_namespaces,
+                                  filters=_applied_filters,
+                                  force_clear_all=False)
 
         # remove filters test
         for _defined_filter in _defined_filters:
             # remove it from our list
             _applied_filters.remove(_defined_filter)
             # apply filter and check the contents
-            self.assert_all_items(filters=_applied_filters, force_clear_all=False)
+            self.assert_all_items(namespaces=_random_namespaces,
+                                  filters=_applied_filters,
+                                  force_clear_all=False)
             # test remove all
             if len(_applied_filters) == 2:
-                self.assert_all_items(filters=[], force_clear_all=True)
+                self.assert_all_items(namespaces=[], filters=[], force_clear_all=True)
                 break
 
     def assert_pagination_feature(self):
@@ -283,7 +322,8 @@ class OverviewPageTest(AbstractListPageTest):
         logger.debug('Options[defined:{}, defined:{}]'.format(options_defined, options_listed))
         assert is_equal(options_defined, options_listed)
 
-    def assert_all_items(self, filters, overview_type=TYPE_ENUM.APPS, force_clear_all=True):
+    def assert_all_items(self, filters=[],
+                         overview_type=TYPE_ENUM.APPS, force_clear_all=True):
         # apply overview type
         self.page.type.select(overview_type.text)
 
@@ -327,7 +367,10 @@ class ApplicationsPageTest(AbstractListPageTest):
             openshift_client=openshift_client, page=ApplicationsPage(browser))
         self.browser = browser
 
-    def assert_random_details(self, filters, force_clear_all=True):
+    def assert_random_details(self, namespaces=[], filters=[], force_clear_all=True):
+        # apply namespaces
+        self.apply_namespaces(namespaces, force_clear_all=force_clear_all)
+
         # apply filters
         self.apply_filters(filters=filters, force_clear_all=force_clear_all)
         # get applications from ui
@@ -350,9 +393,10 @@ class ApplicationsPageTest(AbstractListPageTest):
         # load the page first
         self.page.load(force_load=True)
         # TODO apply pagination feature in get_details
+        # apply namespace
+        self.apply_namespaces(namespaces=[namespace])
         # apply filters
         self.apply_filters(filters=[
-            {'name': ApplicationsPageFilter.NAMESPACE.text, 'value': namespace},
             {'name': ApplicationsPageFilter.APP_NAME.text, 'value': name}])
         # load application details page
         application_details_ui = self.page.content.get_details(name, namespace)
@@ -388,28 +432,29 @@ class ApplicationsPageTest(AbstractListPageTest):
 
             self.assert_metrics_options(application_details_ui.outbound_metrics)
 
-    def assert_all_items(self, filters, force_clear_all=True):
+    def assert_all_items(self, namespaces=[], filters=[], force_clear_all=True):
+        # apply namespaces
+        self.apply_namespaces(namespaces, force_clear_all=force_clear_all)
+
         # apply filters
         self.apply_filters(filters=filters, force_clear_all=force_clear_all)
 
         # get applications from rest api
-        _ns = self.FILTER_ENUM.NAMESPACE.text
-        _namespaces = [_f['value'] for _f in filters if _f['name'] == _ns]
         _sn = self.FILTER_ENUM.APP_NAME.text
         _application_names = [_f['value'] for _f in filters if _f['name'] == _sn]
 
-        logger.debug('Namespaces:{}, Application names:{}'.format(_namespaces, _application_names))
+        logger.debug('Namespaces:{}, Application names:{}'.format(namespaces, _application_names))
         # get applications from ui
         applications_ui = self.page.content.all_items
         # get from REST
         applications_rest = self.kiali_client.application_list(
-            namespaces=_namespaces, application_names=_application_names)
+            namespaces=namespaces, application_names=_application_names)
         # get from OC
         applications_oc = self.openshift_client.application_list(
-            namespaces=_namespaces, application_names=_application_names)
+            namespaces=namespaces, application_names=_application_names)
 
         # compare all results
-        logger.debug('Namespaces:{}, Service names:{}'.format(_namespaces, _application_names))
+        logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _application_names))
         logger.debug('Items count[UI:{}, REST:{}]'.format(
             len(applications_ui), len(applications_rest)))
         logger.debug('Applications UI:{}'.format(applications_ui))
@@ -446,15 +491,13 @@ class WorkloadsPageTest(AbstractListPageTest):
             openshift_client=openshift_client, page=WorkloadsPage(browser))
         self.browser = browser
 
-    def assert_random_details(self, filters, force_clear_all=True):
+    def assert_random_details(self, namespaces=[], filters=[], force_clear_all=True):
         # get workloads from rest api
-        _ns = self.FILTER_ENUM.NAMESPACE.text
-        _namespaces = [_f['value'] for _f in filters if _f['name'] == _ns]
         _sn = self.FILTER_ENUM.WORKLOAD_NAME.text
         _workload_names = [_f['value'] for _f in filters if _f['name'] == _sn]
-        logger.debug('Namespaces:{}, Workload names:{}'.format(_namespaces, _workload_names))
+        logger.debug('Namespaces:{}, Workload names:{}'.format(namespaces, _workload_names))
         workloads_rest = self.kiali_client.workload_list(
-            namespaces=_namespaces, workload_names=_workload_names)
+            namespaces=namespaces, workload_names=_workload_names)
         # random workloads filters
         assert len(workloads_rest) > 0
         if len(workloads_rest) > 3:
@@ -473,9 +516,10 @@ class WorkloadsPageTest(AbstractListPageTest):
         # load the page first
         self.page.load(force_load=True)
         # TODO apply pagination feature in get_details
+        # apply namespace
+        self.apply_namespaces(namespaces=[namespace])
         # apply filters
         self.apply_filters(filters=[
-            {'name': WorkloadsPageFilter.NAMESPACE.text, 'value': namespace},
             {'name': WorkloadsPageFilter.WORKLOAD_NAME.text, 'value': name}])
 
         # load workload details page
@@ -548,26 +592,27 @@ class WorkloadsPageTest(AbstractListPageTest):
 
             self.assert_metrics_options(workload_details_ui.outbound_metrics)
 
-    def assert_all_items(self, filters, force_clear_all=True):
+    def assert_all_items(self, namespaces=[], filters=[], force_clear_all=True):
+        # apply namespaces
+        self.apply_namespaces(namespaces, force_clear_all=force_clear_all)
+
         # apply filters
         self.apply_filters(filters=filters, force_clear_all=force_clear_all)
 
         # get workloads from ui
         workloads_ui = self.page.content.all_items
         # get workloads from rest api
-        _ns = self.FILTER_ENUM.NAMESPACE.text
-        _namespaces = [_f['value'] for _f in filters if _f['name'] == _ns]
         _sn = self.FILTER_ENUM.WORKLOAD_NAME.text
         _workload_names = [_f['value'] for _f in filters if _f['name'] == _sn]
-        logger.debug('Namespaces:{}, Workload names:{}'.format(_namespaces, _workload_names))
+        logger.debug('Namespaces:{}, Workload names:{}'.format(namespaces, _workload_names))
         workloads_rest = self.kiali_client.workload_list(
-            namespaces=_namespaces, workload_names=_workload_names)
+            namespaces=namespaces, workload_names=_workload_names)
         # get workloads from OC client
         workloads_oc = self.openshift_client.workload_list(
-            namespaces=_namespaces, workload_names=_workload_names)
+            namespaces=namespaces, workload_names=_workload_names)
 
         # compare all results
-        logger.debug('Namespaces:{}, Service names:{}'.format(_namespaces, _workload_names))
+        logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _workload_names))
         logger.debug('Items count[UI:{}, REST:{}, OC:{}]'.format(
             len(workloads_ui), len(workloads_rest), len(workloads_oc)))
         logger.debug('Workloads UI:{}'.format(workloads_ui))
@@ -604,15 +649,13 @@ class ServicesPageTest(AbstractListPageTest):
             openshift_client=openshift_client, page=ServicesPage(browser))
         self.browser = browser
 
-    def assert_random_details(self, filters):
+    def assert_random_details(self, namespaces=[], filters=[]):
         # get services from rest api
-        _ns = self.FILTER_ENUM.NAMESPACE.text
-        _namespaces = [_f['value'] for _f in filters if _f['name'] == _ns]
         _sn = self.FILTER_ENUM.SERVICE_NAME.text
         _service_names = [_f['value'] for _f in filters if _f['name'] == _sn]
-        logger.debug('Namespaces:{}, Service names:{}'.format(_namespaces, _service_names))
+        logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _service_names))
         services_rest = self.kiali_client.service_list(
-            namespaces=_namespaces, service_names=_service_names)
+            namespaces=namespaces, service_names=_service_names)
         # random services filters
         assert len(services_rest) > 0
         if len(services_rest) > 3:
@@ -629,9 +672,10 @@ class ServicesPageTest(AbstractListPageTest):
         # load the page first
         self.page.load(force_load=True)
         # TODO apply pagination feature in get_details
+        # apply manespace
+        self.apply_namespaces(namespaces=[namespace])
         # apply filters
         self.apply_filters(filters=[
-            {'name': ServicesPageFilter.NAMESPACE.text, 'value': namespace},
             {'name': ServicesPageFilter.SERVICE_NAME.text, 'value': name}])
         # load service details page
         service_details_ui = self.page.content.get_details(name, namespace)
@@ -723,26 +767,27 @@ class ServicesPageTest(AbstractListPageTest):
                 workload_names.append(workload)
         return set(workload_names)
 
-    def assert_all_items(self, filters, force_clear_all=True):
+    def assert_all_items(self, namespaces=[], filters=[], force_clear_all=True):
+        # apply namespaces
+        self.apply_namespaces(namespaces, force_clear_all=force_clear_all)
+
         # apply filters
         self.apply_filters(filters=filters, force_clear_all=force_clear_all)
 
         # get services from ui
         services_ui = self.page.content.all_items
         # get services from rest api
-        _ns = self.FILTER_ENUM.NAMESPACE.text
-        _namespaces = [_f['value'] for _f in filters if _f['name'] == _ns]
         _sn = self.FILTER_ENUM.SERVICE_NAME.text
         _service_names = [_f['value'] for _f in filters if _f['name'] == _sn]
-        logger.debug('Namespaces:{}, Service names:{}'.format(_namespaces, _service_names))
+        logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _service_names))
         services_rest = self.kiali_client.service_list(
-            namespaces=_namespaces, service_names=_service_names)
+            namespaces=namespaces, service_names=_service_names)
         # get services from OC client
         services_oc = self.openshift_client.service_list(
-            namespaces=_namespaces, service_names=_service_names)
+            namespaces=namespaces, service_names=_service_names)
 
         # compare all results
-        logger.debug('Namespaces:{}, Service names:{}'.format(_namespaces, _service_names))
+        logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _service_names))
         logger.debug('Items count[UI:{}, REST:{}, OC:{}]'.format(
             len(services_ui), len(services_rest), len(services_oc)))
         logger.debug('Services UI:{}'.format(services_ui))
@@ -766,10 +811,10 @@ class ServicesPageTest(AbstractListPageTest):
                     break
             assert found, '{} not found in OC'.format(service_ui)
 
-    def get_additional_filters(self, current_filters):
+    def get_additional_filters(self, namespaces, current_filters):
         logger.debug('Current filters:{}'.format(current_filters))
         # get services of a namespace
-        _namespace = current_filters[0]['value']
+        _namespace = namespaces[0]
         logger.debug('Running Services REST query for namespace:{}'.format(_namespace))
         _services = self.kiali_client.service_list(namespaces=[_namespace])
         logger.debug('Query response, Namespace:{}, Services:{}'.format(_namespace, _services))
@@ -796,15 +841,16 @@ class IstioConfigPageTest(AbstractListPageTest):
             openshift_client=openshift_client, page=IstioConfigPage(browser))
         self.browser = browser
 
-    def assert_all_items(self, filters, force_clear_all=True):
+    def assert_all_items(self, namespaces=[], filters=[], force_clear_all=True):
         logger.debug('Filters:{}'.format(filters))
         # load the page first
         self.page.load(force_load=True)
+        # apply namespaces
+        self.apply_namespaces(namespaces, force_clear_all=force_clear_all)
+
         # apply filters
         self.apply_filters(filters=filters, force_clear_all=force_clear_all)
 
-        _ns = self.FILTER_ENUM.NAMESPACE.text
-        _namespaces = [_f['value'] for _f in filters if _f['name'] == _ns]
         _sn = self.FILTER_ENUM.ISTIO_NAME.text
         _istio_names = [_f['value'] for _f in filters if _f['name'] == _sn]
 
@@ -813,12 +859,13 @@ class IstioConfigPageTest(AbstractListPageTest):
         logger.debug('Istio config list UI:{}]'.format(config_list_ui))
 
         # get rules from rest api
-        config_list_rest = self.kiali_client.istio_config_list(filters=filters)
+        config_list_rest = self.kiali_client.istio_config_list(
+            namespaces=namespaces, filters=filters)
         logger.debug('Istio config list REST:{}]'.format(config_list_rest))
 
         # get configs from OC api
         config_list_oc = self.openshift_client.istio_config_list(
-            namespaces=_namespaces, config_names=_istio_names)
+            namespaces=namespaces, config_names=_istio_names)
         logger.debug('Istio config list OC API:{}]'.format(config_list_oc))
 
         # compare 3 way results
@@ -840,7 +887,10 @@ class IstioConfigPageTest(AbstractListPageTest):
             if not found:
                 assert found, '{} not found in OC'.format(config_ui)
 
-    def assert_random_details(self, filters, force_clear_all=True):
+    def assert_random_details(self, namespaces=[], filters=[], force_clear_all=True):
+        # apply namespaces
+        self.apply_namespaces(namespaces, force_clear_all=force_clear_all)
+
         # apply filters
         self.apply_filters(filters=filters, force_clear_all=force_clear_all)
         # get configs from ui
@@ -862,10 +912,11 @@ class IstioConfigPageTest(AbstractListPageTest):
         self.page.load(force_load=True)
         # TODO apply pagination feature in get_details
         # this is done for optimization if the necessary item already exists in page
+        # apply namespace
+        self.apply_namespaces(namespaces=[namespace])
         if apply_filters:
             # apply filters
             self.apply_filters(filters=[
-                {'name': IstioConfigPageFilter.NAMESPACE.text, 'value': namespace},
                 {'name': IstioConfigPageFilter.ISTIO_NAME.text, 'value': name}])
         # load config details page
         config_details_ui = self.page.content.get_details(name, namespace)
@@ -933,13 +984,13 @@ class IstioConfigPageTest(AbstractListPageTest):
                 if not found:
                     assert found, '{} {} not found in REST'.format(ui_key, config_ui)
 
-    def get_additional_filters(self, current_filters):
+    def get_additional_filters(self, namespaces, current_filters):
         logger.debug('Current filters:{}'.format(current_filters))
         # get rules of a namespace
-        _namespace = current_filters[0]['value']
+        _namespace = namespaces[0]
         logger.debug('Running Rules REST query for namespace:{}'.format(_namespace))
         _istio_config_list = self.kiali_client.istio_config_list(
-            filters=[{'name': self.FILTER_ENUM.NAMESPACE.text, 'value': _namespace}])
+            namespaces=[_namespace])
         logger.debug('Query response, Namespace:{}, Istio config list:{}'.format(
             _namespace, _istio_config_list))
         # if we have a config, select a config randomly and return it
