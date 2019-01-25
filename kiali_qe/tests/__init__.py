@@ -840,15 +840,17 @@ class IstioConfigPageTest(AbstractListPageTest):
             if not found:
                 assert found, '{} not found in OC'.format(config_ui)
 
-    def assert_random_details(self, filters):
-        # get istio config from rest api
-        configs_rest = self.kiali_client.istio_config_list(filters)
+    def assert_random_details(self, filters, force_clear_all=True):
+        # apply filters
+        self.apply_filters(filters=filters, force_clear_all=force_clear_all)
+        # get configs from ui
+        configs_ui = self.page.content.all_items
         # random configs filters
-        assert len(configs_rest) > 0
-        if len(configs_rest) > 3:
-            _random_configs = random.sample(configs_rest, 3)
+        assert len(configs_ui) > 0
+        if len(configs_ui) > 3:
+            _random_configs = random.sample(configs_ui, 3)
         else:
-            _random_configs = configs_rest
+            _random_configs = configs_ui
         # create filters
         for _selected_config in _random_configs:
             if _selected_config.object_type != OBJECT_TYPE.RULE.text:
@@ -865,7 +867,6 @@ class IstioConfigPageTest(AbstractListPageTest):
             self.apply_filters(filters=[
                 {'name': IstioConfigPageFilter.NAMESPACE.text, 'value': namespace},
                 {'name': IstioConfigPageFilter.ISTIO_NAME.text, 'value': name}])
-
         # load config details page
         config_details_ui = self.page.content.get_details(name, namespace)
         assert config_details_ui
@@ -881,12 +882,6 @@ class IstioConfigPageTest(AbstractListPageTest):
         assert config_details_rest
         assert name == config_details_rest.name
         assert config_details_rest.text
-        config_details_oc = self.openshift_client.istio_config_details(
-            namespace=namespace,
-            config_name=name,
-            config_type=config_details_ui._type)
-        assert config_details_oc
-        assert name == config_details_oc.name
         for error_message in error_messages:
             assert error_message in config_details_rest.error_messages, \
                 'Error messages:{} is not in List:{}'.format(error_message,
@@ -937,30 +932,6 @@ class IstioConfigPageTest(AbstractListPageTest):
                             break
                 if not found:
                     assert found, '{} {} not found in REST'.format(ui_key, config_ui)
-                found = False
-                # make the OC result into the same format as shown in UI
-                # to compare only the values
-                for config_oc in str(config_details_oc.text).\
-                        replace('\n', '').\
-                        replace('\'', '').\
-                        replace("\\n", '').\
-                        replace(' - ', '').\
-                        replace('{', '').\
-                        replace('}', '').\
-                        replace('"', '').\
-                        replace(',', '').\
-                        replace('[', '').\
-                        replace(']', '').\
-                        split(' '):
-                    if config_oc.endswith(':'):
-                        oc_key = config_oc
-                    else:
-                        # the previous one was the key of this value
-                        if (ui_key == oc_key and config_ui == config_oc) or config_ui == 'null':
-                            found = True
-                            break
-                if not found:
-                    assert found, '{} {} not found in OC'.format(ui_key, config_ui)
 
     def get_additional_filters(self, current_filters):
         logger.debug('Current filters:{}'.format(current_filters))
