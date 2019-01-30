@@ -13,7 +13,8 @@ def kiali_client():
     logger.debug('Kiali hostname: {}'.format(cfg.kiali.hostname))
     _client = KialiExtendedClient(hostname=cfg.kiali.hostname,
                                   username=cfg.kiali.username,
-                                  password=cfg.kiali.password)
+                                  password=cfg.kiali.password,
+                                  swagger_address=cfg.kiali.swagger_address)
     # update kiali version details
     _response = _client.get_response('getStatus')
     _status = _response['status']
