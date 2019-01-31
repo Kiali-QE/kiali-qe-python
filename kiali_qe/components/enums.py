@@ -35,6 +35,16 @@ class ApplicationVersionEnum(StringEnum):
     GRAFANA = ("GrafanaURL")
 
 
+class MaistraEnum(StringEnum):
+    KIALI_UI = ("kiali-ui")
+    KIALI_CORE = ("kiali")
+    MAISTRA = ("Maistra Project")
+    PROMETHEUS = ("Prometheus")
+    KUBERNETES = ("Kubernetes")
+    JAEGER = ("JaegerURL")
+    GRAFANA = ("GrafanaURL")
+
+
 class PaginationPerPage(Enum):
     FIVE = 5
     TEN = 10

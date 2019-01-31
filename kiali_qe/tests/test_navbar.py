@@ -1,6 +1,6 @@
 import pytest
 
-from kiali_qe.components.enums import ApplicationVersionEnum, HelpMenuEnum
+from kiali_qe.components.enums import ApplicationVersionEnum, MaistraEnum, HelpMenuEnum
 from kiali_qe.pages import RootPage
 from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
@@ -14,15 +14,23 @@ def test_about(browser, kiali_client):
     _about = page.navbar.about()
     assert _about.application_logo
     versions_ui = _about.versions
+
+    _response = kiali_client.get_response('getStatus')
+    _products = _response['externalServices']
+
+    if (any(d['name'] == 'Maistra Project' for d in _products)):
+        versions_defined = [item.text for item in MaistraEnum]
+    else:
+        versions_defined = [item.text for item in ApplicationVersionEnum]
+
     logger.debug('Versions information in UI:{}'.format(versions_ui))
-    versions_defined = [item.text for item in ApplicationVersionEnum]
     logger.debug('Application version keys: defined:{}, available:{}'.format(
         versions_defined, versions_ui.keys()))
     assert is_equal(versions_defined, versions_ui.keys())
 
     # compare each versions
     # get version details from REST API
-    _response = kiali_client.get_response('getStatus')
+
     # kiali core version
     _core_rest = '{} ({})'.format(
         _response['status']['Kiali core version'], _response['status']['Kiali core commit hash'])
@@ -35,9 +43,13 @@ def test_about(browser, kiali_client):
     # assert versions_ui[ApplicationVersionEnum.KIALI_UI.text] == _console_rest
 
     # test other product versions
-    _products = _response['externalServices']
-    # check istio version
-    assert versions_ui[ApplicationVersionEnum.ISTIO.text] == _get_version(_products, 'Istio')
+
+    # If Maistra Project version exists, then Check Maistra version or check istio version
+
+    if (any(d['name'] == 'Maistra Project' for d in _products)):
+        assert versions_ui[MaistraEnum.MAISTRA.text] == _get_version(_products, 'Maistra Project')
+    else:
+        assert versions_ui[ApplicationVersionEnum.ISTIO.text] == _get_version(_products, 'Istio')
     # check Prometheus version
     assert versions_ui[ApplicationVersionEnum.PROMETHEUS.text] == _get_version(
         _products, 'Prometheus')
