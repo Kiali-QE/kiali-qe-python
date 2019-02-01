@@ -77,7 +77,7 @@ class AbstractListPageTest(object):
         _pre_filters = []
         # clear all filters
         if force_clear_all:
-            self.page.namespace.uncheck_all()
+            self.page.namespace.clear_all()
             assert len(self.page.namespace.checked_items) == 0
         else:
             _pre_filters.extend(self.page.namespace.checked_items)
@@ -367,20 +367,20 @@ class ApplicationsPageTest(AbstractListPageTest):
             openshift_client=openshift_client, page=ApplicationsPage(browser))
         self.browser = browser
 
-    def assert_random_details(self, namespaces=[], filters=[], force_clear_all=True):
-        # apply namespaces
-        self.apply_namespaces(namespaces, force_clear_all=force_clear_all)
+    def assert_random_details(self, namespaces=[], filters=[]):
+        # get applications from rest api
+        _sn = self.FILTER_ENUM.APP_NAME.text
+        _application_names = [_f['value'] for _f in filters if _f['name'] == _sn]
+        logger.debug('Namespaces:{}, Application names:{}'.format(namespaces, _application_names))
+        applications_rest = self.kiali_client.application_list(
+            namespaces=namespaces, application_names=_application_names)
 
-        # apply filters
-        self.apply_filters(filters=filters, force_clear_all=force_clear_all)
-        # get applications from ui
-        applications_ui = self.page.content.all_items
         # random applications filters
-        assert len(applications_ui) > 0
-        if len(applications_ui) > 3:
-            _random_applications = random.sample(applications_ui, 3)
+        assert len(applications_rest) > 0
+        if len(applications_rest) > 3:
+            _random_applications = random.sample(applications_rest, 3)
         else:
-            _random_applications = applications_ui
+            _random_applications = applications_rest
         # create filters
         for _idx, _selected_application in enumerate(_random_applications):
             self.assert_details(
@@ -392,6 +392,7 @@ class ApplicationsPageTest(AbstractListPageTest):
         logger.debug('Details: {}, {}'.format(name, namespace))
         # load the page first
         self.page.load(force_load=True)
+
         # TODO apply pagination feature in get_details
         # apply namespace
         self.apply_namespaces(namespaces=[namespace])
@@ -408,7 +409,11 @@ class ApplicationsPageTest(AbstractListPageTest):
             application_name=name)
         assert application_details_rest
         assert name == application_details_rest.name
-        # TODO add check for application openshift REST details
+        application_details_oc = self.openshift_client.application_details(
+            namespace=namespace,
+            application_name=name)
+        assert application_details_oc
+
         assert application_details_ui.is_equal(application_details_rest,
                                                advanced_check=True), \
             'Application UI {} not equal to REST {}'\
@@ -422,10 +427,22 @@ class ApplicationsPageTest(AbstractListPageTest):
                     break
             if not found:
                 assert found, 'Workload {} not found in REST {}'.format(workload_ui, workload_rest)
+            found = False
+            for workload_oc in application_details_oc.workloads:
+                if workload_ui.is_equal(workload_oc,
+                                        advanced_check=False):
+                    found = True
+                    break
+            if not found:
+                assert found, 'Workload {} not found in OC {}'.format(workload_ui, workload_oc)
         assert application_details_ui.services == application_details_rest.services, \
             'UI services {} not equal to REST {}'.format(
                 application_details_ui.services,
                 application_details_rest.services)
+        assert is_equal(application_details_ui.services, application_details_oc.services), \
+            'UI services {} not equal to OC {}'.format(
+                application_details_ui.services,
+                application_details_oc.services)
 
         if check_metrics:
             self.assert_metrics_options(application_details_ui.inbound_metrics)

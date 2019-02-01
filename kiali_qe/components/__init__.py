@@ -556,6 +556,13 @@ class NamespaceFilter(CheckBoxFilter):
             locator=('//button[@id="namespace-selector"]/'
                      '..//*[contains(@class, "fa-angle-down")]'))
 
+    def clear_all(self):
+        self.open()
+        self.browser.click(Button(
+            parent=self.parent,
+            locator=('//button[text()="Clear all"]')))
+        self.close()
+
 
 class Pagination(Widget):
     ROOT = ('//*[contains(@class, "list-view-pf-pagination")'
@@ -1374,8 +1381,8 @@ class TableViewAppWorkloads(TableViewAbstract):
             if _values[0] == 'WORKLOAD':
                 _workload = AppWorkload(
                     name=_values[1] if len(_values) >= 2 else '')
-            # append this item to the final list
-            _items.append(_workload)
+                # append this item to the final list
+                _items.append(_workload)
         return _items
 
 
