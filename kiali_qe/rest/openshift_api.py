@@ -7,7 +7,11 @@ from kiali_qe.components.enums import IstioConfigObjectType
 from kiali_qe.entities.istio_config import IstioConfig, Rule, IstioConfigDetails
 from kiali_qe.entities.service import Service, ServiceDetails
 from kiali_qe.entities.workload import Workload, WorkloadDetails
-from kiali_qe.entities.applications import Application
+from kiali_qe.entities.applications import (
+    Application,
+    ApplicationDetails,
+    AppWorkload
+)
 from kiali_qe.utils.date import parse_from_rest
 
 
@@ -39,6 +43,10 @@ class OpenshiftExtendedClient(object):
         'QuotaSpecBinding': '_quotaspecbinding',
         'Policy': '_policy'
     }
+
+    APP_NAME_REGEX = re.compile('(-v\\d+-.*)?(-v\\d+$)?(-(\\w{0,7}\\d+\\w{0,7})$)?')
+
+    WORKLOAD_NAME_REGEX = re.compile('(-(\\w{1,8}\\d+\\w{1,8}))(-(\\w{0,7}\\d+\\w{0,7})$)?')
 
     def __init__(self):
         self._k8s_client = config.new_client_from_config()
@@ -168,10 +176,9 @@ class OpenshiftExtendedClient(object):
         workloads = []
         workloads.extend(self.workload_list(namespaces=namespaces))
 
-        regex = re.compile('(-v\\d+-.*)?(-v\\d+$)?(-(\\w{0,7}\\d+\\w{0,7})$)?')
         for workload in workloads:
             # TODO: istio side car and health needs to be added
-            name = workload.app_label if workload.app_label else re.sub(regex, '', workload.name)
+            name = self._get_app_name(workload)
             result[name+workload.namespace] = Application(name, workload.namespace)
         # filter by service name
         if len(application_names) > 0:
@@ -198,11 +205,13 @@ class OpenshiftExtendedClient(object):
             _raw_items.extend(_response.items)
         for _item in _raw_items:
             # update all the services to our custom entity
-            # TODO: istio side car and heath needs to be added
+            # TODO: heath needs to be added
             _service = Service(
                 namespace=_item.metadata.namespace,
                 name=_item.metadata.name,
-                istio_sidecar=None,
+                istio_sidecar=self._contains_sidecar(_item),
+                app_label=self._get_label(_item, 'app'),
+                version_label=self._get_label(_item, 'version'),
                 health=None)
             items.append(_service)
         # filter by service name
@@ -277,6 +286,18 @@ class OpenshiftExtendedClient(object):
         except (KeyError, AttributeError, TypeError):
             return None
 
+    def _get_app_name(self, workload):
+        return workload.app_label if workload.app_label else re.sub(
+            self.APP_NAME_REGEX,
+            '',
+            workload.name)
+
+    def _get_workload_name(self, workload):
+        return re.sub(
+            self.WORKLOAD_NAME_REGEX,
+            '',
+            workload.name)
+
     def istio_config_list(self, namespaces=[], config_names=[]):
         """ Returns list of Istio Configs """
         result = []
@@ -336,6 +357,39 @@ class OpenshiftExtendedClient(object):
                 filtered_list.extend([_i for _i in items if _name in _i.name])
             return set(filtered_list)
         return items
+
+    def application_details(self, namespace, application_name):
+        """ Returns the details of Application
+        Args:
+            namespace: Namespace of the service
+            application_name: Application name
+        """
+        workloads = {}
+        services = []
+        all_workloads = self.workload_list(namespaces=[namespace])
+        all_services = self.service_list(namespaces=[namespace])
+
+        for workload in all_workloads:
+            if application_name == self._get_app_name(workload):
+                workload_name = self._get_workload_name(workload)
+                workloads[workload_name] = AppWorkload(
+                        name=workload_name,
+                        # TODO sidecar
+                        istio_sidecar=None)
+
+        for service in all_services:
+            if application_name == self._get_app_name(service):
+                services.append(service.name)
+
+        _application = ApplicationDetails(
+            name=application_name,
+            workloads=workloads.values(),
+            services=list(set(services)),
+            istio_sidecar=None,
+            # TODO health
+            health=None)
+
+        return _application
 
     def service_details(self, namespace, service_name):
         """ Returns the details of service

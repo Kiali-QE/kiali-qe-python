@@ -64,10 +64,13 @@ class Service(EntityBase):
         name: name of the service
         namespace: namespace where service is located
         istio_sidecar: Is istio side car available
+        app_label: App label
+        version_label: version label
         health: health status
     """
 
-    def __init__(self, name, namespace, istio_sidecar=False, health=None):
+    def __init__(self, name, namespace, istio_sidecar=None,
+                 app_label=None, version_label=None, health=None):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         if namespace is None:
@@ -75,16 +78,22 @@ class Service(EntityBase):
         self.name = name
         self.namespace = namespace
         self.istio_sidecar = istio_sidecar
+        self.app_label = app_label
+        self.version_label = version_label
         self.health = health
 
     def __str__(self):
-        return 'name:{}, namespace:{}, istio_sidecar:{}, health:{}'.format(
-            self.name, self.namespace, self.istio_sidecar, self.health)
+        return 'name:{}, namespace:{}, istio_sidecar:{}, app_label:{}, '\
+            'version_label:{}, health:{}'.format(
+                self.name, self.namespace, self.istio_sidecar,
+                self.app_label, self.version_label, self.health)
 
     def __repr__(self):
-        return "{}({}, {}, {}, {})".format(
+        return "{}({}, {}, {}, {}, {}, {})".format(
             type(self).__name__,
-            repr(self.name), repr(self.namespace), repr(self.istio_sidecar), repr(self.health))
+            repr(self.name), repr(self.namespace),
+            repr(self.istio_sidecar), repr(self.app_label),
+            repr(self.version_label), repr(self.health))
 
     def __hash__(self):
         return (hash(self.name) ^ hash(self.namespace) ^ hash(self.istio_sidecar))
