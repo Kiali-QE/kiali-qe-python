@@ -1085,8 +1085,9 @@ class ListViewWorkloads(ListViewAbstract):
 
         _table_view_services = TableViewServices(self.parent, self.locator, self.logger)
 
-        _table_view_destination_services = TableViewDestinationServices(
-            self.parent, self.locator, self.logger)
+        # TODO Traffic tab
+        # _table_view_destination_services = TableViewDestinationServices(
+        #     self.parent, self.locator, self.logger)
 
         _inbound_metrics = MetricsView(self.parent, self.INBOUND_METRICS)
 
@@ -1101,10 +1102,8 @@ class ListViewWorkloads(ListViewAbstract):
                                health=self._get_details_health(),
                                pods_number=_table_view_pods.number,
                                services_number=_table_view_services.number,
-                               destination_services_number=_table_view_destination_services.number,
                                pods=_table_view_pods.all_items,
                                services=_table_view_services.all_items,
-                               destination_services=_table_view_destination_services.all_items,
                                labels=self._get_details_labels(),
                                inbound_metrics=_inbound_metrics,
                                outbound_metrics=_outbound_metrics)

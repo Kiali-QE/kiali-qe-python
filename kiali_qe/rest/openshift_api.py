@@ -41,7 +41,8 @@ class OpenshiftExtendedClient(object):
         'Template: metric': '_metric',
         'QuotaSpec': '_quotaspec',
         'QuotaSpecBinding': '_quotaspecbinding',
-        'Policy': '_policy'
+        'Policy': '_policy',
+        'MeshPolicy': '_meshpolicy'
     }
 
     APP_NAME_REGEX = re.compile('(-v\\d+-.*)?(-v\\d+$)?(-(\\w{0,7}\\d+\\w{0,7})$)?')
@@ -153,6 +154,10 @@ class OpenshiftExtendedClient(object):
     @property
     def _policy(self):
         return self._istio_config(kind='Policy', api_version='v1alpha1')
+
+    @property
+    def _meshpolicy(self):
+        return self._istio_config(kind='MeshPolicy', api_version='v1alpha1')
 
     def namespace_list(self):
         """ Returns list of namespaces """
@@ -344,6 +349,13 @@ class OpenshiftExtendedClient(object):
                                  resource_type, _item.kind))
                 # append this item to the final list
                 items.append(_rule)
+            elif str(resource_type) == IstioConfigObjectType.MESH_POLICY.text:
+                _config = IstioConfig(name=_item.metadata.name,
+                                      namespace="istio-system",
+                                      object_type=resource_type)
+                if _config not in items:
+                    # append this item to the final list
+                    items.append(_config)
             else:
                 _config = IstioConfig(name=_item.metadata.name,
                                       namespace=_item.metadata.namespace,

@@ -301,6 +301,17 @@ class KialiExtendedClient(KialiClient):
                                                                     'policies',
                                                                     _policy['metadata']['name'])))
 
+            # update MeshPolicy
+            if len(_data['meshPolicies']) > 0:
+                for _policy in _data['meshPolicies']:
+                    items.append(IstioConfig(
+                        name=_policy['metadata']['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.MESH_POLICY.text,
+                        validation=self.get_istio_config_validation(_namespace,
+                                                                    'meshpolicies',
+                                                                    _policy['metadata']['name'])))
+
             # update Gateway
             if len(_data['gateways']) > 0:
                 for _policy in _data['gateways']:
