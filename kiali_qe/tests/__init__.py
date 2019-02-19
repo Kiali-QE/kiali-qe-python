@@ -571,9 +571,9 @@ class WorkloadsPageTest(AbstractListPageTest):
             return False
         if workload_details_ui.services_number != workload_details_rest.services_number:
             return False
-        if workload_details_ui.destination_services_number \
-                != workload_details_rest.destination_services_number:
-            return False
+        # if workload_details_ui.destination_services_number \
+        #         != workload_details_rest.destination_services_number:
+        #     return False
         for pod_ui in workload_details_ui.pods:
             found = False
             for pod_rest in workload_details_rest.pods:
@@ -592,7 +592,7 @@ class WorkloadsPageTest(AbstractListPageTest):
                     break
             if not found:
                 assert found, 'Service {} not found in REST {}'.format(service_ui, service_rest)
-        for destination_service_ui in workload_details_ui.destination_services:
+        '''for destination_service_ui in workload_details_ui.destination_services:
             found = False
             for destination_service_rest in workload_details_rest.destination_services:
                 if destination_service_ui.is_equal(destination_service_rest,
@@ -602,7 +602,7 @@ class WorkloadsPageTest(AbstractListPageTest):
             if not found:
                 assert found, 'Destination Service {} not found in REST {}'.format(
                     destination_service_ui,
-                    destination_service_rest)
+                    destination_service_rest)'''
 
         if check_metrics:
             self.assert_metrics_options(workload_details_ui.inbound_metrics)

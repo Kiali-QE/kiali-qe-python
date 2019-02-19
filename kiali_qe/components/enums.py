@@ -59,10 +59,6 @@ class GraphPageDuration(StringEnum):
     LAST_HOUR = ('Last hour')
     LAST_3_HOURS = ('Last 3 hours')
     LAST_6_HOURS = ('Last 6 hours')
-    LAST_12_HOURS = ('Last 12 hours')
-    LAST_DAY = ('Last day')
-    LAST_7_DAYS = ('Last 7 days')
-    LAST_30_DAYS = ('Last 30 days')
 
 
 class GraphRefreshInterval(StringEnum):
@@ -226,6 +222,7 @@ class IstioConfigObjectType(StringEnum):
     QUOTA_SPEC = ('QuotaSpec')
     QUOTA_SPEC_BINDING = ('QuotaSpecBinding')
     POLICY = ('Policy')
+    MESH_POLICY = ('MeshPolicy')
 
 
 class IstioConfigValidationType(StringEnum):
@@ -276,10 +273,6 @@ class MetricsDuration(StringEnum):
     LAST_HOUR = ('Last hour')
     LAST_3_HOURS = ('Last 3 hours')
     LAST_6_HOURS = ('Last 6 hours')
-    LAST_12_HOURS = ('Last 12 hours')
-    LAST_DAY = ('Last day')
-    LAST_7_DAYS = ('Last 7 days')
-    LAST_30_DAYS = ('Last 30 days')
 
 
 class MetricsRefreshInterval(StringEnum):
