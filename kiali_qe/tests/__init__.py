@@ -592,17 +592,17 @@ class WorkloadsPageTest(AbstractListPageTest):
                     break
             if not found:
                 assert found, 'Service {} not found in REST {}'.format(service_ui, service_rest)
-        '''for destination_service_ui in workload_details_ui.destination_services:
+        for traffic_rest in workload_details_rest.traffic:
             found = False
-            for destination_service_rest in workload_details_rest.destination_services:
-                if destination_service_ui.is_equal(destination_service_rest,
-                                                   advanced_check=True):
+            for traffic_ui in workload_details_ui.traffic:
+                if traffic_ui.is_equal(traffic_rest,
+                                                   advanced_check=False):
                     found = True
                     break
             if not found:
-                assert found, 'Destination Service {} not found in REST {}'.format(
-                    destination_service_ui,
-                    destination_service_rest)'''
+                assert found, 'Outbound Traffic Service {} not found in UI {}'.format(
+                    traffic_rest,
+                    traffic_ui)
 
         if check_metrics:
             self.assert_metrics_options(workload_details_ui.inbound_metrics)

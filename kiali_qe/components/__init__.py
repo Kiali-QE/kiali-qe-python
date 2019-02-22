@@ -1085,9 +1085,7 @@ class ListViewWorkloads(ListViewAbstract):
 
         _table_view_services = TableViewServices(self.parent, self.locator, self.logger)
 
-        # TODO Traffic tab
-        # _table_view_destination_services = TableViewDestinationServices(
-        #     self.parent, self.locator, self.logger)
+        _traffic = TrafficView(self.parent, self.locator, self.logger)
 
         _inbound_metrics = MetricsView(self.parent, self.INBOUND_METRICS)
 
@@ -1105,6 +1103,7 @@ class ListViewWorkloads(ListViewAbstract):
                                pods=_table_view_pods.all_items,
                                services=_table_view_services.all_items,
                                labels=self._get_details_labels(),
+                               traffic=_traffic.items,
                                inbound_metrics=_inbound_metrics,
                                outbound_metrics=_outbound_metrics)
 
@@ -1787,17 +1786,27 @@ class TableViewServices(TableViewAbstract):
         return _items
 
 
-class TableViewDestinationServices(TableViewAbstract):
-    DESTS_TEXT = 'Destination Services'
-    ROWS = '//div[contains(@class, "card-pf")]\
-    //div[contains(@class, "row-cards-pf")]\
-    //div[contains(@class, "card-pf-body")]'
-    DEST = './/div[contains(@class, "progress-description")]'
-    COLUMN = './/li'
+class TrafficView(Widget):
+    TRAFFIC_TAB = '//ul[contains(@class, "nav-tabs-pf")]//'\
+        'li//a//div[contains(text(), "Traffic")]/..'
+    ROOT = '//div[@id="basic-tabs"]'
+    TRAFFIC_ROOT = '//div[@id="basic-tabs-pane-traffic"]'
+    ROWS = '//span[contains(@class, "table-grid-pf-col")]'\
+        '//span[contains(@class, "pficon-service")]/../a'
+
+    def __init__(self, parent, locator=None, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        if locator:
+            self.locator = locator
+        else:
+            self.locator = self.ROOT
+
+    def __locator__(self):
+        return self.locator
 
     def open(self):
-        tab = self.browser.element(locator=self.SERVICES_TAB.format(self.DESTS_TEXT),
-                                   parent=self.SERVICE_DETAILS_ROOT)
+        tab = self.browser.element(locator=self.TRAFFIC_TAB,
+                                   parent=self.ROOT)
         try:
             self.browser.click(tab)
         finally:
@@ -1805,30 +1814,18 @@ class TableViewDestinationServices(TableViewAbstract):
         wait_displayed(self)
 
     @property
-    def number(self):
-        _wl_text = self.browser.text(locator=self.SERVICES_TAB.format(self.DESTS_TEXT),
-                                     parent=self.SERVICE_DETAILS_ROOT)
-        return int(re.search(r'\d+', _wl_text).group())
-
-    @property
     def items(self):
         self.open()
 
         _items = []
-        for el in self.browser.elements(locator=self.ROWS.format(
-            'service-tabs-pane-destinationServices'),
-                                        parent=self.ROOT):
-            _from = self.browser.element(
-                locator=self.DEST,
-                parent=el).text.replace('From:', '').strip()
-            _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
-            for _column in _columns:
-                # destination service object creation
-                _service = DestinationService(
-                    _from=_from,
-                    name=_column.text.strip())
-                # append this item to the final list
-                _items.append(_service)
+        for el in self.browser.elements(locator=self.ROWS,
+                                        parent=self.TRAFFIC_ROOT):
+            # destination service object creation
+            _service = DestinationService(
+                _from=None,
+                name=el.text.strip())
+            # append this item to the final list
+            _items.append(_service)
         return _items
 
 
