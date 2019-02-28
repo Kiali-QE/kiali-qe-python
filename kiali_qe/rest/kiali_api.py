@@ -630,8 +630,7 @@ class KialiExtendedClient(KialiClient):
                 labels=self.get_labels(_workload_data),
                 pods_number=len(_pods),
                 services_number=len(_services),
-                destination_services_number=len(_destination_services),
-                destination_services=_destination_services,
+                traffic=_destination_services,
                 pods=_pods,
                 services=_services)
         return _workload

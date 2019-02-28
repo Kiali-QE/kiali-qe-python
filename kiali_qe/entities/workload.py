@@ -79,12 +79,10 @@ class WorkloadDetails(EntityBase):
             if 'pods_number' in kwargs else None
         self.services_number = kwargs['services_number']\
             if 'services_number' in kwargs else None
-        self.destination_services_number = kwargs['destination_services_number']\
-            if 'destination_services_number' in kwargs else None
         self.services = kwargs['services']\
             if 'services' in kwargs else None
-        self.destination_services = kwargs['destination_services']\
-            if 'destination_services' in kwargs else None
+        self.traffic = kwargs['traffic']\
+            if 'traffic' in kwargs else None
         self.pods = kwargs['pods']\
             if 'pods' in kwargs else None
         self.inbound_metrics = kwargs['inbound_metrics']\
@@ -259,9 +257,7 @@ class DestinationService(EntityBase):
         namespace: namespace of service (optional)
     """
 
-    def __init__(self, _from, name, namespace=None):
-        if _from is None:
-            raise KeyError("'_from' should not be 'None'")
+    def __init__(self, name, _from=None, namespace=None):
         self._from = _from
         self.name = name
         self.namespace = namespace
@@ -285,11 +281,11 @@ class DestinationService(EntityBase):
         # basic check
         if not isinstance(other, DestinationService):
             return False
-        if self._from != other._from:
+        if self.name != other.name:
             return False
         # advanced check
         if not advanced_check:
             return True
-        if self.name != other.name:
+        if self._from != other._from:
             return False
         return True
