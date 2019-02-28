@@ -72,7 +72,8 @@ class KialiExtendedClient(KialiClient):
                     istio_sidecar=_service_rest['istioSidecar'],
                     health=self.get_service_health(
                         namespace=_namespace,
-                        service_name=_service_rest['name']))
+                        service_name=_service_rest['name'],
+                        istioSidecar=_service_rest['istioSidecar']))
                 items.append(_service)
         # filter by service name
         if len(service_names) > 0:
@@ -518,7 +519,8 @@ class KialiExtendedClient(KialiClient):
                     labels=self.get_labels(_service_data['service']),
                     health=self.get_service_health(
                         namespace=namespace,
-                        service_name=service_name),
+                        service_name=service_name,
+                        istioSidecar=_service_rest.istio_sidecar),
                     workloads=workloads,
                     source_workloads=source_workloads,
                     virtual_services=virtual_services,
@@ -669,12 +671,15 @@ class KialiExtendedClient(KialiClient):
                 services=_services)
         return _application
 
-    def get_service_health(self, namespace, service_name):
+    def get_service_health(self, namespace, service_name, istioSidecar):
         """Returns Health of Service.
         Args:
             namespaces: namespace where Service is located
             service_name: name of Service
         """
+
+        if not istioSidecar:  # without sidecar no health is available
+            return HEALTH_TYPE.NA
 
         _health_data = self.get_response('serviceHealth',
                                          namespace=namespace,

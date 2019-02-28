@@ -38,8 +38,7 @@ class Requests(EntityBase):
 
     def is_equal(self, other):
         return isinstance(other, Requests)\
-         and self.request_count == other.request_count\
-         and self.request_error_count == other.request_error_count
+         and self.errorRatio == other.errorRatio
 
 
 class DeploymentStatus(EntityBase):

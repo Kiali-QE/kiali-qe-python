@@ -79,10 +79,10 @@ class GraphPageLayout(StringEnum):
 
 
 class GraphType(StringEnum):
-    APP = ('App')
-    SERVICE = ('Service')
-    VERSIONED_APP = ('Versioned app')
-    WORKLOAD = ('Workload')
+    APP = ('App graph')
+    SERVICE = ('Service graph')
+    VERSIONED_APP = ('Versioned app graph')
+    WORKLOAD = ('Workload graph')
 
 
 class GraphPageDisplayFilter(StringEnum):
