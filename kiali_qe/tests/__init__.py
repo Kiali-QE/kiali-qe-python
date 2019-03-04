@@ -1008,18 +1008,23 @@ class IstioConfigPageTest(AbstractListPageTest):
                 found = False
                 # make the OC result into the same format as shown in UI
                 # to compare only the values
-                for config_oc in str(config_details_oc.text).\
-                        replace('\n', '').\
-                        replace('\'', '').\
-                        replace("\\n", '').\
-                        replace(' - ', '').\
-                        replace('{', '').\
-                        replace('}', '').\
-                        replace('"', '').\
-                        replace(',', '').\
-                        replace('[', '').\
-                        replace(']', '').\
-                        split(' '):
+                config_oc_list = str(config_details_oc.text).\
+                    replace('\n', '').\
+                    replace('\'', '').\
+                    replace("\\n", '').\
+                    replace(' - ', '').\
+                    replace('{', '').\
+                    replace('}', '').\
+                    replace('"', '').\
+                    replace(',', '').\
+                    replace('[', '').\
+                    replace(']', '').\
+                    split(' ')
+                config_oc_list.append('kind:')
+                config_oc_list.append(config_details_oc._type)
+                if ui_key == 'apiVersion:':
+                    continue
+                for config_oc in config_oc_list:
                     if config_oc.endswith(':'):
                         oc_key = config_oc
                     else:

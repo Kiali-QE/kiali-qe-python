@@ -223,6 +223,9 @@ class IstioConfigObjectType(StringEnum):
     QUOTA_SPEC_BINDING = ('QuotaSpecBinding')
     POLICY = ('Policy')
     MESH_POLICY = ('MeshPolicy')
+    CLUSTER_RBAC_CONFIG = ('ClusterRbacConfig')
+    SERVICE_ROLE = ('ServiceRole')
+    SERVICE_ROLE_BINDING = ('ServiceRoleBinding')
 
 
 class IstioConfigValidationType(StringEnum):
