@@ -355,7 +355,7 @@ class OverviewPageTest(AbstractListPageTest):
                 if overview_ui.is_equal(overview_rest, advanced_check=False):
                     found = True
                     break
-            assert found, '{} not found in REST'.format(overview_ui)
+            assert found, '{} not found in REST {}'.format(overview_ui, overviews_rest)
 
 
 class ApplicationsPageTest(AbstractListPageTest):
@@ -596,7 +596,7 @@ class WorkloadsPageTest(AbstractListPageTest):
             found = False
             for traffic_ui in workload_details_ui.traffic:
                 if traffic_ui.is_equal(traffic_rest,
-                                                   advanced_check=False):
+                                       advanced_check=False):
                     found = True
                     break
             if not found:
@@ -820,13 +820,15 @@ class ServicesPageTest(AbstractListPageTest):
                 if service_ui.is_equal(service_rest, advanced_check=True):
                     found = True
                     break
-            assert found, '{} not found in REST'.format(service_ui)
+            if not found:
+                assert found, '{} not found in REST'.format(service_ui)
             found = False
             for service_oc in services_oc:
                 if service_ui.is_equal(service_oc, advanced_check=False):
                     found = True
                     break
-            assert found, '{} not found in OC'.format(service_ui)
+            if not found:
+                assert found, '{} not found in OC'.format(service_ui)
 
     def get_additional_filters(self, namespaces, current_filters):
         logger.debug('Current filters:{}'.format(current_filters))
