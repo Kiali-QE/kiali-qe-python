@@ -63,7 +63,6 @@ class GraphPageDuration(StringEnum):
 
 class GraphRefreshInterval(StringEnum):
     PAUSE = ('Pause')
-    IN_5_SECONDS = ('Every 5 sec')
     IN_10_SECONDS = ('Every 10 sec')
     IN_15_SECONDS = ('Every 15 sec')
     IN_30_SECONDS = ('Every 30 sec')
@@ -280,7 +279,6 @@ class MetricsDuration(StringEnum):
 
 class MetricsRefreshInterval(StringEnum):
     PAUSE = ('Pause')
-    IN_5_SECONDS = ('Every 5 sec')
     IN_10_SECONDS = ('Every 10 sec')
     IN_15_SECONDS = ('Every 15 sec')
     IN_30_SECONDS = ('Every 30 sec')
