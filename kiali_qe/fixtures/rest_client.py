@@ -34,7 +34,12 @@ def kiali_client():
 
 @pytest.fixture(scope='session')
 def openshift_client():
-    logger.debug('Creating opeshift rest client')
-    _client = OpenshiftExtendedClient()
-    logger.info('Openshift versions:\n{}'.format(json.dumps(_client.version, indent=2)))
-    return _client
+    if cfg.kiali.skip_oc:
+        logger.debug('Skipping Openshift rest client because of cfg.kiali.skip_oc')
+        # TODO Temporary solution as OC client does not support OCP4
+        return kiali_client()
+    else:
+        logger.debug('Creating Openshift rest client')
+        _client = OpenshiftExtendedClient()
+        logger.info('Openshift versions:\n{}'.format(json.dumps(_client.version, indent=2)))
+        return _client

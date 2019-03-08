@@ -52,23 +52,23 @@ class PaginationPerPage(Enum):
 
 
 class GraphPageDuration(StringEnum):
-    LAST_MINUTE = ('Last min')
-    LAST_5_MINUTES = ('Last 5 min')
-    LAST_10_MINUTES = ('Last 10 min')
-    LAST_30_MINUTES = ('Last 30 min')
-    LAST_HOUR = ('Last hour')
-    LAST_3_HOURS = ('Last 3 hours')
-    LAST_6_HOURS = ('Last 6 hours')
+    LAST_MINUTE = ('Last 1m')
+    LAST_5_MINUTES = ('Last 5m')
+    LAST_10_MINUTES = ('Last 10m')
+    LAST_30_MINUTES = ('Last 30m')
+    LAST_HOUR = ('Last 1h')
+    LAST_3_HOURS = ('Last 3h')
+    LAST_6_HOURS = ('Last 6h')
 
 
 class GraphRefreshInterval(StringEnum):
     PAUSE = ('Pause')
-    IN_10_SECONDS = ('Every 10 sec')
-    IN_15_SECONDS = ('Every 15 sec')
-    IN_30_SECONDS = ('Every 30 sec')
-    IN_1_MINUTE = ('Every 1 min')
-    IN_5_MINUTES = ('Every 5 min')
-    IN_15_MINUTES = ('Every 15 min')
+    IN_10_SECONDS = ('Every 10s')
+    IN_15_SECONDS = ('Every 15s')
+    IN_30_SECONDS = ('Every 30s')
+    IN_1_MINUTE = ('Every 1m')
+    IN_5_MINUTES = ('Every 5m')
+    IN_15_MINUTES = ('Every 15m')
 
 
 class GraphPageLayout(StringEnum):
@@ -265,16 +265,6 @@ class MetricsHistograms(StringEnum):
 class MetricsSource(StringEnum):
     SOURCE = ('Source')
     DESTINATION = ('Destination')
-
-
-class MetricsDuration(StringEnum):
-    LAST_MINUTE = ('Last min')
-    LAST_5_MINUTES = ('Last 5 min')
-    LAST_10_MINUTES = ('Last 10 min')
-    LAST_30_MINUTES = ('Last 30 min')
-    LAST_HOUR = ('Last hour')
-    LAST_3_HOURS = ('Last 3 hours')
-    LAST_6_HOURS = ('Last 6 hours')
 
 
 class MetricsRefreshInterval(StringEnum):
