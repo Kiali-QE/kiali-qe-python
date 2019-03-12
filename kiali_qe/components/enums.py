@@ -265,13 +265,3 @@ class MetricsHistograms(StringEnum):
 class MetricsSource(StringEnum):
     SOURCE = ('Source')
     DESTINATION = ('Destination')
-
-
-class MetricsRefreshInterval(StringEnum):
-    PAUSE = ('Pause')
-    IN_10_SECONDS = ('Every 10 sec')
-    IN_15_SECONDS = ('Every 15 sec')
-    IN_30_SECONDS = ('Every 30 sec')
-    IN_1_MINUTE = ('Every 1 min')
-    IN_5_MINUTES = ('Every 5 min')
-    IN_15_MINUTES = ('Every 15 min')
