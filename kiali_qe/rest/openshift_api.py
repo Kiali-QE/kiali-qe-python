@@ -455,17 +455,17 @@ class OpenshiftExtendedClient(object):
 
         return _workload
 
-    def istio_config_details(self, namespace, config_name, config_type):
+    def istio_config_details(self, namespace, object_name, object_type):
         """ Returns the details of Istio Config
         Args:
             namespace: Namespace of the config
-            config_name: config name
-            config_type: Type of config
+            object_name: config name
+            object_type: Type of config
         """
         _response = getattr(self,
-                            self.CONFIG_TYPES[config_type]).get(
+                            self.CONFIG_TYPES[object_type]).get(
                                 namespace=namespace,
-                                name=config_name)
+                                name=object_name)
         config = IstioConfigDetails(
                     name=_response.metadata.name,
                     _type=_response.kind,

@@ -13,7 +13,7 @@ from kiali_qe.components.enums import (
     MetricsSource,
     MetricsHistograms,
     MetricsFilter,
-    MetricsDuration,
+    GraphPageDuration,
     MetricsRefreshInterval,
     OverviewPageType
 )
@@ -288,7 +288,7 @@ class AbstractListPageTest(object):
         self._assert_metrics_options(metrics_page, MetricsSource, 'destination')
 
     def _assert_metrics_duration(self, metrics_page):
-        self._assert_metrics_options(metrics_page, MetricsDuration, 'duration')
+        self._assert_metrics_options(metrics_page, GraphPageDuration, 'duration')
 
     def _assert_metrics_interval(self, metrics_page):
         self._assert_metrics_options(metrics_page, MetricsRefreshInterval, 'interval')
@@ -548,7 +548,8 @@ class WorkloadsPageTest(AbstractListPageTest):
         # get workload detals from rest
         workload_details_rest = self.kiali_client.workload_details(
             namespace=namespace,
-            workload_name=name)
+            workload_name=name,
+            workload_type=workload_type)
         assert workload_details_rest
         assert name == workload_details_rest.name
         # get workload detals from rest
@@ -851,8 +852,6 @@ class ServicesPageTest(AbstractListPageTest):
 
 class IstioConfigPageTest(AbstractListPageTest):
     FILTER_ENUM = IstioConfigPageFilter
-    ISTIO_CONFIG_TYPES = {'DestinationRule': 'destinationrules',
-                          'VirtualService': 'virtualservices'}
 
     def __init__(self, kiali_client, openshift_client, browser):
         AbstractListPageTest.__init__(
@@ -879,7 +878,7 @@ class IstioConfigPageTest(AbstractListPageTest):
 
         # get rules from rest api
         config_list_rest = self.kiali_client.istio_config_list(
-            namespaces=namespaces, filters=filters)
+            namespaces=namespaces, config_names=_istio_names)
         logger.debug('Istio config list REST:{}]'.format(config_list_rest))
 
         # get configs from OC api
@@ -944,15 +943,15 @@ class IstioConfigPageTest(AbstractListPageTest):
         # get config detals from rest
         config_details_rest = self.kiali_client.istio_config_details(
             namespace=namespace,
-            object_type=self.ISTIO_CONFIG_TYPES[config_details_ui._type],
+            object_type=config_details_ui._type,
             object_name=name)
         assert config_details_rest
         assert name == config_details_rest.name
         assert config_details_rest.text
         config_details_oc = self.openshift_client.istio_config_details(
             namespace=namespace,
-            config_name=name,
-            config_type=config_details_ui._type)
+            object_name=name,
+            object_type=config_details_ui._type)
         assert config_details_oc
         assert name == config_details_oc.name
         for error_message in error_messages:

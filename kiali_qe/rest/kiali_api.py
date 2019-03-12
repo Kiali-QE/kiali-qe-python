@@ -5,7 +5,6 @@ from itertools import groupby
 from kiali.client import KialiClient
 from kiali_qe.components.enums import (
     IstioConfigObjectType as OBJECT_TYPE,
-    IstioConfigPageFilter as FILTER_TYPE,
     IstioConfigValidation,
     OverviewPageType,
     HealthType as HEALTH_TYPE
@@ -36,6 +35,13 @@ from kiali_qe.entities.applications import (
 from kiali_qe.entities.overview import Overview
 from kiali_qe.utils import to_linear_string
 from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
+
+ISTIO_CONFIG_TYPES = {'DestinationRule': 'destinationrules',
+                      'VirtualService': 'virtualservices',
+                      'ServiceEntry': 'serviceentries',
+                      'Gateway': 'gateways',
+                      'QuotaSpecBinding': 'quotaspecbindings',
+                      'QuotaSpec': 'quotaspecs'}
 
 
 class KialiExtendedClient(KialiClient):
@@ -199,21 +205,13 @@ class KialiExtendedClient(KialiClient):
             return set(filtered_list)
         return items
 
-    def istio_config_list(self, namespaces=[], filters=[]):
+    def istio_config_list(self, namespaces=[], config_names=[]):
         """Returns list of istio config.
         Args:
             namespaces: can be zero or any number of namespaces
         """
         items = []
         namespace_list = []
-        # filters
-        istio_names = []
-        istio_types = []
-        for _filter in filters:
-            if FILTER_TYPE.ISTIO_NAME.text in _filter['name']:
-                istio_names.append(_filter['value'])
-            elif FILTER_TYPE.ISTIO_TYPE.text in _filter['name']:
-                istio_types.append(_filter['value'])
         if len(namespaces) > 0:
             namespace_list.extend(namespaces)
         else:
@@ -353,21 +351,11 @@ class KialiExtendedClient(KialiClient):
             #     items.append(_rule)
 
         # apply filters
-        if len(istio_names) > 0 or len(istio_types) > 0:
+        if len(config_names) > 0:
             name_filtered_list = []
-            type_filtered_list = []
-            for _name in istio_names:
+            for _name in config_names:
                 name_filtered_list.extend([_i for _i in items if _name in _i.name])
-            for _type in istio_types:
-                type_filtered_list.extend([_i for _i in items if _type in _i.object_type])
-            # If both filters were set, then results must be intersected,
-            # as UI applies AND in filters
-            if len(istio_names) > 0 and len(istio_types) > 0:
-                return set(name_filtered_list).intersection(set(type_filtered_list))
-            elif len(istio_names) > 0:
-                return set(name_filtered_list)
-            elif len(istio_types) > 0:
-                return set(type_filtered_list)
+            return set(name_filtered_list)
         return items
 
     def istio_config_details(self, namespace, object_type, object_name):
@@ -377,10 +365,10 @@ class KialiExtendedClient(KialiClient):
             object_type: type of istio config
             object_name: name of istio config
         """
-
+        config_type = ISTIO_CONFIG_TYPES[object_type]
         _data = self.get_response('istioConfigDetails',
                                   namespace=namespace,
-                                  object_type=object_type,
+                                  object_type=config_type,
                                   object=object_name)
         config = None
         config_data = None
@@ -419,10 +407,10 @@ class KialiExtendedClient(KialiClient):
                     _type=_data['objectType'],
                     text=json.dumps(config_data),
                     validation=self.get_istio_config_validation(namespace,
-                                                                object_type,
+                                                                config_type,
                                                                 object_name),
                     error_messages=self.get_istio_config_messages(namespace,
-                                                                  object_type,
+                                                                  config_type,
                                                                   object_name))
         return config
 
@@ -527,7 +515,7 @@ class KialiExtendedClient(KialiClient):
                     destination_rules=destination_rules)
         return _service
 
-    def workload_details(self, namespace, workload_name):
+    def workload_details(self, namespace, workload_name, workload_type):
         """Returns details of Workload.
         Args:
             namespaces: namespace where Workload is located
@@ -761,6 +749,34 @@ class KialiExtendedClient(KialiClient):
                     _error_messages.append(_check['message'])
         return _error_messages
 
+    def create_istio_config(self, body, namespace, kind, api_version):
+        """Creates Istio Config.
+        Args:
+            body: config body
+            namespaces: namespace where Config is located
+            kind: type of the Config
+            api_version: Config api version (not used)
+        """
+
+        return self.post_response('istioConfigCreate',
+                                  namespace=namespace,
+                                  object_type=ISTIO_CONFIG_TYPES[kind],
+                                  data=body)
+
+    def delete_istio_config(self, name, namespace, kind, api_version):
+        """Deletes Istio Config.
+        Args:
+            name: config name
+            namespaces: namespace where Config is located
+            kind: type of the Config
+            api_version: Config api version (not used)
+        """
+
+        return self.delete_response('istioConfigDelete',
+                                    namespace=namespace,
+                                    object_type=ISTIO_CONFIG_TYPES[kind],
+                                    object=name)
+
     def get_labels(self, object_rest):
         _labels = {}
         if 'labels' in object_rest:
@@ -783,6 +799,19 @@ class KialiExtendedClient(KialiClient):
 
     def get_response(self, method_name, **kwargs):
         return super(KialiExtendedClient, self).request(method_name=method_name, path=kwargs).json()
+
+    def post_response(self, method_name, data, **kwargs):
+        return super(KialiExtendedClient, self).request(
+            method_name=method_name,
+            path=kwargs,
+            http_method="POST",
+            data=json.dumps(data))
+
+    def delete_response(self, method_name, **kwargs):
+        return super(KialiExtendedClient, self).request(
+            method_name=method_name,
+            path=kwargs,
+            http_method="DELETE")
 
     def get_validation(self, method_name, **kwargs):
         return super(KialiExtendedClient, self).request(
