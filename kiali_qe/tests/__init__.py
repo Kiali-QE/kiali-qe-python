@@ -14,7 +14,7 @@ from kiali_qe.components.enums import (
     MetricsHistograms,
     MetricsFilter,
     GraphPageDuration,
-    MetricsRefreshInterval,
+    GraphRefreshInterval,
     OverviewPageType
 )
 from kiali_qe.utils import is_equal, is_sublist
@@ -291,7 +291,7 @@ class AbstractListPageTest(object):
         self._assert_metrics_options(metrics_page, GraphPageDuration, 'duration')
 
     def _assert_metrics_interval(self, metrics_page):
-        self._assert_metrics_options(metrics_page, MetricsRefreshInterval, 'interval')
+        self._assert_metrics_options(metrics_page, GraphRefreshInterval, 'interval')
 
     def _assert_metrics_options(self, metrics_page, enum, attr_name):
         options_defined = [item.text for item in enum]
