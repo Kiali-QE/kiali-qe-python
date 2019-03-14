@@ -55,6 +55,10 @@ class KialiExtendedClient(KialiClient):
                 entities.append(entity_j['name'])
         return entities
 
+    def namespace_exists(self, namespace):
+        """ Returns True if given namespace exists. False otherwise. """
+        return namespace in self.namespace_list()
+
     def service_list(self, namespaces=[], service_names=[]):
         """Returns list of services.
         Args:
