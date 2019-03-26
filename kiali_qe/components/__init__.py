@@ -1085,12 +1085,12 @@ class ListViewWorkloads(ListViewAbstract):
 
         _table_view_services = TableViewServices(self.parent, self.locator, self.logger)
 
-        _traffic = TrafficView(self.parent, self.locator, self.logger)
+        _traffic = TrafficView(parent=self.parent, locator=self.locator, logger=self.logger)
 
-        _inbound_metrics = MetricsView(self.parent, self.INBOUND_METRICS)
+        _inbound_metrics = MetricsView(parent=self.parent, tab_name=self.INBOUND_METRICS)
 
-        _outbound_metrics = MetricsView(self.parent,
-                                        self.OUTBOUND_METRICS)
+        _outbound_metrics = MetricsView(parent=self.parent,
+                                        tab_name=self.OUTBOUND_METRICS)
 
         return WorkloadDetails(name=str(_name),
                                workload_type=_type,
@@ -1153,9 +1153,9 @@ class ListViewServices(ListViewAbstract):
 
         _table_view_wl = TableViewWorkloads(self.parent, self.locator, self.logger)
 
-        _table_view_swl = TableViewSourceWorkloads(self.parent, self.locator, self.logger)
+        _traffic = TrafficView(parent=self.parent, locator=self.locator, logger=self.logger)
 
-        _inbound_metrics = MetricsView(self.parent, self.INBOUND_METRICS)
+        _inbound_metrics = MetricsView(parent=self.parent, tab_name=self.INBOUND_METRICS)
 
         return ServiceDetails(name=_name,
                               created_at=parse_from_ui(_created_at),
@@ -1167,13 +1167,12 @@ class ListViewServices(ListViewAbstract):
                               istio_sidecar=self._details_sidecar(),
                               labels=self._get_details_labels(),
                               workloads_number=_table_view_wl.number,
-                              source_workloads_number=_table_view_swl.number,
                               virtual_services_number=self.table_view_vs.number,
                               destination_rules_number=self.table_view_dr.number,
                               workloads=_table_view_wl.all_items,
-                              source_workloads=_table_view_swl.all_items,
                               virtual_services=self.table_view_vs.all_items,
                               destination_rules=self.table_view_dr.all_items,
+                              traffic=_traffic.items,
                               inbound_metrics=_inbound_metrics)
 
     @property
@@ -1544,14 +1543,14 @@ class TableViewVirtualServices(TableViewAbstract):
 
             _weight_status = _columns[0].text.strip()
             _host = _columns[1].text.strip()
-            _subset = _columns[2].text.strip().replace('-', '')
+            _subset = _columns[2].text.strip()
             _port = _columns[3].text.strip().replace('-', '')
             _weight = _columns[4].text.strip().replace('-', '')
 
             _weights.append(VirtualServiceWeight(host=_host,
                                                  status=_weight_status
                                                  if _weight_status != '' else None,
-                                                 subset=_subset if _subset != '' else None,
+                                                 subset=_subset if _subset != '-' else None,
                                                  port=int(_port) if _port != '' else None,
                                                  weight=int(_weight) if _weight != '' else None))
         # back to service details
@@ -1786,16 +1785,18 @@ class TableViewServices(TableViewAbstract):
         return _items
 
 
-class TrafficView(Widget):
-    TRAFFIC_TAB = '//ul[contains(@class, "nav-tabs-pf")]//'\
-        'li//a//div[contains(text(), "Traffic")]/..'
+class TabViewAbstract(Widget):
+    """
+        Abstract base class for all Tabs besides the Info tab.
+        After opening the tab and reading the data, it it can back to Info tab.
+    """
     ROOT = '//div[@id="basic-tabs"]'
-    TRAFFIC_ROOT = '//div[@id="basic-tabs-pane-traffic"]'
-    ROWS = '//span[contains(@class, "table-grid-pf-col")]'\
-        '//span[contains(@class, "pficon-service")]/../a'
+    INFO_TAB = '//ul[contains(@class, "nav-tabs-pf")]//'\
+        'li//a//div[contains(text(), "Info")]/..'
 
-    def __init__(self, parent, locator=None, logger=None):
+    def __init__(self, parent, tab_name=None, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
+        self.tab_name = tab_name
         if locator:
             self.locator = locator
         else:
@@ -1803,6 +1804,23 @@ class TrafficView(Widget):
 
     def __locator__(self):
         return self.locator
+
+    def back_to_info(self):
+        tab = self.browser.element(locator=self.INFO_TAB,
+                                   parent=self.ROOT)
+        try:
+            self.browser.click(tab)
+        finally:
+            self.browser.click(tab)
+        wait_displayed(self)
+
+
+class TrafficView(TabViewAbstract):
+    TRAFFIC_TAB = '//ul[contains(@class, "nav-tabs-pf")]//'\
+        'li//a//div[contains(text(), "Traffic")]/..'
+    TRAFFIC_ROOT = '//div[@id="basic-tabs-pane-traffic"]'
+    ROWS = '//span[contains(@class, "table-grid-pf-col")]'\
+        '//span[contains(@class, "pficon-service")]/../a'
 
     def open(self):
         tab = self.browser.element(locator=self.TRAFFIC_TAB,
@@ -1826,12 +1844,12 @@ class TrafficView(Widget):
                 name=el.text.strip())
             # append this item to the final list
             _items.append(_service)
+        self.back_to_info()
         return _items
 
 
-class MetricsView(Widget):
+class MetricsView(TabViewAbstract):
     METRICS_TAB = '//ul[contains(@class, "nav-tabs-pf")]//li//a//div[contains(text(), "{}")]/..'
-    ROOT = '//div[@id="basic-tabs"]'
     DROP_DOWN = '//*[contains(@class, "dropdown")]/*[@id="{}"]/..'
 
     filter = CheckBoxFilter(filter_name="Metrics Settings")
@@ -1839,17 +1857,6 @@ class MetricsView(Widget):
     duration = DropDown(locator=DROP_DOWN.format('metrics_filter_interval_duration'))
     interval = DropDown(locator=DROP_DOWN.format('metrics-refresh'))
     refresh = Button(locator='.//button//*[contains(@class, "fa-refresh")]')
-
-    def __init__(self, parent, tab_name, locator=None, logger=None):
-        Widget.__init__(self, parent, logger=logger)
-        self.tab_name = tab_name
-        if locator:
-            self.locator = locator
-        else:
-            self.locator = self.ROOT
-
-    def __locator__(self):
-        return self.locator
 
     def open(self):
         tab = self.browser.element(locator=self.METRICS_TAB.format(self.tab_name),

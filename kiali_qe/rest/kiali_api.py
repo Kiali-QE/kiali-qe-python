@@ -443,7 +443,8 @@ class KialiExtendedClient(KialiClient):
                         created_at=parse_from_rest(_wl_data['createdAt']),
                         resource_version=_wl_data['resourceVersion']))
             source_workloads = []
-            if _service_data['dependencies']:
+            # TODO better way to find Traffic
+            if 'dependencies' in _service_data:
                 for _wl_data in _service_data['dependencies']:
                     _wl_names = []
                     for _wl_name in _service_data['dependencies'][_wl_data]:
@@ -482,6 +483,7 @@ class KialiExtendedClient(KialiClient):
             if _service_data['destinationRules'] \
                     and len(_service_data['destinationRules']['items']) > 0:
                 for _dr_data in _service_data['destinationRules']['items']:
+                    _traffic_policy = to_linear_string(_dr_data['spec']['trafficPolicy'])
                     destination_rules.append(DestinationRule(
                         status=self.get_istio_config_validation(
                             _dr_data['metadata']['namespace'],
@@ -489,7 +491,7 @@ class KialiExtendedClient(KialiClient):
                             _dr_data['metadata']['name']),
                         name=_dr_data['metadata']['name'],
                         host=_dr_data['spec']['host'],
-                        traffic_policy=to_linear_string(_dr_data['spec']['trafficPolicy']),
+                        traffic_policy=_traffic_policy if _traffic_policy != 'none' else '',
                         subsets=to_linear_string(
                             self.get_subset_labels(_dr_data['spec']['subsets'])),
                         created_at=parse_from_rest(_dr_data['metadata']['creationTimestamp']),
@@ -514,7 +516,7 @@ class KialiExtendedClient(KialiClient):
                         service_name=service_name,
                         istioSidecar=_service_rest.istio_sidecar),
                     workloads=workloads,
-                    source_workloads=source_workloads,
+                    traffic=source_workloads,
                     virtual_services=virtual_services,
                     destination_rules=destination_rules)
         return _service
@@ -551,7 +553,8 @@ class KialiExtendedClient(KialiClient):
                         labels=self.get_labels(_ws_data),
                         resource_version=_ws_data['resourceVersion']))
             _destination_services = []
-            if _workload_data['destinationServices']:
+            # TODO find a better way to take Traffic
+            if 'destinationServices' in _workload_data:
                 for _ds_data in _workload_data['destinationServices']:
                     _destination_services.append(DestinationService(
                         _from=workload_name,
