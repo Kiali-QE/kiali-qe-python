@@ -247,8 +247,16 @@ class IstioConfigValidation(StringEnum):
     NOT_VALID = ('Not Valid')
 
 
-class MetricsFilter(StringEnum):
+class InboundMetricsFilter(StringEnum):
     LOCAL_VERSION = ('Local version')
+    REMOTE_APP = ('Remote app')
+    REMOTE_VERSION = ('Remote version')
+    RESPONSE_CODE = ('Response code')
+
+
+class OutboundMetricsFilter(StringEnum):
+    LOCAL_VERSION = ('Local version')
+    REMOTE_SERVICE = ('Remote service')
     REMOTE_APP = ('Remote app')
     REMOTE_VERSION = ('Remote version')
     RESPONSE_CODE = ('Response code')

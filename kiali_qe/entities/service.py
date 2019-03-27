@@ -145,8 +145,6 @@ class ServiceDetails(EntityBase):
         self.labels = labels
         self.workloads_number = kwargs['workloads_number']\
             if 'workloads_number' in kwargs else None
-        self.source_workloads_number = kwargs['source_workloads_number']\
-            if 'source_workloads_number' in kwargs else None
         self.virtual_services_number = kwargs['virtual_services_number']\
             if 'virtual_services_number' in kwargs else None
         self.destination_rules_number = kwargs['destination_rules_number']\
@@ -157,8 +155,8 @@ class ServiceDetails(EntityBase):
             if 'destination_rules' in kwargs else None
         self.workloads = kwargs['workloads']\
             if 'workloads' in kwargs else None
-        self.source_workloads = kwargs['source_workloads']\
-            if 'source_workloads' in kwargs else None
+        self.traffic = kwargs['traffic']\
+            if 'traffic' in kwargs else None
         self.inbound_metrics = kwargs['inbound_metrics']\
             if 'inbound_metrics' in kwargs else None
 

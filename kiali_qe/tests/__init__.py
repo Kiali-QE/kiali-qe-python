@@ -12,7 +12,8 @@ from kiali_qe.components.enums import (
     IstioConfigValidation,
     MetricsSource,
     MetricsHistograms,
-    MetricsFilter,
+    InboundMetricsFilter,
+    OutboundMetricsFilter,
     GraphPageDuration,
     GraphRefreshInterval,
     OverviewPageType
@@ -259,7 +260,9 @@ class AbstractListPageTest(object):
 
     def _assert_metrics_settings(self, metrics_page):
         # test available filters
-        options_defined = [item.text for item in MetricsFilter]
+        options_defined = [item.text for item in (
+            InboundMetricsFilter if "Inbound" in metrics_page.tab_name
+            else OutboundMetricsFilter)]
         for item in MetricsHistograms:
             options_defined.append(item.text)
         options_listed = metrics_page.filter.items
@@ -699,7 +702,7 @@ class ServicesPageTest(AbstractListPageTest):
         service_details_ui = self.page.content.get_details(name, namespace)
         assert service_details_ui
         assert name == service_details_ui.name
-        # get service detals from rest
+        # get service details from rest
         service_details_rest = self.kiali_client.service_details(
             namespace=namespace,
             service_name=name)
@@ -722,20 +725,17 @@ class ServicesPageTest(AbstractListPageTest):
             .format(service_details_ui, service_details_oc)
         assert service_details_ui.workloads_number\
             == len(service_details_rest.workloads)
-        assert service_details_ui.source_workloads_number\
-            == len(self.get_workload_names_set(service_details_rest.source_workloads))
         assert service_details_ui.virtual_services_number\
             == len(service_details_rest.virtual_services)
         assert service_details_ui.destination_rules_number\
             == len(service_details_rest.destination_rules)
         assert service_details_ui.workloads_number\
             == len(service_details_rest.workloads)
-        assert service_details_ui.source_workloads_number\
-            == len(self.get_workload_names_set(service_details_ui.source_workloads))
         assert service_details_ui.virtual_services_number\
             == len(service_details_ui.virtual_services)
         assert service_details_ui.destination_rules_number\
             == len(service_details_ui.destination_rules)
+
         for workload_ui in service_details_ui.workloads:
             found = False
             for workload_rest in service_details_rest.workloads:
@@ -744,14 +744,6 @@ class ServicesPageTest(AbstractListPageTest):
                     break
             assert found, 'Workload {} not found in REST {}'.format(workload_ui,
                                                                     workload_rest)
-        for workload_ui in service_details_ui.source_workloads:
-            found = False
-            for workload_rest in service_details_rest.source_workloads:
-                if workload_ui.is_equal(workload_rest, advanced_check=True):
-                    found = True
-                    break
-            assert found, 'Source Workload {} not found in REST {}'.format(workload_ui,
-                                                                           workload_rest)
         for virtual_service_ui in service_details_ui.virtual_services:
             found = False
             for virtual_service_rest in service_details_rest.virtual_services:
@@ -774,7 +766,17 @@ class ServicesPageTest(AbstractListPageTest):
             dr_overview = self.page.content.table_view_dr.get_overview(destination_rule_ui.name)
             # TODO advanced_check=True when KIALI-2152 is done
             assert dr_overview.is_equal(destination_rule_ui, advanced_check=False)
-
+        for traffic_rest in service_details_rest.traffic:
+            found = False
+            for traffic_ui in service_details_ui.traffic:
+                if traffic_ui.is_equal(traffic_rest,
+                                       advanced_check=False):
+                    found = True
+                    break
+            if not found:
+                assert found, 'Outbound Traffic Service {} not found in UI {}'.format(
+                    traffic_rest,
+                    traffic_ui)
         if check_metrics:
             self.assert_metrics_options(service_details_ui.inbound_metrics)
 
