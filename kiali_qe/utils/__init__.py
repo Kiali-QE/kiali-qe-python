@@ -24,8 +24,12 @@ def get_dict(path, yaml_file):
 
 
 def get_yaml(path, yaml_file):
-    with open(os.path.join(path, yaml_file), 'r') as yaml_data:
+    with open(get_yaml_path(path, yaml_file), 'r') as yaml_data:
         return yaml.safe_load(yaml_data)
+
+
+def get_yaml_path(path, yaml_file):
+    return os.path.join(path, yaml_file)
 
 
 def is_equal(object_a, object_b):

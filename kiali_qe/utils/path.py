@@ -16,6 +16,7 @@ data_path = project_path.join('data')
 
 #: istio objects yaml storage, ``kiali-qe-pyhton/data/resources/istio_objects``
 istio_objects_path = data_path.join('resources/istio_objects')
+istio_objects_mtls_path = istio_objects_path.join('mtls')
 
 #: log storage, ``kiali-qe-pyhton/log/``
 log_path = project_path.join('log')

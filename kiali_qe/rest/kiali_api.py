@@ -41,7 +41,9 @@ ISTIO_CONFIG_TYPES = {'DestinationRule': 'destinationrules',
                       'ServiceEntry': 'serviceentries',
                       'Gateway': 'gateways',
                       'QuotaSpecBinding': 'quotaspecbindings',
-                      'QuotaSpec': 'quotaspecs'}
+                      'QuotaSpec': 'quotaspecs',
+                      'Policy': 'policies',
+                      'MeshPolicy': 'meshpolicies'}
 
 
 class KialiExtendedClient(KialiClient):
@@ -404,6 +406,30 @@ class KialiExtendedClient(KialiClient):
             # get serviceEntry
             if _data['serviceEntry']:
                 config_data = _data['serviceEntry']
+
+            # get policy
+            if _data['policy']:
+                config_data = _data['policy']
+
+            # get meshPolicy
+            if _data['meshPolicy']:
+                config_data = _data['meshPolicy']
+
+            # get clusterRbacConfig
+            if _data['clusterRbacConfig']:
+                config_data = _data['clusterRbacConfig']
+
+            # get rbacConfig
+            if _data['rbacConfig']:
+                config_data = _data['rbacConfig']
+
+            # get serviceRole
+            if _data['serviceRole']:
+                config_data = _data['serviceRole']
+
+            # get serviceRoleBinding
+            if _data['serviceRoleBinding']:
+                config_data = _data['serviceRoleBinding']
 
             if config_data:
                 config = IstioConfigDetails(
