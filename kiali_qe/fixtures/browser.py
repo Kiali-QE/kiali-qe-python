@@ -70,10 +70,23 @@ def _get_driver(capabilities):
     # using keep_alive=True which should save some connections
     # https://github.com/SeleniumHQ/selenium/issues/5758
     # and https://github.com/seleniumhq/selenium/issues/3457
-    driver = webdriver.Remote(command_executor, desired_capabilities=capabilities, keep_alive=True)
+    driver = webdriver.Remote(command_executor, desired_capabilities=capabilities,
+                              options=_get_browser_options(),
+                              keep_alive=True)
     # reset the timeout to default, only driver creation is taking so much time
     command_executor.reset_timeout()
     _delta = datetime.now() - start_time
     logger.debug('Web driver created successfully. Time taken: {} ms'.format(
         int(_delta.total_seconds() * 1000)))
     return driver
+
+
+def _get_browser_options():
+    if cfg.selenium.capabilities.browserName == "chrome":
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument("--incognito")
+        return chrome_options
+    else:
+        firefox_options = webdriver.FirefoxOptions()
+        firefox_options.set_preference("browser.privatebrowsing.autostart", True)
+        return firefox_options
