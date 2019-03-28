@@ -121,11 +121,13 @@ class ApplicationsPageSort(StringEnum):
 class OverviewPageFilter(StringEnum):
     NAME = ('Name')
     HEALTH = ('Health')
+    MTLS_STATUS = ('mTLS status')
 
 
 class OverviewPageSort(StringEnum):
     NAME = ('Name')
     STATUS = ('Status')
+    MTLS = ('mTLS')
 
 
 class OverviewPageType(StringEnum):

@@ -30,4 +30,6 @@ def test_invalid_login(browser):
     logger.debug('Notifications on screen:{}'.format(page.notifications.items))
     assert not _login
     assert page.notifications.contains(
-        _type='danger', text='Unauthorized. Error in username or password')
+        _type='danger', text='Unauthorized. '
+        'The provided credentials are not valid to access Kiali. '
+        'Please check your credentials and try again.')
