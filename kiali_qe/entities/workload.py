@@ -122,11 +122,11 @@ class WorkloadDetails(EntityBase):
             return False
         if self.resource_version != other.resource_version:
             return False
+        if self.labels != other.labels:
+            return False
         # advanced check
         if advanced_check:
             if self.istio_sidecar != other.istio_sidecar:
-                return False
-            if self.labels != other.labels:
                 return False
             if self.health != other.health:
                 return False
