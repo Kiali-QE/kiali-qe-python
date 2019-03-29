@@ -425,7 +425,7 @@ class ApplicationsPageTest(AbstractListPageTest):
             found = False
             for workload_rest in application_details_rest.workloads:
                 if workload_ui.is_equal(workload_rest,
-                                        advanced_check=False):
+                                        advanced_check=True):
                     found = True
                     break
             if not found:

@@ -1289,6 +1289,7 @@ class TableViewAbstract(Widget):
     COLUMN = './/td'
     ROW_BY_NAME = \
         '//div[@id="{}"]//table[contains(@class, "table")]//tbody//tr//a[text()="{}"]/../..'
+    MISSING_SIDECAR = './/span[contains(@class, "pficon-blueprint")]'
     CREATED_AT = 'Created at'
     RESOURCE_VERSION = 'Resource Version'
     HOST = 'Host'
@@ -1311,6 +1312,10 @@ class TableViewAbstract(Widget):
     def back_to_service_info(self, parent):
         # TODO find a better way after KIALI-2251
         self.browser.click('.//a[contains(@href, "/services/")]', parent)
+
+    def _item_sidecar(self, element):
+        return not len(self.browser.elements(
+                parent=element, locator=self.MISSING_SIDECAR)) > 0
 
     def _get_overview_status(self, element):
         wait_displayed(self)
@@ -1377,10 +1382,10 @@ class TableViewAppWorkloads(TableViewAbstract):
             _values = self.browser.element(
                 locator=self.COLUMN, parent=el).text.split('\n')
             # create Workload instance
-            # TODO add istio sidecar when KIALI-1200 IS DONE
             if _values[0] == 'WORKLOAD':
                 _workload = AppWorkload(
-                    name=_values[1] if len(_values) >= 2 else '')
+                    name=_values[1] if len(_values) >= 2 else '',
+                    istio_sidecar=self._item_sidecar(el))
                 # append this item to the final list
                 _items.append(_workload)
         return _items
@@ -1437,7 +1442,6 @@ class TableViewWorkloads(TableViewAbstract):
 
             _name = _columns[0].text.strip()
             _type = _columns[1].text.strip()
-            # TODO labels
             _created_at = _columns[3].text.strip()
             _resource_version = _columns[4].text.strip()
 

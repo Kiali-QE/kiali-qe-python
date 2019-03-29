@@ -461,7 +461,6 @@ class KialiExtendedClient(KialiClient):
             workloads = []
             if _service_data['workloads']:
                 for _wl_data in _service_data['workloads']:
-                    # TODO get labels
                     workloads.append(WorkloadDetails(
                         name=_wl_data['name'],
                         workload_type=_wl_data['type'],
@@ -640,7 +639,7 @@ class KialiExtendedClient(KialiClient):
                         status=_workload_pods[0].status,
                         phase=_workload_pods[0].phase)
                     _pods.append(_pod)
-            # TODO get labels
+
             _workload = WorkloadDetails(
                 name=_workload_data['name'],
                 istio_sidecar=_workload_rest.istio_sidecar,

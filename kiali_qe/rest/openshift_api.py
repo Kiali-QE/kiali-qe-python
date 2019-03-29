@@ -182,9 +182,11 @@ class OpenshiftExtendedClient(object):
         workloads.extend(self.workload_list(namespaces=namespaces))
 
         for workload in workloads:
-            # TODO: istio side car and health needs to be added
+            # TODO: health needs to be added
             name = self._get_app_name(workload)
-            result[name+workload.namespace] = Application(name, workload.namespace)
+            result[name+workload.namespace] = Application(name,
+                                                          workload.namespace,
+                                                          istio_sidecar=workload.istio_sidecar)
         # filter by service name
         if len(application_names) > 0:
             filtered_list = []
@@ -262,7 +264,6 @@ class OpenshiftExtendedClient(object):
                 _raw_items.extend(_response.items)
         for _item in _raw_items:
             # update all the workloads to our custom entity
-            # TODO: istio side car and labels needs to be added
             _workload = Workload(
                 name=_item.metadata.name,
                 namespace=_item.metadata.namespace,
@@ -386,8 +387,7 @@ class OpenshiftExtendedClient(object):
                 workload_name = self._get_workload_name(workload)
                 workloads[workload_name] = AppWorkload(
                         name=workload_name,
-                        # TODO sidecar
-                        istio_sidecar=None)
+                        istio_sidecar=workload.istio_sidecar)
 
         for service in all_services:
             if application_name == self._get_app_name(service):
@@ -397,7 +397,7 @@ class OpenshiftExtendedClient(object):
             name=application_name,
             workloads=workloads.values(),
             services=list(set(services)),
-            istio_sidecar=None,
+            istio_sidecar=all([w.istio_sidecar for w in workloads.values()]),
             # TODO health
             health=None)
 

@@ -97,10 +97,10 @@ class Application(EntityBase):
             return False
         if self.namespace != other.namespace:
             return False
+        if self.istio_sidecar != other.istio_sidecar:
+            return False
         # advanced check
         if advanced_check:
-            if self.istio_sidecar != other.istio_sidecar:
-                return False
             if self.health != other.health:
                 return False
         return True
@@ -181,8 +181,6 @@ class AppWorkload(EntityBase):
             return False
         if self.name != other.name:
             return False
-        # advanced check
-        if advanced_check:
-            if self.istio_sidecar != other.istio_sidecar:
-                return False
+        if self.istio_sidecar != other.istio_sidecar:
+            return False
         return True
