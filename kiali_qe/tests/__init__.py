@@ -920,9 +920,12 @@ class IstioConfigPageTest(AbstractListPageTest):
         # create filters
         for _selected_config in _random_configs:
             if _selected_config.object_type != OBJECT_TYPE.RULE.text:
-                self.assert_details(_selected_config.name, _selected_config.namespace)
+                self.assert_details(_selected_config.name,
+                                    _selected_config.object_type,
+                                    _selected_config.namespace)
 
-    def assert_details(self, name, namespace=None, error_messages=[], apply_filters=True):
+    def assert_details(self, name, object_type,
+                       namespace=None, error_messages=[], apply_filters=True):
         logger.debug('Details: {}, {}'.format(name, namespace))
         # load the page first
         self.page.load(force_load=True)
@@ -936,13 +939,11 @@ class IstioConfigPageTest(AbstractListPageTest):
                 {'name': IstioConfigPageFilter.ISTIO_NAME.text, 'value': name}])
 
         # load config details page
-        config_details_ui = self.page.content.get_details(name, namespace)
+        config_details_ui = self.page.content.get_details(name, object_type, namespace)
         assert config_details_ui
-        if not config_details_ui.name:  # TODO for now skip configs which don't have Overview page
-            return
         assert name == config_details_ui.name
         assert config_details_ui.text
-        # get config detals from rest
+        # get config details from rest
         config_details_rest = self.kiali_client.istio_config_details(
             namespace=namespace,
             object_type=config_details_ui._type,
@@ -950,6 +951,7 @@ class IstioConfigPageTest(AbstractListPageTest):
         assert config_details_rest
         assert name == config_details_rest.name
         assert config_details_rest.text
+        # get config details from OC
         config_details_oc = self.openshift_client.istio_config_details(
             namespace=namespace,
             object_name=name,

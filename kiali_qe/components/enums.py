@@ -225,6 +225,7 @@ class IstioConfigObjectType(StringEnum):
     POLICY = ('Policy')
     MESH_POLICY = ('MeshPolicy')
     CLUSTER_RBAC_CONFIG = ('ClusterRbacConfig')
+    RBAC_CONFIG = ('RbacConfig')
     SERVICE_ROLE = ('ServiceRole')
     SERVICE_ROLE_BINDING = ('ServiceRoleBinding')
 

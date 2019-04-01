@@ -42,7 +42,11 @@ class OpenshiftExtendedClient(object):
         'QuotaSpec': '_quotaspec',
         'QuotaSpecBinding': '_quotaspecbinding',
         'Policy': '_policy',
-        'MeshPolicy': '_meshpolicy'
+        'MeshPolicy': '_meshpolicy',
+        'ClusterRbacConfig': '_clusterrbacconfig',
+        'RbacConfig': '_rbacconfig',
+        'ServiceRole': '_servicerole',
+        'ServiceRoleBinding': '_servicerolebinding'
     }
 
     APP_NAME_REGEX = re.compile('(-v\\d+-.*)?(-v\\d+$)?(-(\\w{0,7}\\d+\\w{0,7})$)?')
@@ -158,6 +162,22 @@ class OpenshiftExtendedClient(object):
     @property
     def _meshpolicy(self):
         return self._istio_config(kind='MeshPolicy', api_version='v1alpha1')
+
+    @property
+    def _clusterrbacconfig(self):
+        return self._istio_config(kind='ClusterRbacConfig', api_version='v1alpha1')
+
+    @property
+    def _rbacconfig(self):
+        return self._istio_config(kind='RbacConfig', api_version='v1alpha1')
+
+    @property
+    def _servicerole(self):
+        return self._istio_config(kind='ServiceRole', api_version='v1alpha1')
+
+    @property
+    def _servicerolebinding(self):
+        return self._istio_config(kind='ServiceRoleBinding', api_version='v1alpha1')
 
     def namespace_list(self):
         """ Returns list of namespaces """
@@ -350,7 +370,8 @@ class OpenshiftExtendedClient(object):
                                  resource_type, _item.kind))
                 # append this item to the final list
                 items.append(_rule)
-            elif str(resource_type) == IstioConfigObjectType.MESH_POLICY.text:
+            elif str(resource_type) == IstioConfigObjectType.MESH_POLICY.text or\
+                    str(resource_type) == IstioConfigObjectType.CLUSTER_RBAC_CONFIG.text:
                 _config = IstioConfig(name=_item.metadata.name,
                                       namespace="istio-system",
                                       object_type=resource_type)

@@ -1214,19 +1214,12 @@ class ListViewIstioConfig(ListViewAbstract):
     CONFIG_TEXT = './/div[contains(@class, "ace_content")]'
     CONFIG_DETAILS_ROOT = './/div[contains(@class, "container-fluid")]'
 
-    def get_details(self, name, namespace=None):
+    def get_details(self, name, object_type, namespace=None):
         self.open(name, namespace)
-        if self.has_overview_tab():
-            _type, _name = self.browser.text(locator=self.CONFIG_HEADER,
-                                             parent=self.CONFIG_DETAILS_ROOT).split(': ')
-        else:
-            # TODO with configs without overview
-            _type = None
-            _name = None
         self.display_yaml_editor()
         _text = self.browser.text(locator=self.CONFIG_TEXT,
                                   parent=self.CONFIG_DETAILS_ROOT)
-        return IstioConfigDetails(name=_name, _type=_type, text=_text,
+        return IstioConfigDetails(name=name, _type=object_type, text=_text,
                                   validation=self._get_details_validation())
 
     @property

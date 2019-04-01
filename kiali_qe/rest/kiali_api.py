@@ -43,7 +43,11 @@ ISTIO_CONFIG_TYPES = {'DestinationRule': 'destinationrules',
                       'QuotaSpecBinding': 'quotaspecbindings',
                       'QuotaSpec': 'quotaspecs',
                       'Policy': 'policies',
-                      'MeshPolicy': 'meshpolicies'}
+                      'MeshPolicy': 'meshpolicies',
+                      'ClusterRbacConfig': 'clusterrbacconfigs',
+                      'RbacConfig': 'rbacconfigs',
+                      'ServiceRole': 'serviceroles',
+                      'ServiceRoleBinding': 'servicerolebindings'}
 
 
 class KialiExtendedClient(KialiClient):
@@ -337,6 +341,50 @@ class KialiExtendedClient(KialiClient):
                         object_type=OBJECT_TYPE.SERVICE_ENTRY.text,
                         validation=self.get_istio_config_validation(_namespace,
                                                                     'serviceentries',
+                                                                    _policy['metadata']['name'])))
+
+            # update clusterRbacConfigs
+            if len(_data['clusterRbacConfigs']) > 0:
+                for _policy in _data['clusterRbacConfigs']:
+                    items.append(IstioConfig(
+                        name=_policy['metadata']['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.CLUSTER_RBAC_CONFIG.text,
+                        validation=self.get_istio_config_validation(_namespace,
+                                                                    'clusterrbacconfigs',
+                                                                    _policy['metadata']['name'])))
+
+            # update rbacConfigs
+            if len(_data['rbacConfigs']) > 0:
+                for _policy in _data['rbacConfigs']:
+                    items.append(IstioConfig(
+                        name=_policy['metadata']['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.RBAC_CONFIG.text,
+                        validation=self.get_istio_config_validation(_namespace,
+                                                                    'rbacconfigs',
+                                                                    _policy['metadata']['name'])))
+
+            # update serviceRoles
+            if len(_data['serviceRoles']) > 0:
+                for _policy in _data['serviceRoles']:
+                    items.append(IstioConfig(
+                        name=_policy['metadata']['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.SERVICE_ROLE.text,
+                        validation=self.get_istio_config_validation(_namespace,
+                                                                    'serviceroles',
+                                                                    _policy['metadata']['name'])))
+
+            # update serviceRoleBindings
+            if len(_data['serviceRoleBindings']) > 0:
+                for _policy in _data['serviceRoleBindings']:
+                    items.append(IstioConfig(
+                        name=_policy['metadata']['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.SERVICE_ROLE_BINDING.text,
+                        validation=self.get_istio_config_validation(_namespace,
+                                                                    'servicerolebindings',
                                                                     _policy['metadata']['name'])))
 
             # not required at this stage. These options not availabe in UI
