@@ -32,6 +32,12 @@ QUOTA_SPEC = 'quota-spec.yaml'
 QUOTA_SPEC_BINDING = 'quota-spec-binding.yaml'
 GATEWAY = 'gateway.yaml'
 SERVICE_ENTRY = 'service-entry.yaml'
+CLUSTER_RBAC_CONFIG = 'cluster-rbac-config.yaml'
+RBAC_CONFIG = 'rbac-config.yaml'
+SERVICE_ROLE = 'service-role.yaml'
+SERVICE_ROLE_BROKEN = 'service-role-broken.yaml'
+SERVICE_ROLE_BINDING = 'service-role-binding.yaml'
+SERVICE_ROLE_BINDING_BROKEN = 'service-role-binding-broken.yaml'
 
 
 @pytest.mark.p_crud_resource
@@ -287,6 +293,165 @@ def test_service_entry(kiali_client, openshift_client, browser):
                        check_service_details=False)
 
 
+@pytest.mark.p_crud_resource
+@pytest.mark.p_group6
+def test_cluster_rbac_config(kiali_client, openshift_client, browser):
+    yaml = get_yaml(istio_objects_path.strpath, CLUSTER_RBAC_CONFIG)
+    _dict = get_dict(istio_objects_path.strpath, CLUSTER_RBAC_CONFIG)
+
+    _istio_config_test(kiali_client, openshift_client, browser,
+                       _dict,
+                       yaml,
+                       [
+                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
+                         'value': IstioConfigObjectType.CLUSTER_RBAC_CONFIG.text},
+                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
+                         'value': _dict.metadata.name}
+                        ],
+                       namespace='istio-system',
+                       kind='ClusterRbacConfig',
+                       api_version='rbac.istio.io/v1alpha1',
+                       service_name=DETAILS,
+                       check_service_details=False)
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_group6
+def test_rbac_config(kiali_client, openshift_client, browser):
+    yaml = get_yaml(istio_objects_path.strpath, RBAC_CONFIG)
+    _dict = get_dict(istio_objects_path.strpath, RBAC_CONFIG)
+
+    _istio_config_test(kiali_client, openshift_client, browser,
+                       _dict,
+                       yaml,
+                       [
+                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
+                         'value': IstioConfigObjectType.RBAC_CONFIG.text},
+                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
+                         'value': _dict.metadata.name}
+                        ],
+                       namespace=BOOKINFO_1,
+                       kind='RbacConfig',
+                       api_version='rbac.istio.io/v1alpha1',
+                       service_name=DETAILS,
+                       check_service_details=False)
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_group8
+def test_service_role(kiali_client, openshift_client, browser):
+    yaml = get_yaml(istio_objects_path.strpath, SERVICE_ROLE)
+    _dict = get_dict(istio_objects_path.strpath, SERVICE_ROLE)
+
+    _istio_config_test(kiali_client, openshift_client, browser,
+                       _dict,
+                       yaml,
+                       [
+                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
+                         'value': IstioConfigObjectType.SERVICE_ROLE.text},
+                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
+                         'value': _dict.metadata.name}
+                        ],
+                       namespace='default',
+                       kind='ServiceRole',
+                       api_version='rbac.istio.io/v1alpha1',
+                       service_name=DETAILS,
+                       check_service_details=False)
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_group8
+def test_service_role_broken(kiali_client, openshift_client, browser):
+    yaml = get_yaml(istio_objects_path.strpath, SERVICE_ROLE_BROKEN)
+    _dict = get_dict(istio_objects_path.strpath, SERVICE_ROLE_BROKEN)
+
+    _istio_config_test(kiali_client, openshift_client, browser,
+                       _dict,
+                       yaml,
+                       [
+                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
+                         'value': IstioConfigObjectType.SERVICE_ROLE.text},
+                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
+                         'value': _dict.metadata.name}
+                        ],
+                       namespace='default',
+                       kind='ServiceRole',
+                       api_version='rbac.istio.io/v1alpha1',
+                       service_name=DETAILS,
+                       error_messages=['ServiceRole can only point to current namespace',
+                                       'Unable to find all the defined services'],
+                       check_service_details=False)
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_group8
+def test_service_role_binding(kiali_client, openshift_client, browser):
+    _role_yaml = get_yaml(istio_objects_path.strpath, SERVICE_ROLE)
+    _role_dict = get_dict(istio_objects_path.strpath, SERVICE_ROLE)
+    _istio_config_create(openshift_client, _role_dict, _role_yaml,
+                         namespace='default',
+                         kind='ServiceRole',
+                         api_version='rbac.istio.io/v1alpha1')
+
+    yaml = get_yaml(istio_objects_path.strpath, SERVICE_ROLE_BINDING)
+    _dict = get_dict(istio_objects_path.strpath, SERVICE_ROLE_BINDING)
+
+    _istio_config_test(kiali_client, openshift_client, browser,
+                       _dict,
+                       yaml,
+                       [
+                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
+                         'value': IstioConfigObjectType.SERVICE_ROLE_BINDING.text},
+                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
+                         'value': _dict.metadata.name}
+                        ],
+                       namespace='default',
+                       kind='ServiceRoleBinding',
+                       api_version='rbac.istio.io/v1alpha1',
+                       service_name=DETAILS,
+                       check_service_details=False)
+
+    _istio_config_delete(openshift_client, _role_dict,
+                         namespace='default',
+                         kind='ServiceRole',
+                         api_version='rbac.istio.io/v1alpha1')
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_group8
+def test_service_role_binding_broken(kiali_client, openshift_client, browser):
+    _role_yaml = get_yaml(istio_objects_path.strpath, SERVICE_ROLE)
+    _role_dict = get_dict(istio_objects_path.strpath, SERVICE_ROLE)
+    _istio_config_create(openshift_client, _role_dict, _role_yaml,
+                         namespace='default',
+                         kind='ServiceRole',
+                         api_version='rbac.istio.io/v1alpha1')
+
+    yaml = get_yaml(istio_objects_path.strpath, SERVICE_ROLE_BINDING_BROKEN)
+    _dict = get_dict(istio_objects_path.strpath, SERVICE_ROLE_BINDING_BROKEN)
+
+    _istio_config_test(kiali_client, openshift_client, browser,
+                       _dict,
+                       yaml,
+                       [
+                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
+                         'value': IstioConfigObjectType.SERVICE_ROLE_BINDING.text},
+                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
+                         'value': _dict.metadata.name}
+                        ],
+                       namespace='default',
+                       kind='ServiceRoleBinding',
+                       api_version='rbac.istio.io/v1alpha1',
+                       service_name=DETAILS,
+                       error_messages=['ServiceRole does not exists in this namespace'],
+                       check_service_details=False)
+
+    _istio_config_delete(openshift_client, _role_dict,
+                         namespace='default',
+                         kind='ServiceRole',
+                         api_version='rbac.istio.io/v1alpha1')
+
+
 def _istio_config_create(openshift_client, config_dict, config_yaml, kind, api_version,
                          namespace=BOOKINFO_1):
     openshift_client.delete_istio_config(name=config_dict.metadata.name,
@@ -371,6 +536,7 @@ def _istio_config_details_test(kiali_client, openshift_client, browser, config_d
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
 
     tests.assert_details(name=config_dict.metadata.name,
+                         object_type=kind,
                          namespace=namespace,
                          error_messages=error_messages,
                          apply_filters=False)
