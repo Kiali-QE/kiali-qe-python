@@ -26,8 +26,8 @@ class UserMenuEnum(StringEnum):
 
 
 class ApplicationVersionEnum(StringEnum):
-    KIALI_UI = ("kiali-ui")
-    KIALI_CORE = ("kiali")
+    KIALI_UI = ("Kiali-ui")
+    KIALI_CORE = ("Kiali")
     ISTIO = ("Istio")
     PROMETHEUS = ("Prometheus")
     KUBERNETES = ("Kubernetes")
@@ -36,8 +36,8 @@ class ApplicationVersionEnum(StringEnum):
 
 
 class MaistraEnum(StringEnum):
-    KIALI_UI = ("kiali-ui")
-    KIALI_CORE = ("kiali")
+    KIALI_UI = ("Kiali-ui")
+    KIALI_CORE = ("Kiali")
     MAISTRA = ("Maistra Project")
     PROMETHEUS = ("Prometheus")
     KUBERNETES = ("Kubernetes")
