@@ -1,0 +1,42 @@
+# Valid: MeshPolicy in STRICT mode + DestinationRule enabling mTLS mesh-wide (classic scenario)
+#        Policy ns-level in PERMISSIVE mode + DR disabling mTLS ns-wide.
+apiVersion: "networking.istio.io/v1alpha3"
+kind: "DestinationRule"
+metadata:
+  name: "default"
+  namespace: "bookinfo"
+spec:
+  host: "*.bookinfo.svc.cluster.local"
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
+apiVersion: "authentication.istio.io/v1alpha1"
+kind: "Policy"
+metadata:
+  name: "default"
+  namespace: "bookinfo"
+spec:
+  peers:
+  - mtls:
+      mode: PERMISSIVE
+---
+apiVersion: "authentication.istio.io/v1alpha1"
+kind: "MeshPolicy"
+metadata:
+  name: "default"
+spec:
+  peers:
+  - mtls:
+      mode: "STRICT"
+---
+apiVersion: "networking.istio.io/v1alpha3"
+kind: "DestinationRule"
+metadata:
+  name: "default"
+  namespace: "default"
+spec:
+  host: "*.local"
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL

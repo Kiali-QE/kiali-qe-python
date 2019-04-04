@@ -24,6 +24,7 @@ SCENARIO_11 = "scenario11.yaml"
 SCENARIO_12 = "scenario12.yaml"
 SCENARIO_13 = "scenario13.yaml"
 SCENARIO_14 = "scenario14.yaml"
+SCENARIO_15 = "scenario15.yaml"
 
 
 @pytest.mark.p_group_last
@@ -95,7 +96,7 @@ def test_scenario4(kiali_client):
                             ConfigValidationObject(
                                 'DestinationRule', 'default',
                                 namespace='istio-system',
-                                error_messages=['MeshPolicy enabling mTLS is missing'])
+                                error_messages=[])
                         ])
 
 
@@ -251,6 +252,26 @@ def test_scenario14(kiali_client):
                                 namespace=BOOKINFO,
                                 error_messages=[
                                     'Policy enabling namespace-wide mTLS is missing'])
+                        ])
+
+
+@pytest.mark.p_group_last
+def test_scenario15(kiali_client):
+    """ MeshPolicy in STRICT mode + DestinationRule enabling mTLS mesh-wide (classic scenario)
+        Policy ns-level in PERMISSIVE mode + DR disabling mTLS ns-wide.
+
+    """
+
+    _test_istio_objects(kiali_client, SCENARIO_15, namespace=None,
+                        config_validation_objects=[
+                            ConfigValidationObject(
+                                'DestinationRule', 'default',
+                                namespace=BOOKINFO,
+                                error_messages=[]),
+                            ConfigValidationObject(
+                                'Policy', 'default',
+                                namespace=BOOKINFO,
+                                error_messages=[])
                         ])
 
 
