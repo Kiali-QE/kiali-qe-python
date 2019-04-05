@@ -152,5 +152,6 @@ class IstioConfigPage(RootPage):
     namespace = NamespaceFilter()
     filter = Filter()
     sort = SortDropDown(locator=XP_DROP_DOWN.format('sortTypeMenu'))
+    actions = DropDown(locator=XP_DROP_DOWN.format('actions'))
     content = ListViewIstioConfig()
     pagination = Pagination()

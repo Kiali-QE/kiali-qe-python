@@ -777,6 +777,7 @@ class Login(Widget):
 
 class ListViewAbstract(Widget):
     ROOT = '//*[contains(@class, "list-view-pf") and contains(@class, "list-view-pf-view")]'
+    DIALOG_ROOT = '//*[@role="dialog"]'
     ITEMS = './/*[contains(@class, "list-group-item")]//*[contains(@class, "list-view-pf-body")]'
     ITEM_TEXT = './/*[contains(@class, "list-group-item-heading")]'
     SELECT_ITEM = ITEMS + '//*[text()="{}"]'
@@ -1267,6 +1268,14 @@ class ListViewIstioConfig(ListViewAbstract):
                 # append this item to the final list
                 _items.append(_config)
         return _items
+
+    def delete(self, name, namespace=None):
+        self.open(name, namespace)
+        self.parent.actions.select('Delete')
+        self.browser.click(self.browser.element(
+            parent=self.DIALOG_ROOT,
+            locator=('.//button[text()="Delete"]')))
+        wait_displayed(self)
 
 
 class TableViewAbstract(Widget):

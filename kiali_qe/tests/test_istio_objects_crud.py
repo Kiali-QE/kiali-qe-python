@@ -472,6 +472,11 @@ def _istio_config_delete(openshift_client, config_dict, kind, api_version, names
                                          api_version=api_version)
 
 
+def _ui_istio_config_delete(tests, config_dict, namespace=BOOKINFO_1):
+    tests.delete_istio_config(name=config_dict.metadata.name,
+                              namespace=namespace)
+
+
 def _create_dest_rule_vs(openshift_client, destination_rule_conf, namespace=BOOKINFO_1):
     destination_rule = get_yaml(istio_objects_path.strpath, destination_rule_conf)
     destination_rule_dict = get_dict(istio_objects_path.strpath, destination_rule_conf)
@@ -524,7 +529,7 @@ def _istio_config_test(kiali_client, openshift_client, browser, config_dict,
                               service_name,
                               namespace)
 
-    _istio_config_delete(openshift_client, config_dict, kind, api_version, namespace)
+    _ui_istio_config_delete(tests, config_dict, namespace)
 
     tests.assert_all_items(namespaces=[namespace], filters=filters)
 

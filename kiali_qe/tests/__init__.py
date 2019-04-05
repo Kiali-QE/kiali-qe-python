@@ -1038,6 +1038,10 @@ class IstioConfigPageTest(AbstractListPageTest):
                 if not found:
                     assert found, '{} {} not found in OC'.format(ui_key, config_ui)
 
+    def delete_istio_config(self, name, namespace=None):
+        self.page.load(force_load=True)
+        self.page.content.delete(name, namespace)
+
     def get_additional_filters(self, namespaces, current_filters):
         logger.debug('Current filters:{}'.format(current_filters))
         # get rules of a namespace
