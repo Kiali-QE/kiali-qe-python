@@ -53,7 +53,7 @@ class RootPage(View):
                 (self.main_menu.selected != self.PAGE_MENU or force_load):
             self.main_menu.select(self.PAGE_MENU)
         if force_refresh:
-            self.click_refresh()
+            self.page_refresh()
 
     def login(self, username=None, password=None, force_login=False):
         if force_login:
@@ -83,7 +83,7 @@ class RootPage(View):
         self.browser.refresh()
         self.load()
 
-    def click_refresh(self):
+    def page_refresh(self):
         self.browser.click(self.refresh)
 
     @property

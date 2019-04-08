@@ -41,6 +41,9 @@ class AbstractListPageTest(object):
     def _namespaces_ui(self):
         return self.page.namespace.items
 
+    def get_mesh_wide_tls(self):
+        return self.page.content.get_mesh_wide_tls()
+
     def assert_all_items(self, namespaces=[], filters=[], force_clear_all=True):
         """
         Apply supplied filter in to UI, REST, OC and assert content
@@ -335,7 +338,7 @@ class OverviewPageTest(AbstractListPageTest):
         self.apply_filters(filters=filters, force_clear_all=force_clear_all)
 
         if force_refresh:
-            self.page.click_refresh()
+            self.page.page_refresh()
         # get overviews from ui
         overviews_ui = self.page.content.all_items
         # get overviews from rest api
