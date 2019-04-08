@@ -812,7 +812,7 @@ class ListViewAbstract(Widget):
     def __locator__(self):
         return self.locator
 
-    def open(self, name, namespace=None):
+    def open(self, name, namespace=None, force_refresh=False):
         # TODO added wait for unstable performance
         wait_to_spinner_disappear(self.browser)
         if namespace is not None:
@@ -821,6 +821,8 @@ class ListViewAbstract(Widget):
         else:
             self.browser.click(self.browser.element(self.SELECT_ITEM.format(name), parent=self))
 
+        if force_refresh:
+            self.parent.click_refresh()
         wait_to_spinner_disappear(self.browser)
         wait_displayed(self)
 
@@ -1026,8 +1028,8 @@ class ListViewOverview(ListViewAbstract):
 
 class ListViewApplications(ListViewAbstract):
 
-    def get_details(self, name, namespace=None):
-        self.open(name, namespace)
+    def get_details(self, name, namespace=None, force_refresh=False):
+        self.open(name, namespace, force_refresh)
         _name = self.browser.text(
             locator=self.HEADER,
             parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '').strip()
@@ -1071,8 +1073,8 @@ class ListViewApplications(ListViewAbstract):
 
 class ListViewWorkloads(ListViewAbstract):
 
-    def get_details(self, name, namespace=None):
-        self.open(name, namespace)
+    def get_details(self, name, namespace=None, force_refresh=False):
+        self.open(name, namespace, force_refresh)
         _name = self.browser.text(
             locator=self.HEADER,
             parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '').strip()
@@ -1136,8 +1138,8 @@ class ListViewWorkloads(ListViewAbstract):
 
 class ListViewServices(ListViewAbstract):
 
-    def get_details(self, name, namespace=None):
-        self.open(name, namespace)
+    def get_details(self, name, namespace=None, force_refresh=False):
+        self.open(name, namespace, force_refresh)
         _name = self.browser.text(
             locator=self.HEADER,
             parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '').strip()

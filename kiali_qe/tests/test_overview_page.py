@@ -27,7 +27,7 @@ def test_type_options(kiali_client, openshift_client, browser):
 def test_all_app_overviews(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.assert_all_items(filters=[], overview_type=OverviewPageType.APPS)
+    tests.assert_all_items(filters=[], overview_type=OverviewPageType.APPS, force_refresh=True)
 
 
 @pytest.mark.p_ro_top
@@ -35,7 +35,7 @@ def test_all_app_overviews(kiali_client, openshift_client, browser):
 def test_all_services_overviews(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.assert_all_items(filters=[], overview_type=OverviewPageType.SERVICES)
+    tests.assert_all_items(filters=[], overview_type=OverviewPageType.SERVICES, force_refresh=True)
 
 
 @pytest.mark.p_ro_top
@@ -43,4 +43,4 @@ def test_all_services_overviews(kiali_client, openshift_client, browser):
 def test_all_workloads_overviews(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.assert_all_items(filters=[], overview_type=OverviewPageType.WORKLOADS)
+    tests.assert_all_items(filters=[], overview_type=OverviewPageType.WORKLOADS, force_refresh=True)

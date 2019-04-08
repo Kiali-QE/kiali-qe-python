@@ -49,4 +49,4 @@ def test_workload_details_random(kiali_client, openshift_client, browser, pick_n
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     namespace = pick_namespace(BOOKINFO_2)
-    tests.assert_random_details(namespaces=[namespace])
+    tests.assert_random_details(namespaces=[namespace], force_refresh=True)

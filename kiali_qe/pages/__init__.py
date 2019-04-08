@@ -25,6 +25,7 @@ from wait_for import wait_for
 
 XP_DROP_DOWN = '//*[contains(@class, "dropdown")]/*[@id="{}"]/..'
 XP_BUTTON_SWITCH = '//*[contains(@class, "bootstrap-switch")]//*[text()="{}"]/../..'
+REFRESH_BUTTON = './/button//*[contains(@class, "fa-refresh")]'
 
 
 class RootPage(View):
@@ -40,7 +41,7 @@ class RootPage(View):
     page_header = Text(locator='//*[contains(@class, "container-fluid")]//h2')
     notifications = Notifications()
 
-    def load(self, force_load=False):
+    def load(self, force_load=False, force_refresh=False):
         # if auto login enabled, do login. else do logout
         if self._auto_login:
             # if login page displayed, do login
@@ -51,6 +52,8 @@ class RootPage(View):
         if self.PAGE_MENU is not None and \
                 (self.main_menu.selected != self.PAGE_MENU or force_load):
             self.main_menu.select(self.PAGE_MENU)
+        if force_refresh:
+            self.click_refresh()
 
     def login(self, username=None, password=None, force_login=False):
         if force_login:
@@ -80,6 +83,9 @@ class RootPage(View):
         self.browser.refresh()
         self.load()
 
+    def click_refresh(self):
+        self.browser.click(self.refresh)
+
     @property
     def navbar(self):
         return self.main_menu.navbar
@@ -99,7 +105,7 @@ class GraphPage(RootPage):
     type = DropDown(locator=XP_DROP_DOWN.format('graph_filter_view_type'))
     # TODO Layout
     filter = CheckBoxFilter("Display")
-    refresh = Button(locator='.//button//*[contains(@class, "fa-refresh")]')
+    refresh = Button(locator=REFRESH_BUTTON)
     # TODO: implement graph control code
 
 
@@ -111,7 +117,7 @@ class OverviewPage(RootPage):
     type = DropDown(locator=XP_DROP_DOWN.format('overview-type'))
     duration = DropDown(locator=XP_DROP_DOWN.format('overvoew-duration'))
     interval = DropDown(locator=XP_DROP_DOWN.format('overview-refresh'))
-    refresh = Button(locator='.//button//*[contains(@class, "fa-refresh")]')
+    refresh = Button(locator=REFRESH_BUTTON)
     content = ListViewOverview()
 
 
@@ -121,6 +127,7 @@ class ApplicationsPage(RootPage):
     namespace = NamespaceFilter()
     filter = Filter()
     sort = SortDropDown(locator=XP_DROP_DOWN.format('sortTypeMenu'))
+    refresh = Button(locator=REFRESH_BUTTON)
     content = ListViewApplications()
     pagination = Pagination()
 
@@ -131,6 +138,7 @@ class WorkloadsPage(RootPage):
     namespace = NamespaceFilter()
     filter = Filter()
     sort = SortDropDown(locator=XP_DROP_DOWN.format('sortTypeMenu'))
+    refresh = Button(locator=REFRESH_BUTTON)
     content = ListViewWorkloads()
     pagination = Pagination()
 
@@ -142,6 +150,7 @@ class ServicesPage(RootPage):
     filter = Filter()
     sort = SortDropDown(locator=XP_DROP_DOWN.format('sortTypeMenu'))
     rate_interval = DropDown(locator=XP_DROP_DOWN.format('rateIntervalDropDown'))
+    refresh = Button(locator=REFRESH_BUTTON)
     content = ListViewServices()
     pagination = Pagination()
 
@@ -153,5 +162,6 @@ class IstioConfigPage(RootPage):
     filter = Filter()
     sort = SortDropDown(locator=XP_DROP_DOWN.format('sortTypeMenu'))
     actions = DropDown(locator=XP_DROP_DOWN.format('actions'))
+    refresh = Button(locator=REFRESH_BUTTON)
     content = ListViewIstioConfig()
     pagination = Pagination()

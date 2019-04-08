@@ -326,13 +326,16 @@ class OverviewPageTest(AbstractListPageTest):
         assert is_equal(options_defined, options_listed)
 
     def assert_all_items(self, filters=[],
-                         overview_type=TYPE_ENUM.APPS, force_clear_all=True):
+                         overview_type=TYPE_ENUM.APPS, force_clear_all=True,
+                         force_refresh=False):
         # apply overview type
         self.page.type.select(overview_type.text)
 
         # apply filters
         self.apply_filters(filters=filters, force_clear_all=force_clear_all)
 
+        if force_refresh:
+            self.page.click_refresh()
         # get overviews from ui
         overviews_ui = self.page.content.all_items
         # get overviews from rest api
@@ -370,7 +373,7 @@ class ApplicationsPageTest(AbstractListPageTest):
             openshift_client=openshift_client, page=ApplicationsPage(browser))
         self.browser = browser
 
-    def assert_random_details(self, namespaces=[], filters=[]):
+    def assert_random_details(self, namespaces=[], filters=[], force_refresh=False):
         # get applications from rest api
         _sn = self.FILTER_ENUM.APP_NAME.text
         _application_names = [_f['value'] for _f in filters if _f['name'] == _sn]
@@ -389,9 +392,10 @@ class ApplicationsPageTest(AbstractListPageTest):
             self.assert_details(
                 _selected_application.name,
                 _selected_application.namespace,
-                check_metrics=True if _idx == 0 else False)
+                check_metrics=True if _idx == 0 else False,
+                force_refresh=force_refresh)
 
-    def assert_details(self, name, namespace, check_metrics=False):
+    def assert_details(self, name, namespace, check_metrics=False, force_refresh=False):
         logger.debug('Details: {}, {}'.format(name, namespace))
         # load the page first
         self.page.load(force_load=True)
@@ -403,7 +407,7 @@ class ApplicationsPageTest(AbstractListPageTest):
         self.apply_filters(filters=[
             {'name': ApplicationsPageFilter.APP_NAME.text, 'value': name}])
         # load application details page
-        application_details_ui = self.page.content.get_details(name, namespace)
+        application_details_ui = self.page.content.get_details(name, namespace, force_refresh)
         assert application_details_ui
         assert name == application_details_ui.name
         # get application detals from rest
@@ -511,7 +515,8 @@ class WorkloadsPageTest(AbstractListPageTest):
             openshift_client=openshift_client, page=WorkloadsPage(browser))
         self.browser = browser
 
-    def assert_random_details(self, namespaces=[], filters=[], force_clear_all=True):
+    def assert_random_details(self, namespaces=[], filters=[],
+                              force_clear_all=True, force_refresh=False):
         # get workloads from rest api
         _sn = self.FILTER_ENUM.WORKLOAD_NAME.text
         _workload_names = [_f['value'] for _f in filters if _f['name'] == _sn]
@@ -529,9 +534,11 @@ class WorkloadsPageTest(AbstractListPageTest):
             self.assert_details(_selected_workload.name,
                                 _selected_workload.namespace,
                                 _selected_workload.workload_type,
-                                True if _idx == 0 else False)
+                                True if _idx == 0 else False,
+                                force_refresh=force_refresh)
 
-    def assert_details(self, name, namespace, workload_type, check_metrics=False):
+    def assert_details(self, name, namespace, workload_type, check_metrics=False,
+                       force_refresh=False):
         logger.debug('Details: {}, {}'.format(name, namespace))
         # load the page first
         self.page.load(force_load=True)
@@ -543,7 +550,7 @@ class WorkloadsPageTest(AbstractListPageTest):
             {'name': WorkloadsPageFilter.WORKLOAD_NAME.text, 'value': name}])
 
         # load workload details page
-        workload_details_ui = self.page.content.get_details(name, namespace)
+        workload_details_ui = self.page.content.get_details(name, namespace, force_refresh)
         assert workload_details_ui
         assert name == workload_details_ui.name
         assert workload_type == workload_details_ui.workload_type, \
@@ -670,7 +677,7 @@ class ServicesPageTest(AbstractListPageTest):
             openshift_client=openshift_client, page=ServicesPage(browser))
         self.browser = browser
 
-    def assert_random_details(self, namespaces=[], filters=[]):
+    def assert_random_details(self, namespaces=[], filters=[], force_refresh=False):
         # get services from rest api
         _sn = self.FILTER_ENUM.SERVICE_NAME.text
         _service_names = [_f['value'] for _f in filters if _f['name'] == _sn]
@@ -686,9 +693,11 @@ class ServicesPageTest(AbstractListPageTest):
         # create filters
         for _idx, _selected_service in enumerate(_random_services):
             self.assert_details(_selected_service.name, _selected_service.namespace,
-                                check_metrics=True if _idx == 0 else False)
+                                check_metrics=True if _idx == 0 else False,
+                                force_refresh=force_refresh)
 
-    def assert_details(self, name, namespace, check_metrics=False):
+    def assert_details(self, name, namespace, check_metrics=False,
+                       force_refresh=False):
         logger.debug('Details: {}, {}'.format(name, namespace))
         # load the page first
         self.page.load(force_load=True)
@@ -699,7 +708,7 @@ class ServicesPageTest(AbstractListPageTest):
         self.apply_filters(filters=[
             {'name': ServicesPageFilter.SERVICE_NAME.text, 'value': name}])
         # load service details page
-        service_details_ui = self.page.content.get_details(name, namespace)
+        service_details_ui = self.page.content.get_details(name, namespace, force_refresh)
         assert service_details_ui
         assert name == service_details_ui.name
         # get service details from rest
