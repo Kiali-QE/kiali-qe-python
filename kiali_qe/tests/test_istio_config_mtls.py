@@ -6,6 +6,7 @@ from kiali_qe.utils.path import istio_objects_mtls_path
 from kiali_qe.utils.command_exec import oc_apply, oc_delete
 from kiali_qe.components.enums import MeshWideTLSType
 
+
 '''
 Tests are divided into groups using different services and namespaces. This way the group of tests
 can be run in parallel.
@@ -27,6 +28,7 @@ SCENARIO_12 = "scenario12.yaml"
 SCENARIO_13 = "scenario13.yaml"
 SCENARIO_14 = "scenario14.yaml"
 SCENARIO_15 = "scenario15.yaml"
+SCENARIO_16 = "scenario16.yaml"
 
 
 @pytest.mark.p_group_last
@@ -80,7 +82,18 @@ def test_scenario3(kiali_client, openshift_client, browser):
                                 'DestinationRule', 'default',
                                 namespace='istio-system', error_messages=[])
                         ],
-                        tls_type=MeshWideTLSType.ENABLED)
+                        tls_type=MeshWideTLSType.ENABLED,
+                        namespace_tls_objects=[
+                            NamespaceTLSObject(
+                                'bookinfo',
+                                MeshWideTLSType.PARTLY_ENABLED),
+                            NamespaceTLSObject(
+                                'istio-system',
+                                MeshWideTLSType.ENABLED),
+                            NamespaceTLSObject(
+                                'default',
+                                MeshWideTLSType.ENABLED)
+                        ])
 
 
 @pytest.mark.p_group_last
@@ -101,7 +114,18 @@ def test_scenario4(kiali_client, openshift_client, browser):
                                 namespace='istio-system',
                                 error_messages=[])
                         ],
-                        tls_type=MeshWideTLSType.PARTLY_ENABLED)
+                        tls_type=MeshWideTLSType.PARTLY_ENABLED,
+                        namespace_tls_objects=[
+                            NamespaceTLSObject(
+                                'bookinfo',
+                                MeshWideTLSType.PARTLY_ENABLED),
+                            NamespaceTLSObject(
+                                'istio-system',
+                                MeshWideTLSType.DISABLED),
+                            NamespaceTLSObject(
+                                'default',
+                                MeshWideTLSType.DISABLED)
+                        ])
 
 
 @pytest.mark.p_group_last
@@ -115,7 +139,18 @@ def test_scenario5(kiali_client, openshift_client, browser):
                                 'DestinationRule', 'disable-mtls',
                                 namespace=BOOKINFO, error_messages=[])
                         ],
-                        tls_type=MeshWideTLSType.DISABLED)
+                        tls_type=MeshWideTLSType.DISABLED,
+                        namespace_tls_objects=[
+                            NamespaceTLSObject(
+                                'bookinfo',
+                                MeshWideTLSType.PARTLY_ENABLED),
+                            NamespaceTLSObject(
+                                'istio-system',
+                                MeshWideTLSType.DISABLED),
+                            NamespaceTLSObject(
+                                'default',
+                                MeshWideTLSType.DISABLED)
+                        ])
 
 
 @pytest.mark.p_group_last
@@ -148,7 +183,18 @@ def test_scenario7(kiali_client, openshift_client, browser):
                                 'Policy', 'default',
                                 namespace=BOOKINFO, error_messages=[])
                         ],
-                        tls_type=MeshWideTLSType.DISABLED)
+                        tls_type=MeshWideTLSType.DISABLED,
+                        namespace_tls_objects=[
+                            NamespaceTLSObject(
+                                'bookinfo',
+                                MeshWideTLSType.ENABLED),
+                            NamespaceTLSObject(
+                                'istio-system',
+                                MeshWideTLSType.DISABLED),
+                            NamespaceTLSObject(
+                                'default',
+                                MeshWideTLSType.DISABLED)
+                        ])
 
 
 @pytest.mark.p_group_last
@@ -285,6 +331,28 @@ def test_scenario15(kiali_client, openshift_client, browser):
                         ])
 
 
+@pytest.mark.p_group_last
+def test_scenario16(kiali_client, openshift_client, browser):
+    """ MeshPolicy OK
+    """
+
+    _test_istio_objects(kiali_client, openshift_client, browser, SCENARIO_16, namespace=None,
+                        config_validation_objects=[
+                        ],
+                        tls_type=MeshWideTLSType.ENABLED,
+                        namespace_tls_objects=[
+                            NamespaceTLSObject(
+                                'bookinfo',
+                                MeshWideTLSType.ENABLED),
+                            NamespaceTLSObject(
+                                'istio-system',
+                                MeshWideTLSType.ENABLED),
+                            NamespaceTLSObject(
+                                'default',
+                                MeshWideTLSType.ENABLED)
+                        ])
+
+
 def _istio_config_create(yaml_file, namespace):
     _istio_config_delete(yaml_file, namespace=namespace)
 
@@ -298,7 +366,7 @@ def _istio_config_delete(yaml_file, namespace):
 
 
 def _test_istio_objects(kiali_client, openshift_client, browser, scenario, namespace=BOOKINFO,
-                        config_validation_objects=[], tls_type=None):
+                        config_validation_objects=[], tls_type=None, namespace_tls_objects=[]):
     """
         All the testing logic goes here.
         It creates the provided scenario yaml into provider namespace.
@@ -318,7 +386,8 @@ def _test_istio_objects(kiali_client, openshift_client, browser, scenario, names
                                     error_messages=_object.error_messages)
 
         if tls_type:
-            _test_mtls_settings(kiali_client, openshift_client, browser, tls_type)
+            _test_mtls_settings(kiali_client, openshift_client, browser, tls_type,
+                                namespace_tls_objects)
     finally:
         _istio_config_delete(yaml_file, namespace=namespace)
 
@@ -343,12 +412,25 @@ def _test_validation_errors(kiali_client, object_type, object_name, namespace,
                    config_details_rest.error_messages)
 
 
-def _test_mtls_settings(kiali_client, openshift_client, browser, tls_type):
-    actual_tls_type = OverviewPageTest(
-        kiali_client=kiali_client, openshift_client=openshift_client,
-        browser=browser).get_mesh_wide_tls()
-    assert actual_tls_type == tls_type, \
-        'Mesh-wide TLS type expected: {} got: {}'.format(tls_type, actual_tls_type)
+def _test_mtls_settings(kiali_client, openshift_client, browser, tls_type, namespace_tls_objects):
+    """
+        Validates both Mesh-wide mTLS settings in toolbar,
+        and namespace wide TLS settings per namespace in Overview page.
+    """
+    _tests = OverviewPageTest(
+            kiali_client=kiali_client, openshift_client=openshift_client,
+            browser=browser)
+    actual_mtls_type = _tests.get_mesh_wide_tls()
+    assert actual_mtls_type == tls_type, \
+        'Mesh-wide TLS type expected: {} got: {}'.format(tls_type, actual_mtls_type)
+    if namespace_tls_objects:
+        overview_items = _tests.page.content.all_items
+        for tls_object in namespace_tls_objects:
+            for overview_item in overview_items:
+                if overview_item.namespace == tls_object.namespace:
+                    assert tls_object.tls_type == overview_item.tls_type, \
+                        'Namespace TLS type expected: {} got: {}'.format(tls_object.tls_type,
+                                                                         overview_item.tls_type)
 
 
 class ConfigValidationObject(object):
@@ -358,3 +440,10 @@ class ConfigValidationObject(object):
         self.object_type = object_type
         self.object_name = object_name
         self.error_messages = error_messages
+
+
+class NamespaceTLSObject(object):
+
+    def __init__(self, namespace, tls_type):
+        self.namespace = namespace
+        self.tls_type = tls_type

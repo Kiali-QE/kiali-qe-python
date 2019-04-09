@@ -974,6 +974,22 @@ class ListViewAbstract(Widget):
         else:
             return MeshWideTLSType.DISABLED
 
+    def get_namespace_wide_tls(self, element):
+        _partial = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@class, "card-pf-title")]'
+            '//img[contains(@src, "mtls-status-partial-dark")]')) > 0
+        _full = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@class, "card-pf-title")]'
+            '//img[contains(@src, "mtls-status-full-dark")]')) > 0
+        if _full:
+            return MeshWideTLSType.ENABLED
+        elif _partial:
+            return MeshWideTLSType.PARTLY_ENABLED
+        else:
+            return MeshWideTLSType.DISABLED
+
     @property
     def all_items(self):
         items = []
@@ -1040,7 +1056,8 @@ class ListViewOverview(ListViewAbstract):
                 healthy=_healthy,
                 unhealthy=_unhealthy,
                 degraded=_degraded,
-                na=(_item_numbers - (_healthy + _unhealthy + _degraded)))
+                na=(_item_numbers - (_healthy + _unhealthy + _degraded)),
+                tls_type=self.get_namespace_wide_tls(el))
             # append this item to the final list
             _items.append(_overview)
         return _items
