@@ -276,3 +276,9 @@ class MetricsHistograms(StringEnum):
 class MetricsSource(StringEnum):
     SOURCE = ('Source')
     DESTINATION = ('Destination')
+
+
+class MeshWideTLSType(StringEnum):
+    DISABLED = ('')
+    PARTLY_ENABLED = ('Mesh-wide TLS is partially enabled')
+    ENABLED = ('Mesh-wide TLS is fully enabled')
