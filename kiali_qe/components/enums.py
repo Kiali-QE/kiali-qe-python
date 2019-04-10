@@ -282,3 +282,12 @@ class MeshWideTLSType(StringEnum):
     DISABLED = ('')
     PARTLY_ENABLED = ('Mesh-wide TLS is partially enabled')
     ENABLED = ('Mesh-wide TLS is fully enabled')
+
+
+class RoutingWizardType(StringEnum):
+    CREATE_WEIGHTED_ROUTING = ('Create Weighted Routing')
+    UPDATE_WEIGHTED_ROUTING = ('Update Weighted Routing')
+    CREATE_MATCHING_ROUTING = ('Create Matching Routing')
+    UPDATE_MATCHING_ROUTING = ('Update Matching Routing')
+    SUSPEND_TRAFFIC = ('Suspend Traffic')
+    UPDATE_SUSPENDED_TRAFFIC = ('Update Suspended Traffic')

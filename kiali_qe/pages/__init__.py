@@ -15,7 +15,8 @@ from kiali_qe.components import (
     Pagination,
     SortDropDown,
     CheckBoxFilter,
-    NamespaceFilter)
+    NamespaceFilter,
+    Actions)
 from kiali_qe.components.enums import (
     MainMenuEnum as MENU,
     UserMenuEnum as USER_MENU)
@@ -151,6 +152,7 @@ class ServicesPage(RootPage):
     sort = SortDropDown(locator=XP_DROP_DOWN.format('sortTypeMenu'))
     rate_interval = DropDown(locator=XP_DROP_DOWN.format('rateIntervalDropDown'))
     refresh = Button(locator=REFRESH_BUTTON)
+    actions = Actions()
     content = ListViewServices()
     pagination = Pagination()
 
