@@ -13,8 +13,12 @@ def test_weighted_routing_single(kiali_client, openshift_client, browser, pick_n
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     # use only bookinfo2 namespace where colliding tests are in the same p_group
     namespace = pick_namespace(BOOKINFO_2)
-    tests.test_routing_create(name='details', namespace=namespace,
+    name = 'details'
+    tests.test_routing_create(name=name, namespace=namespace,
                               routing_type=RoutingWizardType.CREATE_WEIGHTED_ROUTING)
+    tests.test_routing_update(name=name, namespace=namespace,
+                              routing_type=RoutingWizardType.UPDATE_WEIGHTED_ROUTING)
+    tests.test_routing_delete(name=name, namespace=namespace)
 
 
 @pytest.mark.p_ro_namespace
@@ -24,8 +28,12 @@ def test_matching_routing_multi(kiali_client, openshift_client, browser, pick_na
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     # use only bookinfo2 namespace where colliding tests are in the same p_group
     namespace = pick_namespace(BOOKINFO_2)
-    tests.test_routing_create(name='reviews', namespace=namespace,
+    name = 'reviews'
+    tests.test_routing_create(name=name, namespace=namespace,
                               routing_type=RoutingWizardType.CREATE_MATCHING_ROUTING)
+    tests.test_routing_update(name=name, namespace=namespace,
+                              routing_type=RoutingWizardType.UPDATE_MATCHING_ROUTING)
+    tests.test_routing_delete(name=name, namespace=namespace)
 
 
 @pytest.mark.p_ro_namespace
@@ -35,5 +43,9 @@ def test_suspend_traffic_multi(kiali_client, openshift_client, browser, pick_nam
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     # use only bookinfo2 namespace where colliding tests are in the same p_group
     namespace = pick_namespace(BOOKINFO_2)
-    tests.test_routing_create(name='ratings', namespace=namespace,
+    name = 'ratings'
+    tests.test_routing_create(name=name, namespace=namespace,
                               routing_type=RoutingWizardType.SUSPEND_TRAFFIC)
+    tests.test_routing_update(name=name, namespace=namespace,
+                              routing_type=RoutingWizardType.UPDATE_SUSPENDED_TRAFFIC)
+    tests.test_routing_delete(name=name, namespace=namespace)

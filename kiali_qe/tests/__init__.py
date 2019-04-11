@@ -691,6 +691,10 @@ class ServicesPageTest(AbstractListPageTest):
         self.apply_filters(filters=[
             {'name': ServicesPageFilter.SERVICE_NAME.text, 'value': name}])
 
+    def load_details_page(self, name, namespace, force_refresh):
+        self._prepare_load_details_page(name, namespace)
+        return self.page.content.get_details(name, namespace, force_refresh)
+
     def assert_random_details(self, namespaces=[], filters=[], force_refresh=False):
         # get services from rest api
         _sn = self.FILTER_ENUM.SERVICE_NAME.text
@@ -714,8 +718,7 @@ class ServicesPageTest(AbstractListPageTest):
                        force_refresh=False):
         logger.debug('Details: {}, {}'.format(name, namespace))
         # load service details page
-        self._prepare_load_details_page(name, namespace)
-        service_details_ui = self.page.content.get_details(name, namespace, force_refresh)
+        service_details_ui = self.load_details_page(name, namespace, force_refresh)
         assert service_details_ui
         assert name == service_details_ui.name
         # get service details from rest
@@ -899,6 +902,57 @@ class ServicesPageTest(AbstractListPageTest):
         assert len(service_details_rest.destination_rules) == 1, 'Service should have 1 DR'
         assert service_details_rest.virtual_services[0].name == name
         assert service_details_rest.destination_rules[0].name == name
+
+    def test_routing_update(self, name, namespace, routing_type):
+        logger.debug('Routing Update Wizard {} for Service: {}, {}'.format(routing_type,
+                                                                           name,
+                                                                           namespace))
+        # load service details page
+        self._prepare_load_details_page(name, namespace)
+        self.page.content.open(name, namespace)
+        if routing_type == RoutingWizardType.UPDATE_WEIGHTED_ROUTING:
+            assert self.page.actions.update_weighted_routing()
+            assert not self.page.actions.is_delete_disabled()
+            assert self.page.actions.is_update_weighted_enabled()
+            assert self.page.actions.is_create_matching_disabled()
+            assert self.page.actions.is_suspend_disabled()
+        elif routing_type == RoutingWizardType.UPDATE_MATCHING_ROUTING:
+            assert self.page.actions.update_matching_routing()
+            assert not self.page.actions.is_delete_disabled()
+            assert self.page.actions.is_update_matching_enabled()
+            assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_suspend_disabled()
+        elif routing_type == RoutingWizardType.UPDATE_SUSPENDED_TRAFFIC:
+            assert self.page.actions.update_suspended_traffic()
+            assert not self.page.actions.is_delete_disabled()
+            assert self.page.actions.is_create_matching_disabled()
+            assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_update_suspended_enabled()
+        # get service details from rest
+        service_details_rest = self.kiali_client.service_details(
+            namespace=namespace,
+            service_name=name)
+        assert len(service_details_rest.virtual_services) == 1, 'Service should have 1 VS'
+        assert len(service_details_rest.destination_rules) == 1, 'Service should have 1 DR'
+        assert service_details_rest.virtual_services[0].name == name
+        assert service_details_rest.destination_rules[0].name == name
+
+    def test_routing_delete(self, name, namespace):
+        logger.debug('Routing Delete for Service: {}, {}'.format(name, namespace))
+        # load service details page
+        self._prepare_load_details_page(name, namespace)
+        self.page.content.open(name, namespace)
+        assert self.page.actions.delete_all_routing()
+        assert self.page.actions.is_delete_disabled()
+        assert self.page.actions.is_create_weighted_enabled()
+        assert self.page.actions.is_create_matching_enabled()
+        assert self.page.actions.is_suspend_enabled()
+        # get service details from rest
+        service_details_rest = self.kiali_client.service_details(
+            namespace=namespace,
+            service_name=name)
+        assert len(service_details_rest.virtual_services) == 0, 'Service should have no VS'
+        assert len(service_details_rest.destination_rules) == 0, 'Service should have no DR'
 
 
 class IstioConfigPageTest(AbstractListPageTest):

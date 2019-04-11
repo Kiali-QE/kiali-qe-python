@@ -43,6 +43,12 @@ def wait_displayed(obj, timeout='10s'):
         delay=0.2, very_quiet=True, silent_failure=True)
 
 
+def wait_not_displayed(obj, timeout='10s'):
+    wait_for(
+        lambda: not obj.is_displayed, timeout=timeout,
+        delay=0.2, very_quiet=True, silent_failure=True)
+
+
 def wait_to_spinner_disappear(browser, timeout='5s', very_quiet=True, silent_failure=True):
     def _is_disappeared(browser):
         return len(browser.elements(locator='//*[contains(@class, " spinner ")]',
@@ -464,6 +470,8 @@ class Actions(Widget):
     DIALOG_ROOT = '//*[@role="dialog"]'
     ACTIONS_DROPDOWN = '//*[contains(@class, "dropdown")]'
     CREATE_BUTTON = './/button[text()="Create"]'
+    UPDATE_BUTTON = './/button[text()="Update"]'
+    REMOVE_BUTTON = './/button[text()="Remove"]'
     ADD_RULE_BUTTON = './/button[text()="Add Rule"]'
     DELETE_ALL_TRAFFIC_ROUTING = 'Delete ALL Traffic Routing'
     CREATE_MATCHING_ROUTING = 'Create Matching Routing'
@@ -512,6 +520,15 @@ class Actions(Widget):
     def is_suspend_disabled(self):
         return self.SUSPEND_TRAFFIC in self.disabled_actions
 
+    def is_create_weighted_enabled(self):
+        return self.CREATE_WEIGHTED_ROUTING in self.actions
+
+    def is_create_matching_enabled(self):
+        return self.CREATE_MATCHING_ROUTING in self.actions
+
+    def is_suspend_enabled(self):
+        return self.SUSPEND_TRAFFIC in self.actions
+
     def is_update_weighted_enabled(self):
         return self.UPDATE_WEIGHTED_ROUTING in self.actions
 
@@ -523,7 +540,7 @@ class Actions(Widget):
 
     def delete_all_routing(self):
         if self.is_delete_disabled():
-            return
+            return False
         else:
             self._select(self.DELETE_ALL_TRAFFIC_ROUTING)
             wait_displayed(self)
@@ -532,6 +549,7 @@ class Actions(Widget):
                 locator=('.//button[text()="Delete"]')))
             # wait to Spinner disappear
             wait_to_spinner_disappear(self.browser)
+            return True
 
     def create_weighted_routing(self):
         if self.is_create_weighted_disabled():
@@ -542,9 +560,24 @@ class Actions(Widget):
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.CREATE_BUTTON)))
+            wait_not_displayed(self)
             # wait to Spinner disappear
             wait_to_spinner_disappear(self.browser)
             return True
+
+    def update_weighted_routing(self):
+        if self.is_update_weighted_enabled():
+            self._select(self.UPDATE_WEIGHTED_ROUTING)
+            wait_displayed(self)
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.UPDATE_BUTTON)))
+            wait_not_displayed(self)
+            # wait to Spinner disappear
+            wait_to_spinner_disappear(self.browser)
+            return True
+        else:
+            return False
 
     def create_matching_routing(self):
         if self.is_create_matching_disabled():
@@ -555,12 +588,37 @@ class Actions(Widget):
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.ADD_RULE_BUTTON)))
-            self.browser.click(self.browser.element(
+            create_button = self.browser.element(
                 parent=self.WIZARD_ROOT,
-                locator=(self.CREATE_BUTTON)))
+                locator=(self.CREATE_BUTTON))
+            wait_displayed(create_button)
+            self.browser.click(create_button)
+            wait_not_displayed(self)
             # wait to Spinner disappear
             wait_to_spinner_disappear(self.browser)
             return True
+
+    def update_matching_routing(self):
+        if self.is_update_matching_enabled():
+            self._select(self.UPDATE_MATCHING_ROUTING)
+            wait_displayed(self)
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.REMOVE_BUTTON)))
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.ADD_RULE_BUTTON)))
+            update_button = self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.UPDATE_BUTTON))
+            wait_displayed(update_button)
+            self.browser.click(update_button)
+            wait_not_displayed(self)
+            # wait to Spinner disappear
+            wait_to_spinner_disappear(self.browser)
+            return True
+        else:
+            return False
 
     def suspend_traffic(self):
         if self.is_suspend_disabled():
@@ -571,9 +629,24 @@ class Actions(Widget):
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.CREATE_BUTTON)))
+            wait_not_displayed(self)
             # wait to Spinner disappear
             wait_to_spinner_disappear(self.browser)
             return True
+
+    def update_suspended_traffic(self):
+        if self.is_update_suspended_enabled():
+            self._select(self.UPDATE_SUSPENDED_TRAFFIC)
+            wait_displayed(self)
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.UPDATE_BUTTON)))
+            wait_not_displayed(self)
+            # wait to Spinner disappear
+            wait_to_spinner_disappear(self.browser)
+            return True
+        else:
+            return False
 
 
 class CheckBoxFilter(Widget):
