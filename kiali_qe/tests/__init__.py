@@ -16,7 +16,8 @@ from kiali_qe.components.enums import (
     OutboundMetricsFilter,
     GraphPageDuration,
     GraphRefreshInterval,
-    OverviewPageType
+    OverviewPageType,
+    RoutingWizardType
 )
 from kiali_qe.utils import is_equal, is_sublist
 from kiali_qe.utils.log import logger
@@ -680,6 +681,16 @@ class ServicesPageTest(AbstractListPageTest):
             openshift_client=openshift_client, page=ServicesPage(browser))
         self.browser = browser
 
+    def _prepare_load_details_page(self, name, namespace):
+        # load the page first
+        self.page.load(force_load=True)
+        # TODO apply pagination feature in get_details
+        # apply namespace
+        self.apply_namespaces(namespaces=[namespace])
+        # apply filters
+        self.apply_filters(filters=[
+            {'name': ServicesPageFilter.SERVICE_NAME.text, 'value': name}])
+
     def assert_random_details(self, namespaces=[], filters=[], force_refresh=False):
         # get services from rest api
         _sn = self.FILTER_ENUM.SERVICE_NAME.text
@@ -702,15 +713,8 @@ class ServicesPageTest(AbstractListPageTest):
     def assert_details(self, name, namespace, check_metrics=False,
                        force_refresh=False):
         logger.debug('Details: {}, {}'.format(name, namespace))
-        # load the page first
-        self.page.load(force_load=True)
-        # TODO apply pagination feature in get_details
-        # apply manespace
-        self.apply_namespaces(namespaces=[namespace])
-        # apply filters
-        self.apply_filters(filters=[
-            {'name': ServicesPageFilter.SERVICE_NAME.text, 'value': name}])
         # load service details page
+        self._prepare_load_details_page(name, namespace)
         service_details_ui = self.page.content.get_details(name, namespace, force_refresh)
         assert service_details_ui
         assert name == service_details_ui.name
@@ -862,6 +866,39 @@ class ServicesPageTest(AbstractListPageTest):
                 }
             ]
         return []
+
+    def test_routing_create(self, name, namespace, routing_type):
+        logger.debug('Routing Wizard {} for Service: {}, {}'.format(routing_type, name, namespace))
+        # load service details page
+        self._prepare_load_details_page(name, namespace)
+        self.page.content.open(name, namespace)
+        self.page.actions.delete_all_routing()
+        if routing_type == RoutingWizardType.CREATE_WEIGHTED_ROUTING:
+            assert self.page.actions.create_weighted_routing()
+            assert not self.page.actions.is_delete_disabled()
+            assert self.page.actions.is_update_weighted_enabled()
+            assert self.page.actions.is_create_matching_disabled()
+            assert self.page.actions.is_suspend_disabled()
+        elif routing_type == RoutingWizardType.CREATE_MATCHING_ROUTING:
+            assert self.page.actions.create_matching_routing()
+            assert not self.page.actions.is_delete_disabled()
+            assert self.page.actions.is_update_matching_enabled()
+            assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_suspend_disabled()
+        elif routing_type == RoutingWizardType.SUSPEND_TRAFFIC:
+            assert self.page.actions.suspend_traffic()
+            assert not self.page.actions.is_delete_disabled()
+            assert self.page.actions.is_create_matching_disabled()
+            assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_update_suspended_enabled()
+        # get service details from rest
+        service_details_rest = self.kiali_client.service_details(
+            namespace=namespace,
+            service_name=name)
+        assert len(service_details_rest.virtual_services) == 1, 'Service should have 1 VS'
+        assert len(service_details_rest.destination_rules) == 1, 'Service should have 1 DR'
+        assert service_details_rest.virtual_services[0].name == name
+        assert service_details_rest.destination_rules[0].name == name
 
 
 class IstioConfigPageTest(AbstractListPageTest):

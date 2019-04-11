@@ -202,7 +202,10 @@ class Notification(Widget):
 class DropDown(Widget):
     ROOT = '//*[contains(@class, "form-group")]/*[contains(@class, "dropdown")]/..'
     SELECT_BUTTON = './/*[contains(@class, "dropdown-toggle")]'
-    OPTIONS_LIST = './/*[contains(@class, "dropdown-menu")]//*[contains(@role, "menuitem")]'
+    OPTIONS_LIST = ('.//*[contains(@class, "dropdown-menu")]'
+                    '//*[not(contains(@class, "disabled"))]//*[contains(@role, "menuitem")]')
+    DISABLED_OPTIONS_LIST = ('.//*[contains(@class, "dropdown-menu")]'
+                             '//*[contains(@class, "disabled")]//*[contains(@role, "menuitem")]')
     OPTION = ('.//*[contains(@class, "dropdown-menu")]'
               '//*[contains(@role, "menuitem") and text()="{}"]')
 
@@ -228,25 +231,38 @@ class DropDown(Widget):
         if el.get_attribute('aria-expanded') == 'false':
             self.browser.click(el)
 
+    def _update_options(self, locator):
+        options = []
+        if self._force_open:
+            self._open()
+        for el in self.browser.elements(locator=locator, parent=self):
+            # on filter drop down, title comes in to options list.
+            # Here it will be removed
+            if self.browser.get_attribute('title', el).startswith('Filter by'):
+                continue
+            options.append(self.browser.text(el))
+        if self._force_open:
+            self._close()
+        return options
+
     @property
     def options(self):
         options = []
 
-        def _update_options():
-            if self._force_open:
-                self._open()
-            for el in self.browser.elements(locator=self.OPTIONS_LIST, parent=self):
-                # on filter drop down, title comes in to options list.
-                # Here it will be removed
-                if self.browser.get_attribute('title', el).startswith('Filter by'):
-                    continue
-                options.append(self.browser.text(el))
-            if self._force_open:
-                self._close()
+        # sometime options are not displayed, needs to do retry
+        for retry in range(1, 3):  # @UnusedVariable
+            options = self._update_options(self.OPTIONS_LIST)
+            if len(options) > 0:
+                break
+        return options
+
+    @property
+    def disabled_options(self):
+        options = []
 
         # sometime options are not displayed, needs to do retry
         for retry in range(1, 3):  # @UnusedVariable
-            _update_options()
+            options = self._update_options(self.DISABLED_OPTIONS_LIST)
             if len(options) > 0:
                 break
         return options
@@ -440,6 +456,124 @@ class Filter(Widget):
     @property
     def active_filters(self):
         return self._filter_list.active_filters
+
+
+class Actions(Widget):
+    ROOT = '//*[contains(@class, "tab-pane")]//*[contains(@class, "container-cards-pf")]'
+    WIZARD_ROOT = '//*[contains(@class, "wizard-pf")]//*[contains(@class, "modal-content")]'
+    DIALOG_ROOT = '//*[@role="dialog"]'
+    ACTIONS_DROPDOWN = '//*[contains(@class, "dropdown")]'
+    CREATE_BUTTON = './/button[text()="Create"]'
+    ADD_RULE_BUTTON = './/button[text()="Add Rule"]'
+    DELETE_ALL_TRAFFIC_ROUTING = 'Delete ALL Traffic Routing'
+    CREATE_MATCHING_ROUTING = 'Create Matching Routing'
+    UPDATE_MATCHING_ROUTING = 'Update Matching Routing'
+    CREATE_WEIGHTED_ROUTING = 'Create Weighted Routing'
+    UPDATE_WEIGHTED_ROUTING = 'Update Weighted Routing'
+    SUSPEND_TRAFFIC = 'Suspend Traffic'
+    UPDATE_SUSPENDED_TRAFFIC = 'Update Suspended Traffic'
+
+    def __init__(self, parent, locator=None, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        if locator:
+            self.locator = locator
+        else:
+            self.locator = self.ROOT
+        self._actions = DropDown(parent=self, locator=self.locator + self.ACTIONS_DROPDOWN)
+
+    def __locator__(self):
+        return self.locator
+
+    @property
+    def is_displayed(self):
+        return self.browser.is_displayed(self.WIZARD_ROOT) \
+            or self.browser.is_displayed(self.DIALOG_ROOT)
+
+    @property
+    def actions(self):
+        return self._actions.options
+
+    @property
+    def disabled_actions(self):
+        return self._actions.disabled_options
+
+    def _select(self, action):
+        self._actions.select(action)
+
+    def is_delete_disabled(self):
+        return self.DELETE_ALL_TRAFFIC_ROUTING in self.disabled_actions
+
+    def is_create_weighted_disabled(self):
+        return self.CREATE_WEIGHTED_ROUTING in self.disabled_actions
+
+    def is_create_matching_disabled(self):
+        return self.CREATE_MATCHING_ROUTING in self.disabled_actions
+
+    def is_suspend_disabled(self):
+        return self.SUSPEND_TRAFFIC in self.disabled_actions
+
+    def is_update_weighted_enabled(self):
+        return self.UPDATE_WEIGHTED_ROUTING in self.actions
+
+    def is_update_matching_enabled(self):
+        return self.UPDATE_MATCHING_ROUTING in self.actions
+
+    def is_update_suspended_enabled(self):
+        return self.UPDATE_SUSPENDED_TRAFFIC in self.actions
+
+    def delete_all_routing(self):
+        if self.is_delete_disabled():
+            return
+        else:
+            self._select(self.DELETE_ALL_TRAFFIC_ROUTING)
+            wait_displayed(self)
+            self.browser.click(self.browser.element(
+                parent=self.DIALOG_ROOT,
+                locator=('.//button[text()="Delete"]')))
+            # wait to Spinner disappear
+            wait_to_spinner_disappear(self.browser)
+
+    def create_weighted_routing(self):
+        if self.is_create_weighted_disabled():
+            return False
+        else:
+            self._select(self.CREATE_WEIGHTED_ROUTING)
+            wait_displayed(self)
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.CREATE_BUTTON)))
+            # wait to Spinner disappear
+            wait_to_spinner_disappear(self.browser)
+            return True
+
+    def create_matching_routing(self):
+        if self.is_create_matching_disabled():
+            return False
+        else:
+            self._select(self.CREATE_MATCHING_ROUTING)
+            wait_displayed(self)
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.ADD_RULE_BUTTON)))
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.CREATE_BUTTON)))
+            # wait to Spinner disappear
+            wait_to_spinner_disappear(self.browser)
+            return True
+
+    def suspend_traffic(self):
+        if self.is_suspend_disabled():
+            return False
+        else:
+            self._select(self.SUSPEND_TRAFFIC)
+            wait_displayed(self)
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.CREATE_BUTTON)))
+            # wait to Spinner disappear
+            wait_to_spinner_disappear(self.browser)
+            return True
 
 
 class CheckBoxFilter(Widget):
