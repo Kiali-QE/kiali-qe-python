@@ -14,6 +14,7 @@ def test_about(browser, kiali_client):
     _about = page.navbar.about()
     assert _about.application_logo
     versions_ui = _about.versions
+    _about.close()
 
     _response = kiali_client.get_response('getStatus')
     _products = _response['externalServices']

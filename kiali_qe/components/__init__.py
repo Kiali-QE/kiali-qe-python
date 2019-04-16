@@ -108,7 +108,7 @@ class ButtonSwitch(Button):
 
 
 class Notifications(Widget):
-    ROOT = '//*[contains(@class, "alert-")]'
+    ROOT = '//*[contains(@class, "pf-c-form__helper-text")]'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -206,7 +206,7 @@ class Notification(Widget):
 
 
 class DropDown(Widget):
-    ROOT = '//*[contains(@class, "form-group")]/*[contains(@class, "dropdown")]/..'
+    ROOT = '//*[contains(@class, "input-group")]/*[contains(@class, "dropdown")]/../..'
     SELECT_BUTTON = './/*[contains(@class, "dropdown-toggle")]'
     OPTIONS_LIST = ('.//*[contains(@class, "dropdown-menu")]'
                     '//*[not(contains(@class, "disabled"))]//*[contains(@role, "menuitem")]')
@@ -290,6 +290,22 @@ class DropDown(Widget):
     @property
     def selected(self):
         return self.browser.text(self.browser.element(self.SELECT_BUTTON, parent=self))
+
+
+class MenuDropDown(DropDown):
+    ROOT = '//*[contains(@class, "pf-l-toolbar")]'
+    SELECT_BUTTON = './/*[contains(@class, "pf-c-dropdown__toggle")]'
+    OPTIONS_LIST = './/*[contains(@class, "pf-c-dropdown__menu")]//*[contains(@role, "menuitem")]'
+    OPTION = ('.//*[contains(@class, "pf-c-dropdown__menu")]'
+              '//*[contains(@role, "menuitem") and text()="{}"]')
+
+    def __init__(self, parent, force_open=False, locator=None, logger=None, select_button=None):
+        DropDown.__init__(self, parent=parent,
+                          force_open=force_open,
+                          locator=locator,
+                          logger=logger)
+        if select_button:
+            self.SELECT_BUTTON = select_button
 
 
 class Sort(Widget):
@@ -407,7 +423,7 @@ class Filter(Widget):
     ROOT = '//*[contains(@class, "toolbar-pf-actions")]//*[contains(@class, "toolbar-pf-filter")]'
     FILTER_DROPDOWN = '//*[contains(@class, "dropdown")]'
     VALUE_INPUT = './/input'
-    VALUE_DROPDOWN = './/*[contains(@class, "filter-pf-select")]'
+    VALUE_DROPDOWN = './/*[contains(@class, "filter-pf-select")]//*[contains(@class, "dropdown")]'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -415,7 +431,8 @@ class Filter(Widget):
             self.locator = locator
         else:
             self.locator = self.ROOT
-        self._filter = DropDown(parent=self, locator=self.locator + self.FILTER_DROPDOWN)
+        self._filter = DropDown(parent=self, force_open=True,
+                                locator=self.locator + self.FILTER_DROPDOWN)
         self._filter_list = FilterList(parent=self.parent)
 
     def __locator__(self):
@@ -855,14 +872,14 @@ class Pagination(Widget):
 
 
 class About(Widget):
-    ROOT = '//*[contains(@class, "about-modal-pf")]'
-    HEADER = './/*[contains(@class, "modal-header")]'
-    BODY = './/*[contains(@class, "modal-body")]'
-    APP_LOGO = BODY + '/h1/img'
-    VERSION = BODY + '//*[contains(@class, "product-versions-pf")]//li'
-    VERSION_NAME = './strong'
-    TRADEMARK = BODY + '//*[contains(@class, "trademark-pf")]'
-    CLOSE = HEADER + '//*[contains(@class, "close")]'
+    ROOT = './/*[contains(@class, "pf-c-about-modal-box")]'
+    HEADER = './/*[contains(@class, "pf-c-about-modal-box__header")]'
+    BODY = './/*[contains(@class, "pf-c-about-modal-box__content")]'
+    APP_LOGO = '//*[contains(@class, "pf-c-about-modal-box__brand")]/img'
+    VERSION = BODY + '//dl//dt'
+    VERSION_VALUE = './following-sibling::dd'
+    TRADEMARK = ROOT + '//*[contains(@class, "pf-c-about-modal-box__strapline")]'
+    CLOSE = './/*[contains(@class, "pf-c-about-modal-box__close")]//button'
 
     def __init__(self, parent, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -885,7 +902,7 @@ class About(Widget):
 
         # ugly fix to wait until version details loaded
         def _is_versions_loaded():
-            _locator = '{}/strong[text()="{}"]'.format(
+            _locator = '{}[text()="{}"]'.format(
                 self.VERSION, ApplicationVersionEnum.PROMETHEUS.text)
             if len(self.browser.elements(_locator, parent=self, force_check_safe=True)) > 0:
                 return True
@@ -893,8 +910,8 @@ class About(Widget):
                 return False
         wait_for(_is_versions_loaded, timout=3, delay=0.2, very_quiet=True)
         for el in self.browser.elements(self.VERSION, parent=self, force_check_safe=True):
-            _name = self.browser.text(self.browser.element(self.VERSION_NAME, parent=el))
-            _version = self.browser.text(el).split(_name, 1)[1].strip()
+            _name = self.browser.text(el)
+            _version = self.browser.text(locator=self.VERSION_VALUE, parent=el)
             _versions[_name] = _version
         return _versions
 
@@ -904,19 +921,24 @@ class About(Widget):
 
 
 class NavBar(Widget):
-    ROOT = '//*[contains(@class, "navbar")]'
-    TOGGLE_NAVIGATION = './/*[contains(@class, "navbar-toggle")]'
-    NAVBAR_RIGHT_MENU = ('//*[contains(@class, "navbar-right")]'
-                         '//*[contains(@class, "dropdown")]//*[@id="{}"]/..')
+    ROOT = '//*[contains(@class, "pf-c-page__header")]'
+    TOGGLE_NAVIGATION = './/*[@id="nav-toggle"]'
+    NAVBAR_HELP = ('//*[contains(@class, "pf-l-toolbar__group")]'
+                   '//*[contains(@class, "pf-c-dropdown")]//span[not(@class)]/../..')
+    NAVBAR_USER = ('//*[contains(@class, "pf-l-toolbar__group")]'
+                   '//*[contains(@class, "pf-c-dropdown")]//'
+                   'span[contains(@class, "pf-c-dropdown__toggle-text")]/../..')
+    USER_SELECT_BUTTON = './/*[contains(@class, "pf-c-dropdown__toggle-text")]/..'
 
     def __init__(self, parent, logger=None):
         Widget.__init__(self, parent, logger=logger)
-        self.help_menu = DropDown(
-            parent=self, locator=self.NAVBAR_RIGHT_MENU.format('help'),
+        self.help_menu = MenuDropDown(
+            parent=self, locator=self.NAVBAR_HELP,
             logger=logger, force_open=True)
-        self.user_menu = DropDown(
-            parent=self, locator=self.NAVBAR_RIGHT_MENU.format('user'),
-            logger=logger, force_open=True)
+        self.user_menu = MenuDropDown(
+            parent=self, locator=self.NAVBAR_USER,
+            logger=logger, force_open=True,
+            select_button=self.USER_SELECT_BUTTON)
 
     def about(self):
         self.help_menu.select(HelpMenuEnum.ABOUT.text)
@@ -927,12 +949,11 @@ class NavBar(Widget):
 
 
 class MainMenu(Widget):
-    ROOT = ('//*[contains(@class, "nav-pf-vertical-with-sub-menus")'
-            ' and contains(@class, "nav-pf-persistent-secondary")]')
-    MENU_ITEMS = './/*[contains(@class, "list-group-item-value")]'
-    MENU_ITEM = './/*[contains(@class, "list-group-item-value") and text()="{}"]'
-    MENU_ITEM_ACTIVE = ('.//*[contains(@class, "active") and contains(@class, "list-group-item")]'
-                        '//*[contains(@class, "list-group-item-value")]')
+    ROOT = ('//*[contains(@class, "pf-c-page__sidebar")]')
+    MENU_ITEMS = './/*[contains(@class, "pf-c-nav__link")]/..'
+    MENU_ITEM = './/*[contains(@class, "pf-c-nav__link") and text()="{}"]/..'
+    MENU_ITEM_ACTIVE = ('.//*[contains(@class, "pf-m-current")'
+                        ' and contains(@class, "pf-c-nav__link")]/..')
 
     def __init__(self, parent, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -954,7 +975,7 @@ class MainMenu(Widget):
 
     @property
     def is_collapsed(self):
-        return 'collapsed' in self.browser.get_attribute('class', self.ROOT)
+        return 'pf-m-collapsed' in self.browser.get_attribute('class', self.ROOT)
 
     def collapse(self):
         if not self.is_collapsed:
@@ -966,9 +987,9 @@ class MainMenu(Widget):
 
 
 class Login(Widget):
-    ROOT = '//*[@id="kiali-login"]'
-    USERNAME = './/input[@name="username"]'
-    PASSWORD = './/input[@name="password"]'
+    ROOT = '//*[contains(@class, "pf-c-form")]'
+    USERNAME = './/input[@name="pf-login-username-id"]'
+    PASSWORD = './/input[@name="pf-login-password-id"]'
     SUBMIT = './/button[@type="submit"]'
 
     def __init__(self, parent, logger=None):
@@ -1168,11 +1189,11 @@ class ListViewAbstract(Widget):
         wait_displayed(self)
         _partial = len(self.browser.elements(
             parent=self.ROOT,
-            locator='//*[contains(@class, "navbar")]'
+            locator='//*[contains(@class, "pf-l-toolbar")]'
             '//img[contains(@src, "mtls-status-partial")]')) > 0
         _full = len(self.browser.elements(
             parent=self.ROOT,
-            locator='//*[contains(@class, "navbar")]'
+            locator='//*[contains(@class, "pf-l-toolbar")]'
             '//img[contains(@src, "mtls-status-full")]')) > 0
         if _full:
             return MeshWideTLSType.ENABLED
