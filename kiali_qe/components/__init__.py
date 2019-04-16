@@ -770,6 +770,10 @@ class CheckBoxFilter(Widget):
 
 
 class NamespaceFilter(CheckBoxFilter):
+    ROOT = ('//*[@class="pf-c-context-selector__menu"]')
+    CB_ITEMS = './/input[@type="checkbox"]/../label'
+    ITEM = './/label[normalize-space(text())="{}"]/../input'
+
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
         if locator:
@@ -778,14 +782,22 @@ class NamespaceFilter(CheckBoxFilter):
             self.locator = self.ROOT
         self._filter_button = Button(
             parent=self.parent,
-            locator=('//button[@id="namespace-selector"]/'
-                     '..//*[contains(@class, "fa-angle-down")]'))
+            locator=('//button[@id="pf-context-selector-toggle-id-0"]/'
+                     '..//*[contains(@class, "pf-c-context-selector__toggle-icon")]'))
+
+    def close(self):
+        """ Temporary solution until Namespace is finalized """
+        try:
+            self.browser.click(self.browser.element(locator='//*[@class="namespace-selector"]'))
+        except NoSuchElementException:
+            pass
 
     def clear_all(self):
         self.open()
         self.browser.click(Button(
             parent=self.parent,
-            locator=('//button[text()="Clear all"]')))
+            locator=('//button[normalize-space(text())="Clear all"]')))
+        wait_to_spinner_disappear(self.browser)
         self.close()
 
 
@@ -997,6 +1009,11 @@ class Login(Widget):
         self.username = TextInput(parent=self, locator=self.USERNAME)
         self.password = TextInput(parent=self, locator=self.PASSWORD)
         self.submit = Button(parent=self.parent, locator=self.SUBMIT, logger=logger)
+
+    @property
+    def is_displayed(self):
+        return self.browser.is_displayed(self.ROOT) and \
+            self.browser.is_displayed(self.USERNAME)
 
     def login(self, username, password):
         self.username.fill(username)
@@ -2139,6 +2156,10 @@ class MetricsView(TabViewAbstract):
                                    parent=self.ROOT)
         try:
             self.browser.click(tab)
-        finally:
-            self.browser.click(tab)
+        except (NoSuchElementException, StaleElementReferenceException):
+            try:
+                self.browser.click(tab)
+            except StaleElementReferenceException:
+                pass
         wait_displayed(self)
+        wait_to_spinner_disappear(self.browser)
