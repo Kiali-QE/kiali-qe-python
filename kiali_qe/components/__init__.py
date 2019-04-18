@@ -770,9 +770,9 @@ class CheckBoxFilter(Widget):
 
 
 class NamespaceFilter(CheckBoxFilter):
-    ROOT = ('//*[@class="pf-c-context-selector__menu"]')
-    CB_ITEMS = './/input[@type="checkbox"]/../label'
-    ITEM = './/label[normalize-space(text())="{}"]/../input'
+    ROOT = ('//*[@id="namespace-list-layers-popover"]')
+    CB_ITEMS = './/input[@type="checkbox"]/../span'
+    ITEM = './/span[normalize-space(text())="{}"]/../input'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -782,15 +782,12 @@ class NamespaceFilter(CheckBoxFilter):
             self.locator = self.ROOT
         self._filter_button = Button(
             parent=self.parent,
-            locator=('//button[@id="pf-context-selector-toggle-id-0"]/'
-                     '..//*[contains(@class, "pf-c-context-selector__toggle-icon")]'))
+            locator=('//button[@id="namespace-selector"]/'
+                     '..//*[contains(@class, "fa-angle-down")]'))
 
-    def close(self):
-        """ Temporary solution until Namespace is finalized """
-        try:
-            self.browser.click(self.browser.element(locator='//*[@class="namespace-selector"]'))
-        except NoSuchElementException:
-            pass
+    @property
+    def is_displayed(self):
+        return self.browser.is_displayed(self.ROOT)
 
     def clear_all(self):
         self.open()
