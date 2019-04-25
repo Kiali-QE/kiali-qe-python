@@ -1043,6 +1043,10 @@ class ListViewAbstract(Widget):
     OUTBOUND_METRICS = 'Outbound Metrics'
     MISSING_SIDECAR_TEXT = 'Missing Sidecar'
     MISSING_SIDECAR = './/span[normalize-space(text())="{}"]'.format(MISSING_SIDECAR_TEXT)
+    HEALTH_TEXT = "Health"
+    HEALTH = 'strong[normalize-space(text()="{}:")]/../'.format(HEALTH_TEXT)
+    CONFIG_TEXT = "Config"
+    CONFIG = 'strong[normalize-space(text()="{}:")]/..//'.format(CONFIG_TEXT)
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -1121,16 +1125,17 @@ class ListViewAbstract(Widget):
     def _get_item_health(self, element):
         _healthy = len(self.browser.elements(
             parent=element,
-            locator='.//*[contains(@class, "pficon-ok")]')) > 0
+            locator='.//{}*[contains(@class, "pficon-ok")]'.format(self.HEALTH))) > 0
         _not_healthy = len(self.browser.elements(
             parent=element,
-            locator='.//*[contains(@class, "pficon-error-circle-o")]')) > 0
+            locator='.//{}*[contains(@class, "pficon-error-circle-o")]'.format(self.HEALTH))) > 0
         _degraded = len(self.browser.elements(
             parent=element,
-            locator='.//*[contains(@class, "pficon-warning-triangle-o")]')) > 0
+            locator='.//{}*[contains(@class, "pficon-warning-triangle-o")]'
+                    .format(self.HEALTH))) > 0
         _not_available = len(self.browser.elements(
             parent=element,
-            locator='.//*[text()="N/A"]')) > 0
+            locator='.//{}*[text()="N/A"]'.format(self.HEALTH))) > 0
         _health = None
         if _healthy:
             _health = HealthType.HEALTHY
@@ -1145,13 +1150,14 @@ class ListViewAbstract(Widget):
     def _get_item_validation(self, element):
         _valid = len(self.browser.elements(
             parent=element,
-            locator='.//*[contains(@class, "pficon-ok")]')) > 0
+            locator='.//{}*[contains(@class, "pficon-ok")]'.format(self.CONFIG))) > 0
         _not_valid = len(self.browser.elements(
             parent=element,
-            locator='.//*[contains(@class, "pficon-error-circle-o")]')) > 0
+            locator='.//{}*[contains(@class, "pficon-error-circle-o")]'.format(self.CONFIG))) > 0
         _warning = len(self.browser.elements(
             parent=element,
-            locator='.//*[contains(@class, "pficon-warning-triangle-o")]')) > 0
+            locator='.//{}*[contains(@class, "pficon-warning-triangle-o")]'
+                    .format(self.CONFIG))) > 0
         return get_validation(_valid, _not_valid, _warning)
 
     def _get_details_validation(self):
