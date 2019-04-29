@@ -704,8 +704,8 @@ class ServicesPageTest(AbstractListPageTest):
             namespaces=namespaces, service_names=_service_names)
         # random services filters
         assert len(services_rest) > 0
-        if len(services_rest) > 3:
-            _random_services = random.sample(services_rest, 3)
+        if len(services_rest) > 2:
+            _random_services = random.sample(services_rest, 2)
         else:
             _random_services = services_rest
         # create filters
