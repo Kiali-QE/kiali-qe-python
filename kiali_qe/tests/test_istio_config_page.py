@@ -16,7 +16,7 @@ def test_pagination_feature(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_ro_top_safe
-@pytest.mark.p_group7
+@pytest.mark.p_group10
 def test_namespaces(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -24,7 +24,7 @@ def test_namespaces(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_group7
+@pytest.mark.p_group10
 def test_filter_options(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
