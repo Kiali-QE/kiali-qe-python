@@ -894,10 +894,11 @@ class KialiExtendedClient(KialiClient):
             http_method="DELETE")
 
     def get_validation(self, method_name, **kwargs):
-        return super(KialiExtendedClient, self).request(
+        response = super(KialiExtendedClient, self).request(
             method_name=method_name,
             path=kwargs,
-            params={'validate': 'true'}).json()['validation']
+            params={'validate': 'true'}).json()
+        return response['validation'] if 'validation' in response else None
 
     def get_pod_status(self, istioSidecar, pod_data):
         if not istioSidecar or not pod_data['versionLabel'] or not pod_data['appLabel']:
