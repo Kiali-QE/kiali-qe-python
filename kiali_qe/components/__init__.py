@@ -1043,6 +1043,7 @@ class ListViewAbstract(Widget):
     OUTBOUND_METRICS = 'Outbound Metrics'
     MISSING_SIDECAR_TEXT = 'Missing Sidecar'
     MISSING_SIDECAR = './/span[normalize-space(text())="{}"]'.format(MISSING_SIDECAR_TEXT)
+    SHOW_ON_GRAPH_TEXT = '(Show on graph)'
     HEALTH_TEXT = "Health"
     HEALTH = 'strong[normalize-space(text()="{}:")]/../'.format(HEALTH_TEXT)
     CONFIG_TEXT = "Config"
@@ -1427,7 +1428,8 @@ class ListViewServices(ListViewAbstract):
         self.open(name, namespace, force_refresh)
         _name = self.browser.text(
             locator=self.HEADER,
-            parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '').strip()
+            parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '')\
+            .replace(self.SHOW_ON_GRAPH_TEXT, '').strip()
         _type = self.browser.text(locator=self.ISTIO_PROPERTIES.format(self.TYPE),
                                   parent=self.DETAILS_ROOT).replace(self.TYPE, '').strip()
         _ip = self.browser.text(locator=self.ISTIO_PROPERTIES.format(self.IP),
