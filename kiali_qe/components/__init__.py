@@ -1318,7 +1318,8 @@ class ListViewApplications(ListViewAbstract):
         self.open(name, namespace, force_refresh)
         _name = self.browser.text(
             locator=self.HEADER,
-            parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '').strip()
+            parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '')\
+            .replace(self.SHOW_ON_GRAPH_TEXT, '').strip()
 
         _table_view_workloads = TableViewAppWorkloads(self.parent, self.locator, self.logger)
 
@@ -1363,7 +1364,8 @@ class ListViewWorkloads(ListViewAbstract):
         self.open(name, namespace, force_refresh)
         _name = self.browser.text(
             locator=self.HEADER,
-            parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '').strip()
+            parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '')\
+            .replace(self.SHOW_ON_GRAPH_TEXT, '').strip()
         _type = self.browser.text(locator=self.ISTIO_PROPERTIES.format(self.TYPE),
                                   parent=self.DETAILS_ROOT).replace(self.TYPE, '').strip()
         _created_at = self.browser.text(locator=self.ISTIO_PROPERTIES.format(self.CREATED_AT),
