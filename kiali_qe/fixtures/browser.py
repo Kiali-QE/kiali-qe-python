@@ -19,7 +19,7 @@ def browser(kiali_client):
     selenium.maximize_window()
     logger.debug('Launching kiali instance: {}'.format(cfg.kiali.hostname))
     selenium.get(
-        'https://{}:{}@{}'.format(cfg.kiali.username, cfg.kiali.password, cfg.kiali.hostname))
+        'https://{}'.format(cfg.kiali.hostname))
     # load KialiBrowser
     kiali_browser = KialiBrowser(
         selenium, logger=logger,
