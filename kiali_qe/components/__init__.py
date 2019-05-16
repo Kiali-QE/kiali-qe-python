@@ -785,8 +785,8 @@ class NamespaceFilter(CheckBoxFilter):
             self.locator = self.ROOT
         self._filter_button = Button(
             parent=self.parent,
-            locator=('//button[@id="namespace-selector"]/'
-                     '..//*[contains(@class, "fa-angle-down")]'))
+            locator=('//button[@id="namespace-selector"]'
+                     '//span[contains(@class, "fa-angle-down")]'))
 
     @property
     def is_displayed(self):
@@ -1577,7 +1577,7 @@ class ListViewIstioConfig(ListViewAbstract):
 class TableViewAbstract(Widget):
     SERVICE_DETAILS_ROOT = './/div[contains(@class, "card-pf")]'
     OVERVIEW_DETAILS_ROOT = './/div[contains(@class, "row-cards-pf")]'
-    OVERVIEW_HEADER = './/h4'
+    OVERVIEW_HEADER = './/h4[contains(text(), "{}")]'
     OVERVIEW_PROPERTIES = './/div/strong[contains(text(), "{}")]/..'
     HOSTS_PROPERTIES = './/div/strong[contains(text(), "{}")]/..//li'
     SERVICES_TAB = '//div[@id="service-tabs"]//li//a[contains(text(), "{}")]/..'
@@ -1827,7 +1827,7 @@ class TableViewVirtualServices(TableViewAbstract):
         wait_displayed(self)
 
         _name = self.browser.text(
-            locator=self.OVERVIEW_HEADER,
+            locator=self.OVERVIEW_HEADER.format('VirtualService'),
             parent=self.OVERVIEW_DETAILS_ROOT).replace('VirtualService:', '').strip()
         _created_at = self.browser.text(locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
                                         parent=self.OVERVIEW_DETAILS_ROOT).replace(
@@ -1924,7 +1924,7 @@ class TableViewDestinationRules(TableViewAbstract):
         wait_displayed(self)
 
         _name = self.browser.text(
-            locator=self.OVERVIEW_HEADER,
+            locator=self.OVERVIEW_HEADER.format('DestinationRule'),
             parent=self.OVERVIEW_DETAILS_ROOT).replace('DestinationRule:', '').strip()
         _created_at = self.browser.text(locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
                                         parent=self.OVERVIEW_DETAILS_ROOT).replace(
@@ -2155,7 +2155,8 @@ class TrafficView(TabViewAbstract):
 
 class MetricsView(TabViewAbstract):
     METRICS_TAB = '//ul[contains(@class, "nav-tabs-pf")]//li//a//div[contains(text(), "{}")]/..'
-    DROP_DOWN = '//*[contains(@class, "dropdown")]/*[@id="{}"]/..'
+    DROP_DOWN = '//div[contains(@class, "dropdown")]/'\
+        'button[@id="{}" and contains(@class, "dropdown-toggle")]/..'
 
     filter = CheckBoxFilter(filter_name="Metrics Settings")
     destination = DropDown(locator=DROP_DOWN.format('metrics_filter_reporter'))
