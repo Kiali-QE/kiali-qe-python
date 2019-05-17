@@ -1568,6 +1568,7 @@ class ListViewIstioConfig(ListViewAbstract):
     def delete(self, name, namespace=None):
         self.open(name, namespace)
         self.parent.actions.select('Delete')
+        wait_displayed(self)
         self.browser.click(self.browser.element(
             parent=self.DIALOG_ROOT,
             locator=('.//button[text()="Delete"]')))
@@ -1816,6 +1817,7 @@ class TableViewVirtualServices(TableViewAbstract):
 
     def get_overview(self, name):
         self.open()
+        wait_displayed(self)
 
         _row = self.browser.element(locator=self.VS_ROWS.format(
                 'service-tabs-pane-virtualservices', name),
