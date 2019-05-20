@@ -2,6 +2,7 @@
 import re
 
 from widgetastic.widget import Checkbox, TextInput, Widget
+from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 from kiali_qe.components.enums import (
     HelpMenuEnum,
@@ -206,7 +207,7 @@ class Notification(Widget):
 
 
 class DropDown(Widget):
-    ROOT = '//*[contains(@class, "input-group")]/*[contains(@class, "dropdown")]/../..'
+    ROOT = '//*[contains(@class, "input-group")]/div[contains(@class, "dropdown")]/../..'
     SELECT_BUTTON = './/*[contains(@class, "dropdown-toggle")]'
     OPTIONS_LIST = ('.//*[contains(@class, "dropdown-menu")]'
                     '//*[not(contains(@class, "disabled"))]//*[contains(@role, "menuitem")]')
@@ -421,9 +422,9 @@ class FilterList(Widget):
 
 class Filter(Widget):
     ROOT = '//*[contains(@class, "toolbar-pf-actions")]//*[contains(@class, "toolbar-pf-filter")]'
-    FILTER_DROPDOWN = '//*[contains(@class, "dropdown")]'
+    FILTER_DROPDOWN = '//div[contains(@class, "dropdown")]'
     VALUE_INPUT = './/input'
-    VALUE_DROPDOWN = './/*[contains(@class, "filter-pf-select")]//*[contains(@class, "dropdown")]'
+    VALUE_DROPDOWN = './/*[contains(@class, "filter-pf-select")]//div[contains(@class, "dropdown")]'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -458,6 +459,8 @@ class Filter(Widget):
         if len(self.browser.elements(parent=self, locator=self.VALUE_INPUT)):
             _input = TextInput(parent=self, locator=self.VALUE_INPUT)
             _input.fill(value + '\n')
+            if self.browser.browser_type == 'firefox':
+                self.browser.send_keys(Keys.ENTER, _input)
         elif len(self.browser.elements(parent=self, locator=self.VALUE_DROPDOWN)):
             _dropdown = DropDown(parent=self, locator=self.VALUE_DROPDOWN)
             _dropdown.select(value)
@@ -782,8 +785,8 @@ class NamespaceFilter(CheckBoxFilter):
             self.locator = self.ROOT
         self._filter_button = Button(
             parent=self.parent,
-            locator=('//button[@id="namespace-selector"]/'
-                     '..//*[contains(@class, "fa-angle-down")]'))
+            locator=('//button[@id="namespace-selector"]'
+                     '//span[contains(@class, "fa-angle-down")]'))
 
     @property
     def is_displayed(self):
@@ -853,6 +856,8 @@ class Pagination(Widget):
 
     def move_to_page(self, page_number):
         self._page_input.fill('{}\n'.format(page_number))
+        if self.browser.browser_type == 'firefox':
+            self.browser.send_keys(Keys.ENTER, self._page_input)
         wait_to_spinner_disappear(self.browser)
 
     @property
@@ -1563,6 +1568,7 @@ class ListViewIstioConfig(ListViewAbstract):
     def delete(self, name, namespace=None):
         self.open(name, namespace)
         self.parent.actions.select('Delete')
+        wait_displayed(self)
         self.browser.click(self.browser.element(
             parent=self.DIALOG_ROOT,
             locator=('.//button[text()="Delete"]')))
@@ -1572,7 +1578,7 @@ class ListViewIstioConfig(ListViewAbstract):
 class TableViewAbstract(Widget):
     SERVICE_DETAILS_ROOT = './/div[contains(@class, "card-pf")]'
     OVERVIEW_DETAILS_ROOT = './/div[contains(@class, "row-cards-pf")]'
-    OVERVIEW_HEADER = './/h4'
+    OVERVIEW_HEADER = './/h4[contains(text(), "{}")]'
     OVERVIEW_PROPERTIES = './/div/strong[contains(text(), "{}")]/..'
     HOSTS_PROPERTIES = './/div/strong[contains(text(), "{}")]/..//li'
     SERVICES_TAB = '//div[@id="service-tabs"]//li//a[contains(text(), "{}")]/..'
@@ -1811,6 +1817,7 @@ class TableViewVirtualServices(TableViewAbstract):
 
     def get_overview(self, name):
         self.open()
+        wait_displayed(self)
 
         _row = self.browser.element(locator=self.VS_ROWS.format(
                 'service-tabs-pane-virtualservices', name),
@@ -1822,7 +1829,7 @@ class TableViewVirtualServices(TableViewAbstract):
         wait_displayed(self)
 
         _name = self.browser.text(
-            locator=self.OVERVIEW_HEADER,
+            locator=self.OVERVIEW_HEADER.format('VirtualService'),
             parent=self.OVERVIEW_DETAILS_ROOT).replace('VirtualService:', '').strip()
         _created_at = self.browser.text(locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
                                         parent=self.OVERVIEW_DETAILS_ROOT).replace(
@@ -1919,7 +1926,7 @@ class TableViewDestinationRules(TableViewAbstract):
         wait_displayed(self)
 
         _name = self.browser.text(
-            locator=self.OVERVIEW_HEADER,
+            locator=self.OVERVIEW_HEADER.format('DestinationRule'),
             parent=self.OVERVIEW_DETAILS_ROOT).replace('DestinationRule:', '').strip()
         _created_at = self.browser.text(locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
                                         parent=self.OVERVIEW_DETAILS_ROOT).replace(
@@ -2150,7 +2157,8 @@ class TrafficView(TabViewAbstract):
 
 class MetricsView(TabViewAbstract):
     METRICS_TAB = '//ul[contains(@class, "nav-tabs-pf")]//li//a//div[contains(text(), "{}")]/..'
-    DROP_DOWN = '//*[contains(@class, "dropdown")]/*[@id="{}"]/..'
+    DROP_DOWN = '//div[contains(@class, "dropdown")]/'\
+        'button[@id="{}" and contains(@class, "dropdown-toggle")]/..'
 
     filter = CheckBoxFilter(filter_name="Metrics Settings")
     destination = DropDown(locator=DROP_DOWN.format('metrics_filter_reporter'))
