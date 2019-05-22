@@ -45,8 +45,8 @@ class ServiceHealth(EntityBase):
             for _d_in_rest in health['deploymentStatuses']:
                 deployment_status = DeploymentStatus(
                     name=_d_in_rest['name'],
-                    replicas=_d_in_rest['replicas'],
-                    available=_d_in_rest['available'])
+                    replicas=_d_in_rest['desiredReplicas'],
+                    available=_d_in_rest['availableReplicas'])
                 _deployment_status_list.append(deployment_status)
             # update requests
         _r_rest = health['requests']

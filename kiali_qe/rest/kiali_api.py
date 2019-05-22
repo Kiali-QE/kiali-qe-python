@@ -678,7 +678,7 @@ class KialiExtendedClient(KialiClient):
                     _pods.append(_pod)
                 elif len(_workload_pods) == 1:
                     _pod = WorkloadPod(
-                        name='{} (1 replica)'.format(_workload_pods[0].name),
+                        name=_workload_pods[0].name,
                         created_at=_workload_pods[0].created_at,
                         created_by=_created_by,
                         labels=_workload_pods[0].labels,
