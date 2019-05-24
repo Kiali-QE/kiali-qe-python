@@ -1,4 +1,4 @@
-from kiali_qe.entities import EntityBase, DeploymentStatus, Requests
+from kiali_qe.entities import EntityBase, DeploymentStatus, AppRequests
 from kiali_qe.components.enums import HealthType
 
 
@@ -55,13 +55,14 @@ class ApplicationHealth(EntityBase):
             for _d_in_rest in health['workloadStatuses']:
                 deployment_status = DeploymentStatus(
                     name=_d_in_rest['name'],
-                    replicas=_d_in_rest['replicas'],
-                    available=_d_in_rest['available'])
+                    replicas=_d_in_rest['desiredReplicas'],
+                    available=_d_in_rest['availableReplicas'])
                 _deployment_status_list.append(deployment_status)
             # update requests
         _r_rest = health['requests']
-        _requests = Requests(
-            errorRatio=_r_rest['errorRatio'])
+        _requests = AppRequests(
+            inboundErrorRatio=_r_rest['inboundErrorRatio'],
+            outboundErrorRatio=_r_rest['outboundErrorRatio'])
         return ApplicationHealth(
             deployment_statuses=_deployment_status_list, requests=_requests)
 

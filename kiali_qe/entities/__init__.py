@@ -41,6 +41,37 @@ class Requests(EntityBase):
          and self.errorRatio == other.errorRatio
 
 
+class AppRequests(EntityBase):
+
+    def __init__(self, inboundErrorRatio, outboundErrorRatio):
+        self.inboundErrorRatio = inboundErrorRatio
+        self.outboundErrorRatio = outboundErrorRatio
+
+    def __str__(self):
+        return 'inboundErrorRatio:{} outboundErrorRatio:{}'.format(
+            self.inboundErrorRatio, self.outboundErrorRatio)
+
+    def __repr__(self):
+        return "{}({},{})".format(
+            type(self).__name__, repr(self.inboundErrorRatio),
+            repr(self.outboundErrorRatio))
+
+    def is_healthy(self):
+        if self.inboundErrorRatio < 0 and self.outboundErrorRatio < 0:
+            return HealthType.NA
+        if self.inboundErrorRatio < 0.001 and self.outboundErrorRatio < 0.001:
+            return HealthType.HEALTHY
+        elif self.inboundErrorRatio >= 0.20 or self.outboundErrorRatio >= 0.20:
+            return HealthType.FAILURE
+        else:
+            return HealthType.DEGRADED
+
+    def is_equal(self, other):
+        return isinstance(other, Requests)\
+         and self.inboundErrorRatio == other.inboundErrorRatio\
+         and self.outboundErrorRatio == other.outboundErrorRatio
+
+
 class DeploymentStatus(EntityBase):
 
     def __init__(self, name, replicas, available):

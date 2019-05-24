@@ -488,7 +488,7 @@ class Actions(Widget):
     ROOT = '//*[contains(@class, "tab-pane")]//*[contains(@class, "container-cards-pf")]'
     WIZARD_ROOT = '//*[contains(@class, "wizard-pf")]//*[contains(@class, "modal-content")]'
     DIALOG_ROOT = '//*[@role="dialog"]'
-    ACTIONS_DROPDOWN = '//*[contains(@class, "dropdown")]'
+    ACTIONS_DROPDOWN = '//div[contains(@class, "dropdown")]//button[@id="service_actions"]/..'
     CREATE_BUTTON = './/button[text()="Create"]'
     UPDATE_BUTTON = './/button[text()="Update"]'
     REMOVE_BUTTON = './/button[text()="Remove"]'
@@ -1032,7 +1032,7 @@ class ListViewAbstract(Widget):
     SELECT_ITEM_WITH_NAMESPACE = SELECT_ITEM + '/small[text()="{}"]'
     OBJECT_TYPE = './/*[contains(@class, "list-group-item-text")]//td'
     DETAILS_ROOT = './/div[contains(@class, "card-pf")]'
-    HEADER = './/div[contains(@class, "card-pf-heading")]//h2'
+    HEADER = './/div[contains(@class, "container-fluid")]//h2'
     ISTIO_PROPERTIES = ('.//*[contains(@class, "card-pf-body")]'
                         '//strong[normalize-space(text())="{}"]/..')
     PROPERTY_SECTIONS = ('.//*[contains(@class, "card-pf-body")]'
@@ -2098,8 +2098,7 @@ class TabViewAbstract(Widget):
         After opening the tab and reading the data, it it can back to Info tab.
     """
     ROOT = '//div[@id="basic-tabs"]'
-    INFO_TAB = '//ul[contains(@class, "nav-tabs-pf")]//'\
-        'li//a//div[contains(text(), "Info")]/..'
+    INFO_TAB = '//a[@id="basic-tabs-tab-info"]'
 
     def __init__(self, parent, tab_name=None, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -2123,8 +2122,7 @@ class TabViewAbstract(Widget):
 
 
 class TrafficView(TabViewAbstract):
-    TRAFFIC_TAB = '//ul[contains(@class, "nav-tabs-pf")]//'\
-        'li//a//div[contains(text(), "Traffic")]/..'
+    TRAFFIC_TAB = '//a[@id="basic-tabs-tab-traffic"]'
     TRAFFIC_ROOT = '//div[@id="basic-tabs-pane-traffic"]'
     ROWS = '//span[contains(@class, "table-grid-pf-col")]'\
         '//span[contains(@class, "pficon-service")]/../a'
@@ -2156,7 +2154,7 @@ class TrafficView(TabViewAbstract):
 
 
 class MetricsView(TabViewAbstract):
-    METRICS_TAB = '//ul[contains(@class, "nav-tabs-pf")]//li//a//div[contains(text(), "{}")]/..'
+    METRICS_TAB = '//ul[contains(@class, "nav-tabs-pf")]//li//a[contains(text(), "{}")]'
     DROP_DOWN = '//div[contains(@class, "dropdown")]/'\
         'button[@id="{}" and contains(@class, "dropdown-toggle")]/..'
 
