@@ -8,11 +8,15 @@ from kiali_qe.utils.log import logger
 
 @pytest.mark.p_atomic
 @pytest.mark.p_group9
-def test_menu(browser):
+def test_menu(browser, kiali_client):
     # load root page
     page = RootPage(browser)
     # test available menus
+    _response = kiali_client.get_response('getStatus')
+    _products = _response['externalServices']
     options_defined = [item.text for item in MainMenuEnum]
+    if (any((d['name'] == 'Jaeger' and 'url' not in d) for d in _products)):
+        options_defined.remove(MainMenuEnum.DISTRIBUTED_TRACING.value)
     options_listed = page.main_menu.items
     logger.debug('menus[defined:{}, listed:{}]'.format(options_defined, options_listed))
     assert is_equal(options_defined, options_listed), \
