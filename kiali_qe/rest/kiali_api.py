@@ -584,6 +584,7 @@ class KialiExtendedClient(KialiClient):
                     ip=_service_data['service']['ip'],
                     ports=_ports.strip(),
                     labels=self.get_labels(_service_data['service']),
+                    selectors=self.get_selectors(_service_data['service']),
                     health=self.get_service_health(
                         namespace=namespace,
                         service_name=service_name,
@@ -624,6 +625,7 @@ class KialiExtendedClient(KialiClient):
                         ip=_ws_data['ip'],
                         ports=_ports.strip(),
                         labels=self.get_labels(_ws_data),
+                        selectors=self.get_selectors(_ws_data),
                         resource_version=_ws_data['resourceVersion']))
             _destination_services = []
             # TODO find a better way to take Traffic
@@ -862,6 +864,12 @@ class KialiExtendedClient(KialiClient):
         if 'labels' in object_rest:
             _labels = object_rest['labels']
         return _labels
+
+    def get_selectors(self, object_rest):
+        _selectors = {}
+        if 'selectors' in object_rest:
+            _selectors = object_rest['selectors']
+        return _selectors
 
     def get_subset_labels(self, subsets):
         """

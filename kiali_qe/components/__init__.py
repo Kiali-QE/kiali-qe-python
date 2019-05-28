@@ -1193,11 +1193,17 @@ class ListViewAbstract(Widget):
 
     def _get_details_labels(self):
         _label_dict = {}
+        try:
+            self.browser.click(self.browser.element(
+                parent=self.DETAILS_ROOT,
+                locator=('.//a[text()="More labels..."]')))
+        except NoSuchElementException:
+            pass
         wait_displayed(self)
         _labels = self.browser.elements(
             parent=self.DETAILS_ROOT,
             locator='.//strong[contains(text(), "Labels")]\
-                /../..//*[contains(@class, "label-pair")]')
+                /../../../div[@id="labels"]//*[contains(@class, "label-pair")]')
         if _labels:
             for _label in _labels:
                 _label_key = self.browser.element(
@@ -1208,6 +1214,30 @@ class ListViewAbstract(Widget):
                     locator='.//*[contains(@class, "label-value")]').text
                 _label_dict[_label_key] = _label_value
         return _label_dict
+
+    def _get_details_selectors(self):
+        _selector_dict = {}
+        try:
+            self.browser.click(self.browser.element(
+                parent=self.DETAILS_ROOT,
+                locator=('.//a[text()="More selectors..."]')))
+        except NoSuchElementException:
+            pass
+        wait_displayed(self)
+        _selectors = self.browser.elements(
+            parent=self.DETAILS_ROOT,
+            locator='.//strong[contains(text(), "Selectors")]\
+                /../../../div[@id="selectors"]//*[contains(@class, "label-pair")]')
+        if _selectors:
+            for _selector in _selectors:
+                _label_key = self.browser.element(
+                    parent=_selector,
+                    locator='.//*[contains(@class, "label-key")]').text
+                _label_value = self.browser.element(
+                    parent=_selector,
+                    locator='.//*[contains(@class, "label-value")]').text
+                _selector_dict[_label_key] = _label_value
+        return _selector_dict
 
     def get_mesh_wide_tls(self):
         self.browser.refresh()
@@ -1466,6 +1496,7 @@ class ListViewServices(ListViewAbstract):
                               health=self._get_details_health(),
                               istio_sidecar=self._details_sidecar(),
                               labels=self._get_details_labels(),
+                              selectors=self._get_details_selectors(),
                               workloads_number=_table_view_wl.number,
                               virtual_services_number=self.table_view_vs.number,
                               destination_rules_number=self.table_view_dr.number,

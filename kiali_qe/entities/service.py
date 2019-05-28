@@ -130,7 +130,7 @@ class ServiceDetails(EntityBase):
     """
 
     def __init__(self, name, created_at, service_type,
-                 resource_version, ip, ports, labels={},
+                 resource_version, ip, ports, labels={}, selectors={},
                  istio_sidecar=False, health=None, **kwargs):
         if name is None:
             raise KeyError("'name' should not be 'None'")
@@ -143,6 +143,7 @@ class ServiceDetails(EntityBase):
         self.ip = ip
         self.ports = ports
         self.labels = labels
+        self.selectors = selectors
         self.workloads_number = kwargs['workloads_number']\
             if 'workloads_number' in kwargs else None
         self.virtual_services_number = kwargs['virtual_services_number']\
@@ -162,17 +163,17 @@ class ServiceDetails(EntityBase):
 
     def __str__(self):
         return 'name:{}, created_at: {}, service_type: {}, resource_version: {}, \
-        ip: {}, ports: {}, istio_sidecar:{}, health:{}, labels:{}'.format(
+        ip: {}, ports: {}, istio_sidecar:{}, health:{}, labels:{}, selectors:{}'.format(
             self.name, self.created_at,
             self.service_type, self.resource_version,
             self.ip, self.ports,
-            self.istio_sidecar, self.health, self.labels)
+            self.istio_sidecar, self.health, self.labels, self.selectors)
 
     def __repr__(self):
-        return "{}({}, {}, {}, {})".format(
+        return "{}({}, {}, {}, {}, {})".format(
             type(self).__name__,
             repr(self.name), repr(self.istio_sidecar), repr(self.health),
-            repr(self.labels))
+            repr(self.labels), repr(self.selectors))
 
     def __hash__(self):
         return (hash(self.name) ^ hash(self.istio_sidecar))
@@ -197,6 +198,8 @@ class ServiceDetails(EntityBase):
         if self.ports != other.ports:
             return False
         if self.labels != other.labels:
+            return False
+        if self.selectors != other.selectors:
             return False
         # advanced check
         if not advanced_check:

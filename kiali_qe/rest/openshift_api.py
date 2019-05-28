@@ -447,6 +447,7 @@ class OpenshiftExtendedClient(object):
             ip=_response.spec.clusterIP,
             ports=_ports.strip(),
             labels=dict(_response.metadata.labels),
+            selectors=dict(_response.spec.selector if _response.spec.selector else {}),
             # TODO health
             health=None)
 
