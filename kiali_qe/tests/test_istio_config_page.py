@@ -2,6 +2,7 @@ import pytest
 from kiali_qe.tests import IstioConfigPageTest
 
 BOOKINFO_2 = 'bookinfo2'
+ISTIO_SYSTEM = 'istio-system'
 
 
 @pytest.mark.p_ro_namespace
@@ -46,6 +47,14 @@ def test_all_configs(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_group_last
+def test_all_configs_namespace(kiali_client, openshift_client, browser):
+    tests = IstioConfigPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.assert_all_items(namespaces=[ISTIO_SYSTEM])
 
 
 @pytest.mark.p_ro_namespace
