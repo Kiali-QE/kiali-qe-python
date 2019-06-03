@@ -3,6 +3,7 @@ import pytest
 from kiali_qe.tests import WorkloadsPageTest
 
 BOOKINFO_2 = 'bookinfo2'
+ISTIO_SYSTEM = 'istio-system'
 
 
 @pytest.mark.p_ro_namespace
@@ -39,6 +40,14 @@ def test_all_workloads(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_group7
+def test_all_workloads_namespace(kiali_client, openshift_client, browser):
+    tests = WorkloadsPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.assert_all_items(namespaces=[ISTIO_SYSTEM])
 
 
 # putting to p_ro_top group although right now there are no tests changing health of app so

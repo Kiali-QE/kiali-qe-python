@@ -3,6 +3,7 @@ import pytest
 from kiali_qe.tests import ApplicationsPageTest
 
 BOOKINFO_2 = 'bookinfo2'
+ISTIO_SYSTEM = 'istio-system'
 
 
 @pytest.mark.p_ro_namespace
@@ -11,7 +12,7 @@ def test_pagination_feature(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     # use only istio-system namespace which contains sufficient number of items for this test
-    tests.apply_namespaces(['istio-system'])
+    tests.apply_namespaces([ISTIO_SYSTEM])
     tests.assert_pagination_feature()
 
 
@@ -39,6 +40,14 @@ def test_all_applications(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_group4
+def test_all_applications_namespace(kiali_client, openshift_client, browser):
+    tests = ApplicationsPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.assert_all_items(namespaces=[ISTIO_SYSTEM])
 
 
 # putting to p_ro_top group although right now there are no tests changing health of app so
