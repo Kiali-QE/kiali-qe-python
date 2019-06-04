@@ -1309,6 +1309,7 @@ class ListViewOverview(ListViewAbstract):
         self.browser.click(self.browser.element(
             parent=self.ROOT,
             locator=('//button[text()="Compact"]')))
+        wait_to_spinner_disappear(self.browser)
         _overview_type = self.browser.element(
                 locator=self.OVERVIEW_TYPE, parent=self.ROOT).text
         for el in self.browser.elements(self.ITEMS, parent=self):

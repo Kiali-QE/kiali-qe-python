@@ -400,16 +400,24 @@ def _test_validation_errors(kiali_client, object_type, object_name, namespace,
         object_type=object_type,
         object_name=object_name)
 
-    assert len(error_messages) == len(config_details_rest.error_messages), \
+    rest_error_messages = config_details_rest.error_messages
+
+    try:
+        rest_error_messages.remove(
+            'More than one DestinationRules for the same host subset combination')
+    except ValueError:
+        pass
+
+    assert len(error_messages) == len(rest_error_messages), \
         'Error messages are different Expected:{}, Got:{}'.\
         format(error_messages,
-               config_details_rest.error_messages)
+               rest_error_messages)
 
     for error_message in error_messages:
-        assert error_message in config_details_rest.error_messages, \
+        assert error_message in rest_error_messages, \
             'Error messages:{} is not in List:{}'.\
             format(error_message,
-                   config_details_rest.error_messages)
+                   rest_error_messages)
 
 
 def _test_mtls_settings(kiali_client, openshift_client, browser, tls_type, namespace_tls_objects):
