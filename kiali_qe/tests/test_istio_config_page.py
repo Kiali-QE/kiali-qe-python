@@ -1,5 +1,6 @@
 import pytest
 from kiali_qe.tests import IstioConfigPageTest
+from kiali_qe.components.enums import IstioConfigPageSort
 
 BOOKINFO_2 = 'bookinfo2'
 ISTIO_SYSTEM = 'istio-system'
@@ -32,6 +33,14 @@ def test_filter_options(kiali_client, openshift_client, browser):
     tests.assert_filter_options()
 
 
+@pytest.mark.p_atomic
+@pytest.mark.p_group10
+def test_sort_options(kiali_client, openshift_client, browser):
+    tests = IstioConfigPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.assert_sort_options()
+
+
 # p_group_last is used for tests which must be run at the end when all other test are done
 @pytest.mark.p_ro_top
 @pytest.mark.p_group_last
@@ -54,7 +63,8 @@ def test_all_configs(kiali_client, openshift_client, browser):
 def test_all_configs_namespace(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.assert_all_items(namespaces=[ISTIO_SYSTEM])
+    tests.assert_all_items(namespaces=[ISTIO_SYSTEM],
+                           sort_options=[IstioConfigPageSort.CONFIG, True])
 
 
 @pytest.mark.p_ro_namespace

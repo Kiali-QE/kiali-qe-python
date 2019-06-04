@@ -1,6 +1,7 @@
 import pytest
 
 from kiali_qe.tests import WorkloadsPageTest
+from kiali_qe.components.enums import WorkloadsPageSort
 
 BOOKINFO_2 = 'bookinfo2'
 ISTIO_SYSTEM = 'istio-system'
@@ -32,6 +33,14 @@ def test_filter_options(kiali_client, openshift_client, browser):
     tests.assert_filter_options()
 
 
+@pytest.mark.p_atomic
+@pytest.mark.p_group7
+def test_sort_options(kiali_client, openshift_client, browser):
+    tests = WorkloadsPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.assert_sort_options()
+
+
 # putting to p_ro_top group although right now there are no tests changing health of app so
 # it could be in p_ro_top_safe
 @pytest.mark.p_ro_top
@@ -47,7 +56,7 @@ def test_all_workloads(kiali_client, openshift_client, browser):
 def test_all_workloads_namespace(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.assert_all_items(namespaces=[ISTIO_SYSTEM])
+    tests.assert_all_items(namespaces=[ISTIO_SYSTEM], sort_options=[WorkloadsPageSort.HEALTH, True])
 
 
 # putting to p_ro_top group although right now there are no tests changing health of app so

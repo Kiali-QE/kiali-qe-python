@@ -115,7 +115,7 @@ class ApplicationsPageSort(StringEnum):
     NAMESPACE = ('Namespace')
     APP_NAME = ('App Name')
     ISTIO_SIDECAR = ('IstioSidecar')
-    ERROR_RATE = ('Error Rate')
+    HEALTH = ('Health')
 
 
 class OverviewPageFilter(StringEnum):
@@ -125,8 +125,8 @@ class OverviewPageFilter(StringEnum):
 
 
 class OverviewPageSort(StringEnum):
+    HEALTH = ('Health')
     NAME = ('Name')
-    STATUS = ('Status')
     MTLS = ('mTLS')
 
 
@@ -152,6 +152,7 @@ class WorkloadsPageSort(StringEnum):
     ISTIO_SIDECAR = ('IstioSidecar')
     APP_LABEL = ('App Label')
     VERSION_LABEL = ('Version Label')
+    HEALTH = ('Health')
 
 
 class WorkloadType(StringEnum):
@@ -191,7 +192,7 @@ class ServicesPageSort(StringEnum):
     NAMESPACE = ('Namespace')
     SERVICE_NAME = ('Service Name')
     ISTIO_SIDECAR = ('Istio Sidecar')
-    ERROR_RATE = ('Error Rate')
+    HEALTH = ('Health')
 
 
 class ServicesPageRateInterval(StringEnum):
@@ -209,7 +210,9 @@ class IstioConfigPageFilter(StringEnum):
 
 class IstioConfigPageSort(StringEnum):
     NAMESPACE = ('Namespace')
+    ISTIO_TYPE = ('Istio Type')
     ISTIO_NAME = ('Istio Name')
+    CONFIG = ('Config')
 
 
 class IstioConfigObjectType(StringEnum):

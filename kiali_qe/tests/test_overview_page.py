@@ -14,6 +14,14 @@ def test_filter_options(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_atomic
 @pytest.mark.p_group6
+def test_sort_options(kiali_client, openshift_client, browser):
+    tests = OverviewPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.assert_sort_options()
+
+
+@pytest.mark.p_atomic
+@pytest.mark.p_group6
 def test_type_options(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
