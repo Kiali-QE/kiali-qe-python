@@ -85,6 +85,7 @@ def _get_browser_options():
     if cfg.selenium.capabilities.browserName == "chrome":
         chrome_options = webdriver.ChromeOptions()
         chrome_options.add_argument("--incognito")
+        chrome_options.add_experimental_option('w3c', False)
         return chrome_options
     else:
         firefox_options = webdriver.FirefoxOptions()
