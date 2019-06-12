@@ -22,7 +22,9 @@ from kiali_qe.components.enums import (
     OverviewPageSort,
     WorkloadsPageSort,
     ServicesPageSort,
-    IstioConfigPageSort
+    IstioConfigPageSort,
+    RoutingWizardTLS,
+    RoutingWizardLoadBalancer
 )
 from kiali_qe.utils import is_equal, is_sublist
 from kiali_qe.utils.log import logger
@@ -920,19 +922,22 @@ class ServicesPageTest(AbstractListPageTest):
         self.page.content.open(name, namespace)
         self.page.actions.delete_all_routing()
         if routing_type == RoutingWizardType.CREATE_WEIGHTED_ROUTING:
-            assert self.page.actions.create_weighted_routing()
+            assert self.page.actions.create_weighted_routing(
+                tls=RoutingWizardTLS.ISTIO_MUTUAL, load_balancer=True, gateway=True)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_weighted_enabled()
             assert self.page.actions.is_create_matching_disabled()
             assert self.page.actions.is_suspend_disabled()
         elif routing_type == RoutingWizardType.CREATE_MATCHING_ROUTING:
-            assert self.page.actions.create_matching_routing()
+            assert self.page.actions.create_matching_routing(
+                tls=RoutingWizardTLS.ISTIO_MUTUAL, load_balancer=True, gateway=True)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_matching_enabled()
             assert self.page.actions.is_create_weighted_disabled()
             assert self.page.actions.is_suspend_disabled()
         elif routing_type == RoutingWizardType.SUSPEND_TRAFFIC:
-            assert self.page.actions.suspend_traffic()
+            assert self.page.actions.suspend_traffic(
+                tls=RoutingWizardTLS.ISTIO_MUTUAL, load_balancer=True, gateway=True)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_create_matching_disabled()
             assert self.page.actions.is_create_weighted_disabled()
@@ -945,6 +950,10 @@ class ServicesPageTest(AbstractListPageTest):
         assert len(service_details_rest.destination_rules) == 1, 'Service should have 1 DR'
         assert service_details_rest.virtual_services[0].name == name
         assert service_details_rest.destination_rules[0].name == name
+        assert RoutingWizardLoadBalancer.ROUND_ROBIN.text.lower() \
+            in service_details_rest.destination_rules[0].traffic_policy
+        assert RoutingWizardTLS.ISTIO_MUTUAL.text.lower() \
+            in service_details_rest.destination_rules[0].traffic_policy
 
     def test_routing_update(self, name, namespace, routing_type):
         logger.debug('Routing Update Wizard {} for Service: {}, {}'.format(routing_type,
@@ -979,6 +988,10 @@ class ServicesPageTest(AbstractListPageTest):
         assert len(service_details_rest.destination_rules) == 1, 'Service should have 1 DR'
         assert service_details_rest.virtual_services[0].name == name
         assert service_details_rest.destination_rules[0].name == name
+        assert RoutingWizardLoadBalancer.ROUND_ROBIN.text.lower() \
+            not in service_details_rest.destination_rules[0].traffic_policy
+        assert RoutingWizardTLS.ISTIO_MUTUAL.text.lower() \
+            not in service_details_rest.destination_rules[0].traffic_policy
 
     def test_routing_delete(self, name, namespace):
         logger.debug('Routing Delete for Service: {}, {}'.format(name, namespace))
