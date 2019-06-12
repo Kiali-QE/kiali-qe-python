@@ -17,7 +17,12 @@ from kiali_qe.components.enums import (
     GraphPageDuration,
     GraphRefreshInterval,
     OverviewPageType,
-    RoutingWizardType
+    RoutingWizardType,
+    ApplicationsPageSort,
+    OverviewPageSort,
+    WorkloadsPageSort,
+    ServicesPageSort,
+    IstioConfigPageSort
 )
 from kiali_qe.utils import is_equal, is_sublist
 from kiali_qe.utils.log import logger
@@ -33,6 +38,7 @@ from kiali_qe.pages import (
 
 class AbstractListPageTest(object):
     FILTER_ENUM = None
+    SORT_ENUM = None
 
     def __init__(self, kiali_client, openshift_client, page):
         self.kiali_client = kiali_client
@@ -140,19 +146,22 @@ class AbstractListPageTest(object):
         options_defined = [item.text for item in self.FILTER_ENUM]
         options_listed = self.page.filter.filters
         logger.debug('Options[defined:{}, defined:{}]'.format(options_defined, options_listed))
-        assert is_equal(options_defined, options_listed)
+        assert is_equal(options_defined, options_listed), \
+            'Defined: {}  Listed: {}'.format(options_defined, options_listed)
 
     def assert_applied_filters(self, filters):
         # validate applied filters
         _active_filters = self.page.filter.active_filters
         logger.debug('Filters[applied:{}, active:{}]'.format(filters, _active_filters))
-        assert is_equal(filters, _active_filters)
+        assert is_equal(filters, _active_filters), \
+            'Defined: {}  Listed: {}'.format(filters, _active_filters)
 
     def assert_applied_namespaces(self, filters):
         # validate applied namespaces
         _active_filters = self.page.namespace.checked_items
         logger.debug('Filters[applied:{}, active:{}]'.format(filters, _active_filters))
-        assert is_equal(filters, _active_filters)
+        assert is_equal(filters, _active_filters), \
+            'Defined: {}  Listed: {}'.format(filters, _active_filters)
 
     def assert_namespaces(self):
         namespaces_ui = self._namespaces_ui()
@@ -255,6 +264,27 @@ class AbstractListPageTest(object):
             'Total items mismatch: pagination:{}, page:{}'.format(total_items_pagin,
                                                                   total_items_page)
 
+    def sort(self, sort_options=[]):
+        """
+        Sorts the listed items.
+
+        Parameters
+        ----------
+        sort_options : array of 2 values
+            option: SortEnum item, the sorting option to select
+            is_ascending: boolean, sort ascending or descending
+        """
+        if len(sort_options) == 2:
+            self.page.sort.select(sort_options[0], sort_options[1])
+
+    def assert_sort_options(self):
+        # test available options
+        options_defined = [item.text for item in self.SORT_ENUM]
+        options_listed = self.page.sort.options
+        logger.debug('Options[defined:{}, defined:{}]'.format(options_defined, options_listed))
+        assert is_equal(options_defined, options_listed), \
+            'Defined: {}  Listed: {}'.format(options_defined, options_listed)
+
     def assert_metrics_options(self, metrics_page):
         metrics_page.open()
         self._assert_metrics_settings(metrics_page)
@@ -312,6 +342,7 @@ class AbstractListPageTest(object):
 class OverviewPageTest(AbstractListPageTest):
     FILTER_ENUM = OverviewPageFilter
     TYPE_ENUM = OverviewPageType
+    SORT_ENUM = OverviewPageSort
 
     def _namespaces_ui(self):
         return self.page.filter.filter_options(filter_name=self.FILTER_ENUM.NAME.text)
@@ -370,6 +401,7 @@ class OverviewPageTest(AbstractListPageTest):
 
 class ApplicationsPageTest(AbstractListPageTest):
     FILTER_ENUM = ApplicationsPageFilter
+    SORT_ENUM = ApplicationsPageSort
 
     def __init__(self, kiali_client, openshift_client, browser):
         AbstractListPageTest.__init__(
@@ -460,12 +492,15 @@ class ApplicationsPageTest(AbstractListPageTest):
 
             self.assert_metrics_options(application_details_ui.outbound_metrics)
 
-    def assert_all_items(self, namespaces=[], filters=[], force_clear_all=True):
+    def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True):
         # apply namespaces
         self.apply_namespaces(namespaces, force_clear_all=force_clear_all)
 
         # apply filters
         self.apply_filters(filters=filters, force_clear_all=force_clear_all)
+
+        # apply sorting
+        self.sort(sort_options)
 
         # get applications from rest api
         _sn = self.FILTER_ENUM.APP_NAME.text
@@ -512,6 +547,7 @@ class ApplicationsPageTest(AbstractListPageTest):
 
 class WorkloadsPageTest(AbstractListPageTest):
     FILTER_ENUM = WorkloadsPageFilter
+    SORT_ENUM = WorkloadsPageSort
 
     def __init__(self, kiali_client, openshift_client, browser):
         AbstractListPageTest.__init__(
@@ -624,12 +660,15 @@ class WorkloadsPageTest(AbstractListPageTest):
 
             self.assert_metrics_options(workload_details_ui.outbound_metrics)
 
-    def assert_all_items(self, namespaces=[], filters=[], force_clear_all=True):
+    def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True):
         # apply namespaces
         self.apply_namespaces(namespaces, force_clear_all=force_clear_all)
 
         # apply filters
         self.apply_filters(filters=filters, force_clear_all=force_clear_all)
+
+        # apply sorting
+        self.sort(sort_options)
 
         # get workloads from ui
         workloads_ui = self.page.content.all_items
@@ -674,6 +713,7 @@ class WorkloadsPageTest(AbstractListPageTest):
 
 class ServicesPageTest(AbstractListPageTest):
     FILTER_ENUM = ServicesPageFilter
+    SORT_ENUM = ServicesPageSort
 
     def __init__(self, kiali_client, openshift_client, browser):
         AbstractListPageTest.__init__(
@@ -806,12 +846,15 @@ class ServicesPageTest(AbstractListPageTest):
                 workload_names.append(workload)
         return set(workload_names)
 
-    def assert_all_items(self, namespaces=[], filters=[], force_clear_all=True):
+    def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True):
         # apply namespaces
         self.apply_namespaces(namespaces, force_clear_all=force_clear_all)
 
         # apply filters
         self.apply_filters(filters=filters, force_clear_all=force_clear_all)
+
+        # apply sorting
+        self.sort(sort_options)
 
         # get services from ui
         services_ui = self.page.content.all_items
@@ -957,6 +1000,7 @@ class ServicesPageTest(AbstractListPageTest):
 
 class IstioConfigPageTest(AbstractListPageTest):
     FILTER_ENUM = IstioConfigPageFilter
+    SORT_ENUM = IstioConfigPageSort
 
     def __init__(self, kiali_client, openshift_client, browser):
         AbstractListPageTest.__init__(
@@ -964,7 +1008,7 @@ class IstioConfigPageTest(AbstractListPageTest):
             openshift_client=openshift_client, page=IstioConfigPage(browser))
         self.browser = browser
 
-    def assert_all_items(self, namespaces=[], filters=[], force_clear_all=True):
+    def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True):
         logger.debug('Filters:{}'.format(filters))
         # load the page first
         self.page.load(force_load=True)
@@ -973,6 +1017,9 @@ class IstioConfigPageTest(AbstractListPageTest):
 
         # apply filters
         self.apply_filters(filters=filters, force_clear_all=force_clear_all)
+
+        # apply sorting
+        self.sort(sort_options)
 
         _sn = self.FILTER_ENUM.ISTIO_NAME.text
         _istio_names = [_f['value'] for _f in filters if _f['name'] == _sn]

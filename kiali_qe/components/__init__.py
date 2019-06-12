@@ -351,9 +351,10 @@ class SortDropDown(Widget):
         else:
             self.locator = self.ROOT
         self._drop_down = DropDown(
-            parent=self, locator=self.locator + '/*[contains(@class, "dropdown")]')
+            parent=self, locator=self.locator)
         self._sort = Sort(
-            parent=self, locator=self.locator + '/button/*[contains(@class, "sort-direction")]/..')
+            parent=self,
+            locator=self.locator + '/../button/span[contains(@class, "sort-direction")]/..')
 
     def __locator__(self):
         return self.locator
