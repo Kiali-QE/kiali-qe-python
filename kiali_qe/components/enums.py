@@ -307,3 +307,10 @@ class RoutingWizardLoadBalancer(StringEnum):
     LEAST_CONN = ('LEAST_CONN')
     RANDOM = ('RANDOM')
     PASSTHROUGH = ('PASSTHROUGH')
+
+
+class BreadCrumbObjectType(StringEnum):
+    APPLICATIONS = ('App')
+    WORKLOADS = ('Workload')
+    SERVICES = ('Service')
+    ISTIO_CONFIG = ('Istio Object')

@@ -340,6 +340,25 @@ class AbstractListPageTest(object):
         assert is_equal(options_defined, options_listed), \
             ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
 
+    def assert_breadcrumb_menu(self, name, namespace):
+        breadcrumb = self.load_details_page(name, namespace, force_refresh=False, load_only=True)
+        menu_location = breadcrumb.locations[0]
+        assert menu_location == self.page.PAGE_MENU
+        breadcrumb.click_location(menu_location)
+        self.assert_applied_namespaces(filters=[namespace])
+
+    def assert_breadcrumb_namespace(self, name, namespace):
+        breadcrumb = self.load_details_page(name, namespace, force_refresh=False, load_only=True)
+        namespace_location = breadcrumb.locations[1]
+        assert namespace_location == "Namespace: " + namespace
+        breadcrumb.click_location(namespace_location)
+        self.assert_applied_namespaces(filters=[namespace])
+
+    def assert_breadcrumb_object(self, name, namespace, object_type):
+        breadcrumb = self.load_details_page(name, namespace, force_refresh=False, load_only=True)
+        object_location = breadcrumb.active_location
+        assert object_location == "{}: {}".format(object_type, name)
+
 
 class OverviewPageTest(AbstractListPageTest):
     FILTER_ENUM = OverviewPageFilter
@@ -411,6 +430,20 @@ class ApplicationsPageTest(AbstractListPageTest):
             openshift_client=openshift_client, page=ApplicationsPage(browser))
         self.browser = browser
 
+    def _prepare_load_details_page(self, name, namespace):
+        # load the page first
+        self.page.load(force_load=True)
+        # TODO apply pagination feature in get_details
+        # apply namespace
+        self.apply_namespaces(namespaces=[namespace])
+        # apply filters
+        self.apply_filters(filters=[
+            {'name': ApplicationsPageFilter.APP_NAME.text, 'value': name}])
+
+    def load_details_page(self, name, namespace, force_refresh, load_only=False):
+        self._prepare_load_details_page(name, namespace)
+        return self.page.content.get_details(name, namespace, force_refresh, load_only)
+
     def assert_random_details(self, namespaces=[], filters=[], force_refresh=False):
         # get applications from rest api
         _sn = self.FILTER_ENUM.APP_NAME.text
@@ -435,17 +468,9 @@ class ApplicationsPageTest(AbstractListPageTest):
 
     def assert_details(self, name, namespace, check_metrics=False, force_refresh=False):
         logger.debug('Details: {}, {}'.format(name, namespace))
-        # load the page first
-        self.page.load(force_load=True)
 
-        # TODO apply pagination feature in get_details
-        # apply namespace
-        self.apply_namespaces(namespaces=[namespace])
-        # apply filters
-        self.apply_filters(filters=[
-            {'name': ApplicationsPageFilter.APP_NAME.text, 'value': name}])
         # load application details page
-        application_details_ui = self.page.content.get_details(name, namespace, force_refresh)
+        application_details_ui = self.load_details_page(name, namespace, force_refresh)
         assert application_details_ui
         assert name == application_details_ui.name
         # get application detals from rest
@@ -557,6 +582,20 @@ class WorkloadsPageTest(AbstractListPageTest):
             openshift_client=openshift_client, page=WorkloadsPage(browser))
         self.browser = browser
 
+    def _prepare_load_details_page(self, name, namespace):
+        # load the page first
+        self.page.load(force_load=True)
+        # TODO apply pagination feature in get_details
+        # apply namespace
+        self.apply_namespaces(namespaces=[namespace])
+        # apply filters
+        self.apply_filters(filters=[
+            {'name': WorkloadsPageFilter.WORKLOAD_NAME.text, 'value': name}])
+
+    def load_details_page(self, name, namespace, force_refresh, load_only=False):
+        self._prepare_load_details_page(name, namespace)
+        return self.page.content.get_details(name, namespace, force_refresh, load_only)
+
     def assert_random_details(self, namespaces=[], filters=[],
                               force_clear_all=True, force_refresh=False):
         # get workloads from rest api
@@ -582,17 +621,9 @@ class WorkloadsPageTest(AbstractListPageTest):
     def assert_details(self, name, namespace, workload_type, check_metrics=False,
                        force_refresh=False):
         logger.debug('Details: {}, {}'.format(name, namespace))
-        # load the page first
-        self.page.load(force_load=True)
-        # TODO apply pagination feature in get_details
-        # apply namespace
-        self.apply_namespaces(namespaces=[namespace])
-        # apply filters
-        self.apply_filters(filters=[
-            {'name': WorkloadsPageFilter.WORKLOAD_NAME.text, 'value': name}])
 
         # load workload details page
-        workload_details_ui = self.page.content.get_details(name, namespace, force_refresh)
+        workload_details_ui = self.load_details_page(name, namespace, force_refresh)
         assert workload_details_ui
         assert name == workload_details_ui.name
         assert workload_type == workload_details_ui.workload_type, \
@@ -733,9 +764,9 @@ class ServicesPageTest(AbstractListPageTest):
         self.apply_filters(filters=[
             {'name': ServicesPageFilter.SERVICE_NAME.text, 'value': name}])
 
-    def load_details_page(self, name, namespace, force_refresh):
+    def load_details_page(self, name, namespace, force_refresh, load_only=False):
         self._prepare_load_details_page(name, namespace)
-        return self.page.content.get_details(name, namespace, force_refresh)
+        return self.page.content.get_details(name, namespace, force_refresh, load_only)
 
     def assert_random_details(self, namespaces=[], filters=[], force_refresh=False):
         # get services from rest api
@@ -1021,6 +1052,20 @@ class IstioConfigPageTest(AbstractListPageTest):
             openshift_client=openshift_client, page=IstioConfigPage(browser))
         self.browser = browser
 
+    def _prepare_load_details_page(self, name, namespace):
+        # load the page first
+        self.page.load(force_load=True)
+        # TODO apply pagination feature in get_details
+        # apply namespace
+        self.apply_namespaces(namespaces=[namespace])
+        # apply filters
+        self.apply_filters(filters=[
+            {'name': IstioConfigPageFilter.ISTIO_NAME.text, 'value': name}])
+
+    def load_details_page(self, name, namespace, force_refresh, load_only=False):
+        self._prepare_load_details_page(name, namespace)
+        return self.page.content.get_details(name, namespace, force_refresh, load_only)
+
     def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True):
         logger.debug('Filters:{}'.format(filters))
         # load the page first
@@ -1090,26 +1135,16 @@ class IstioConfigPageTest(AbstractListPageTest):
     def assert_details(self, name, object_type,
                        namespace=None, error_messages=[], apply_filters=True):
         logger.debug('Details: {}, {}'.format(name, namespace))
-        # load the page first
-        self.page.load(force_load=True)
-        # TODO apply pagination feature in get_details
-        # this is done for optimization if the necessary item already exists in page
-        # apply namespace
-        self.apply_namespaces(namespaces=[namespace])
-        if apply_filters:
-            # apply filters
-            self.apply_filters(filters=[
-                {'name': IstioConfigPageFilter.ISTIO_NAME.text, 'value': name}])
 
         # load config details page
-        config_details_ui = self.page.content.get_details(name, object_type, namespace)
+        config_details_ui = self.load_details_page(name, namespace, force_refresh=False)
         assert config_details_ui
         assert name == config_details_ui.name
         assert config_details_ui.text
         # get config details from rest
         config_details_rest = self.kiali_client.istio_config_details(
             namespace=namespace,
-            object_type=config_details_ui._type,
+            object_type=object_type,
             object_name=name)
         assert config_details_rest
         assert name == config_details_rest.name
@@ -1118,7 +1153,7 @@ class IstioConfigPageTest(AbstractListPageTest):
         config_details_oc = self.openshift_client.istio_config_details(
             namespace=namespace,
             object_name=name,
-            object_type=config_details_ui._type)
+            object_type=object_type)
         assert config_details_oc
         assert name == config_details_oc.name
         for error_message in error_messages:
