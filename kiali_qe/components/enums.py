@@ -294,3 +294,16 @@ class RoutingWizardType(StringEnum):
     UPDATE_MATCHING_ROUTING = ('Update Matching Routing')
     SUSPEND_TRAFFIC = ('Suspend Traffic')
     UPDATE_SUSPENDED_TRAFFIC = ('Update Suspended Traffic')
+
+
+class RoutingWizardTLS(StringEnum):
+    DISABLE = ('DISABLE')
+    ISTIO_MUTUAL = ('ISTIO_MUTUAL')
+    SIMPLE = ('SIMPLE')
+
+
+class RoutingWizardLoadBalancer(StringEnum):
+    ROUND_ROBIN = ('ROUND_ROBIN')
+    LEAST_CONN = ('LEAST_CONN')
+    RANDOM = ('RANDOM')
+    PASSTHROUGH = ('PASSTHROUGH')

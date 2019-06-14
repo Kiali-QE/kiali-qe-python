@@ -10,7 +10,8 @@ from kiali_qe.components.enums import (
     IstioConfigObjectType,
     HealthType,
     IstioConfigValidation,
-    MeshWideTLSType
+    MeshWideTLSType,
+    RoutingWizardTLS
 )
 from kiali_qe.entities.service import (
     Service,
@@ -85,11 +86,14 @@ class Button(Widget):
 
 
 class ButtonSwitch(Button):
-    DEFAULT = '//*[contains(@class, "bootstrap-switch")]'
-    TEXT = './/*[contains(@class, "bootstrap-switch-label")]'
+    DEFAULT = '//label[contains(@class, "") and normalize-space(text())="{}"]' + \
+        '/..//*[contains(@class, "bootstrap-switch")]'
+    TEXT = '/../..//*[contains(@class, "control-label")]'
 
-    def __init__(self, parent, locator=None, logger=None):
-        Button.__init__(self, parent, locator=locator if locator else self.DEFAULT, logger=logger)
+    def __init__(self, parent, label=None, locator=None, logger=None):
+        Button.__init__(self, parent,
+                        locator=locator if locator else self.DEFAULT.format(label),
+                        logger=logger)
 
     @property
     def is_on(self):
@@ -101,11 +105,13 @@ class ButtonSwitch(Button):
 
     def off(self):
         if self.is_on:
-            self.click()
+            self.browser.click(self.browser.element(
+                parent=self,
+                locator='.//span[contains(@class, "bootstrap-switch-handle-on")]'))
 
     @property
     def text(self):
-        return self.browser.text(parent=self, locator=self.TEXT)
+        return self.browser.text(parent=self, locator=self.locator + self.TEXT)
 
 
 class Notifications(Widget):
@@ -490,6 +496,8 @@ class Actions(Widget):
     WIZARD_ROOT = '//*[contains(@class, "wizard-pf")]//*[contains(@class, "modal-content")]'
     DIALOG_ROOT = '//*[@role="dialog"]'
     ACTIONS_DROPDOWN = '//div[contains(@class, "dropdown")]//button[@id="service_actions"]/..'
+    TLS_DROPDOWN = '//div[contains(@class, "dropdown")]//button[@id="trafficPolicy-tls"]/..'
+    SHOW_ADVANCED_OPTIONS = '//button[text()="Show Advanced Options"]'
     CREATE_BUTTON = './/button[text()="Create"]'
     UPDATE_BUTTON = './/button[text()="Update"]'
     REMOVE_BUTTON = './/button[text()="Remove"]'
@@ -509,6 +517,9 @@ class Actions(Widget):
         else:
             self.locator = self.ROOT
         self._actions = DropDown(parent=self, locator=self.locator + self.ACTIONS_DROPDOWN)
+        self._tls = DropDown(parent=self, locator=self.TLS_DROPDOWN)
+        self._loadbalancer_switch = ButtonSwitch(parent=self, label="Add LoadBalancer")
+        self._gateway_sitch = ButtonSwitch(parent=self, label="Add Gateway")
 
     def __locator__(self):
         return self.locator
@@ -572,11 +583,13 @@ class Actions(Widget):
             wait_to_spinner_disappear(self.browser)
             return True
 
-    def create_weighted_routing(self):
+    def create_weighted_routing(self, tls=RoutingWizardTLS.DISABLE,
+                                load_balancer=False, gateway=False):
         if self.is_create_weighted_disabled():
             return False
         else:
             self._select(self.CREATE_WEIGHTED_ROUTING)
+            self.advanced_options(tls=tls, load_balancer=load_balancer, gateway=gateway)
             wait_displayed(self)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
@@ -586,9 +599,11 @@ class Actions(Widget):
             wait_to_spinner_disappear(self.browser)
             return True
 
-    def update_weighted_routing(self):
+    def update_weighted_routing(self, tls=RoutingWizardTLS.DISABLE,
+                                load_balancer=False, gateway=False):
         if self.is_update_weighted_enabled():
             self._select(self.UPDATE_WEIGHTED_ROUTING)
+            self.advanced_options(tls=tls, load_balancer=load_balancer, gateway=gateway)
             wait_displayed(self)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
@@ -600,11 +615,13 @@ class Actions(Widget):
         else:
             return False
 
-    def create_matching_routing(self):
+    def create_matching_routing(self, tls=RoutingWizardTLS.DISABLE,
+                                load_balancer=False, gateway=False):
         if self.is_create_matching_disabled():
             return False
         else:
             self._select(self.CREATE_MATCHING_ROUTING)
+            self.advanced_options(tls=tls, load_balancer=load_balancer, gateway=gateway)
             wait_displayed(self)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
@@ -619,9 +636,11 @@ class Actions(Widget):
             wait_to_spinner_disappear(self.browser)
             return True
 
-    def update_matching_routing(self):
+    def update_matching_routing(self, tls=RoutingWizardTLS.DISABLE,
+                                load_balancer=False, gateway=False):
         if self.is_update_matching_enabled():
             self._select(self.UPDATE_MATCHING_ROUTING)
+            self.advanced_options(tls=tls, load_balancer=load_balancer, gateway=gateway)
             wait_displayed(self)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
@@ -641,11 +660,12 @@ class Actions(Widget):
         else:
             return False
 
-    def suspend_traffic(self):
+    def suspend_traffic(self, tls=RoutingWizardTLS.DISABLE, load_balancer=False, gateway=False):
         if self.is_suspend_disabled():
             return False
         else:
             self._select(self.SUSPEND_TRAFFIC)
+            self.advanced_options(tls=tls, load_balancer=load_balancer, gateway=gateway)
             wait_displayed(self)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
@@ -655,9 +675,11 @@ class Actions(Widget):
             wait_to_spinner_disappear(self.browser)
             return True
 
-    def update_suspended_traffic(self):
+    def update_suspended_traffic(self, tls=RoutingWizardTLS.DISABLE,
+                                 load_balancer=False, gateway=False):
         if self.is_update_suspended_enabled():
             self._select(self.UPDATE_SUSPENDED_TRAFFIC)
+            self.advanced_options(tls=tls, load_balancer=load_balancer, gateway=gateway)
             wait_displayed(self)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
@@ -668,6 +690,22 @@ class Actions(Widget):
             return True
         else:
             return False
+
+    def advanced_options(self, tls=RoutingWizardTLS.DISABLE, load_balancer=False, gateway=False):
+        """
+        Adds Advanced Options to Wizard.
+        @TODO more flexible load balancer and gateway creation
+        """
+        self.browser.click(Button(parent=self.parent, locator=self.SHOW_ADVANCED_OPTIONS))
+        self._tls.select(tls.text)
+        if load_balancer:
+            self._loadbalancer_switch.on()
+        else:
+            self._loadbalancer_switch.off()
+        if gateway:
+            self._gateway_sitch.on()
+        else:
+            self._gateway_sitch.off()
 
 
 class CheckBoxFilter(Widget):
