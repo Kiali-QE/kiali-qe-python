@@ -734,16 +734,14 @@ class CheckBoxFilter(Widget):
         # TODO necessary workaround for remote zalenium webdriver execution
         self.browser.execute_script("window.scrollTo(0,0);")
         if not self.is_displayed:
-            self._filter_button.click()
+            self.browser.click(self._filter_button)
+            wait_displayed(self)
         wait_to_spinner_disappear(self.browser)
 
     def close(self):
         if self.is_displayed:
-            self._filter_button.click()
-
-            def _is_closed():
-                return not self.is_displayed
-            wait_for(_is_closed, timeout='3s', delay=0.2, very_quiet=True, silent_failure=True)
+            self.browser.click(self._filter_button)
+            wait_not_displayed(self)
 
     @property
     def layout(self):
@@ -754,11 +752,18 @@ class CheckBoxFilter(Widget):
     def items(self):
         self.open()
         try:
-            return [
-                self.browser.text(el)
-                for el in self.browser.elements(parent=self, locator=self.CB_ITEMS)]
+            return self._items
         finally:
             self.close()
+
+    @property
+    def _items(self):
+        """
+        Optimized property, filter should be opened before calling.
+        """
+        return [
+            self.browser.text(el)
+            for el in self.browser.elements(parent=self, locator=self.CB_ITEMS)]
 
     @property
     def radio_items(self):
@@ -790,8 +795,8 @@ class CheckBoxFilter(Widget):
         self._cb_action(filter_name, 'fill', False)
 
     def uncheck_all(self):
-        _items = self.items
         self.open()
+        _items = self._items
         for _cb_item in _items:
             self._cb_action(_cb_item, 'fill', False, skipOpen=True)
         self.close()
@@ -801,9 +806,9 @@ class CheckBoxFilter(Widget):
 
     @property
     def checked_items(self):
-        _items = self.items
-        checked_items = []
         self.open()
+        _items = self._items
+        checked_items = []
         for _cb_item in _items:
             if self.is_checked(_cb_item, skipOpen=True):
                 checked_items.append(_cb_item)
@@ -999,6 +1004,48 @@ class NavBar(Widget):
 
     def toggle(self):
         self.browser.click(self.browser.element(self.TOGGLE_NAVIGATION, parent=self))
+
+
+class BreadCrumb(Widget):
+    """Represents the Patternfly BreadCrumb.
+    """
+    ROOT = './/ol[contains(@class, "breadcrumb")]'
+    ELEMENTS = ".//li"
+    LINKS = ".//li//a"
+
+    def __init__(self, parent, locator=None, logger=None):
+        Widget.__init__(self, parent=parent, logger=logger)
+        self._locator = locator or self.ROOT
+
+    def __locator__(self):
+        return self._locator
+
+    @property
+    def _path_elements(self):
+        return self.browser.elements(self.ELEMENTS)
+
+    @property
+    def _path_links(self):
+        return self.browser.elements(self.LINKS)
+
+    @property
+    def locations(self):
+        return [self.browser.text(loc) for loc in self._path_elements]
+
+    @property
+    def active_location(self):
+        return self.locations[-1] if self.locations else None
+
+    def click_location(self, name, handle_alert=False):
+        location = next(loc for loc in self._path_links if self.browser.text(loc) == name)
+        self.browser.click(location, ignore_ajax=handle_alert)
+        if handle_alert:
+            self.browser.handle_alert(wait=2.0)
+            self.browser.plugin.ensure_page_safe()
+
+    def read(self):
+        """Return the active location of the breadcrumb"""
+        return self.active_location
 
 
 class MainMenu(Widget):
@@ -1389,8 +1436,10 @@ class ListViewOverview(ListViewAbstract):
 
 class ListViewApplications(ListViewAbstract):
 
-    def get_details(self, name, namespace=None, force_refresh=False):
+    def get_details(self, name, namespace=None, force_refresh=False, load_only=False):
         self.open(name, namespace, force_refresh)
+        if load_only:
+            return BreadCrumb(self.parent)
         _name = self.browser.text(
             locator=self.HEADER,
             parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '')\
@@ -1435,8 +1484,10 @@ class ListViewApplications(ListViewAbstract):
 
 class ListViewWorkloads(ListViewAbstract):
 
-    def get_details(self, name, namespace=None, force_refresh=False):
+    def get_details(self, name, namespace=None, force_refresh=False, load_only=False):
         self.open(name, namespace, force_refresh)
+        if load_only:
+            return BreadCrumb(self.parent)
         _name = self.browser.text(
             locator=self.HEADER,
             parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '')\
@@ -1501,8 +1552,10 @@ class ListViewWorkloads(ListViewAbstract):
 
 class ListViewServices(ListViewAbstract):
 
-    def get_details(self, name, namespace=None, force_refresh=False):
+    def get_details(self, name, namespace=None, force_refresh=False, load_only=False):
         self.open(name, namespace, force_refresh)
+        if load_only:
+            return BreadCrumb(self.parent)
         _name = self.browser.text(
             locator=self.HEADER,
             parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '')\
@@ -1582,12 +1635,14 @@ class ListViewIstioConfig(ListViewAbstract):
     CONFIG_TEXT = './/div[contains(@class, "ace_content")]'
     CONFIG_DETAILS_ROOT = './/div[contains(@class, "container-fluid")]'
 
-    def get_details(self, name, object_type, namespace=None):
-        self.open(name, namespace)
+    def get_details(self, name, namespace=None, force_refresh=False, load_only=False):
+        self.open(name, namespace, force_refresh)
+        if load_only:
+            return BreadCrumb(self.parent)
         self.display_yaml_editor()
         _text = self.browser.text(locator=self.CONFIG_TEXT,
                                   parent=self.CONFIG_DETAILS_ROOT)
-        return IstioConfigDetails(name=name, _type=object_type, text=_text,
+        return IstioConfigDetails(name=name, text=_text,
                                   validation=self._get_details_validation())
 
     @property
@@ -1973,6 +2028,8 @@ class TableViewVirtualServices(TableViewAbstract):
 
 
 class TableViewDestinationRules(TableViewAbstract):
+    DR_ROWS = '//div[@id="{}"]//table[contains(@class, "table")]'\
+        '//tbody//tr//td//a[text()="{}"]/../..'
     DR_TEXT = 'Destination Rules'
 
     def open(self):
@@ -1987,7 +2044,7 @@ class TableViewDestinationRules(TableViewAbstract):
     def get_overview(self, name):
         self.open()
 
-        _row = self.browser.element(locator=self.ROWS.format(
+        _row = self.browser.element(locator=self.DR_ROWS.format(
                 'service-tabs-pane-destinationrules', name),
                                         parent=self.ROOT)
         _columns = list(self.browser.elements(locator=self.COLUMN, parent=_row))
