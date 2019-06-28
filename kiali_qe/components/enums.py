@@ -125,8 +125,8 @@ class OverviewPageFilter(StringEnum):
 
 
 class OverviewPageSort(StringEnum):
-    HEALTH = ('Health')
     NAME = ('Name')
+    STATUS = ('Status')
     MTLS = ('mTLS')
 
 

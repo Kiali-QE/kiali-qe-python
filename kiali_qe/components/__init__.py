@@ -1193,16 +1193,16 @@ class ListViewAbstract(Widget):
         _health_sublocator = '/../..//strong[normalize-space(text())="Health"]'
         _healthy = len(self.browser.elements(
             parent=self.DETAILS_ROOT,
-            locator='.//*[contains(@class, "pficon-ok")]' + _health_sublocator)) > 0
+            locator='.//*[contains(@class, "icon-healthy")]' + _health_sublocator)) > 0
         _not_healthy = len(self.browser.elements(
             parent=self.DETAILS_ROOT,
-            locator='.//*[contains(@class, "pficon-error-circle-o")]' + _health_sublocator)) > 0
+            locator='.//*[contains(@class, "icon-failure")]' + _health_sublocator)) > 0
         _degraded = len(self.browser.elements(
             parent=self.DETAILS_ROOT,
-            locator='.//*[contains(@class, "pficon-warning-triangle-o")]' + _health_sublocator)) > 0
+            locator='.//*[contains(@class, "icon-degraded")]' + _health_sublocator)) > 0
         _not_available = len(self.browser.elements(
             parent=self.DETAILS_ROOT,
-            locator='.//*[text()="N/A"]')) > 0
+            locator='.//*[contains(@class, "icon-na")]' + _health_sublocator)) > 0
         _health = None
         if _healthy:
             _health = HealthType.HEALTHY
@@ -1217,17 +1217,18 @@ class ListViewAbstract(Widget):
     def _get_item_health(self, element):
         _healthy = len(self.browser.elements(
             parent=element,
-            locator='.//{}*[contains(@class, "pficon-ok")]'.format(self.HEALTH))) > 0
+            locator='.//{}*[contains(@class, "icon-healthy")]'.format(self.HEALTH))) > 0
         _not_healthy = len(self.browser.elements(
             parent=element,
-            locator='.//{}*[contains(@class, "pficon-error-circle-o")]'.format(self.HEALTH))) > 0
+            locator='.//{}*[contains(@class, "icon-failure")]'.format(self.HEALTH))) > 0
         _degraded = len(self.browser.elements(
             parent=element,
-            locator='.//{}*[contains(@class, "pficon-warning-triangle-o")]'
+            locator='.//{}*[contains(@class, "icon-degraded")]'
                     .format(self.HEALTH))) > 0
         _not_available = len(self.browser.elements(
             parent=element,
-            locator='.//{}*[text()="N/A"]'.format(self.HEALTH))) > 0
+            locator='.//{}*[contains(@class, "icon-na")]'
+                    .format(self.HEALTH))) > 0
         _health = None
         if _healthy:
             _health = HealthType.HEALTHY
