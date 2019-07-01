@@ -1114,8 +1114,6 @@ class ListViewAbstract(Widget):
     DIALOG_ROOT = '//*[@role="dialog"]'
     ITEMS = './/*[contains(@class, "list-group-item")]//*[contains(@class, "list-view-pf-body")]'
     ITEM_TEXT = './/*[contains(@class, "list-group-item-heading")]'
-    SELECT_ITEM = ITEMS + '//*[text()="{}"]'
-    SELECT_ITEM_WITH_NAMESPACE = SELECT_ITEM + '/small[text()="{}"]'
     OBJECT_TYPE = './/*[contains(@class, "list-group-item-text")]//td'
     DETAILS_ROOT = './/div[contains(@class, "card-pf")]'
     HEADER = './/div[contains(@class, "container-fluid")]//h2'
@@ -1150,20 +1148,6 @@ class ListViewAbstract(Widget):
 
     def __locator__(self):
         return self.locator
-
-    def open(self, name, namespace=None, force_refresh=False):
-        # TODO added wait for unstable performance
-        wait_to_spinner_disappear(self.browser)
-        if namespace is not None:
-            self.browser.click(self.browser.element(
-                self.SELECT_ITEM_WITH_NAMESPACE.format(name, namespace), parent=self))
-        else:
-            self.browser.click(self.browser.element(self.SELECT_ITEM.format(name), parent=self))
-
-        if force_refresh:
-            self.parent.page_refresh()
-        wait_to_spinner_disappear(self.browser)
-        wait_displayed(self)
 
     def has_overview_tab(self):
         return len(self.browser.elements(locator='.//a[@id="basic-tabs-tab-overview"]',
@@ -1437,8 +1421,7 @@ class ListViewOverview(ListViewAbstract):
 
 class ListViewApplications(ListViewAbstract):
 
-    def get_details(self, name, namespace=None, force_refresh=False, load_only=False):
-        self.open(name, namespace, force_refresh)
+    def get_details(self, load_only=False):
         if load_only:
             return BreadCrumb(self.parent)
         _name = self.browser.text(
@@ -1485,8 +1468,7 @@ class ListViewApplications(ListViewAbstract):
 
 class ListViewWorkloads(ListViewAbstract):
 
-    def get_details(self, name, namespace=None, force_refresh=False, load_only=False):
-        self.open(name, namespace, force_refresh)
+    def get_details(self, load_only=False):
         if load_only:
             return BreadCrumb(self.parent)
         _name = self.browser.text(
@@ -1553,8 +1535,7 @@ class ListViewWorkloads(ListViewAbstract):
 
 class ListViewServices(ListViewAbstract):
 
-    def get_details(self, name, namespace=None, force_refresh=False, load_only=False):
-        self.open(name, namespace, force_refresh)
+    def get_details(self, load_only=False):
         if load_only:
             return BreadCrumb(self.parent)
         _name = self.browser.text(
@@ -1636,8 +1617,7 @@ class ListViewIstioConfig(ListViewAbstract):
     CONFIG_TEXT = './/div[contains(@class, "ace_content")]'
     CONFIG_DETAILS_ROOT = './/div[contains(@class, "container-fluid")]'
 
-    def get_details(self, name, namespace=None, force_refresh=False, load_only=False):
-        self.open(name, namespace, force_refresh)
+    def get_details(self, name, load_only=False):
         if load_only:
             return BreadCrumb(self.parent)
         self.display_yaml_editor()
@@ -1691,15 +1671,6 @@ class ListViewIstioConfig(ListViewAbstract):
                 # append this item to the final list
                 _items.append(_config)
         return _items
-
-    def delete(self, name, namespace=None):
-        self.open(name, namespace)
-        self.parent.actions.select('Delete')
-        wait_displayed(self)
-        self.browser.click(self.browser.element(
-            parent=self.DIALOG_ROOT,
-            locator=('.//button[text()="Delete"]')))
-        wait_displayed(self)
 
 
 class TableViewAbstract(Widget):
