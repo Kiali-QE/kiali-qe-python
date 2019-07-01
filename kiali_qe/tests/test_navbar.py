@@ -19,7 +19,7 @@ def test_about(browser, kiali_client):
     _response = kiali_client.get_response('getStatus')
     _products = _response['externalServices']
 
-    if (any(d['name'] == 'Maistra Project' for d in _products)):
+    if (any(d['name'] == MaistraEnum.MAISTRA.text for d in _products)):
         versions_defined = [item.text for item in MaistraEnum]
     else:
         versions_defined = [item.text for item in ApplicationVersionEnum]
@@ -47,10 +47,13 @@ def test_about(browser, kiali_client):
 
     # If Maistra Project version exists, then Check Maistra version or check istio version
 
-    if (any(d['name'] == 'Maistra Project' for d in _products)):
-        assert versions_ui[MaistraEnum.MAISTRA.text] == _get_version(_products, 'Maistra Project')
+    if (any(d['name'] == MaistraEnum.MAISTRA.text for d in _products)):
+        assert versions_ui[MaistraEnum.MAISTRA.text] == _get_version(_products,
+                                                                     MaistraEnum.MAISTRA.text)
     else:
-        assert versions_ui[ApplicationVersionEnum.ISTIO.text] == _get_version(_products, 'Istio')
+        assert versions_ui[ApplicationVersionEnum.ISTIO.text] == _get_version(
+            _products,
+            ApplicationVersionEnum.ISTIO.text)
     # check Prometheus version
     assert versions_ui[ApplicationVersionEnum.PROMETHEUS.text] == _get_version(
         _products, 'Prometheus')
