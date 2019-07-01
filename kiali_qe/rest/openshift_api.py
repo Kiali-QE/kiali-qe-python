@@ -36,9 +36,11 @@ class OpenshiftExtendedClient(object):
         'ServiceEntry': '_serviceentry',
         'Rule': '_rule',
         'Adapter': '_handler',
+        'Adapter: adapter': '_adapter',
         'Template: logentry': '_logentry',
         'Template: kubernetes': '_kubernetes',
         'Template: metric': '_metric',
+        'Template: template': '_template',
         'QuotaSpec': '_quotaspec',
         'QuotaSpecBinding': '_quotaspecbinding',
         'Policy': '_policy',
@@ -144,8 +146,16 @@ class OpenshiftExtendedClient(object):
         return self._istio_config(kind='metric', api_version='v1alpha2')
 
     @property
+    def _template(self):
+        return self._istio_config(kind='template', api_version='v1alpha2')
+
+    @property
     def _handler(self):
         return self._istio_config(kind='handler', api_version='v1alpha2')
+
+    @property
+    def _adapter(self):
+        return self._istio_config(kind='adapter', api_version='v1alpha2')
 
     @property
     def _quotaspec(self):
