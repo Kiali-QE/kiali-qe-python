@@ -38,7 +38,7 @@ class ApplicationVersionEnum(StringEnum):
 class MaistraEnum(StringEnum):
     KIALI_UI = ("Kiali-ui")
     KIALI_CORE = ("Kiali")
-    MAISTRA = ("Maistra Project")
+    MAISTRA = ("Maistra")
     PROMETHEUS = ("Prometheus")
     KUBERNETES = ("Kubernetes")
     JAEGER = ("JaegerURL")
