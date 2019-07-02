@@ -1,6 +1,12 @@
 import random
 import re
 
+from kiali_qe.components import (
+    BreadCrumb,
+    wait_to_spinner_disappear,
+    wait_displayed,
+    ListViewAbstract
+)
 from kiali_qe.components.enums import (
     PaginationPerPage,
     ServicesPageFilter,
@@ -24,7 +30,8 @@ from kiali_qe.components.enums import (
     ServicesPageSort,
     IstioConfigPageSort,
     RoutingWizardTLS,
-    RoutingWizardLoadBalancer
+    RoutingWizardLoadBalancer,
+    BreadCrumbObjectType
 )
 from kiali_qe.utils import is_equal, is_sublist
 from kiali_qe.utils.log import logger
@@ -41,6 +48,8 @@ from kiali_qe.pages import (
 class AbstractListPageTest(object):
     FILTER_ENUM = None
     SORT_ENUM = None
+    SELECT_ITEM = ListViewAbstract.ITEMS + '//*[text()="{}"]'
+    SELECT_ITEM_WITH_NAMESPACE = SELECT_ITEM + '/small[text()="{}"]'
 
     def __init__(self, kiali_client, openshift_client, page):
         self.kiali_client = kiali_client
@@ -75,7 +84,36 @@ class AbstractListPageTest(object):
     def get_additional_filters(self, namespaces, current_filters):
         raise NotImplementedError('This method should be implemented on sub class')
 
-    def apply_namespaces(self, namespaces, force_clear_all=True):
+    def open(self, name, namespace=None, force_refresh=False):
+        # TODO added wait for unstable performance
+        wait_to_spinner_disappear(self.browser)
+        if namespace is not None:
+            self.browser.click(self.browser.element(
+                self.SELECT_ITEM_WITH_NAMESPACE.format(name, namespace), parent=self))
+        else:
+            self.browser.click(self.browser.element(self.SELECT_ITEM.format(name), parent=self))
+
+        if force_refresh:
+            self.page.page_refresh()
+        wait_to_spinner_disappear(self.browser)
+        wait_displayed(self.page.content)
+
+    def is_in_details_page(self, name, object_type, namespace):
+        breadcrumb = BreadCrumb(self.page)
+        if len(breadcrumb.locations) < 3:
+            return False
+        menu_location = breadcrumb.locations[0]
+        if menu_location != self.page.PAGE_MENU:
+            return False
+        namespace_location = breadcrumb.locations[1]
+        if namespace_location != "Namespace: " + namespace:
+            return False
+        object_location = breadcrumb.active_location
+        if object_location != "{}: {}".format(object_type, name):
+            return False
+        return True
+
+    def apply_namespaces(self, namespaces, force_clear_all=False):
         """
         Apply supplied namespaces in to UI and assert with supplied and applied namespaces
 
@@ -84,7 +122,7 @@ class AbstractListPageTest(object):
         namespaces : list
             A list for namespace names      .
         force_clear_all : boolean
-            Default True.
+            Default False.
             If this value is True, all existing applied namespaces will be removed.
         """
         _pre_filters = []
@@ -107,7 +145,7 @@ class AbstractListPageTest(object):
 
         self.assert_applied_namespaces(namespaces)
 
-    def apply_filters(self, filters, force_clear_all=True):
+    def apply_filters(self, filters, force_clear_all=False):
         """
         Apply supplied filter in to UI and assert with supplied and applied filters
 
@@ -118,7 +156,7 @@ class AbstractListPageTest(object):
             filter = {'name': 'Health', 'value': 'Healthy'}
             Take filter name from pre defined enum
         force_clear_all : boolean
-            Default True.
+            Default False.
             If this value is True, all existing applied filters will be removed.
             otherwise, will be adjusted with pre filter.
             on both case final outcome will be same.
@@ -441,8 +479,10 @@ class ApplicationsPageTest(AbstractListPageTest):
             {'name': ApplicationsPageFilter.APP_NAME.text, 'value': name}])
 
     def load_details_page(self, name, namespace, force_refresh, load_only=False):
-        self._prepare_load_details_page(name, namespace)
-        return self.page.content.get_details(name, namespace, force_refresh, load_only)
+        if not self.is_in_details_page(name, BreadCrumbObjectType.APPLICATIONS.text, namespace):
+            self._prepare_load_details_page(name, namespace)
+            self.open(name, namespace, force_refresh)
+        return self.page.content.get_details(load_only)
 
     def assert_random_details(self, namespaces=[], filters=[], force_refresh=False):
         # get applications from rest api
@@ -593,8 +633,10 @@ class WorkloadsPageTest(AbstractListPageTest):
             {'name': WorkloadsPageFilter.WORKLOAD_NAME.text, 'value': name}])
 
     def load_details_page(self, name, namespace, force_refresh, load_only=False):
-        self._prepare_load_details_page(name, namespace)
-        return self.page.content.get_details(name, namespace, force_refresh, load_only)
+        if not self.is_in_details_page(name, BreadCrumbObjectType.WORKLOADS.text, namespace):
+            self._prepare_load_details_page(name, namespace)
+            self.open(name, namespace, force_refresh)
+        return self.page.content.get_details(load_only)
 
     def assert_random_details(self, namespaces=[], filters=[],
                               force_clear_all=True, force_refresh=False):
@@ -765,8 +807,10 @@ class ServicesPageTest(AbstractListPageTest):
             {'name': ServicesPageFilter.SERVICE_NAME.text, 'value': name}])
 
     def load_details_page(self, name, namespace, force_refresh, load_only=False):
-        self._prepare_load_details_page(name, namespace)
-        return self.page.content.get_details(name, namespace, force_refresh, load_only)
+        if not self.is_in_details_page(name, BreadCrumbObjectType.SERVICES.text, namespace):
+            self._prepare_load_details_page(name, namespace)
+            self.open(name, namespace, force_refresh)
+        return self.page.content.get_details(load_only)
 
     def assert_random_details(self, namespaces=[], filters=[], force_refresh=False):
         # get services from rest api
@@ -950,7 +994,7 @@ class ServicesPageTest(AbstractListPageTest):
         logger.debug('Routing Wizard {} for Service: {}, {}'.format(routing_type, name, namespace))
         # load service details page
         self._prepare_load_details_page(name, namespace)
-        self.page.content.open(name, namespace)
+        self.open(name, namespace)
         self.page.actions.delete_all_routing()
         if routing_type == RoutingWizardType.CREATE_WEIGHTED_ROUTING:
             assert self.page.actions.create_weighted_routing(
@@ -992,7 +1036,7 @@ class ServicesPageTest(AbstractListPageTest):
                                                                            namespace))
         # load service details page
         self._prepare_load_details_page(name, namespace)
-        self.page.content.open(name, namespace)
+        self.open(name, namespace)
         if routing_type == RoutingWizardType.UPDATE_WEIGHTED_ROUTING:
             assert self.page.actions.update_weighted_routing()
             assert not self.page.actions.is_delete_disabled()
@@ -1028,7 +1072,7 @@ class ServicesPageTest(AbstractListPageTest):
         logger.debug('Routing Delete for Service: {}, {}'.format(name, namespace))
         # load service details page
         self._prepare_load_details_page(name, namespace)
-        self.page.content.open(name, namespace)
+        self.open(name, namespace)
         assert self.page.actions.delete_all_routing()
         assert self.page.actions.is_delete_disabled()
         assert self.page.actions.is_create_weighted_enabled()
@@ -1063,13 +1107,14 @@ class IstioConfigPageTest(AbstractListPageTest):
             {'name': IstioConfigPageFilter.ISTIO_NAME.text, 'value': name}])
 
     def load_details_page(self, name, namespace, force_refresh, load_only=False):
-        self._prepare_load_details_page(name, namespace)
-        return self.page.content.get_details(name, namespace, force_refresh, load_only)
+        if not self.is_in_details_page(name, BreadCrumbObjectType.ISTIO_CONFIG.text, namespace):
+            self._prepare_load_details_page(name, namespace)
+            self.open(name, namespace, force_refresh)
+        return self.page.content.get_details(name, load_only)
 
     def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True):
         logger.debug('Filters:{}'.format(filters))
-        # load the page first
-        self.page.load(force_load=True)
+
         # apply namespaces
         self.apply_namespaces(namespaces, force_clear_all=force_clear_all)
 
@@ -1237,8 +1282,13 @@ class IstioConfigPageTest(AbstractListPageTest):
                     assert found, '{} {} not found in OC'.format(ui_key, config_ui)
 
     def delete_istio_config(self, name, namespace=None):
-        self.page.load(force_load=True)
-        self.page.content.delete(name, namespace)
+        self.load_details_page(name, namespace, force_refresh=False, load_only=True)
+        self.page.actions.select('Delete')
+        wait_displayed(self.page.content)
+        self.browser.click(self.browser.element(
+            parent=ListViewAbstract.DIALOG_ROOT,
+            locator=('.//button[text()="Delete"]')))
+        wait_displayed(self.page.content)
 
     def get_additional_filters(self, namespaces, current_filters):
         logger.debug('Current filters:{}'.format(current_filters))

@@ -76,4 +76,4 @@ def test_service_details_random(kiali_client, openshift_client, browser, pick_na
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     # use only bookinfo2 namespace where colliding tests are in the same p_group
     namespace = pick_namespace(BOOKINFO_2)
-    tests.assert_random_details(namespaces=[namespace], force_refresh=True)
+    tests.assert_random_details(namespaces=[namespace])
