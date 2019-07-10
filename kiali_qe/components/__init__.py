@@ -11,8 +11,7 @@ from kiali_qe.components.enums import (
     HealthType,
     IstioConfigValidation,
     MeshWideTLSType,
-    RoutingWizardTLS
-)
+    RoutingWizardTLS)
 from kiali_qe.entities.service import (
     Service,
     ServiceDetails,
@@ -497,6 +496,9 @@ class Actions(Widget):
     DIALOG_ROOT = '//*[@role="dialog"]'
     ACTIONS_DROPDOWN = '//div[contains(@class, "dropdown")]//button[@id="service_actions"]/..'
     TLS_DROPDOWN = '//div[contains(@class, "dropdown")]//button[@id="trafficPolicy-tls"]/..'
+    LOAD_BALANCER_TYPE_DROPDOWN = '//div[contains(@class, "dropdown")]'\
+        '//button[@id="trafficPolicy-lb"]/..'
+    INCLUDE_MESH_GATEWAY = '//label[contains(text(), "Include")]/input[@type="checkbox"]'
     SHOW_ADVANCED_OPTIONS = '//button[text()="Show Advanced Options"]'
     CREATE_BUTTON = './/button[text()="Create"]'
     UPDATE_BUTTON = './/button[text()="Update"]'
@@ -519,7 +521,9 @@ class Actions(Widget):
         self._actions = DropDown(parent=self, locator=self.locator + self.ACTIONS_DROPDOWN)
         self._tls = DropDown(parent=self, locator=self.TLS_DROPDOWN)
         self._loadbalancer_switch = ButtonSwitch(parent=self, label="Add LoadBalancer")
-        self._gateway_sitch = ButtonSwitch(parent=self, label="Add Gateway")
+        self._loadbalancer_type = DropDown(parent=self, locator=self.LOAD_BALANCER_TYPE_DROPDOWN)
+        self._gateway_switch = ButtonSwitch(parent=self, label="Add Gateway")
+        self._include_mesh_gateway = Checkbox(locator=self.INCLUDE_MESH_GATEWAY, parent=self)
 
     def __locator__(self):
         return self.locator
@@ -584,12 +588,18 @@ class Actions(Widget):
             return True
 
     def create_weighted_routing(self, tls=RoutingWizardTLS.DISABLE,
-                                load_balancer=False, gateway=False):
+                                load_balancer=False,
+                                load_balancer_type=None,
+                                gateway=False,
+                                include_mesh_gateway=False):
         if self.is_create_weighted_disabled():
             return False
         else:
             self._select(self.CREATE_WEIGHTED_ROUTING)
-            self.advanced_options(tls=tls, load_balancer=load_balancer, gateway=gateway)
+            self.advanced_options(tls=tls, load_balancer=load_balancer,
+                                  load_balancer_type=load_balancer_type,
+                                  gateway=gateway,
+                                  include_mesh_gateway=include_mesh_gateway)
             wait_displayed(self)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
@@ -600,10 +610,16 @@ class Actions(Widget):
             return True
 
     def update_weighted_routing(self, tls=RoutingWizardTLS.DISABLE,
-                                load_balancer=False, gateway=False):
+                                load_balancer=False,
+                                load_balancer_type=None,
+                                gateway=False,
+                                include_mesh_gateway=False):
         if self.is_update_weighted_enabled():
             self._select(self.UPDATE_WEIGHTED_ROUTING)
-            self.advanced_options(tls=tls, load_balancer=load_balancer, gateway=gateway)
+            self.advanced_options(tls=tls, load_balancer=load_balancer,
+                                  load_balancer_type=load_balancer_type,
+                                  gateway=gateway,
+                                  include_mesh_gateway=include_mesh_gateway)
             wait_displayed(self)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
@@ -616,12 +632,18 @@ class Actions(Widget):
             return False
 
     def create_matching_routing(self, tls=RoutingWizardTLS.DISABLE,
-                                load_balancer=False, gateway=False):
+                                load_balancer=False,
+                                load_balancer_type=None,
+                                gateway=False,
+                                include_mesh_gateway=False):
         if self.is_create_matching_disabled():
             return False
         else:
             self._select(self.CREATE_MATCHING_ROUTING)
-            self.advanced_options(tls=tls, load_balancer=load_balancer, gateway=gateway)
+            self.advanced_options(tls=tls, load_balancer=load_balancer,
+                                  load_balancer_type=load_balancer_type,
+                                  gateway=gateway,
+                                  include_mesh_gateway=include_mesh_gateway)
             wait_displayed(self)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
@@ -637,10 +659,16 @@ class Actions(Widget):
             return True
 
     def update_matching_routing(self, tls=RoutingWizardTLS.DISABLE,
-                                load_balancer=False, gateway=False):
+                                load_balancer=False,
+                                load_balancer_type=None,
+                                gateway=False,
+                                include_mesh_gateway=False):
         if self.is_update_matching_enabled():
             self._select(self.UPDATE_MATCHING_ROUTING)
-            self.advanced_options(tls=tls, load_balancer=load_balancer, gateway=gateway)
+            self.advanced_options(tls=tls, load_balancer=load_balancer,
+                                  load_balancer_type=load_balancer_type,
+                                  gateway=gateway,
+                                  include_mesh_gateway=include_mesh_gateway)
             wait_displayed(self)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
@@ -660,12 +688,18 @@ class Actions(Widget):
         else:
             return False
 
-    def suspend_traffic(self, tls=RoutingWizardTLS.DISABLE, load_balancer=False, gateway=False):
+    def suspend_traffic(self, tls=RoutingWizardTLS.DISABLE, load_balancer=False,
+                        load_balancer_type=None,
+                        gateway=False,
+                        include_mesh_gateway=False):
         if self.is_suspend_disabled():
             return False
         else:
             self._select(self.SUSPEND_TRAFFIC)
-            self.advanced_options(tls=tls, load_balancer=load_balancer, gateway=gateway)
+            self.advanced_options(tls=tls, load_balancer=load_balancer,
+                                  load_balancer_type=load_balancer_type,
+                                  gateway=gateway,
+                                  include_mesh_gateway=include_mesh_gateway)
             wait_displayed(self)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
@@ -676,10 +710,16 @@ class Actions(Widget):
             return True
 
     def update_suspended_traffic(self, tls=RoutingWizardTLS.DISABLE,
-                                 load_balancer=False, gateway=False):
+                                 load_balancer=False,
+                                 load_balancer_type=None,
+                                 gateway=False,
+                                 include_mesh_gateway=False):
         if self.is_update_suspended_enabled():
             self._select(self.UPDATE_SUSPENDED_TRAFFIC)
-            self.advanced_options(tls=tls, load_balancer=load_balancer, gateway=gateway)
+            self.advanced_options(tls=tls, load_balancer=load_balancer,
+                                  load_balancer_type=load_balancer_type,
+                                  gateway=gateway,
+                                  include_mesh_gateway=include_mesh_gateway)
             wait_displayed(self)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
@@ -691,21 +731,28 @@ class Actions(Widget):
         else:
             return False
 
-    def advanced_options(self, tls=RoutingWizardTLS.DISABLE, load_balancer=False, gateway=False):
+    def advanced_options(self, tls=RoutingWizardTLS.DISABLE, load_balancer=False,
+                         load_balancer_type=None,
+                         gateway=False,
+                         include_mesh_gateway=False):
         """
         Adds Advanced Options to Wizard.
-        @TODO more flexible load balancer and gateway creation
         """
         self.browser.click(Button(parent=self.parent, locator=self.SHOW_ADVANCED_OPTIONS))
-        self._tls.select(tls.text)
-        if load_balancer:
+        wait_displayed(self._tls)
+        if tls:
+            self._tls.select(tls.text)
+        if load_balancer and load_balancer_type:
             self._loadbalancer_switch.on()
+            if load_balancer_type:
+                self._loadbalancer_type.select(load_balancer_type.text)
         else:
             self._loadbalancer_switch.off()
         if gateway:
-            self._gateway_sitch.on()
+            self._gateway_switch.on()
+            self._include_mesh_gateway.fill(include_mesh_gateway)
         else:
-            self._gateway_sitch.off()
+            self._gateway_switch.off()
 
 
 class CheckBoxFilter(Widget):

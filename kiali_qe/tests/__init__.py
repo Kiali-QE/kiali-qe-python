@@ -26,7 +26,7 @@ from kiali_qe.components.enums import (
     RoutingWizardTLS,
     RoutingWizardLoadBalancer
 )
-from kiali_qe.utils import is_equal, is_sublist
+from kiali_qe.utils import is_equal, is_sublist, word_in_text
 from kiali_qe.utils.log import logger
 
 from kiali_qe.pages import (
@@ -946,7 +946,10 @@ class ServicesPageTest(AbstractListPageTest):
             ]
         return []
 
-    def test_routing_create(self, name, namespace, routing_type):
+    def test_routing_create(self, name, namespace, routing_type,
+                            tls=RoutingWizardTLS.ISTIO_MUTUAL, load_balancer=True,
+                            load_balancer_type=RoutingWizardLoadBalancer.ROUND_ROBIN,
+                            gateway=True, include_mesh_gateway=True):
         logger.debug('Routing Wizard {} for Service: {}, {}'.format(routing_type, name, namespace))
         # load service details page
         self._prepare_load_details_page(name, namespace)
@@ -954,21 +957,27 @@ class ServicesPageTest(AbstractListPageTest):
         self.page.actions.delete_all_routing()
         if routing_type == RoutingWizardType.CREATE_WEIGHTED_ROUTING:
             assert self.page.actions.create_weighted_routing(
-                tls=RoutingWizardTLS.ISTIO_MUTUAL, load_balancer=True, gateway=True)
+                tls=tls, load_balancer=load_balancer,
+                load_balancer_type=load_balancer_type, gateway=gateway,
+                include_mesh_gateway=include_mesh_gateway)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_weighted_enabled()
             assert self.page.actions.is_create_matching_disabled()
             assert self.page.actions.is_suspend_disabled()
         elif routing_type == RoutingWizardType.CREATE_MATCHING_ROUTING:
             assert self.page.actions.create_matching_routing(
-                tls=RoutingWizardTLS.ISTIO_MUTUAL, load_balancer=True, gateway=True)
+                tls=tls, load_balancer=load_balancer,
+                load_balancer_type=load_balancer_type, gateway=gateway,
+                include_mesh_gateway=include_mesh_gateway)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_matching_enabled()
             assert self.page.actions.is_create_weighted_disabled()
             assert self.page.actions.is_suspend_disabled()
         elif routing_type == RoutingWizardType.SUSPEND_TRAFFIC:
             assert self.page.actions.suspend_traffic(
-                tls=RoutingWizardTLS.ISTIO_MUTUAL, load_balancer=True, gateway=True)
+                tls=tls, load_balancer=load_balancer,
+                load_balancer_type=load_balancer_type, gateway=gateway,
+                include_mesh_gateway=include_mesh_gateway)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_create_matching_disabled()
             assert self.page.actions.is_create_weighted_disabled()
@@ -981,12 +990,30 @@ class ServicesPageTest(AbstractListPageTest):
         assert len(service_details_rest.destination_rules) == 1, 'Service should have 1 DR'
         assert service_details_rest.virtual_services[0].name == name
         assert service_details_rest.destination_rules[0].name == name
-        assert RoutingWizardLoadBalancer.ROUND_ROBIN.text.lower() \
-            in service_details_rest.destination_rules[0].traffic_policy
-        assert RoutingWizardTLS.ISTIO_MUTUAL.text.lower() \
-            in service_details_rest.destination_rules[0].traffic_policy
 
-    def test_routing_update(self, name, namespace, routing_type):
+        if load_balancer_type:
+            assert word_in_text(load_balancer_type.text.lower(),
+                                service_details_rest.destination_rules[0].traffic_policy,
+                                load_balancer)
+
+        if tls:
+            assert word_in_text(tls.text.lower(),
+                                service_details_rest.destination_rules[0].traffic_policy,
+                                tls)
+        # get virtual service details from rest
+        istio_config_details_rest = self.kiali_client.istio_config_details(
+            namespace=namespace,
+            object_type=OBJECT_TYPE.VIRTUAL_SERVICE.text,
+            object_name=service_details_rest.virtual_services[0].name)
+
+        assert word_in_text('\"mesh\"',
+                            istio_config_details_rest.text,
+                            gateway and include_mesh_gateway)
+
+    def test_routing_update(self, name, namespace, routing_type,
+                            tls=RoutingWizardTLS.ISTIO_MUTUAL, load_balancer=True,
+                            load_balancer_type=RoutingWizardLoadBalancer.ROUND_ROBIN,
+                            gateway=True, include_mesh_gateway=True):
         logger.debug('Routing Update Wizard {} for Service: {}, {}'.format(routing_type,
                                                                            name,
                                                                            namespace))
@@ -994,19 +1021,28 @@ class ServicesPageTest(AbstractListPageTest):
         self._prepare_load_details_page(name, namespace)
         self.page.content.open(name, namespace)
         if routing_type == RoutingWizardType.UPDATE_WEIGHTED_ROUTING:
-            assert self.page.actions.update_weighted_routing()
+            assert self.page.actions.update_weighted_routing(
+                tls=tls, load_balancer=load_balancer,
+                load_balancer_type=load_balancer_type, gateway=gateway,
+                include_mesh_gateway=include_mesh_gateway)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_weighted_enabled()
             assert self.page.actions.is_create_matching_disabled()
             assert self.page.actions.is_suspend_disabled()
         elif routing_type == RoutingWizardType.UPDATE_MATCHING_ROUTING:
-            assert self.page.actions.update_matching_routing()
+            assert self.page.actions.update_matching_routing(
+                tls=tls, load_balancer=load_balancer,
+                load_balancer_type=load_balancer_type, gateway=gateway,
+                include_mesh_gateway=include_mesh_gateway)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_matching_enabled()
             assert self.page.actions.is_create_weighted_disabled()
             assert self.page.actions.is_suspend_disabled()
         elif routing_type == RoutingWizardType.UPDATE_SUSPENDED_TRAFFIC:
-            assert self.page.actions.update_suspended_traffic()
+            assert self.page.actions.update_suspended_traffic(
+                tls=tls, load_balancer=load_balancer,
+                load_balancer_type=load_balancer_type, gateway=gateway,
+                include_mesh_gateway=include_mesh_gateway)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_create_matching_disabled()
             assert self.page.actions.is_create_weighted_disabled()
@@ -1019,10 +1055,25 @@ class ServicesPageTest(AbstractListPageTest):
         assert len(service_details_rest.destination_rules) == 1, 'Service should have 1 DR'
         assert service_details_rest.virtual_services[0].name == name
         assert service_details_rest.destination_rules[0].name == name
-        assert RoutingWizardLoadBalancer.ROUND_ROBIN.text.lower() \
-            not in service_details_rest.destination_rules[0].traffic_policy
-        assert RoutingWizardTLS.ISTIO_MUTUAL.text.lower() \
-            not in service_details_rest.destination_rules[0].traffic_policy
+
+        if load_balancer_type:
+            assert word_in_text(load_balancer_type.text.lower(),
+                                service_details_rest.destination_rules[0].traffic_policy,
+                                load_balancer)
+
+        if tls:
+            assert word_in_text(tls.text.lower(),
+                                service_details_rest.destination_rules[0].traffic_policy,
+                                tls)
+        # get virtual service details from rest
+        istio_config_details_rest = self.kiali_client.istio_config_details(
+            namespace=namespace,
+            object_type=OBJECT_TYPE.VIRTUAL_SERVICE.text,
+            object_name=service_details_rest.virtual_services[0].name)
+
+        assert word_in_text('\"mesh\"',
+                            istio_config_details_rest.text,
+                            gateway and include_mesh_gateway)
 
     def test_routing_delete(self, name, namespace):
         logger.debug('Routing Delete for Service: {}, {}'.format(name, namespace))
