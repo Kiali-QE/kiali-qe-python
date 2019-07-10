@@ -98,3 +98,10 @@ def get_texts_of_elements(elements):
     for _element in elements:
         texts.append(_element.text.strip())
     return texts
+
+
+def word_in_text(word, text, contains=True):
+    if contains:
+        return word in text
+    else:
+        return word not in text
