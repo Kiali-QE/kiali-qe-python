@@ -120,8 +120,9 @@ class WorkloadDetails(EntityBase):
             return False
         if self.created_at != other.created_at:
             return False
-        if self.resource_version != other.resource_version:
-            return False
+        # Skip because of OCP4.1 random pod crashes.
+        # if self.resource_version != other.resource_version:
+        #    return False
         if self.labels != other.labels:
             return False
         # advanced check
