@@ -312,7 +312,12 @@ class OpenshiftExtendedClient(object):
 
     def _contains_sidecar(self, item):
         try:
-            return item.spec.template.metadata.annotations['sidecar.istio.io/status'] is not None
+            return (item.spec.template.metadata.annotations['sidecar.istio.io/inject']
+                    is not None and
+                    item.spec.template.metadata.annotations['sidecar.istio.io/inject']
+                        .lower() == 'true') or\
+                item.spec.template.metadata.annotations['sidecar.istio.io/status']\
+                is not None
         except (KeyError, AttributeError, TypeError):
             return False
 
