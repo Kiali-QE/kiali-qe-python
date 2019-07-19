@@ -14,6 +14,8 @@ def kiali_client():
     _client = KialiExtendedClient(hostname=cfg.kiali.hostname,
                                   username=cfg.kiali.username,
                                   password=cfg.kiali.password,
+                                  auth_type=cfg.kiali.auth_type,
+                                  token=cfg.kiali.token,
                                   swagger_address=cfg.kiali.swagger_address)
     # update kiali version details
     _response = _client.get_response('getStatus')
