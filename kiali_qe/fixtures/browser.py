@@ -18,8 +18,13 @@ def browser(kiali_client):
     selenium = _get_selenium()
     selenium.maximize_window()
     logger.debug('Launching kiali instance: {}'.format(cfg.kiali.hostname))
-    selenium.get(
-        'https://{}'.format(cfg.kiali.hostname))
+    if cfg.kiali.auth_type == 'oauth':
+        selenium.get(
+            'https://{}/#access_token={}&expires_in=86400&scope=user%3Afull&token_type=Bearer'
+                .format(cfg.kiali.hostname, cfg.kiali.token))
+    else:
+        selenium.get(
+            'https://{}'.format(cfg.kiali.hostname))
     # load KialiBrowser
     kiali_browser = KialiBrowser(
         selenium, logger=logger,

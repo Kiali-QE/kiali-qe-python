@@ -8,6 +8,8 @@ _env_override_list = {
         'kiali.hostname': 'KIALI_HOSTNAME',
         'kiali.username': 'KIALI_USERNAME',
         'kiali.password': 'KIALI_PASSWORD',
+        'kiali.auth_type': 'KIALI_AUTH_TYPE',
+        'kiali.token': 'KIALI_TOKEN',
         'selenium.web_driver': 'SELENIUM_WEB_DRIVER',
         'selenium.capabilities.platform': 'SELENIUM_PLATFORM',
         'selenium.capabilities.browser': 'SELENIUM_BROWESR',
