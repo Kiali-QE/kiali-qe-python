@@ -2,10 +2,12 @@ import pytest
 from kiali_qe.components import Notification
 from kiali_qe.pages import RootPage
 from kiali_qe.utils.log import logger
+from kiali_qe.utils.conf import env as cfg
 
 
 @pytest.mark.p_atomic
 @pytest.mark.p_group8
+@pytest.mark.skipif(cfg.kiali.auth_type == "oauth", reason="does not run on oauth")
 def test_login(browser):
     # load root page
     page = RootPage(browser, auto_login=False)
@@ -21,6 +23,7 @@ def test_login(browser):
 
 @pytest.mark.p_atomic
 @pytest.mark.p_group8
+@pytest.mark.skipif(cfg.kiali.auth_type == "oauth", reason="does not run on oauth")
 def test_invalid_login(browser):
     # load root page
     page = RootPage(browser, auto_login=False)
