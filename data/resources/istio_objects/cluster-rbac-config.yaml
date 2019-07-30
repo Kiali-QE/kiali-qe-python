@@ -1,7 +1,7 @@
 apiVersion: "rbac.istio.io/v1alpha1"
 kind: ClusterRbacConfig
 metadata:
-  name: test-cluster-rbac-config
+  name: default
 spec:
   mode: 'ON_WITH_INCLUSION'
   inclusion:
