@@ -17,6 +17,7 @@ class MainMenuEnum(StringEnum):
 
 
 class HelpMenuEnum(StringEnum):
+    DOCUMENTATION = ('Documentation')
     VIEW_DEBUG_INFO = ('View Debug Info')
     ABOUT = ('About')
 
