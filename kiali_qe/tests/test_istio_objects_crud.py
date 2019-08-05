@@ -1,5 +1,6 @@
 
 import pytest
+from openshift.dynamic.exceptions import InternalServerError
 from kiali_qe.tests import IstioConfigPageTest, ServicesPageTest
 
 from kiali_qe.utils import get_yaml, get_dict
@@ -127,12 +128,12 @@ def test_virtual_service_broken(kiali_client, openshift_client, browser):
                        virtual_service_broken_dict,
                        virtual_service_broken,
                        [
-                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
-                         'value': IstioConfigObjectType.VIRTUAL_SERVICE.text},
-                        {'name': IstioConfigPageFilter.CONFIG.text,
-                         'value': IstioConfigValidationType.NOT_VALID.text},
-                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': virtual_service_broken_dict.metadata.name}
+                           {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
+                            'value': IstioConfigObjectType.VIRTUAL_SERVICE.text},
+                           {'name': IstioConfigPageFilter.CONFIG.text,
+                            'value': IstioConfigValidationType.NOT_VALID.text},
+                           {'name': IstioConfigPageFilter.ISTIO_NAME.text,
+                            'value': virtual_service_broken_dict.metadata.name}
                         ],
                        namespace=BOOKINFO_1,
                        kind='VirtualService',
@@ -153,26 +154,29 @@ def test_virtual_service_broken_weight(kiali_client, openshift_client, browser):
                                       VIRTUAL_SERVICE_BROKEN_WEIGHT)
     virtual_service_broken_dict = get_dict(istio_objects_path.strpath,
                                            VIRTUAL_SERVICE_BROKEN_WEIGHT)
-    _create_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
+    try:
+        _create_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
-    _istio_config_test(kiali_client, openshift_client, browser,
-                       virtual_service_broken_dict,
-                       virtual_service_broken,
-                       [
-                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
-                         'value': IstioConfigObjectType.VIRTUAL_SERVICE.text},
-                        {'name': IstioConfigPageFilter.CONFIG.text,
-                         'value': IstioConfigValidationType.NOT_VALID.text},
-                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': virtual_service_broken_dict.metadata.name}
-                        ],
-                       namespace=BOOKINFO_1,
-                       kind='VirtualService',
-                       api_version='networking.istio.io/v1alpha3',
-                       service_name=REVIEWS,
-                       error_messages=['Weight sum should be 100'],
-                       check_service_details=False)
-    _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
+        _istio_config_test(kiali_client, openshift_client, browser,
+                           virtual_service_broken_dict,
+                           virtual_service_broken,
+                           [
+                            {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
+                             'value': IstioConfigObjectType.VIRTUAL_SERVICE.text},
+                            {'name': IstioConfigPageFilter.CONFIG.text,
+                             'value': IstioConfigValidationType.NOT_VALID.text},
+                            {'name': IstioConfigPageFilter.ISTIO_NAME.text,
+                             'value': virtual_service_broken_dict.metadata.name}
+                            ],
+                           namespace=BOOKINFO_1,
+                           kind='VirtualService',
+                           api_version='networking.istio.io/v1alpha3',
+                           service_name=REVIEWS,
+                           error_messages=['Weight sum should be 100'],
+                           check_service_details=False)
+        _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
+    except InternalServerError:
+        pass
 
 
 @pytest.mark.p_crud_resource
@@ -182,27 +186,30 @@ def test_virtual_service_broken_weight_text(kiali_client, openshift_client, brow
                                       VIRTUAL_SERVICE_BROKEN_WEIGHT_TEXT)
     virtual_service_broken_dict = get_dict(istio_objects_path.strpath,
                                            VIRTUAL_SERVICE_BROKEN_WEIGHT_TEXT)
-    _create_dest_rule_vs(openshift_client, DEST_RULE_VS_RATINGS)
+    try:
+        _create_dest_rule_vs(openshift_client, DEST_RULE_VS_RATINGS)
 
-    _istio_config_test(kiali_client, openshift_client, browser,
-                       virtual_service_broken_dict,
-                       virtual_service_broken,
-                       [
-                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
-                         'value': IstioConfigObjectType.VIRTUAL_SERVICE.text},
-                        {'name': IstioConfigPageFilter.CONFIG.text,
-                         'value': IstioConfigValidationType.NOT_VALID.text},
-                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': virtual_service_broken_dict.metadata.name}
-                        ],
-                       namespace=BOOKINFO_1,
-                       kind='VirtualService',
-                       api_version='networking.istio.io/v1alpha3',
-                       service_name=RATINGS,
-                       error_messages=['Weight must be a number',
-                                       'Weight sum should be 100'],
-                       check_service_details=False)
-    _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_RATINGS)
+        _istio_config_test(kiali_client, openshift_client, browser,
+                           virtual_service_broken_dict,
+                           virtual_service_broken,
+                           [
+                            {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
+                             'value': IstioConfigObjectType.VIRTUAL_SERVICE.text},
+                            {'name': IstioConfigPageFilter.CONFIG.text,
+                             'value': IstioConfigValidationType.NOT_VALID.text},
+                            {'name': IstioConfigPageFilter.ISTIO_NAME.text,
+                             'value': virtual_service_broken_dict.metadata.name}
+                            ],
+                           namespace=BOOKINFO_1,
+                           kind='VirtualService',
+                           api_version='networking.istio.io/v1alpha3',
+                           service_name=RATINGS,
+                           error_messages=['Weight must be a number',
+                                           'Weight sum should be 100'],
+                           check_service_details=False)
+        _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_RATINGS)
+    except InternalServerError:
+        pass
 
 
 @pytest.mark.p_crud_resource
