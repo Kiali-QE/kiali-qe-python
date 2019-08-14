@@ -360,7 +360,7 @@ def test_service_role(kiali_client, openshift_client, browser):
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
                          'value': _dict.metadata.name}
                         ],
-                       namespace='default',
+                       namespace='istio-system',
                        kind='ServiceRole',
                        api_version='rbac.istio.io/v1alpha1',
                        service_name=DETAILS,
@@ -382,7 +382,7 @@ def test_service_role_broken(kiali_client, openshift_client, browser):
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
                          'value': _dict.metadata.name}
                         ],
-                       namespace='default',
+                       namespace='istio-system',
                        kind='ServiceRole',
                        api_version='rbac.istio.io/v1alpha1',
                        service_name=DETAILS,
@@ -397,7 +397,7 @@ def test_service_role_binding(kiali_client, openshift_client, browser):
     _role_yaml = get_yaml(istio_objects_path.strpath, SERVICE_ROLE)
     _role_dict = get_dict(istio_objects_path.strpath, SERVICE_ROLE)
     _istio_config_create(openshift_client, _role_dict, _role_yaml,
-                         namespace='default',
+                         namespace='istio-system',
                          kind='ServiceRole',
                          api_version='rbac.istio.io/v1alpha1')
 
@@ -413,14 +413,14 @@ def test_service_role_binding(kiali_client, openshift_client, browser):
                             {'name': IstioConfigPageFilter.ISTIO_NAME.text,
                              'value': _dict.metadata.name}
                             ],
-                           namespace='default',
+                           namespace='istio-system',
                            kind='ServiceRoleBinding',
                            api_version='rbac.istio.io/v1alpha1',
                            service_name=DETAILS,
                            check_service_details=False)
     finally:
         _istio_config_delete(openshift_client, _role_dict,
-                             namespace='default',
+                             namespace='istio-system',
                              kind='ServiceRole',
                              api_version='rbac.istio.io/v1alpha1')
 
@@ -431,7 +431,7 @@ def test_service_role_binding_broken(kiali_client, openshift_client, browser):
     _role_yaml = get_yaml(istio_objects_path.strpath, SERVICE_ROLE)
     _role_dict = get_dict(istio_objects_path.strpath, SERVICE_ROLE)
     _istio_config_create(openshift_client, _role_dict, _role_yaml,
-                         namespace='default',
+                         namespace='istio-system',
                          kind='ServiceRole',
                          api_version='rbac.istio.io/v1alpha1')
 
@@ -447,7 +447,7 @@ def test_service_role_binding_broken(kiali_client, openshift_client, browser):
                             {'name': IstioConfigPageFilter.ISTIO_NAME.text,
                              'value': _dict.metadata.name}
                             ],
-                           namespace='default',
+                           namespace='istio-system',
                            kind='ServiceRoleBinding',
                            api_version='rbac.istio.io/v1alpha1',
                            service_name=DETAILS,
@@ -455,7 +455,7 @@ def test_service_role_binding_broken(kiali_client, openshift_client, browser):
                            check_service_details=False)
     finally:
         _istio_config_delete(openshift_client, _role_dict,
-                             namespace='default',
+                             namespace='istio-system',
                              kind='ServiceRole',
                              api_version='rbac.istio.io/v1alpha1')
 

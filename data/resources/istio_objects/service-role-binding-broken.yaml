@@ -2,7 +2,7 @@ apiVersion: "rbac.istio.io/v1alpha1"
 kind: ServiceRoleBinding
 metadata:
   name: test-binding-products-broken
-  namespace: default
+  namespace: istio-system
 spec:
   subjects:
   - user: "service-account-a"
@@ -12,3 +12,4 @@ spec:
   roleRef:
     kind: ServiceRole
     name: "products-viewer-wrong"
+
