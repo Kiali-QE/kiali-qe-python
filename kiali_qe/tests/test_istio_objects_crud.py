@@ -32,7 +32,7 @@ QUOTA_SPEC = 'quota-spec.yaml'
 QUOTA_SPEC_BINDING = 'quota-spec-binding.yaml'
 GATEWAY = 'gateway.yaml'
 SERVICE_ENTRY = 'service-entry.yaml'
-CLUSTER_RBAC_CONFIG = 'cluster-rbac-config.yaml'
+SERVICE_MESH_RBAC_CONFIG = 'service-mesh-rbac-config.yaml'
 RBAC_CONFIG = 'rbac-config.yaml'
 SERVICE_ROLE = 'service-role.yaml'
 SERVICE_ROLE_BROKEN = 'service-role-broken.yaml'
@@ -296,22 +296,22 @@ def test_service_entry(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_crud_resource
 @pytest.mark.p_group6
-def test_cluster_rbac_config(kiali_client, openshift_client, browser):
-    yaml = get_yaml(istio_objects_path.strpath, CLUSTER_RBAC_CONFIG)
-    _dict = get_dict(istio_objects_path.strpath, CLUSTER_RBAC_CONFIG)
+def test_service_mesh_rbac_config(kiali_client, openshift_client, browser):
+    yaml = get_yaml(istio_objects_path.strpath, SERVICE_MESH_RBAC_CONFIG)
+    _dict = get_dict(istio_objects_path.strpath, SERVICE_MESH_RBAC_CONFIG)
 
     _istio_config_test(kiali_client, openshift_client, browser,
                        _dict,
                        yaml,
                        [
                         {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
-                         'value': IstioConfigObjectType.CLUSTER_RBAC_CONFIG.text},
+                         'value': IstioConfigObjectType.SERVICE_MESH_RBAC_CONFIG.text},
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
                          'value': _dict.metadata.name}
                         ],
                        namespace='istio-system',
-                       kind='ClusterRbacConfig',
-                       api_version='rbac.istio.io/v1alpha1',
+                       kind='ServiceMeshRbacConfig',
+                       api_version='rbac.maistra.io/v1',
                        service_name=DETAILS,
                        check_service_details=False)
 

@@ -1,8 +1,9 @@
-# Valid, classic: MeshPolicy explicitly ask for mTLS connections
-apiVersion: "authentication.istio.io/v1alpha1"
-kind: "MeshPolicy"
+# Valid, classic: ServiceMeshPolicy explicitly ask for mTLS connections
+apiVersion: "authentication.maistra.io/v1"
+kind: "ServiceMeshPolicy"
 metadata:
   name: "default"
+  namespace: "istio-system"
 spec:
   peers:
   - mtls: {}
@@ -11,7 +12,7 @@ apiVersion: "networking.istio.io/v1alpha3"
 kind: "DestinationRule"
 metadata:
   name: "default"
-  namespace: "default"
+  namespace: "istio-system"
 spec:
   host: "*.local"
   trafficPolicy:
