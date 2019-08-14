@@ -38,7 +38,7 @@ class ApplicationVersionEnum(StringEnum):
 class MaistraEnum(StringEnum):
     KIALI_UI = ("Kiali-ui")
     KIALI_CORE = ("Kiali")
-    MAISTRA = ("Maistra")
+    MAISTRA = ("OpenShift Service Mesh")
     PROMETHEUS = ("Prometheus")
     KUBERNETES = ("Kubernetes")
     JAEGER = ("JaegerURL")
