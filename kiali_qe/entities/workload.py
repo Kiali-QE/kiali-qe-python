@@ -42,8 +42,8 @@ class Workload(EntityBase):
             return False
         if self.workload_type != other.workload_type:
             return False
-        if self.istio_sidecar != other.istio_sidecar:
-            return False
+        # if self.istio_sidecar != other.istio_sidecar:
+        #    return False
         # advanced check
         if advanced_check:
             if self.health != other.health:
@@ -126,8 +126,8 @@ class WorkloadDetails(EntityBase):
             return False
         # advanced check
         if advanced_check:
-            if self.istio_sidecar != other.istio_sidecar:
-                return False
+            # if self.istio_sidecar != other.istio_sidecar:
+            #    return False
             if self.health != other.health:
                 return False
         return True

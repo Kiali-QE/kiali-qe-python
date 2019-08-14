@@ -88,7 +88,7 @@ class DeploymentStatus(EntityBase):
             type(self).__name__, repr(self.name), repr(self.replicas), repr(self.available))
 
     def is_healthy(self):
-        if self.replicas + self.replicas == 0:
+        if self.available + self.replicas == 0:
             return HealthType.NA
         elif self.available == self.replicas:
             return HealthType.HEALTHY

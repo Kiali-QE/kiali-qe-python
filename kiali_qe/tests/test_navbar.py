@@ -1,6 +1,6 @@
 import pytest
 
-from kiali_qe.components.enums import ApplicationVersionEnum, MaistraEnum, HelpMenuEnum
+from kiali_qe.components.enums import ApplicationVersionEnum, HelpMenuEnum
 from kiali_qe.pages import RootPage
 from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
@@ -19,10 +19,7 @@ def test_about(browser, kiali_client):
     _response = kiali_client.get_response('getStatus')
     _products = _response['externalServices']
 
-    if (any(d['name'] == MaistraEnum.MAISTRA.text for d in _products)):
-        versions_defined = [item.text for item in MaistraEnum]
-    else:
-        versions_defined = [item.text for item in ApplicationVersionEnum]
+    versions_defined = [item.text for item in ApplicationVersionEnum]
 
     logger.debug('Versions information in UI:{}'.format(versions_ui))
     logger.debug('Application version keys: defined:{}, available:{}'.format(
@@ -45,15 +42,9 @@ def test_about(browser, kiali_client):
 
     # test other product versions
 
-    # If Maistra Project version exists, then Check Maistra version or check istio version
-
-    if (any(d['name'] == MaistraEnum.MAISTRA.text for d in _products)):
-        assert versions_ui[MaistraEnum.MAISTRA.text] == _get_version(_products,
-                                                                     MaistraEnum.MAISTRA.text)
-    else:
-        assert versions_ui[ApplicationVersionEnum.ISTIO.text] == _get_version(
-            _products,
-            ApplicationVersionEnum.ISTIO.text)
+    assert versions_ui[ApplicationVersionEnum.ISTIO.text] == _get_version(
+        _products,
+        ApplicationVersionEnum.ISTIO.text)
     # check Prometheus version
     assert versions_ui[ApplicationVersionEnum.PROMETHEUS.text] == _get_version(
         _products, 'Prometheus')

@@ -5,6 +5,8 @@ metadata:
 spec:
   hosts:
   - reviews
+  gateways:
+  - bookinfo-gateway-auto-bad
   http:
   - route:
     - destination:

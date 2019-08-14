@@ -65,7 +65,7 @@ def test_scenario2(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_group_last
 def test_scenario3(kiali_client, openshift_client, browser):
-    """ MeshPolicy explicitly ask for mTLS connections
+    """ ServiceMeshPolicy explicitly ask for mTLS connections
     """
 
     _test_istio_objects(kiali_client, openshift_client, browser, SCENARIO_3, namespace=None,
@@ -74,9 +74,10 @@ def test_scenario3(kiali_client, openshift_client, browser):
                                 'DestinationRule', 'disable-mtls',
                                 namespace=BOOKINFO,
                                 error_messages=[
-                                    'MeshPolicy enabling mTLS found, permissive policy is needed']),
+                                    'ServiceMeshPolicy enabling mTLS found, '
+                                    'permissive policy is needed']),
                             ConfigValidationObject(
-                                'MeshPolicy', 'default',
+                                'ServiceMeshPolicy', 'default',
                                 namespace='istio-system', error_messages=[]),
                             ConfigValidationObject(
                                 'DestinationRule', 'default',
@@ -98,7 +99,7 @@ def test_scenario3(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_group_last
 def test_scenario4(kiali_client, openshift_client, browser):
-    """ MeshPolicy allows non-mTLS connections in the service mesh
+    """ ServiceMeshPolicy allows non-mTLS connections in the service mesh
     """
 
     _test_istio_objects(kiali_client, openshift_client, browser, SCENARIO_4, namespace=None,
@@ -107,7 +108,7 @@ def test_scenario4(kiali_client, openshift_client, browser):
                                 'DestinationRule', 'disable-mtls',
                                 namespace=BOOKINFO, error_messages=[]),
                             ConfigValidationObject(
-                                'MeshPolicy', 'default',
+                                'ServiceMeshPolicy', 'default',
                                 namespace='istio-system', error_messages=[]),
                             ConfigValidationObject(
                                 'DestinationRule', 'default',
@@ -206,7 +207,7 @@ def test_scenario8(kiali_client, openshift_client, browser):
                         config_validation_objects=[
                             ConfigValidationObject(
                                 'DestinationRule', 'enable-mtls',
-                                error_messages=['MeshPolicy enabling mTLS is missing']),
+                                error_messages=['ServiceMeshPolicy enabling mTLS is missing']),
                             ConfigValidationObject(
                                 'Policy', 'default', error_messages=[])
                         ],
@@ -262,7 +263,7 @@ def test_scenario11(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_group_last
 def test_scenario12(kiali_client, openshift_client, browser):
-    """ STRICT mode allow only mTLS connections to services
+    """ PERMISSIVE mode allow mTLS connections to services to the whole mesh
     """
 
     _test_istio_objects(kiali_client, openshift_client, browser,
@@ -272,7 +273,7 @@ def test_scenario12(kiali_client, openshift_client, browser):
                                 'DestinationRule', 'enable-mtls',
                                 namespace=BOOKINFO, error_messages=[]),
                             ConfigValidationObject(
-                                'MeshPolicy', 'default',
+                                'ServiceMeshPolicy', 'default',
                                 namespace='istio-system', error_messages=[])
                         ])
 
@@ -288,7 +289,7 @@ def test_scenario13(kiali_client, openshift_client, browser):
                                 'DestinationRule', 'enable-mtls',
                                 namespace=BOOKINFO, error_messages=[]),
                             ConfigValidationObject(
-                                'MeshPolicy', 'default',
+                                'ServiceMeshPolicy', 'default',
                                 namespace='istio-system',
                                 error_messages=[
                                     'Mesh-wide Destination Rule enabling mTLS is missing'])
@@ -313,7 +314,7 @@ def test_scenario14(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_group_last
 def test_scenario15(kiali_client, openshift_client, browser):
-    """ MeshPolicy in STRICT mode + DestinationRule enabling mTLS mesh-wide (classic scenario)
+    """ ServiceMeshPolicy in STRICT mode + DestinationRule enabling mTLS mesh-wide (classic scenario)
         Policy ns-level in PERMISSIVE mode + DR disabling mTLS ns-wide.
 
     """
@@ -333,7 +334,7 @@ def test_scenario15(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_group_last
 def test_scenario16(kiali_client, openshift_client, browser):
-    """ MeshPolicy OK
+    """ ServiceMeshPolicy OK
     """
 
     _test_istio_objects(kiali_client, openshift_client, browser, SCENARIO_16, namespace=None,

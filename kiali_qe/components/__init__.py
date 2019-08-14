@@ -18,7 +18,8 @@ from kiali_qe.entities.service import (
     VirtualService,
     DestinationRule,
     SourceWorkload,
-    VirtualServiceWeight
+    VirtualServiceWeight,
+    VirtualServiceGateway
 )
 from kiali_qe.entities.istio_config import IstioConfig, Rule, IstioConfigDetails
 from kiali_qe.entities.workload import (
@@ -30,6 +31,7 @@ from kiali_qe.entities.workload import (
 from kiali_qe.entities.applications import Application, ApplicationDetails, AppWorkload
 from kiali_qe.entities.overview import Overview
 from kiali_qe.utils.date import parse_from_ui
+from time import sleep
 from wait_for import wait_for
 from kiali_qe.utils import (
     get_validation,
@@ -85,8 +87,9 @@ class Button(Widget):
 
 
 class ButtonSwitch(Button):
-    DEFAULT = '//label[contains(@class, "") and normalize-space(text())="{}"]' + \
-        '/..//*[contains(@class, "bootstrap-switch")]'
+    DEFAULT = '//span[contains(@class, "pf-c-form__label-text")' + \
+        ' and normalize-space(text())="{}"]' + \
+        '/../..//*[contains(@class, "pf-c-switch__input")]'
     TEXT = '/../..//*[contains(@class, "control-label")]'
 
     def __init__(self, parent, label=None, locator=None, logger=None):
@@ -96,7 +99,7 @@ class ButtonSwitch(Button):
 
     @property
     def is_on(self):
-        return 'bootstrap-switch-on' in self.browser.get_attribute('class', self)
+        return Checkbox(locator='../input', parent=self).selected
 
     def on(self):
         if not self.is_on:
@@ -104,9 +107,7 @@ class ButtonSwitch(Button):
 
     def off(self):
         if self.is_on:
-            self.browser.click(self.browser.element(
-                parent=self,
-                locator='.//span[contains(@class, "bootstrap-switch-handle-on")]'))
+            self.click()
 
     @property
     def text(self):
@@ -212,16 +213,16 @@ class Notification(Widget):
 
 
 class DropDown(Widget):
-    ROOT = '//*[contains(@class, "input-group")]/div[contains(@class, "dropdown")]/../..'
-    SELECT_BUTTON = './/*[contains(@class, "dropdown-toggle")]'
-    OPTIONS_LIST = ('.//*[contains(@class, "dropdown-menu")]'
-                    '//*[not(contains(@class, "disabled"))]//*[contains(@role, "menuitem")]')
-    DISABLED_OPTIONS_LIST = ('.//*[contains(@class, "dropdown-menu")]'
-                             '//*[contains(@class, "disabled")]//*[contains(@role, "menuitem")]')
-    OPTION = ('.//*[contains(@class, "dropdown-menu")]'
-              '//*[contains(@role, "menuitem") and text()="{}"]')
+    ROOT = '//*[contains(@class, "pf-c-select__menu")]/div[contains(@class, "pf-c-select")]/../..'
+    SELECT_BUTTON = '//*[contains(@class, "pf-c-select__toggle")]'
+    OPTIONS_LIST = ('//*[contains(@class, "pf-c-select__menu")]'
+                    '//*[not(contains(@class, "disabled"))]//*[contains(@role, "option")]')
+    DISABLED_OPTIONS_LIST = ('//*[contains(@class, "pf-c-select__menu")]'
+                             '//*[contains(@class, "disabled")]//*[contains(@role, "option")]')
+    OPTION = ('//*[contains(@class, "pf-c-select__menu")]'
+              '//*[contains(@role, "option") and text()="{}"]')
 
-    def __init__(self, parent, force_open=False, locator=None, logger=None):
+    def __init__(self, parent, force_open=True, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
         self._force_open = force_open
         if locator:
@@ -234,20 +235,23 @@ class DropDown(Widget):
         return self.locator
 
     def _close(self):
-        els = self.browser.elements(locator=self.SELECT_BUTTON, parent=self)
-        if len(els) and els[0].get_attribute('aria-expanded') == 'true':
-            self.browser.click(els[0])
+        els = self.browser.elements(locator=self.locator + self.SELECT_BUTTON, parent=self)
+        # TODO check if opened in PF4
+        # if len(els) and els[0].get_attribute('aria-expanded') == 'true':
+        self.browser.click(els[0])
 
     def _open(self):
-        el = self.browser.element(locator=self.SELECT_BUTTON, parent=self)
-        if el.get_attribute('aria-expanded') == 'false':
-            self.browser.click(el)
+        el = self.browser.element(locator=self.locator + self.SELECT_BUTTON, parent=self)
+        # TODO check if opened in PF4
+        # if el.get_attribute('aria-expanded') == 'false':
+        wait_displayed(el)
+        self.browser.click(el)
 
     def _update_options(self, locator):
         options = []
         if self._force_open:
             self._open()
-        for el in self.browser.elements(locator=locator, parent=self):
+        for el in self.browser.elements(locator=self.locator + locator, parent=self):
             # on filter drop down, title comes in to options list.
             # Here it will be removed
             if self.browser.get_attribute('title', el).startswith('Filter by'):
@@ -282,12 +286,12 @@ class DropDown(Widget):
     def select(self, option):
         self._open()
         try:
-            self.browser.click(self.browser.element(self.OPTION.format(option), parent=self))
+            self.browser.element(self.OPTION.format(option), parent=self.locator).click()
         except NoSuchElementException:
-            for element in self.browser.elements(self.OPTIONS_LIST, parent=self):
+            for element in self.browser.elements(self.OPTIONS_LIST, parent=self.locator):
                 try:
                     if element.text == option:
-                        self.browser.click(element)
+                        element.click()
                 # in some of dropdown, when we select options page reloads.
                 # reload leads this issue
                 except StaleElementReferenceException:
@@ -295,23 +299,102 @@ class DropDown(Widget):
 
     @property
     def selected(self):
-        return self.browser.text(self.browser.element(self.SELECT_BUTTON, parent=self))
+        return self.browser.text(self.browser.element(self.SELECT_BUTTON, parent=self.locator))
 
 
 class MenuDropDown(DropDown):
     ROOT = '//*[contains(@class, "pf-l-toolbar")]'
-    SELECT_BUTTON = './/*[contains(@class, "pf-c-dropdown__toggle")]'
-    OPTIONS_LIST = './/*[contains(@class, "pf-c-dropdown__menu")]//*[contains(@role, "menuitem")]'
-    OPTION = ('.//*[contains(@class, "pf-c-dropdown__menu")]'
+    SELECT_BUTTON = '//*[contains(@class, "pf-c-dropdown__toggle")]'
+    OPTIONS_LIST = ('//*[contains(@class, "pf-c-dropdown__menu")]//*[contains(@role, "menuitem")'
+                    ' and not(contains(@class, "pf-m-disabled"))]')
+    OPTION = ('//*[contains(@class, "pf-c-dropdown__menu")]'
               '//*[contains(@role, "menuitem") and text()="{}"]')
+    DISABLED_OPTIONS_LIST = ('/..//*[contains(@class, "pf-c-dropdown__menu")]//*'
+                             '[contains(@role, "menuitem") and contains(@class, "pf-m-disabled")]')
 
-    def __init__(self, parent, force_open=False, locator=None, logger=None, select_button=None):
+    def __init__(self, parent, force_open=True, locator=None, logger=None, select_button=None):
         DropDown.__init__(self, parent=parent,
                           force_open=force_open,
                           locator=locator,
                           logger=logger)
-        if select_button:
+        if select_button or select_button == '':
             self.SELECT_BUTTON = select_button
+
+
+class ActionsDropDown(DropDown):
+    ROOT = '//*[contains(@class, "pf-l-toolbar")]'
+    SELECT_BUTTON = '//*[contains(@class, "pf-c-dropdown__toggle")]'
+    OPTIONS_LIST = ('//*[contains(@class, "pf-c-dropdown__menu")]//*[contains(@role, "menuitem")]'
+                    '//button[not(contains(@class, "pf-m-disabled"))]')
+    OPTION = ('//*[contains(@class, "pf-c-dropdown__menu")]'
+              '//*[contains(@role, "menuitem")]//*[text()="{}"]')
+    DISABLED_OPTIONS_LIST = ('/..//*[contains(@class, "pf-c-dropdown__menu")]//*'
+                             '[contains(@role, "menuitem")]'
+                             '//button[contains(@class, "pf-m-disabled")]')
+
+    def __init__(self, parent, force_open=True, locator=None, logger=None, select_button=None):
+        DropDown.__init__(self, parent=parent,
+                          force_open=force_open,
+                          locator=locator,
+                          logger=logger)
+        if select_button or select_button == '':
+            self.SELECT_BUTTON = select_button
+
+
+class ItemDropDown(DropDown):
+    ROOT = '//*[contains(@class, "pf-c-select")]'
+    SELECT_BUTTON = '//*[contains(@class, "pf-c-select__toggle")]'
+    OPTIONS_LIST = '/..//*[contains(@role, "option")]'
+    OPTION = ('/..//*[contains(@role, "option") and text()="{}"]')
+
+    def __init__(self, parent, force_open=True, locator=None, logger=None, select_button=None):
+        DropDown.__init__(self, parent=parent,
+                          force_open=force_open,
+                          locator=locator,
+                          logger=logger)
+        if select_button or select_button == '':
+            self.SELECT_BUTTON = select_button
+
+
+class TypeDropDown(DropDown):
+    ROOT = '//*[contains(@class, "pf-c-select")]'
+    SELECT_BUTTON = '//*[contains(@class, "pf-c-select__toggle")]'
+    OPTIONS_LIST = '//li/button[contains(@role, "option")]'
+    OPTION = ('//li//button[contains(@role, "option") and contains(text(), "{}")]')
+
+    def __init__(self, parent, force_open=True, locator=None, logger=None, select_button=None):
+        DropDown.__init__(self, parent=parent,
+                          force_open=force_open,
+                          locator=locator,
+                          logger=logger)
+        if select_button or select_button == '':
+            self.SELECT_BUTTON = select_button
+
+
+class SelectDropDown(DropDown):
+    SELECT_BUTTON = '//select[contains(@class, "pf-c-form-control")]'
+    OPTIONS_LIST = ('//option')
+    OPTION = ('//*[text()="{}"]')
+
+    def __init__(self, parent, force_open=True, locator=None, logger=None, select_button=None):
+        DropDown.__init__(self, parent=parent,
+                          force_open=force_open,
+                          locator=locator,
+                          logger=logger)
+        if select_button or select_button == '':
+            self.SELECT_BUTTON = select_button
+
+
+class FilterDropDown(DropDown):
+    SELECT_BUTTON = ''
+    OPTIONS_LIST = ('//option')
+    OPTION = ('//*[text()="{}"]')
+
+    def __init__(self, parent, force_open=True, locator=None, logger=None):
+        DropDown.__init__(self, parent=parent,
+                          force_open=force_open,
+                          locator=locator,
+                          logger=logger)
 
 
 class Sort(Widget):
@@ -347,7 +430,7 @@ class Sort(Widget):
 
 
 class SortDropDown(Widget):
-    ROOT = '//*[contains(@class, "dropdown")]/../button/*[contains(@class, "sort-direction")]/../..'
+    ROOT = '//*[contains(@class, "pf-c-form-control")]/../button/svg/../..'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -355,11 +438,11 @@ class SortDropDown(Widget):
             self.locator = locator
         else:
             self.locator = self.ROOT
-        self._drop_down = DropDown(
+        self._drop_down = SelectDropDown(
             parent=self, locator=self.locator)
         self._sort = Sort(
             parent=self,
-            locator=self.locator + '/../button/span[contains(@class, "sort-direction")]/..')
+            locator=self.locator + '/../button/svg/..')
 
     def __locator__(self):
         return self.locator
@@ -384,12 +467,40 @@ class SortDropDown(Widget):
         return self._drop_down.selected, self._sort.is_ascending
 
 
+class SortBar(Widget):
+    ROOT = ('//*[contains(@class, "pf-c-table")]'
+            '//button/*[contains(@class, "pf-c-table__sort-indicator")]/../../..')
+    BUTTONS = ('//button[contains(@class, "pf-c-button")]'
+               '/*[contains(@class, "pf-c-table__sort-indicator")]/..')
+    BUTTON = '//button[contains(@class, "pf-c-button") and text()="{}"]'
+
+    def __init__(self, parent, locator=None, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        if locator:
+            self.locator = locator
+        else:
+            self.locator = self.ROOT
+
+    def __locator__(self):
+        return self.locator
+
+    @property
+    def options(self):
+        return [el.text for el in self.browser.elements(locator=self.BUTTONS, parent=self.locator)]
+
+    def select(self, option, is_ascending=None):
+        button = self.browser.element(parent=self, locator=self.BUTTON.format(option.text))
+        self.browser.click(button)
+        if is_ascending is not None and not is_ascending:
+            # second click orders descending
+            self.browser.click(button)
+
+
 class FilterList(Widget):
-    ROOT = '//*[contains(@class, "toolbar-pf-results")]'
-    ITEMS = './/*[contains(@class, "list-inline")]//*[contains(@class, "label")]'
-    CLEAR = ('.//*[contains(@class, "list-inline")]//*[contains(@class, "label")'
-             ' and contains(text(), "{}: {}")]//*[contains(@class, "pficon-close")]')
-    CLEAR_ALL = './/a[text()="Clear All Filters"]'
+    ROOT = './/*[contains(@class, "pf-l-toolbar")]'
+    ITEMS = '//ul[contains(@class, "pf-c-chip-group") and contains(@class, "pf-m-toolbar")]/li'
+    CLEAR = (ITEMS + '//*[contains(text(), "{}")]/..//*[contains(@aria-label, "close")]')
+    CLEAR_ALL = '//a[text()="Clear All Filters"]'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -410,7 +521,8 @@ class FilterList(Widget):
     def remove(self, key, value):
         try:
             self.browser.click(
-                self.browser.element(parent=self, locator=self.CLEAR.format(key, value)))
+                # TODO with value as it can be cut off in page
+                self.browser.element(parent=self, locator=self.CLEAR.format(key)))
         except NoSuchElementException:
             pass
 
@@ -421,16 +533,16 @@ class FilterList(Widget):
         if not self.is_displayed:
             return _filters
         for el in self.browser.elements(parent=self, locator=self.ITEMS, force_check_safe=True):
-            _name, _value = el.text.split('\n')[0].split(':', 1)
+            _name, _value = el.text.split('\n')
             _filters.append({'name': _name.strip(), 'value': _value.strip()})
         return _filters
 
 
 class Filter(Widget):
-    ROOT = '//*[contains(@class, "toolbar-pf-actions")]//*[contains(@class, "toolbar-pf-filter")]'
-    FILTER_DROPDOWN = '//div[contains(@class, "dropdown")]'
+    ROOT = '//*[contains(@class, "pf-l-toolbar")]//*[contains(@class, "pf-l-toolbar__section")]'
+    FILTER_DROPDOWN = '//select[contains(@aria-label, "filter_select_type")]'
     VALUE_INPUT = './/input'
-    VALUE_DROPDOWN = './/*[contains(@class, "filter-pf-select")]//div[contains(@class, "dropdown")]'
+    VALUE_DROPDOWN = '//select[contains(@aria-label, "filter_select_value")]'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -438,8 +550,8 @@ class Filter(Widget):
             self.locator = locator
         else:
             self.locator = self.ROOT
-        self._filter = DropDown(parent=self, force_open=True,
-                                locator=self.locator + self.FILTER_DROPDOWN)
+        self._filter = FilterDropDown(parent=self,
+                                      locator=self.locator + self.FILTER_DROPDOWN)
         self._filter_list = FilterList(parent=self.parent)
 
     def __locator__(self):
@@ -452,7 +564,7 @@ class Filter(Widget):
     def filter_options(self, filter_name):
         self.select(filter_name)
         if len(self.browser.elements(parent=self, locator=self.VALUE_DROPDOWN)):
-            option_dropdown = DropDown(
+            option_dropdown = FilterDropDown(
                 parent=self.parent, locator=self.locator + "/" + self.VALUE_DROPDOWN)
             return option_dropdown.options
         return {}
@@ -468,7 +580,7 @@ class Filter(Widget):
             if self.browser.browser_type == 'firefox':
                 self.browser.send_keys(Keys.ENTER, _input)
         elif len(self.browser.elements(parent=self, locator=self.VALUE_DROPDOWN)):
-            _dropdown = DropDown(parent=self, locator=self.VALUE_DROPDOWN)
+            _dropdown = FilterDropDown(parent=self, locator=self.VALUE_DROPDOWN)
             _dropdown.select(value)
         else:
             raise NoSuchElementException('There is no "Input" or "Dropdown" component found!')
@@ -491,18 +603,20 @@ class Filter(Widget):
 
 
 class Actions(Widget):
-    ROOT = '//*[contains(@class, "tab-pane")]//*[contains(@class, "container-cards-pf")]'
-    WIZARD_ROOT = '//*[contains(@class, "wizard-pf")]//*[contains(@class, "modal-content")]'
+    ROOT = '//*[contains(@class, "pf-c-page__main")]' + \
+        '//*[contains(@class, "pf-c-page__main-section")]'
+    WIZARD_ROOT = '//*[contains(@class, "pf-c-modal-box")]'
     DIALOG_ROOT = '//*[@role="dialog"]'
-    ACTIONS_DROPDOWN = '//div[contains(@class, "dropdown")]//button[@id="service_actions"]/..'
-    TLS_DROPDOWN = '//div[contains(@class, "dropdown")]//button[@id="trafficPolicy-tls"]/..'
-    LOAD_BALANCER_TYPE_DROPDOWN = '//div[contains(@class, "dropdown")]'\
-        '//button[@id="trafficPolicy-lb"]/..'
-    INCLUDE_MESH_GATEWAY = '//label[contains(text(), "Include")]/input[@type="checkbox"]'
-    SHOW_ADVANCED_OPTIONS = '//button[text()="Show Advanced Options"]'
+    ACTIONS_DROPDOWN = '//div[contains(@class, "pf-c-dropdown")]//span[text()="Actions"]/../..'
+    RULE_ACTIONS = '//div[contains(@class, "pf-c-dropdown")]//button[@aria-label="Actions"]'
+    TLS_DROPDOWN = '//div[contains(@class, "pf-c-form__group")]//select[@id="advanced-tls"]'
+    LOAD_BALANCER_TYPE_DROPDOWN = '//div[contains(@class, "pf-c-form__group")]'\
+        '//select[@id="trafficPolicy-lb"]'
+    INCLUDE_MESH_GATEWAY = '//label[contains(text(), "Include")]/..//input[@type="checkbox"]'
+    SHOW_ADVANCED_OPTIONS = '//span[text()="Show Advanced Options"]/..'
     CREATE_BUTTON = './/button[text()="Create"]'
     UPDATE_BUTTON = './/button[text()="Update"]'
-    REMOVE_BUTTON = './/button[text()="Remove"]'
+    REMOVE_RULE = 'Remove Rule'
     ADD_RULE_BUTTON = './/button[text()="Add Rule"]'
     DELETE_ALL_TRAFFIC_ROUTING = 'Delete ALL Traffic Routing'
     CREATE_MATCHING_ROUTING = 'Create Matching Routing'
@@ -518,10 +632,15 @@ class Actions(Widget):
             self.locator = locator
         else:
             self.locator = self.ROOT
-        self._actions = DropDown(parent=self, locator=self.locator + self.ACTIONS_DROPDOWN)
-        self._tls = DropDown(parent=self, locator=self.TLS_DROPDOWN)
+        self._actions = ActionsDropDown(parent=self, locator=self.locator + self.ACTIONS_DROPDOWN,
+                                        select_button='', force_open=True)
+        self._rule_actions = MenuDropDown(parent=self, locator=self.RULE_ACTIONS,
+                                          select_button='', force_open=True)
+        self._tls = SelectDropDown(parent=self, locator=self.TLS_DROPDOWN, select_button='')
         self._loadbalancer_switch = ButtonSwitch(parent=self, label="Add LoadBalancer")
-        self._loadbalancer_type = DropDown(parent=self, locator=self.LOAD_BALANCER_TYPE_DROPDOWN)
+        self._loadbalancer_type = SelectDropDown(
+            parent=self, locator=self.LOAD_BALANCER_TYPE_DROPDOWN,
+            select_button='')
         self._gateway_switch = ButtonSwitch(parent=self, label="Add Gateway")
         self._include_mesh_gateway = Checkbox(locator=self.INCLUDE_MESH_GATEWAY, parent=self)
 
@@ -541,7 +660,7 @@ class Actions(Widget):
     def disabled_actions(self):
         return self._actions.disabled_options
 
-    def _select(self, action):
+    def select(self, action):
         self._actions.select(action)
 
     def is_delete_disabled(self):
@@ -578,7 +697,7 @@ class Actions(Widget):
         if self.is_delete_disabled():
             return False
         else:
-            self._select(self.DELETE_ALL_TRAFFIC_ROUTING)
+            self.select(self.DELETE_ALL_TRAFFIC_ROUTING)
             wait_displayed(self)
             self.browser.click(self.browser.element(
                 parent=self.DIALOG_ROOT,
@@ -595,7 +714,7 @@ class Actions(Widget):
         if self.is_create_weighted_disabled():
             return False
         else:
-            self._select(self.CREATE_WEIGHTED_ROUTING)
+            self.select(self.CREATE_WEIGHTED_ROUTING)
             self.advanced_options(tls=tls, load_balancer=load_balancer,
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
@@ -615,7 +734,7 @@ class Actions(Widget):
                                 gateway=False,
                                 include_mesh_gateway=False):
         if self.is_update_weighted_enabled():
-            self._select(self.UPDATE_WEIGHTED_ROUTING)
+            self.select(self.UPDATE_WEIGHTED_ROUTING)
             self.advanced_options(tls=tls, load_balancer=load_balancer,
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
@@ -639,7 +758,7 @@ class Actions(Widget):
         if self.is_create_matching_disabled():
             return False
         else:
-            self._select(self.CREATE_MATCHING_ROUTING)
+            self.select(self.CREATE_MATCHING_ROUTING)
             self.advanced_options(tls=tls, load_balancer=load_balancer,
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
@@ -664,15 +783,13 @@ class Actions(Widget):
                                 gateway=False,
                                 include_mesh_gateway=False):
         if self.is_update_matching_enabled():
-            self._select(self.UPDATE_MATCHING_ROUTING)
+            self.select(self.UPDATE_MATCHING_ROUTING)
             self.advanced_options(tls=tls, load_balancer=load_balancer,
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
                                   include_mesh_gateway=include_mesh_gateway)
             wait_displayed(self)
-            self.browser.click(self.browser.element(
-                parent=self.WIZARD_ROOT,
-                locator=(self.REMOVE_BUTTON)))
+            self._rule_actions.select(self.REMOVE_RULE)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.ADD_RULE_BUTTON)))
@@ -695,7 +812,7 @@ class Actions(Widget):
         if self.is_suspend_disabled():
             return False
         else:
-            self._select(self.SUSPEND_TRAFFIC)
+            self.select(self.SUSPEND_TRAFFIC)
             self.advanced_options(tls=tls, load_balancer=load_balancer,
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
@@ -715,7 +832,7 @@ class Actions(Widget):
                                  gateway=False,
                                  include_mesh_gateway=False):
         if self.is_update_suspended_enabled():
-            self._select(self.UPDATE_SUSPENDED_TRAFFIC)
+            self.select(self.UPDATE_SUSPENDED_TRAFFIC)
             self.advanced_options(tls=tls, load_balancer=load_balancer,
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
@@ -745,19 +862,80 @@ class Actions(Widget):
         if load_balancer and load_balancer_type:
             self._loadbalancer_switch.on()
             if load_balancer_type:
+                wait_displayed(self._loadbalancer_type)
                 self._loadbalancer_type.select(load_balancer_type.text)
         else:
             self._loadbalancer_switch.off()
         if gateway:
             self._gateway_switch.on()
+            wait_displayed(self._include_mesh_gateway)
             self._include_mesh_gateway.fill(include_mesh_gateway)
         else:
             self._gateway_switch.off()
 
 
+class Traces(Widget):
+    ROOT = '//*[@id="content-scrollable"]'
+    SEARCH_TRACES_BUTTON = './/button[contains(@aria-label, "SearchTraces")]'
+    SHOW_HIDE_OPTIONS = '//button[contains(@class, "pf-c-expandable__toggle")]/span[text()="{}"]/..'
+
+    def __init__(self, parent, locator=None, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        if locator:
+            self.locator = locator
+        else:
+            self.locator = self.ROOT
+        self._search_traces = Button(parent=self, locator=self.SEARCH_TRACES_BUTTON)
+        self._show_advanced_options = Button(
+            parent=self,
+            locator=self.SHOW_HIDE_OPTIONS.format('Show Advanced Options'))
+        self._hide_advanced_options = Button(
+            parent=self,
+            locator=self.SHOW_HIDE_OPTIONS.format('Hide Advanced Options'))
+        self._service_drop_down = SelectDropDown(
+            parent=self, locator=self.locator)
+
+    @property
+    def is_oc_login_displayed(self):
+        try:
+            self.browser.switch_to_frame('//iframe')
+            return len(
+                self.browser.elements(
+                    locator='//button[text()="Log in with OpenShift"]', parent='iframe')) > 0
+        finally:
+            self.browser.switch_to_main_frame()
+
+    @property
+    def has_no_results(self):
+        try:
+            self.browser.switch_to_frame('//iframe')
+            return len(
+                self.browser.elements(
+                    locator='//div[contains(@data-test, "no-results")]', parent='iframe')) > 0
+        finally:
+            self.browser.switch_to_main_frame()
+
+    @property
+    def has_results(self):
+        try:
+            self.browser.switch_to_frame('//iframe')
+            return len(
+                self.browser.elements(
+                    locator='//div[contains(@class, "TraceResultsScatterPlot")]',
+                    parent='iframe')) > 0
+        finally:
+            self.browser.switch_to_main_frame()
+
+    def search_traces(self, service_name):
+        self._service_drop_down.select(service_name)
+        if self._show_advanced_options.is_displayed:
+            self.browser.click(self._show_advanced_options)
+        self.browser.click(self._search_traces)
+
+
 class CheckBoxFilter(Widget):
-    ROOT = ('//*[@role="tooltip" and contains(@class, "popover")]'
-            '//*[contains(@class, "popover-content")]')
+    ROOT = ('//*[contains(@class, "pf-c-dropdown__menu")]'
+            '//*[contains(@class, "pf-c-dropdown__menu-item")]')
     CB_ITEMS = './/label/input[@type="checkbox"]/..'
     ITEM = './/label/span[normalize-space(text())="{}"]/../input'
     RB_ITEMS = './/label/input[@type="radio"]/..'
@@ -771,8 +949,7 @@ class CheckBoxFilter(Widget):
             self.locator = self.ROOT
         self._filter_button = Button(
             parent=self.parent,
-            locator=('//button[normalize-space(text())="{}"]/'
-                     '..//*[contains(@class, "fa-angle-down")]'.format(filter_name)))
+            locator=('//button//span[normalize-space(text())="{}"]/..'.format(filter_name)))
 
     def __locator__(self):
         return self.locator
@@ -781,6 +958,7 @@ class CheckBoxFilter(Widget):
         # TODO necessary workaround for remote zalenium webdriver execution
         self.browser.execute_script("window.scrollTo(0,0);")
         if not self.is_displayed:
+            wait_displayed(self._filter_button)
             self.browser.click(self._filter_button)
             wait_displayed(self)
         wait_to_spinner_disappear(self.browser)
@@ -876,8 +1054,7 @@ class NamespaceFilter(CheckBoxFilter):
             self.locator = self.ROOT
         self._filter_button = Button(
             parent=self.parent,
-            locator=('//button[@id="namespace-selector"]'
-                     '//span[contains(@class, "fa-angle-down")]'))
+            locator=('//button[@id="namespace-selector"]'))
 
     @property
     def is_displayed(self):
@@ -890,90 +1067,6 @@ class NamespaceFilter(CheckBoxFilter):
             locator=('//button[normalize-space(text())="Clear all"]')))
         wait_to_spinner_disappear(self.browser)
         self.close()
-
-
-class Pagination(Widget):
-    ROOT = ('//*[contains(@class, "list-view-pf-pagination")'
-            ' and contains(@class, "content-view-pf-pagination")]')
-    PER_PAGE_DROPDOWN = './/*[contains(@class, "pagination-pf-pagesize")]'
-    TOTAL_ITEMS = './/*[contains(@class, "pagination-pf-items-total")]'
-    TOTAL_PAGES = ('.//*[contains(@class, "pagination pagination-pf-forward")]/'
-                   '..//*[contains(@class, "pagination-pf-pages")]')
-    CURRENT_PAGE = './/input[contains(@class, "pagination-pf-page")]'
-    FIRST_PAGE = './/*[@title="First Page"]'
-    LAST_PAGE = './/*[@title="Last Page"]'
-    NEXT_PAGE = './/*[@title="Next Page"]'
-    PREVIOUS_PAGE = './/*[@title="Previous Page"]'
-
-    def __init__(self, parent, locator=None, logger=None):
-        Widget.__init__(self, parent, logger=logger)
-        if locator:
-            self.locator = locator
-        else:
-            self.locator = self.ROOT
-        wait_displayed(self)
-
-    def __locator__(self):
-        return self.locator
-
-    def _element(self, locator):
-        wait_displayed(self)
-        return self.browser.element(parent=self, locator=locator)
-
-    @property
-    def _page_input(self):
-        wait_displayed(self)
-        return TextInput(parent=self, locator=self.CURRENT_PAGE)
-
-    @property
-    def current_page(self):
-        return int(self._page_input.read())
-
-    def _move_to_page(self, page):
-        self.browser.click(self._element(locator=page))
-        wait_to_spinner_disappear(self.browser)
-
-    def move_to_first_page(self):
-        self._move_to_page(self.FIRST_PAGE)
-
-    def move_to_last_page(self):
-        self._move_to_page(self.LAST_PAGE)
-
-    def move_to_next_page(self):
-        self._move_to_page(self.NEXT_PAGE)
-
-    def move_to_previous_page(self):
-        self._move_to_page(self.PREVIOUS_PAGE)
-
-    def move_to_page(self, page_number):
-        self._page_input.fill('{}\n'.format(page_number))
-        if self.browser.browser_type == 'firefox':
-            self.browser.send_keys(Keys.ENTER, self._page_input)
-        wait_to_spinner_disappear(self.browser)
-
-    @property
-    def total_items(self):
-        return int(self.browser.text(self._element(locator=self.TOTAL_ITEMS)))
-
-    @property
-    def total_pages(self):
-        return int(self.browser.text(self._element(locator=self.TOTAL_PAGES)))
-
-    @property
-    def _dropdown_per_page(self):
-        wait_displayed(self)
-        return DropDown(parent=self, locator=self.PER_PAGE_DROPDOWN)
-
-    @property
-    def items_per_page(self):
-        return int(self._dropdown_per_page.selected)
-
-    def set_items_per_page(self, items):
-        self._dropdown_per_page.select(items)
-
-    @property
-    def items_per_page_options(self):
-        return [int(i) for i in self._dropdown_per_page.options]
 
 
 class About(Widget):
@@ -1033,7 +1126,7 @@ class NavBar(Widget):
     NAVBAR_USER = ('//*[contains(@class, "pf-l-toolbar__group")]'
                    '//*[contains(@class, "pf-c-dropdown")]//'
                    'span[contains(@class, "pf-c-dropdown__toggle-text")]/../..')
-    USER_SELECT_BUTTON = './/*[contains(@class, "pf-c-dropdown__toggle-text")]/..'
+    USER_SELECT_BUTTON = '//*[contains(@class, "pf-c-dropdown__toggle-text")]/..'
 
     def __init__(self, parent, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -1157,21 +1250,26 @@ class Login(Widget):
 
 
 class ListViewAbstract(Widget):
-    ROOT = '//*[contains(@class, "list-view-pf") and contains(@class, "list-view-pf-view")]'
+    ROOT = '//*[contains(@class, "pf-c-table") and contains(@class, "pf-c-virtualized")]'
+    BODY = '//*[contains(@class, "ReactVirtualized__VirtualGrid__innerScrollContainer")]'
     DIALOG_ROOT = '//*[@role="dialog"]'
-    ITEMS = './/*[contains(@class, "list-group-item")]//*[contains(@class, "list-view-pf-body")]'
-    ITEM_TEXT = './/*[contains(@class, "list-group-item-heading")]'
-    OBJECT_TYPE = './/*[contains(@class, "list-group-item-text")]//td'
-    DETAILS_ROOT = './/div[contains(@class, "card-pf")]'
+    ITEMS = './/tr[contains(@class, "isVisible")]'
+    ITEM_COL = './/td'
+    ITEM_TEXT = './/*[contains(@class, "virtualitem_definition_link")]'
+    DETAILS_ROOT = ('.//section[@id="pf-tab-section-0-basic-tabs"]'
+                    '/div[contains(@class, "pf-l-grid")]')
     HEADER = './/div[contains(@class, "container-fluid")]//h2'
-    ISTIO_PROPERTIES = ('.//*[contains(@class, "card-pf-body")]'
-                        '//strong[normalize-space(text())="{}"]/..')
-    PROPERTY_SECTIONS = ('.//*[contains(@class, "card-pf-body")]'
-                         '//strong[normalize-space(text())="{}"]/../..')
+    ISTIO_PROPERTIES = ('.//*[contains(@class, "pf-l-stack__item")]'
+                        '//h3[normalize-space(text())="{}"]/..')
+    NETWORK_PROPERTIES = ('.//*[contains(@class, "pf-l-stack__item")]'
+                          '//h3[text()="{}"]/..')
+    PROPERTY_SECTIONS = ('.//*[contains(@class, "pf-l-stack__item")]'
+                         '//span[text()="{}"]/../..')
     PODS = 'Pods'
     SERVICES = 'Services'
     TYPE = 'Type'
     IP = 'IP'
+    SERVICE_IP = 'Service IP'
     PORTS = 'Ports'
     CREATED_AT = 'Created at'
     RESOURCE_VERSION = 'Resource Version'
@@ -1181,9 +1279,11 @@ class ListViewAbstract(Widget):
     MISSING_SIDECAR = './/span[normalize-space(text())="{}"]'.format(MISSING_SIDECAR_TEXT)
     SHOW_ON_GRAPH_TEXT = '(Show on graph)'
     HEALTH_TEXT = "Health"
-    HEALTH = 'strong[normalize-space(text()="{}:")]/../'.format(HEALTH_TEXT)
     CONFIG_TEXT = "Config"
     CONFIG = 'strong[normalize-space(text()="{}:")]/..//'.format(CONFIG_TEXT)
+    CONFIG_TABS_PARENT = './/ul[contains(@class, "pf-c-tabs__list")]'
+    CONFIG_TAB_OVERVIEW = './/button[@id="pf-tab-0-basic-tabs"]'
+    CONFIG_TAB_YAML = './/button[@id="pf-tab-1-basic-tabs"]'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -1191,29 +1291,32 @@ class ListViewAbstract(Widget):
             self.locator = locator
         else:
             self.locator = self.ROOT
-        self._pagination = Pagination(parent=self.parent)
 
     def __locator__(self):
         return self.locator
 
     def has_overview_tab(self):
-        return len(self.browser.elements(locator='.//a[@id="basic-tabs-tab-overview"]',
-                                         parent='.//div[@id="basic-tab"]')) > 0
+        return len(self.browser.elements(locator=self.CONFIG_TAB_OVERVIEW,
+                                         parent=self.CONFIG_TABS_PARENT)) > 0
 
     def display_overview_editor(self):
         if self.has_overview_tab():
-            self.browser.click(self.browser.element(locator='.//a[@id="basic-tabs-tab-overview"]',
-                                                    parent='.//div[@id="basic-tab"]'))
+            self.browser.click(self.browser.element(locator=self.CONFIG_TAB_OVERVIEW,
+                                                    parent=self.CONFIG_TABS_PARENT))
             wait_displayed(self)
 
     def display_yaml_editor(self):
-        self.browser.click(self.browser.element(locator='.//a[@id="basic-tabs-tab-yaml"]',
-                                                parent='.//div[@id="basic-tab"]'))
+        self.browser.click(self.browser.element(locator=self.CONFIG_TAB_YAML,
+                                                parent=self.CONFIG_TABS_PARENT))
         wait_displayed(self)
 
     def _item_sidecar(self, element):
+        # TODO sidecar is not shown yet
         return not len(self.browser.elements(
                 parent=element, locator=self.MISSING_SIDECAR)) > 0
+
+    def _item_namespace(self, cell):
+        return cell.text.strip().replace('NS', '')
 
     def _details_sidecar(self):
         return not len(self.browser.elements(
@@ -1221,7 +1324,7 @@ class ListViewAbstract(Widget):
             locator=self.MISSING_SIDECAR)) > 0
 
     def _get_details_health(self):
-        _health_sublocator = '/../..//strong[normalize-space(text())="Health"]'
+        _health_sublocator = '/../..//h3[normalize-space(text())="Health"]'
         _healthy = len(self.browser.elements(
             parent=self.DETAILS_ROOT,
             locator='.//*[contains(@class, "icon-healthy")]' + _health_sublocator)) > 0
@@ -1248,18 +1351,16 @@ class ListViewAbstract(Widget):
     def _get_item_health(self, element):
         _healthy = len(self.browser.elements(
             parent=element,
-            locator='.//{}*[contains(@class, "icon-healthy")]'.format(self.HEALTH))) > 0
+            locator='.//*[contains(@class, "icon-healthy")]')) > 0
         _not_healthy = len(self.browser.elements(
             parent=element,
-            locator='.//{}*[contains(@class, "icon-failure")]'.format(self.HEALTH))) > 0
+            locator='.//*[contains(@class, "icon-failure")]')) > 0
         _degraded = len(self.browser.elements(
             parent=element,
-            locator='.//{}*[contains(@class, "icon-degraded")]'
-                    .format(self.HEALTH))) > 0
+            locator='.//*[contains(@class, "icon-degraded")]')) > 0
         _not_available = len(self.browser.elements(
             parent=element,
-            locator='.//{}*[contains(@class, "icon-na")]'
-                    .format(self.HEALTH))) > 0
+            locator='.//*[contains(@class, "icon-na")]')) > 0
         _health = None
         if _healthy:
             _health = HealthType.HEALTHY
@@ -1274,14 +1375,13 @@ class ListViewAbstract(Widget):
     def _get_item_validation(self, element):
         _valid = len(self.browser.elements(
             parent=element,
-            locator='.//{}*[contains(@class, "pficon-ok")]'.format(self.CONFIG))) > 0
+            locator='.//*[contains(@style, "success")]')) > 0
         _not_valid = len(self.browser.elements(
             parent=element,
-            locator='.//{}*[contains(@class, "pficon-error-circle-o")]'.format(self.CONFIG))) > 0
+            locator='.//*[contains(@style, "danger")]')) > 0
         _warning = len(self.browser.elements(
             parent=element,
-            locator='.//{}*[contains(@class, "pficon-warning-triangle-o")]'
-                    .format(self.CONFIG))) > 0
+            locator='.//*[contains(@style, "warning")]')) > 0
         return get_validation(_valid, _not_valid, _warning)
 
     def _get_details_validation(self):
@@ -1302,8 +1402,7 @@ class ListViewAbstract(Widget):
         _label_keys = []
         _labels = self.browser.elements(
             parent=element,
-            locator='.//strong[normalize-space(text())="Label Validation :"]\
-                /../*[contains(@class, "badge")]')
+            locator='.//*[contains(@class, "pf-c-badge")]')
         if _labels:
             for _label in _labels:
                 _label_keys.append(_label.text)
@@ -1320,8 +1419,8 @@ class ListViewAbstract(Widget):
         wait_displayed(self)
         _labels = self.browser.elements(
             parent=self.DETAILS_ROOT,
-            locator='.//strong[contains(text(), "Labels")]\
-                /../../../div[@id="labels"]//*[contains(@class, "label-pair")]')
+            locator=('//h3[contains(text(), "Labels")]'
+                     '/../../div[@id="labels"]//*[contains(@class, "label-pair")]'))
         if _labels:
             for _label in _labels:
                 _label_key = self.browser.element(
@@ -1344,8 +1443,8 @@ class ListViewAbstract(Widget):
         wait_displayed(self)
         _selectors = self.browser.elements(
             parent=self.DETAILS_ROOT,
-            locator='.//strong[contains(text(), "Selectors")]\
-                /../../../div[@id="selectors"]//*[contains(@class, "label-pair")]')
+            locator=('//h3[contains(text(), "Selectors")]'
+                     '/../../div[@id="selectors"]//*[contains(@class, "label-pair")]'))
         if _selectors:
             for _selector in _selectors:
                 _label_key = self.browser.element(
@@ -1379,11 +1478,11 @@ class ListViewAbstract(Widget):
     def get_namespace_wide_tls(self, element):
         _partial = len(self.browser.elements(
             parent=element,
-            locator='.//*[contains(@class, "card-pf-title")]'
+            locator='.//*[contains(@class, "pf-c-title")]'
             '//img[contains(@src, "mtls-status-partial-dark")]')) > 0
         _full = len(self.browser.elements(
             parent=element,
-            locator='.//*[contains(@class, "card-pf-title")]'
+            locator='.//*[contains(@class, "pf-c-title")]'
             '//img[contains(@src, "mtls-status-full-dark")]')) > 0
         if _full:
             return MeshWideTLSType.ENABLED
@@ -1394,28 +1493,42 @@ class ListViewAbstract(Widget):
 
     @property
     def all_items(self):
-        items = []
-        self._pagination.move_to_first_page()
-        # set per page to maximum size
-        # TODO: set to maximum size. right now problem with focus,
-        # hence setting it to minimum size
-        self._pagination.set_items_per_page(5)
-        for _page in range(1, self._pagination.total_pages + 1):
-            self._pagination.move_to_page(_page)
-            wait_to_spinner_disappear(self.browser)
+        height = self._get_height()
+        prev_height = 0
+        scroll_size = self.browser.element(self.ROOT).size['height']
+        scroll_height = 0
+        items = self.items
+        while prev_height != height or scroll_height - height < scroll_size:
+            prev_height = height
+            scroll_height += scroll_size
+            self.browser.execute_script(
+                "document.getElementsByClassName(\"pf-c-window-scroller\")[0].scroll(0, "
+                + str(scroll_height) + ");")
+            height = self._get_height()
+            # Here sleep is required as there is no spinner shown while scrolling
+            sleep(0.05)
             items.extend(self.items)
-        return items
+        return set(items)
+
+    def _get_height(self):
+        try:
+            return self.browser.element(
+                locator='//*[contains(@class, '
+                '"ReactVirtualized__VirtualGrid__innerScrollContainer")]',
+                parent=self.ROOT).size['height']
+        except NoSuchElementException:
+            return 0
 
 
 class ListViewOverview(ListViewAbstract):
-    ROOT = '//*[contains(@class, "cards-pf") and contains(@class, "container-cards-pf")]'
-    ITEMS = './/*[contains(@class, "row")]//*[contains(@class, "card-pf-accented")]'
-    ITEM_TITLE = './/*[contains(@class, "card-pf-title")]'
-    ITEM_TEXT = './/*[contains(@class, "card-pf-body")]/a'
-    UNHEALTHY_TEXT = './/*[contains(@class, "pficon-error-circle-o")]/..'
-    HEALTHY_TEXT = './/*[contains(@class, "pficon-ok")]/..'
-    DEGRADED_TEXT = './/*[contains(@class, "pficon-warning-triangle-o")]/..'
-    OVERVIEW_TYPE = './/*[@id="overview-type"]'
+    ROOT = './/*[contains(@class, "pf-l-grid")]'
+    ITEMS = './/*[contains(@class, "pf-l-grid__item")]/article[contains(@class, "pf-c-card")]'
+    ITEM_TITLE = './/*[contains(@class, "pf-c-title")]'
+    ITEM_TEXT = './/*[contains(@class, "pf-c-card__body")]//a'
+    UNHEALTHY_TEXT = './/*[contains(@class, "icon-failure")]/..'
+    HEALTHY_TEXT = './/*[contains(@class, "icon-healthy")]/..'
+    DEGRADED_TEXT = './/*[contains(@class, "icon-warning")]/..'
+    OVERVIEW_TYPE = '//*[contains(@aria-labelledby, "overview-type")]'
 
     @property
     def all_items(self):
@@ -1429,7 +1542,7 @@ class ListViewOverview(ListViewAbstract):
             locator=('//button[text()="Compact"]')))
         wait_to_spinner_disappear(self.browser)
         _overview_type = self.browser.element(
-                locator=self.OVERVIEW_TYPE, parent=self.ROOT).text
+                locator=self.OVERVIEW_TYPE).text
         for el in self.browser.elements(self.ITEMS, parent=self):
             _namespace = self.browser.element(
                 locator=self.ITEM_TITLE, parent=el).text
@@ -1497,11 +1610,10 @@ class ListViewApplications(ListViewAbstract):
     def items(self):
         _items = []
         for el in self.browser.elements(self.ITEMS, parent=self):
-            # get application name and namespace
-            name, namespace = self.browser.element(
-                locator=self.ITEM_TEXT, parent=el).text.split('\n')
-            _name = name.strip()
-            _namespace = namespace.strip()
+            columns = self.browser.elements(self.ITEM_COL, parent=el)
+            _name = self.browser.element(
+                locator=self.ITEM_TEXT, parent=columns[0]).text.strip()
+            _namespace = self._item_namespace(columns[1])
             # TODO Error Rate
             # application object creation
             _application = Application(
@@ -1562,12 +1674,12 @@ class ListViewWorkloads(ListViewAbstract):
         _items = []
         for el in self.browser.elements(self.ITEMS, parent=self):
             # get workload name and namespace
-            name, namespace, _type = self.browser.element(
-                locator=self.ITEM_TEXT, parent=el).text.split('\n')
-            _name = name.strip()
-            _namespace = namespace.strip()
-            _type = _type.strip()
-            _label_keys = self._get_item_label_keys(el)
+            columns = self.browser.elements(self.ITEM_COL, parent=el)
+            _name = self.browser.element(
+                locator=self.ITEM_TEXT, parent=columns[0]).text.strip()
+            _namespace = self._item_namespace(columns[1])
+            _type = columns[2].text.strip()
+            _label_keys = self._get_item_label_keys(columns[5])
             # workload object creation
             _workload = Workload(
                 name=_name, namespace=_namespace, workload_type=_type,
@@ -1591,8 +1703,8 @@ class ListViewServices(ListViewAbstract):
             .replace(self.SHOW_ON_GRAPH_TEXT, '').strip()
         _type = self.browser.text(locator=self.ISTIO_PROPERTIES.format(self.TYPE),
                                   parent=self.DETAILS_ROOT).replace(self.TYPE, '').strip()
-        _ip = self.browser.text(locator=self.ISTIO_PROPERTIES.format(self.IP),
-                                parent=self.DETAILS_ROOT).replace(self.IP, '').strip()
+        _ip = self.browser.text(locator=self.NETWORK_PROPERTIES.format(self.SERVICE_IP),
+                                parent=self.DETAILS_ROOT).replace(self.SERVICE_IP, '').strip()
         _created_at = self.browser.text(
             locator=self.ISTIO_PROPERTIES.format(self.CREATED_AT),
             parent=self.DETAILS_ROOT).replace(self.CREATED_AT, '').strip()
@@ -1608,6 +1720,8 @@ class ListViewServices(ListViewAbstract):
         _traffic = TrafficView(parent=self.parent, locator=self.locator, logger=self.logger)
 
         _inbound_metrics = MetricsView(parent=self.parent, tab_name=self.INBOUND_METRICS)
+
+        _traces_tab = TracesView(parent=self.parent, locator=self.locator, logger=self.logger)
 
         return ServiceDetails(name=_name,
                               created_at=parse_from_ui(_created_at),
@@ -1626,17 +1740,18 @@ class ListViewServices(ListViewAbstract):
                               virtual_services=self.table_view_vs.all_items,
                               destination_rules=self.table_view_dr.all_items,
                               traffic=_traffic.items,
-                              inbound_metrics=_inbound_metrics)
+                              inbound_metrics=_inbound_metrics,
+                              traces_tab=_traces_tab)
 
     @property
     def items(self):
         _items = []
         for el in self.browser.elements(self.ITEMS, parent=self):
             # get rule name and namespace
-            name, namespace = self.browser.element(
-                locator=self.ITEM_TEXT, parent=el).text.split('\n')
-            _name = name.strip()
-            _namespace = namespace.strip()
+            columns = self.browser.elements(self.ITEM_COL, parent=el)
+            _name = self.browser.element(
+                locator=self.ITEM_TEXT, parent=columns[0]).text.strip()
+            _namespace = self._item_namespace(columns[1])
 
             # create service instance
             _service = Service(
@@ -1678,32 +1793,11 @@ class ListViewIstioConfig(ListViewAbstract):
         _items = []
         for el in self.browser.elements(self.ITEMS, parent=self):
             # get rule name and namespace
-            name, namespace = self.browser.element(
-                locator=self.ITEM_TEXT, parent=el).text.split('\n')
-            _name = name.strip()
-            _namespace = namespace.strip()
-            # disable handler and other features. UI changed
-            # _actions = []
-            # _match = None
-            # get handler
-            # _handler = self.browser.element(
-            #     locator=self.ACTION_HEADER.format('Handler'),
-            #     parent=el).text.split('Handler:', 1)[1].strip()
-            # # get instances
-            # _instances = self.browser.element(
-            #     locator=self.ACTION_HEADER.format('Instances'),
-            #     parent=el).text.split('Instances:', 1)[1].strip().split(',')
-            # _actions.append(Action(handler=_handler, instances=_instances))
-            # # get Match
-            # if 'Match:' in el.text:
-            #     match = self.browser.element(
-            #         locator=self.ACTION_HEADER.format('Match'),
-            #         parent=el).text.split('Match:', 1)[1].strip()
-            #     _match = match.strip()
-
-            # create istio config instance
-            _object_type = self.browser.text(
-                self.browser.element(locator=self.OBJECT_TYPE, parent=el))
+            columns = self.browser.elements(self.ITEM_COL, parent=el)
+            _name = self.browser.element(
+                locator=self.ITEM_TEXT, parent=columns[0]).text.strip()
+            _namespace = self._item_namespace(columns[1])
+            _object_type = columns[2].text.strip()
             if str(_object_type) == IstioConfigObjectType.RULE.text or \
                     '{}: '.format(IstioConfigObjectType.ADAPTER.text) in str(_object_type) or \
                     '{}: '.format(IstioConfigObjectType.TEMPLATE.text) in str(_object_type):
@@ -1721,15 +1815,17 @@ class ListViewIstioConfig(ListViewAbstract):
 
 
 class TableViewAbstract(Widget):
-    SERVICE_DETAILS_ROOT = './/div[contains(@class, "card-pf")]'
+    SERVICE_DETAILS_ROOT = './/div[contains(@class, "container-fluid")]'
     OVERVIEW_DETAILS_ROOT = './/div[contains(@class, "row-cards-pf")]'
-    OVERVIEW_HEADER = './/h4[contains(text(), "{}")]'
-    OVERVIEW_PROPERTIES = './/div/strong[contains(text(), "{}")]/..'
-    HOSTS_PROPERTIES = './/div/strong[contains(text(), "{}")]/..//li'
-    SERVICES_TAB = '//div[@id="service-tabs"]//li//a[contains(text(), "{}")]/..'
+    OVERVIEW_HEADER = './/div[contains(@class, "container-fluid")]//h1[@data-pf-content="true"]'
+    OVERVIEW_PROPERTIES = ('.//div[contains(@class, "pf-c-card__body")]//'
+                           'h3[@data-pf-content="true" and contains(text(), "{}")]/..')
+    HOSTS_PROPERTIES = './/div/h3[contains(text(), "{}")]/..//li'
+    SERVICES_TAB = '//*[contains(@class, "pf-c-tabs__item")]//button[contains(text(), "{}")]'
     ROOT = '//[contains(@class, "tab-pane") and contains(@class, "active") and \
         contains(@class, "in")]'
-    ROWS = '//div[@id="{}"]//table[contains(@class, "table")]//tbody//tr'
+    ROWS = ('//section[@id="{}"]//table[contains(@class, "table")]'
+            '//tbody//tr/td/div[not(contains(@class, "pf-c-empty-state"))]/../..')
     COLUMN = './/td'
     ROW_BY_NAME = \
         '//div[@id="{}"]//table[contains(@class, "table")]//tbody//tr//a[text()="{}"]/../..'
@@ -1741,7 +1837,10 @@ class TableViewAbstract(Widget):
     NAME = 'Name'
     LABELS = 'Labels'
     TRAFFIC_POLICY = 'Traffic Policy'
+    NO_TRAFFIC_POLICY = 'No traffic policy defined.'
     SUBSETS = 'Subsets'
+    NO_SUBSETS = 'No subsets defined.'
+    NONE = 'None'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -1755,7 +1854,10 @@ class TableViewAbstract(Widget):
 
     def back_to_service_info(self, parent):
         # TODO find a better way after KIALI-2251
-        self.browser.click('.//a[contains(@href, "/services/")]', parent)
+        try:
+            self.browser.click('.//a[contains(@href, "/services/")]', parent)
+        except NoSuchElementException:
+            self.browser.execute_script("history.back();")
 
     def _item_sidecar(self, element):
         return not len(self.browser.elements(
@@ -1765,10 +1867,10 @@ class TableViewAbstract(Widget):
         wait_displayed(self)
         _not_valid = len(self.browser.elements(
             parent=element,
-            locator='.//*[contains(@class, "pficon-error-circle-o")]')) > 0
+            locator='.//*[contains(@style, "danger")]')) > 0
         _warning = len(self.browser.elements(
             parent=element,
-            locator='.//*[contains(@class, "pficon-warning-triangle-o")]')) > 0
+            locator='.//*[contains(@style, "warning")]')) > 0
         if _not_valid:
             return IstioConfigValidation.NOT_VALID
         elif _warning:
@@ -1777,16 +1879,15 @@ class TableViewAbstract(Widget):
             return IstioConfigValidation.VALID
 
     def _get_item_status(self, element):
-        wait_displayed(self)
         _valid = len(self.browser.elements(
             parent=element,
-            locator='.//*[contains(@class, "pficon-ok")]')) > 0
+            locator='.//*[contains(@style, "success")]')) > 0
         _not_valid = len(self.browser.elements(
             parent=element,
-            locator='.//*[contains(@class, "pficon-error-circle-o")]')) > 0
+            locator='.//*[contains(@style, "danger")]')) > 0
         _warning = len(self.browser.elements(
             parent=element,
-            locator='.//*[contains(@class, "pficon-warning-triangle-o")]')) > 0
+            locator='.//*[contains(@style, "warning")]')) > 0
         return get_validation(_valid, _not_valid, _warning)
 
     def _get_labels(self, el):
@@ -1880,7 +1981,7 @@ class TableViewWorkloads(TableViewAbstract):
 
         _items = []
         for el in self.browser.elements(locator=self.ROWS.format(
-            'service-tabs-pane-workloads'),
+            'pf-tab-section-0-service-tabs'),
                                         parent=self.ROOT):
             _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
 
@@ -1948,8 +2049,10 @@ class TableViewSourceWorkloads(TableViewAbstract):
 
 class TableViewVirtualServices(TableViewAbstract):
     VS_TEXT = 'Virtual Services'
-    VS_ROWS = '//div[@id="{}"]//table[contains(@class, "table")]'\
+    VS_ROWS = '//section[@id="{}"]//table[contains(@class, "table")]'\
         '//tbody//tr//td//a[text()="{}"]/../..'
+    VS_ROUTES = '//section[@id="{}"]//table[contains(@class, "pf-c-table")]'\
+        '//tbody//tr'
 
     def open(self):
         tab = self.browser.element(locator=self.SERVICES_TAB.format(self.VS_TEXT),
@@ -1965,7 +2068,7 @@ class TableViewVirtualServices(TableViewAbstract):
         wait_displayed(self)
 
         _row = self.browser.element(locator=self.VS_ROWS.format(
-                'service-tabs-pane-virtualservices', name),
+                'pf-tab-section-1-service-tabs', name),
                                         parent=self.ROOT)
         _columns = list(self.browser.elements(locator=self.COLUMN, parent=_row))
 
@@ -1974,22 +2077,26 @@ class TableViewVirtualServices(TableViewAbstract):
         wait_displayed(self)
 
         _name = self.browser.text(
-            locator=self.OVERVIEW_HEADER.format('VirtualService'),
-            parent=self.OVERVIEW_DETAILS_ROOT).replace('VirtualService:', '').strip()
+            locator=self.OVERVIEW_HEADER,
+            parent=self.OVERVIEW_DETAILS_ROOT).strip()
         _created_at = self.browser.text(locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
                                         parent=self.OVERVIEW_DETAILS_ROOT).replace(
-                                            self.CREATED_AT + ':', '').strip()
+                                            self.CREATED_AT, '').strip()
         _resource_version = self.browser.text(
             locator=self.OVERVIEW_PROPERTIES.format(self.RESOURCE_VERSION),
-            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.RESOURCE_VERSION + ':', '').strip()
+            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.RESOURCE_VERSION, '').strip()
         _hosts = get_texts_of_elements(self.browser.elements(
             locator=self.HOSTS_PROPERTIES.format(self.HOSTS),
             parent=self.OVERVIEW_DETAILS_ROOT))
+        _gateway_elements = self.browser.elements(
+            locator='//div[contains(@class, "pf-c-card__body")]/ul[contains(@class, "details")]/li',
+            parent=self.OVERVIEW_DETAILS_ROOT)
         _status = self._get_overview_status(self.OVERVIEW_DETAILS_ROOT)
         _weights = []
+        _gateways = []
 
-        for el in self.browser.elements(locator=self.ROWS.format(
-                'basic-tabs-pane-overview'),
+        for el in self.browser.elements(locator=self.VS_ROUTES.format(
+                'pf-tab-section-0-basic-tabs'),
                 parent=self.OVERVIEW_DETAILS_ROOT):
             _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
 
@@ -1998,6 +2105,8 @@ class TableViewVirtualServices(TableViewAbstract):
             _subset = _columns[2].text.strip()
             _port = _columns[3].text.strip().replace('-', '')
             _weight = _columns[4].text.strip().replace('-', '')
+            if _host == "Host" and _port == "Port":
+                continue
 
             _weights.append(VirtualServiceWeight(host=_host,
                                                  status=_weight_status
@@ -2005,6 +2114,17 @@ class TableViewVirtualServices(TableViewAbstract):
                                                  subset=_subset if _subset != '-' else None,
                                                  port=int(_port) if _port != '' else None,
                                                  weight=int(_weight) if _weight != '' else None))
+
+        for el in _gateway_elements:
+            try:
+                _link = self.browser.element(
+                    locator='/a', parent=el)
+                _gateways.append(
+                    VirtualServiceGateway(
+                        text=el.text, link=self.browser.get_attribute('href', _link)))
+            except NoSuchElementException:
+                _gateways.append(VirtualServiceGateway(text=el.text))
+
         # back to service details
         self.back_to_service_info(parent=self.OVERVIEW_DETAILS_ROOT)
 
@@ -2014,7 +2134,8 @@ class TableViewVirtualServices(TableViewAbstract):
                 created_at=parse_from_ui(_created_at),
                 resource_version=_resource_version,
                 hosts=_hosts,
-                weights=_weights)
+                weights=_weights,
+                gateways=_gateways)
 
     @property
     def number(self):
@@ -2028,7 +2149,7 @@ class TableViewVirtualServices(TableViewAbstract):
 
         _items = []
         for el in self.browser.elements(locator=self.ROWS.format(
-            'service-tabs-pane-virtualservices'),
+            'pf-tab-section-1-service-tabs'),
                                         parent=self.ROOT):
             _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
 
@@ -2047,7 +2168,7 @@ class TableViewVirtualServices(TableViewAbstract):
 
 
 class TableViewDestinationRules(TableViewAbstract):
-    DR_ROWS = '//div[@id="{}"]//table[contains(@class, "table")]'\
+    DR_ROWS = '//section[@id="{}"]//table[contains(@class, "table")]'\
         '//tbody//tr//td//a[text()="{}"]/../..'
     DR_TEXT = 'Destination Rules'
 
@@ -2064,7 +2185,7 @@ class TableViewDestinationRules(TableViewAbstract):
         self.open()
 
         _row = self.browser.element(locator=self.DR_ROWS.format(
-                'service-tabs-pane-destinationrules', name),
+                'pf-tab-section-2-service-tabs', name),
                                         parent=self.ROOT)
         _columns = list(self.browser.elements(locator=self.COLUMN, parent=_row))
 
@@ -2077,24 +2198,24 @@ class TableViewDestinationRules(TableViewAbstract):
             parent=self.OVERVIEW_DETAILS_ROOT).replace('DestinationRule:', '').strip()
         _created_at = self.browser.text(locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
                                         parent=self.OVERVIEW_DETAILS_ROOT).replace(
-                                            self.CREATED_AT + ':', '').strip()
+                                            self.CREATED_AT, '').strip()
         _resource_version = self.browser.text(
             locator=self.OVERVIEW_PROPERTIES.format(self.RESOURCE_VERSION),
-            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.RESOURCE_VERSION + ':', '').strip()
+            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.RESOURCE_VERSION, '').strip()
         _host = self.browser.text(
             locator=self.OVERVIEW_PROPERTIES.format(self.HOST),
-            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.HOST + ':', '').strip()
+            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.HOST, '').strip()
         _traffic_policy = self.browser.text_or_default(
-            locator=self.OVERVIEW_PROPERTIES.format(self.TRAFFIC_POLICY),
-            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.TRAFFIC_POLICY, '').strip()
-        _subsets = self.browser.text_or_default(
-            locator=self.OVERVIEW_PROPERTIES.format(self.SUBSETS),
+            locator='//div[@id="traffic_policy"]',
             parent=self.OVERVIEW_DETAILS_ROOT).\
-            replace(self.SUBSETS, '').\
-            replace(' :', '').\
-            replace(self.NAME, '').\
-            replace(self.LABELS, '').\
-            replace(self.TRAFFIC_POLICY, '').strip()
+            replace(self.NO_TRAFFIC_POLICY, self.NONE).strip()
+        _subsets = self.browser.text_or_default(
+            locator=('.//div[contains(@class, "pf-c-card__body")]//'
+                     'h2[@data-pf-content="true" and contains(text(), "{}")]/..//tbody').format(
+                        self.SUBSETS),
+            parent=self.OVERVIEW_DETAILS_ROOT).\
+            replace(self.NO_SUBSETS, self.NONE).\
+            replace(' :', '').strip()
 
         # back to service details
         self.back_to_service_info(parent=self.OVERVIEW_DETAILS_ROOT)
@@ -2106,8 +2227,8 @@ class TableViewDestinationRules(TableViewAbstract):
                 created_at=parse_from_ui(_created_at),
                 resource_version=_resource_version,
                 traffic_policy=to_linear_string(
-                    _traffic_policy if _traffic_policy != 'None' else ''),
-                subsets=to_linear_string(_subsets if _subsets != 'None' else ''))
+                    _traffic_policy if _traffic_policy != self.NONE else ''),
+                subsets=to_linear_string(_subsets if _subsets != self.NONE else ''))
 
     @property
     def number(self):
@@ -2121,7 +2242,7 @@ class TableViewDestinationRules(TableViewAbstract):
 
         _items = []
         for el in self.browser.elements(locator=self.ROWS.format(
-                'service-tabs-pane-destinationrules'),
+                'pf-tab-section-2-service-tabs'),
                                         parent=self.ROOT):
             _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
 
@@ -2139,8 +2260,8 @@ class TableViewDestinationRules(TableViewAbstract):
                 created_at=parse_from_ui(_created_at),
                 resource_version=_resource_version,
                 traffic_policy=to_linear_string(
-                    _traffic_policy if _traffic_policy != 'None' else ''),
-                subsets=to_linear_string(_subsets if _subsets != 'None' else ''))
+                    _traffic_policy if _traffic_policy != self.NONE else ''),
+                subsets=to_linear_string(_subsets if _subsets != self.NONE else ''))
             # append this item to the final list
             _items.append(_destination_rule)
         return _items
@@ -2244,8 +2365,8 @@ class TabViewAbstract(Widget):
         Abstract base class for all Tabs besides the Info tab.
         After opening the tab and reading the data, it it can back to Info tab.
     """
-    ROOT = '//div[@id="basic-tabs"]'
-    INFO_TAB = '//a[@id="basic-tabs-tab-info"]'
+    ROOT = '//div[contains(@class, "pf-c-tabs")]'
+    INFO_TAB = '//button[@id="pf-tab-0-basic-tabs"]'
 
     def __init__(self, parent, tab_name=None, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -2269,8 +2390,8 @@ class TabViewAbstract(Widget):
 
 
 class TrafficView(TabViewAbstract):
-    TRAFFIC_TAB = '//a[@id="basic-tabs-tab-traffic"]'
-    TRAFFIC_ROOT = '//div[@id="basic-tabs-pane-traffic"]'
+    TRAFFIC_TAB = '//button[text()="Traffic"]'
+    TRAFFIC_ROOT = '//section[@id="pf-tab-section-1-basic-tabs"]'
     ROWS = '//span[contains(@class, "table-grid-pf-col")]'\
         '//span[contains(@class, "pficon-service")]/../a'
 
@@ -2301,15 +2422,14 @@ class TrafficView(TabViewAbstract):
 
 
 class MetricsView(TabViewAbstract):
-    METRICS_TAB = '//ul[contains(@class, "nav-tabs-pf")]//li//a[contains(text(), "{}")]'
-    DROP_DOWN = '//div[contains(@class, "dropdown")]/'\
-        'button[@id="{}" and contains(@class, "dropdown-toggle")]/..'
+    METRICS_TAB = '//ul[contains(@class, "pf-c-tabs__list")]//li//button[contains(text(), "{}")]'
+    DROP_DOWN = '//*[contains(@class, "pf-c-select")]/*[contains(@aria-labelledby, "{}")]/..'
 
     filter = CheckBoxFilter(filter_name="Metrics Settings")
     destination = DropDown(locator=DROP_DOWN.format('metrics_filter_reporter'))
     duration = DropDown(locator=DROP_DOWN.format('metrics_filter_interval_duration'))
     interval = DropDown(locator=DROP_DOWN.format('metrics-refresh'))
-    refresh = Button(locator='.//button//*[contains(@class, "fa-refresh")]')
+    refresh = Button(locator='.//button[@id="metrics-refresh_btn"]')
 
     def open(self):
         tab = self.browser.element(locator=self.METRICS_TAB.format(self.tab_name),
@@ -2323,3 +2443,17 @@ class MetricsView(TabViewAbstract):
                 pass
         wait_displayed(self)
         wait_to_spinner_disappear(self.browser)
+
+
+class TracesView(TabViewAbstract):
+    TRACES_TAB = '//button[contains(text(), "Traces")]'
+    traces = Traces()
+
+    def open(self):
+        tab = self.browser.element(locator=self.TRACES_TAB,
+                                   parent=self.ROOT)
+        try:
+            self.browser.click(tab)
+        finally:
+            self.browser.click(tab)
+        wait_displayed(self)

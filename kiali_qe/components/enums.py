@@ -29,27 +29,11 @@ class UserMenuEnum(StringEnum):
 class ApplicationVersionEnum(StringEnum):
     KIALI_UI = ("Kiali-ui")
     KIALI_CORE = ("Kiali")
-    ISTIO = ("Istio")
+    ISTIO = ("OpenShift Service Mesh")
     PROMETHEUS = ("Prometheus")
     KUBERNETES = ("Kubernetes")
-    JAEGER = ("JaegerURL")
-    GRAFANA = ("GrafanaURL")
-
-
-class MaistraEnum(StringEnum):
-    KIALI_UI = ("Kiali-ui")
-    KIALI_CORE = ("Kiali")
-    MAISTRA = ("Maistra")
-    PROMETHEUS = ("Prometheus")
-    KUBERNETES = ("Kubernetes")
-    JAEGER = ("JaegerURL")
-    GRAFANA = ("GrafanaURL")
-
-
-class PaginationPerPage(Enum):
-    FIVE = 5
-    TEN = 10
-    FIFTEEN = 15
+    GRAFANA = ("Grafana URL")
+    JAEGER = ("Jaeger URL")
 
 
 class TimeIntervalUIText(StringEnum):
@@ -96,6 +80,7 @@ class GraphType(StringEnum):
 
 
 class GraphPageDisplayFilter(StringEnum):
+    COMPRESS_HIDDEN = ('Compress Hidden')
     NODE_LABELS = ('Node Names')
     SERVICE_NODES = ('Service Nodes')
     TRAFFIC_ANIMATION = ('Traffic Animation')
@@ -123,10 +108,10 @@ class ApplicationsPageFilter(StringEnum):
 
 
 class ApplicationsPageSort(StringEnum):
+    APP_NAME = ('Name')
     NAMESPACE = ('Namespace')
-    APP_NAME = ('App Name')
-    ISTIO_SIDECAR = ('IstioSidecar')
     HEALTH = ('Health')
+    DETAILS = ('Details')
 
 
 class OverviewPageFilter(StringEnum):
@@ -157,13 +142,12 @@ class WorkloadsPageFilter(StringEnum):
 
 
 class WorkloadsPageSort(StringEnum):
+    WORKLOAD_NAME = ('Name')
     NAMESPACE = ('Namespace')
-    WORKLOAD_NAME = ('Workload Name')
-    WORKLOAD_TYPE = ('Workload Type')
-    ISTIO_SIDECAR = ('IstioSidecar')
-    APP_LABEL = ('App Label')
-    VERSION_LABEL = ('Version Label')
+    WORKLOAD_TYPE = ('Type')
     HEALTH = ('Health')
+    DETAILS = ('Details')
+    LABEL_VALIDATION = ('Label Validation')
 
 
 class WorkloadType(StringEnum):
@@ -200,10 +184,11 @@ class ServicesPageFilter(StringEnum):
 
 
 class ServicesPageSort(StringEnum):
+    SERVICE_NAME = ('Name')
     NAMESPACE = ('Namespace')
-    SERVICE_NAME = ('Service Name')
-    ISTIO_SIDECAR = ('Istio Sidecar')
     HEALTH = ('Health')
+    DETAILS = ('Details')
+    CONFIGURATION = ('Configuration')
 
 
 class ServicesPageRateInterval(StringEnum):
@@ -220,10 +205,10 @@ class IstioConfigPageFilter(StringEnum):
 
 
 class IstioConfigPageSort(StringEnum):
+    ISTIO_NAME = ('Name')
     NAMESPACE = ('Namespace')
-    ISTIO_TYPE = ('Istio Type')
-    ISTIO_NAME = ('Istio Name')
-    CONFIG = ('Config')
+    ISTIO_TYPE = ('Type')
+    CONFIGURATION = ('Configuration')
 
 
 class IstioConfigObjectType(StringEnum):
@@ -239,6 +224,8 @@ class IstioConfigObjectType(StringEnum):
     POLICY = ('Policy')
     MESH_POLICY = ('MeshPolicy')
     CLUSTER_RBAC_CONFIG = ('ClusterRbacConfig')
+    SERVICE_MESH_POLICY = ('ServiceMeshPolicy')
+    SERVICE_MESH_RBAC_CONFIG = ('ServiceMeshRbacConfig')
     RBAC_CONFIG = ('RbacConfig')
     SERVICE_ROLE = ('ServiceRole')
     SERVICE_ROLE_BINDING = ('ServiceRoleBinding')
@@ -320,10 +307,3 @@ class RoutingWizardLoadBalancer(StringEnum):
     LEAST_CONN = ('LEAST_CONN')
     RANDOM = ('RANDOM')
     PASSTHROUGH = ('PASSTHROUGH')
-
-
-class BreadCrumbObjectType(StringEnum):
-    APPLICATIONS = ('App')
-    WORKLOADS = ('Workload')
-    SERVICES = ('Service')
-    ISTIO_CONFIG = ('Istio Object')

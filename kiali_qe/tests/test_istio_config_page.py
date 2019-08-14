@@ -6,17 +6,6 @@ BOOKINFO_2 = 'bookinfo2'
 ISTIO_SYSTEM = 'istio-system'
 
 
-@pytest.mark.p_ro_namespace
-@pytest.mark.p_ro_group4
-def test_pagination_feature(kiali_client, openshift_client, browser):
-    tests = IstioConfigPageTest(
-        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    # use only istio-system namespace which is not affected by other CRUD tests which are using
-    # bookinfo
-    tests.apply_namespaces(['istio-system'])
-    tests.assert_pagination_feature()
-
-
 @pytest.mark.p_ro_top_safe
 @pytest.mark.p_ro_group4
 def test_namespaces(kiali_client, openshift_client, browser):
@@ -63,7 +52,7 @@ def test_all_configs_namespace(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(namespaces=[ISTIO_SYSTEM],
-                           sort_options=[IstioConfigPageSort.CONFIG, True])
+                           sort_options=[IstioConfigPageSort.CONFIGURATION, True])
 
 
 @pytest.mark.p_ro_namespace

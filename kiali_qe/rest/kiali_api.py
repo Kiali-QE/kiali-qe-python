@@ -44,8 +44,8 @@ ISTIO_CONFIG_TYPES = {'DestinationRule': 'destinationrules',
                       'QuotaSpecBinding': 'quotaspecbindings',
                       'QuotaSpec': 'quotaspecs',
                       'Policy': 'policies',
-                      'MeshPolicy': 'meshpolicies',
-                      'ClusterRbacConfig': 'clusterrbacconfigs',
+                      'ServiceMeshPolicy': 'servicemeshpolicies',
+                      'ServiceMeshRbacConfig': 'servicemeshrbacconfigs',
                       'RbacConfig': 'rbacconfigs',
                       'ServiceRole': 'serviceroles',
                       'ServiceRoleBinding': 'servicerolebindings'}
@@ -311,15 +311,15 @@ class KialiExtendedClient(KialiClient):
                                                                     'policies',
                                                                     _policy['metadata']['name'])))
 
-            # update MeshPolicy
-            if len(_data['meshPolicies']) > 0:
-                for _policy in _data['meshPolicies']:
+            # update ServiceMeshPolicy
+            if len(_data['serviceMeshPolicies']) > 0:
+                for _policy in _data['serviceMeshPolicies']:
                     items.append(IstioConfig(
                         name=_policy['metadata']['name'],
                         namespace=_namespace,
-                        object_type=OBJECT_TYPE.MESH_POLICY.text,
+                        object_type=OBJECT_TYPE.SERVICE_MESH_POLICY.text,
                         validation=self.get_istio_config_validation(_namespace,
-                                                                    'meshpolicies',
+                                                                    'servicemeshpolicies',
                                                                     _policy['metadata']['name'])))
 
             # update Gateway
@@ -344,15 +344,15 @@ class KialiExtendedClient(KialiClient):
                                                                     'serviceentries',
                                                                     _policy['metadata']['name'])))
 
-            # update clusterRbacConfigs
-            if len(_data['clusterRbacConfigs']) > 0:
-                for _policy in _data['clusterRbacConfigs']:
+            # update serviceMeshRbacConfigs
+            if len(_data['serviceMeshRbacConfigs']) > 0:
+                for _policy in _data['serviceMeshRbacConfigs']:
                     items.append(IstioConfig(
                         name=_policy['metadata']['name'],
                         namespace=_namespace,
-                        object_type=OBJECT_TYPE.CLUSTER_RBAC_CONFIG.text,
+                        object_type=OBJECT_TYPE.SERVICE_MESH_RBAC_CONFIG.text,
                         validation=self.get_istio_config_validation(_namespace,
-                                                                    'clusterrbacconfigs',
+                                                                    'servicemeshrbacconfigs',
                                                                     _policy['metadata']['name'])))
 
             # update rbacConfigs
@@ -459,13 +459,13 @@ class KialiExtendedClient(KialiClient):
             if _data['policy']:
                 config_data = _data['policy']
 
-            # get meshPolicy
-            if _data['meshPolicy']:
-                config_data = _data['meshPolicy']
+            # get serviceMeshPolicy
+            if _data['serviceMeshPolicy']:
+                config_data = _data['serviceMeshPolicy']
 
-            # get clusterRbacConfig
-            if _data['clusterRbacConfig']:
-                config_data = _data['clusterRbacConfig']
+            # get serviceMeshRbacConfig
+            if _data['serviceMeshRbacConfig']:
+                config_data = _data['serviceMeshRbacConfig']
 
             # get rbacConfig
             if _data['rbacConfig']:

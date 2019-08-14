@@ -4,7 +4,7 @@ metadata:
   name: bookinfo-service-entry-auth
 spec:
   hosts:
-  - "*"
+  - www.googleapis.com
   ports:
   - number: 443
     name: https

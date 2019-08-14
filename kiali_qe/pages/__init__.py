@@ -3,6 +3,8 @@ from widgetastic.widget import View, Text
 from kiali_qe.components import (
     Button,
     DropDown,
+    TypeDropDown,
+    ItemDropDown,
     Filter,
     ListViewIstioConfig,
     ListViewServices,
@@ -12,11 +14,13 @@ from kiali_qe.components import (
     Login,
     MainMenu,
     Notifications,
-    Pagination,
     SortDropDown,
+    SortBar,
     CheckBoxFilter,
     NamespaceFilter,
-    Actions)
+    Actions,
+    Traces)
+
 from kiali_qe.components.enums import (
     MainMenuEnum as MENU,
     UserMenuEnum as USER_MENU)
@@ -24,7 +28,8 @@ from kiali_qe.utils.log import logger
 from kiali_qe.utils.conf import env as cfg
 from wait_for import wait_for
 
-XP_DROP_DOWN = '//*[contains(@class, "dropdown")]/*[@id="{}"]/..'
+XP_DROP_DOWN = '//*[contains(@class, "pf-c-select")]/*[contains(@aria-labelledby, "{}")]'
+SORT_DROP_DOWN = '//*[contains(@class, "pf-l-toolbar__item")]/*[contains(@aria-label, "{}")]/..'
 XP_BUTTON_SWITCH = '//*[contains(@class, "bootstrap-switch")]//*[text()="{}"]/../..'
 REFRESH_BUTTON = './/button//*[contains(@class, "fa-refresh")]'
 
@@ -100,10 +105,10 @@ class GraphPage(RootPage):
     PAGE_MENU = MENU.GRAPH.text
 
     namespace = NamespaceFilter()
-    duration = DropDown(locator=XP_DROP_DOWN.format('graph_filter_duration'))
-    interval = DropDown(locator=XP_DROP_DOWN.format('graph_refresh_dropdown'))
-    edge_labels = DropDown(locator=XP_DROP_DOWN.format('graph_filter_edges'))
-    type = DropDown(locator=XP_DROP_DOWN.format('graph_filter_view_type'))
+    duration = ItemDropDown(locator=XP_DROP_DOWN.format('graph_filter_duration'))
+    interval = ItemDropDown(locator=XP_DROP_DOWN.format('graph_refresh_dropdown'))
+    edge_labels = DropDown(locator=XP_DROP_DOWN.format('graph_filter_edge_labels'))
+    type = ItemDropDown(locator=XP_DROP_DOWN.format('graph_filter_view_type'))
     # TODO Layout
     filter = CheckBoxFilter("Display")
     refresh = Button(locator=REFRESH_BUTTON)
@@ -114,8 +119,8 @@ class OverviewPage(RootPage):
     PAGE_MENU = MENU.OVERVIEW.text
 
     filter = Filter()
-    sort = SortDropDown(locator=XP_DROP_DOWN.format('sortTypeMenu'))
-    type = DropDown(locator=XP_DROP_DOWN.format('overview-type'))
+    sort = SortDropDown(locator=SORT_DROP_DOWN.format('Sort_Selector'))
+    type = TypeDropDown(locator=XP_DROP_DOWN.format('overview-type'))
     duration = DropDown(locator=XP_DROP_DOWN.format('overvoew-duration'))
     interval = DropDown(locator=XP_DROP_DOWN.format('overview-refresh'))
     refresh = Button(locator=REFRESH_BUTTON)
@@ -127,10 +132,9 @@ class ApplicationsPage(RootPage):
 
     namespace = NamespaceFilter()
     filter = Filter()
-    sort = SortDropDown(locator=XP_DROP_DOWN.format('sortTypeMenu'))
+    sort = SortBar()
     refresh = Button(locator=REFRESH_BUTTON)
     content = ListViewApplications()
-    pagination = Pagination()
 
 
 class WorkloadsPage(RootPage):
@@ -138,10 +142,9 @@ class WorkloadsPage(RootPage):
 
     namespace = NamespaceFilter()
     filter = Filter()
-    sort = SortDropDown(locator=XP_DROP_DOWN.format('sortTypeMenu'))
+    sort = SortBar()
     refresh = Button(locator=REFRESH_BUTTON)
     content = ListViewWorkloads()
-    pagination = Pagination()
 
 
 class ServicesPage(RootPage):
@@ -149,12 +152,11 @@ class ServicesPage(RootPage):
 
     namespace = NamespaceFilter()
     filter = Filter()
-    sort = SortDropDown(locator=XP_DROP_DOWN.format('sortTypeMenu'))
+    sort = SortBar()
     rate_interval = DropDown(locator=XP_DROP_DOWN.format('rateIntervalDropDown'))
     refresh = Button(locator=REFRESH_BUTTON)
     actions = Actions()
     content = ListViewServices()
-    pagination = Pagination()
 
 
 class IstioConfigPage(RootPage):
@@ -162,8 +164,14 @@ class IstioConfigPage(RootPage):
 
     namespace = NamespaceFilter()
     filter = Filter()
-    sort = SortDropDown(locator=XP_DROP_DOWN.format('sortTypeMenu'))
-    actions = DropDown(locator=XP_DROP_DOWN.format('actions'))
+    sort = SortBar()
+    actions = Actions()
     refresh = Button(locator=REFRESH_BUTTON)
     content = ListViewIstioConfig()
-    pagination = Pagination()
+
+
+class DistributedTracingPage(RootPage):
+    PAGE_MENU = MENU.DISTRIBUTED_TRACING.text
+
+    namespace = NamespaceFilter()
+    traces = Traces()
