@@ -28,7 +28,7 @@ CONFIG_KEPT_FILTER = []
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_group10
+@pytest.mark.p_ro_group3
 def test_app_filters_kept(kiali_client, openshift_client, browser):
     app_filters = [
         {'name': ApplicationsPageFilter.ISTIO_SIDECAR.text, 'value': FILTER_PRESENT},
@@ -58,7 +58,7 @@ def test_app_filters_kept(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_group10
+@pytest.mark.p_ro_group3
 def test_workloads_filters_kept(kiali_client, openshift_client, browser):
     wr_filters = [
         {'name': WorkloadsPageFilter.ISTIO_SIDECAR.text, 'value': FILTER_PRESENT},
@@ -91,7 +91,7 @@ def test_workloads_filters_kept(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_group10
+@pytest.mark.p_ro_group3
 def test_services_filters_kept(kiali_client, openshift_client, browser):
     services_filters = [
         {'name': ServicesPageFilter.ISTIO_SIDECAR.text, 'value': FILTER_PRESENT},
@@ -121,7 +121,7 @@ def test_services_filters_kept(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_group10
+@pytest.mark.p_ro_group8
 def test_config_filters_kept(kiali_client, openshift_client, browser):
     config_filters = [
         {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
