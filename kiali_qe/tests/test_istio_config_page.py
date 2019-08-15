@@ -7,7 +7,7 @@ ISTIO_SYSTEM = 'istio-system'
 
 
 @pytest.mark.p_ro_namespace
-@pytest.mark.p_group6
+@pytest.mark.p_ro_group4
 def test_pagination_feature(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -18,7 +18,7 @@ def test_pagination_feature(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_ro_top_safe
-@pytest.mark.p_group10
+@pytest.mark.p_ro_group4
 def test_namespaces(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -26,7 +26,7 @@ def test_namespaces(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_group10
+@pytest.mark.p_ro_group4
 def test_filter_options(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -34,16 +34,15 @@ def test_filter_options(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_group10
+@pytest.mark.p_ro_group4
 def test_sort_options(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_sort_options()
 
 
-# p_group_last is used for tests which must be run at the end when all other test are done
 @pytest.mark.p_ro_top
-@pytest.mark.p_group_last
+@pytest.mark.p_ro_group4
 def test_filter_feature_random(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -51,7 +50,7 @@ def test_filter_feature_random(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_ro_top
-@pytest.mark.p_group_last
+@pytest.mark.p_ro_group6
 def test_all_configs(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -59,7 +58,7 @@ def test_all_configs(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_ro_top
-@pytest.mark.p_group_last
+@pytest.mark.p_ro_group4
 def test_all_configs_namespace(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -68,7 +67,7 @@ def test_all_configs_namespace(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_ro_namespace
-@pytest.mark.p_group5
+@pytest.mark.p_ro_group4
 def test_config_details_random(kiali_client, openshift_client, browser, pick_namespace):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
