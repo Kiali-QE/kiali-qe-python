@@ -6,7 +6,7 @@ from kiali_qe.utils.conf import env as cfg
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_group8
+@pytest.mark.p_ro_group5
 @pytest.mark.skipif(cfg.kiali.auth_type == "oauth", reason="does not run on oauth")
 def test_login(browser):
     # load root page
@@ -22,7 +22,7 @@ def test_login(browser):
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_group8
+@pytest.mark.p_ro_group5
 @pytest.mark.skipif(cfg.kiali.auth_type == "oauth", reason="does not run on oauth")
 def test_invalid_login(browser):
     # load root page

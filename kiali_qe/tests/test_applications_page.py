@@ -8,7 +8,7 @@ ISTIO_SYSTEM = 'istio-system'
 
 
 @pytest.mark.p_ro_namespace
-@pytest.mark.p_group9
+@pytest.mark.p_ro_group5
 def test_pagination_feature(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -18,7 +18,7 @@ def test_pagination_feature(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_ro_top_safe
-@pytest.mark.p_group4
+@pytest.mark.p_ro_group5
 def test_namespaces(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -26,7 +26,7 @@ def test_namespaces(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_group4
+@pytest.mark.p_ro_group1
 def test_filter_options(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -34,7 +34,7 @@ def test_filter_options(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_group4
+@pytest.mark.p_ro_group1
 def test_sort_options(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -44,7 +44,7 @@ def test_sort_options(kiali_client, openshift_client, browser):
 # putting to p_ro_top group although right now there are no tests changing health of app so
 # it could be in p_ro_top_safe
 @pytest.mark.p_ro_top
-@pytest.mark.p_group4
+@pytest.mark.p_ro_group1
 def test_all_applications(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -52,7 +52,7 @@ def test_all_applications(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_ro_top
-@pytest.mark.p_group4
+@pytest.mark.p_ro_group1
 def test_all_applications_namespace(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -63,7 +63,7 @@ def test_all_applications_namespace(kiali_client, openshift_client, browser):
 # putting to p_ro_top group although right now there are no tests changing health of app so
 # it could be in p_ro_top_safe
 @pytest.mark.p_ro_top
-@pytest.mark.p_group4
+@pytest.mark.p_ro_group1
 def test_application_details_random(kiali_client, openshift_client, browser, pick_namespace):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)

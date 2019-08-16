@@ -13,7 +13,7 @@ from kiali_qe.utils.log import logger
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_group9
+@pytest.mark.p_ro_group3
 def test_duration(browser):
     # get page instance
     page = GraphPage(browser)
@@ -27,7 +27,7 @@ def test_duration(browser):
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_group9
+@pytest.mark.p_ro_group3
 def test_refresh_interval(browser):
     # get page instance
     page = GraphPage(browser)
@@ -41,7 +41,7 @@ def test_refresh_interval(browser):
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_group9
+@pytest.mark.p_ro_group3
 def test_type(browser):
     # get page instance
     page = GraphPage(browser)
@@ -54,7 +54,7 @@ def test_type(browser):
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_group9
+@pytest.mark.p_ro_group3
 def test_filter(browser):
     # get page instance
     page = GraphPage(browser)

@@ -11,7 +11,7 @@ BOOKINFO_2 = 'bookinfo2'
 
 
 @pytest.mark.p_ro_namespace
-@pytest.mark.p_group5
+@pytest.mark.p_crud_group6
 def test_weighted_routing_single(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -32,7 +32,7 @@ def test_weighted_routing_single(kiali_client, openshift_client, browser, pick_n
 
 
 @pytest.mark.p_ro_namespace
-@pytest.mark.p_group5
+@pytest.mark.p_crud_group6
 def test_matching_routing_multi(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -53,7 +53,7 @@ def test_matching_routing_multi(kiali_client, openshift_client, browser, pick_na
 
 
 @pytest.mark.p_ro_namespace
-@pytest.mark.p_group5
+@pytest.mark.p_crud_group6
 def test_suspend_traffic_multi(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)

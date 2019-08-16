@@ -42,7 +42,7 @@ SERVICE_ROLE_BINDING_BROKEN = 'service-role-binding-broken.yaml'
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_group1
+@pytest.mark.p_crud_group1
 def test_destination_rule(kiali_client, openshift_client, browser):
     destination_rule = get_yaml(istio_objects_path.strpath, DEST_RULE)
     destination_rule_dict = get_dict(istio_objects_path.strpath, DEST_RULE)
@@ -66,7 +66,7 @@ def test_destination_rule(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_group1
+@pytest.mark.p_crud_group1
 def test_destination_rule_broken(kiali_client, openshift_client, browser):
     destination_rule_broken = get_yaml(istio_objects_path.strpath, DEST_RULE_BROKEN)
     destination_rule_broken_dict = get_dict(istio_objects_path.strpath, DEST_RULE_BROKEN)
@@ -92,7 +92,7 @@ def test_destination_rule_broken(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_group2
+@pytest.mark.p_crud_group2
 def test_virtual_service(kiali_client, openshift_client, browser):
     virtual_service = get_yaml(istio_objects_path.strpath, VIRTUAL_SERVICE)
     virtual_service_dict = get_dict(istio_objects_path.strpath, VIRTUAL_SERVICE)
@@ -118,7 +118,7 @@ def test_virtual_service(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_group2
+@pytest.mark.p_crud_group2
 def test_virtual_service_broken(kiali_client, openshift_client, browser):
     virtual_service_broken = get_yaml(istio_objects_path.strpath, VIRTUAL_SERVICE_BROKEN)
     virtual_service_broken_dict = get_dict(istio_objects_path.strpath, VIRTUAL_SERVICE_BROKEN)
@@ -148,7 +148,7 @@ def test_virtual_service_broken(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_group2
+@pytest.mark.p_crud_group2
 def test_virtual_service_broken_weight(kiali_client, openshift_client, browser):
     virtual_service_broken = get_yaml(istio_objects_path.strpath,
                                       VIRTUAL_SERVICE_BROKEN_WEIGHT)
@@ -180,7 +180,7 @@ def test_virtual_service_broken_weight(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_group3
+@pytest.mark.p_crud_group3
 def test_virtual_service_broken_weight_text(kiali_client, openshift_client, browser):
     virtual_service_broken = get_yaml(istio_objects_path.strpath,
                                       VIRTUAL_SERVICE_BROKEN_WEIGHT_TEXT)
@@ -213,7 +213,7 @@ def test_virtual_service_broken_weight_text(kiali_client, openshift_client, brow
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_group3
+@pytest.mark.p_crud_group3
 def test_quota_spec(kiali_client, openshift_client, browser):
     quota_spec = get_yaml(istio_objects_path.strpath, QUOTA_SPEC)
     quota_spec_dict = get_dict(istio_objects_path.strpath, QUOTA_SPEC)
@@ -235,7 +235,7 @@ def test_quota_spec(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_group3
+@pytest.mark.p_crud_group3
 def test_quota_spec_binding(kiali_client, openshift_client, browser):
     quota_spec_binding = get_yaml(istio_objects_path.strpath, QUOTA_SPEC_BINDING)
     quota_spec_binding_dict = get_dict(istio_objects_path.strpath, QUOTA_SPEC_BINDING)
@@ -257,7 +257,7 @@ def test_quota_spec_binding(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_group3
+@pytest.mark.p_crud_group3
 def test_gateway(kiali_client, openshift_client, browser, pick_namespace):
     gateway = get_yaml(istio_objects_path.strpath, GATEWAY)
     gateway_dict = get_dict(istio_objects_path.strpath, GATEWAY)
@@ -280,7 +280,7 @@ def test_gateway(kiali_client, openshift_client, browser, pick_namespace):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_group1
+@pytest.mark.p_crud_group1
 def test_service_entry(kiali_client, openshift_client, browser):
     yaml = get_yaml(istio_objects_path.strpath, SERVICE_ENTRY)
     _dict = get_dict(istio_objects_path.strpath, SERVICE_ENTRY)
@@ -302,11 +302,10 @@ def test_service_entry(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_group6
+@pytest.mark.p_crud_group4
 def test_cluster_rbac_config(kiali_client, openshift_client, browser):
     yaml = get_yaml(istio_objects_path.strpath, CLUSTER_RBAC_CONFIG)
     _dict = get_dict(istio_objects_path.strpath, CLUSTER_RBAC_CONFIG)
-
     _istio_config_test(kiali_client, openshift_client, browser,
                        _dict,
                        yaml,
@@ -324,7 +323,7 @@ def test_cluster_rbac_config(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_group6
+@pytest.mark.p_crud_group4
 def test_rbac_config(kiali_client, openshift_client, browser):
     yaml = get_yaml(istio_objects_path.strpath, RBAC_CONFIG)
     _dict = get_dict(istio_objects_path.strpath, RBAC_CONFIG)
@@ -346,7 +345,7 @@ def test_rbac_config(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_group8
+@pytest.mark.p_crud_group5
 def test_service_role(kiali_client, openshift_client, browser):
     yaml = get_yaml(istio_objects_path.strpath, SERVICE_ROLE)
     _dict = get_dict(istio_objects_path.strpath, SERVICE_ROLE)
@@ -368,7 +367,7 @@ def test_service_role(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_group8
+@pytest.mark.p_crud_group5
 def test_service_role_broken(kiali_client, openshift_client, browser):
     yaml = get_yaml(istio_objects_path.strpath, SERVICE_ROLE_BROKEN)
     _dict = get_dict(istio_objects_path.strpath, SERVICE_ROLE_BROKEN)
@@ -392,7 +391,7 @@ def test_service_role_broken(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_group8
+@pytest.mark.p_crud_group5
 def test_service_role_binding(kiali_client, openshift_client, browser):
     _role_yaml = get_yaml(istio_objects_path.strpath, SERVICE_ROLE)
     _role_dict = get_dict(istio_objects_path.strpath, SERVICE_ROLE)
@@ -426,7 +425,7 @@ def test_service_role_binding(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_group8
+@pytest.mark.p_crud_group5
 def test_service_role_binding_broken(kiali_client, openshift_client, browser):
     _role_yaml = get_yaml(istio_objects_path.strpath, SERVICE_ROLE)
     _role_dict = get_dict(istio_objects_path.strpath, SERVICE_ROLE)
