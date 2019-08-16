@@ -7,7 +7,7 @@ from kiali_qe.utils.log import logger
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_group10
+@pytest.mark.p_ro_group6
 def test_about(browser, kiali_client):
     # load root page
     page = RootPage(browser)
@@ -69,7 +69,7 @@ def _get_version(versions, key):
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_group10
+@pytest.mark.p_ro_group6
 def test_help_menu(browser):
     # load root page
     page = RootPage(browser)

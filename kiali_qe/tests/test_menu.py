@@ -7,7 +7,7 @@ from kiali_qe.utils.log import logger
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_group9
+@pytest.mark.p_ro_group5
 def test_menu(browser, kiali_client):
     # load root page
     page = RootPage(browser)
@@ -31,7 +31,7 @@ def test_menu(browser, kiali_client):
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_group9
+@pytest.mark.p_ro_group5
 def test_toggle(browser):
     # load root page
     page = RootPage(browser)
@@ -42,7 +42,7 @@ def test_toggle(browser):
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_group9
+@pytest.mark.p_ro_group5
 def test_help_menu(browser):
     # load root page
     page = RootPage(browser)
@@ -54,7 +54,7 @@ def test_help_menu(browser):
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_group9
+@pytest.mark.p_ro_group5
 def test_user_menu(browser):
     # load root page
     page = RootPage(browser)
