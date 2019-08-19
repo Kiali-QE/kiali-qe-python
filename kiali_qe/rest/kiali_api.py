@@ -7,6 +7,7 @@ from kiali_qe.components.enums import (
     IstioConfigObjectType as OBJECT_TYPE,
     IstioConfigValidation,
     OverviewPageType,
+    TimeIntervalRestParam,
     HealthType as HEALTH_TYPE
 )
 from kiali_qe.entities.istio_config import IstioConfig, IstioConfigDetails, Rule
@@ -78,7 +79,7 @@ class KialiExtendedClient(KialiClient):
             namespace_list = self.namespace_list()
         # update items
         for _namespace in namespace_list:
-            _data = self.get_response('serviceList', namespace=_namespace)
+            _data = self.get_response('serviceList', path={'namespace': _namespace})
             _services = _data['services']
             # update all the services to our custom entity
             for _service_rest in _services:
@@ -157,7 +158,7 @@ class KialiExtendedClient(KialiClient):
             namespace_list = self.namespace_list()
         # update items
         for _namespace in namespace_list:
-            _data = self.get_response('appList', namespace=_namespace)
+            _data = self.get_response('appList', path={'namespace': _namespace})
             _applications = _data['applications']
             if _applications:
                 for _application_rest in _applications:
@@ -191,7 +192,7 @@ class KialiExtendedClient(KialiClient):
             namespace_list = self.namespace_list()
         # update items
         for _namespace in namespace_list:
-            _data = self.get_response('workloadList', namespace=_namespace)
+            _data = self.get_response('workloadList', path={'namespace': _namespace})
             _workloads = _data['workloads']
             if _workloads:
                 for _workload_rest in _workloads:
@@ -228,7 +229,7 @@ class KialiExtendedClient(KialiClient):
             namespace_list = self.namespace_list()
         # update items
         for _namespace in namespace_list:
-            _data = self.get_response('istioConfigList', namespace=_namespace)
+            _data = self.get_response('istioConfigList', path={'namespace': _namespace})
 
             # update DestinationRule
             if len(_data['destinationRules']) > 0 and len(_data['destinationRules']['items']) > 0:
@@ -421,9 +422,8 @@ class KialiExtendedClient(KialiClient):
         """
         config_type = ISTIO_CONFIG_TYPES[object_type]
         _data = self.get_response('istioConfigDetails',
-                                  namespace=namespace,
-                                  object_type=config_type,
-                                  object=object_name)
+                                  path={'namespace': namespace, 'object_type': config_type,
+                                        'object': object_name})
         config = None
         config_data = None
         if _data:
@@ -500,8 +500,7 @@ class KialiExtendedClient(KialiClient):
         """
 
         _service_data = self.get_response('serviceDetails',
-                                          namespace=namespace,
-                                          service=service_name)
+                                          path={'namespace': namespace, 'service': service_name})
         _service = None
         if _service_data:
             _service_rest = self.service_list(namespaces=[namespace],
@@ -603,8 +602,7 @@ class KialiExtendedClient(KialiClient):
         """
 
         _workload_data = self.get_response('workloadDetails',
-                                           namespace=namespace,
-                                           workload=workload_name)
+                                           path={'namespace': namespace, 'workload': workload_name})
         _workload = None
         if _workload_data:
             _workload_rest = self.workload_list(namespaces=[namespace],
@@ -715,8 +713,8 @@ class KialiExtendedClient(KialiClient):
         """
 
         _application_data = self.get_response('appDetails',
-                                              namespace=namespace,
-                                              app=application_name)
+                                              path={'namespace': namespace,
+                                                    'app': application_name})
         _application = None
         if _application_data:
             _application_rest = self.application_list(namespaces=[namespace],
@@ -741,49 +739,55 @@ class KialiExtendedClient(KialiClient):
                 services=_services)
         return _application
 
-    def get_service_health(self, namespace, service_name, istioSidecar):
+    def get_service_health(self, namespace, service_name, istioSidecar,
+                           time_interval=TimeIntervalRestParam.LAST_MINUTE.text):
         """Returns Health of Service.
         Args:
             namespaces: namespace where Service is located
             service_name: name of Service
+            time_interval: The rate interval used for fetching error rate
         """
 
         if not istioSidecar:  # without sidecar no health is available
             return HEALTH_TYPE.NA
 
-        _health_data = self.get_response('serviceHealth',
-                                         namespace=namespace,
-                                         service=service_name)
+        _health_data = self.get_response(method_name='serviceHealth',
+                                         path={'namespace': namespace, 'service': service_name},
+                                         params={'rateInterval': time_interval})
         if _health_data:
             return ServiceHealth.get_from_rest(_health_data).is_healthy()
         else:
             return None
 
-    def get_workload_health(self, namespace, workload_name):
+    def get_workload_health(self, namespace, workload_name,
+                            time_interval=TimeIntervalRestParam.LAST_MINUTE.text):
         """Returns Health of Workload.
         Args:
             namespaces: namespace where Workload is located
             workload_name: name of Workload
+            time_interval: The rate interval used for fetching error rate
         """
 
-        _health_data = self.get_response('workloadHealth',
-                                         namespace=namespace,
-                                         workload=workload_name)
+        _health_data = self.get_response(method_name='workloadHealth',
+                                         path={'namespace': namespace, 'workload': workload_name},
+                                         params={'rateInterval': time_interval})
         if _health_data:
             return WorkloadHealth.get_from_rest(_health_data).is_healthy()
         else:
             return None
 
-    def get_app_health(self, namespace, app_name):
+    def get_app_health(self, namespace, app_name,
+                       time_interval=TimeIntervalRestParam.LAST_MINUTE.text):
         """Returns Health of Application.
         Args:
             namespaces: namespace where Application is located
             workload_name: name of Application
+            time_interval: The rate interval used for fetching error rate
         """
 
-        _health_data = self.get_response('appHealth',
-                                         namespace=namespace,
-                                         app=app_name)
+        _health_data = self.get_response(method_name='appHealth',
+                                         path={'namespace': namespace, 'app': app_name},
+                                         params={'rateInterval': time_interval})
         if _health_data:
             return ApplicationHealth.get_from_rest(_health_data).is_healthy()
         else:
@@ -885,8 +889,9 @@ class KialiExtendedClient(KialiClient):
                     _labels[_subset['name']] = _values
         return _labels
 
-    def get_response(self, method_name, **kwargs):
-        return super(KialiExtendedClient, self).request(method_name=method_name, path=kwargs).json()
+    def get_response(self, method_name, path=None, params=None):
+        return super(KialiExtendedClient, self).request(method_name=method_name, path=path,
+                                                        params=params).json()
 
     def post_response(self, method_name, data, **kwargs):
         return super(KialiExtendedClient, self).request(
