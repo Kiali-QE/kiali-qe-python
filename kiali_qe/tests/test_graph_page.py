@@ -4,7 +4,7 @@ from kiali_qe.components.enums import (
     GraphPageDisplayFilter,
     GraphType,
     EdgeLabelsFilter,
-    GraphPageDuration,
+    TimeIntervalUIText,
     GraphRefreshInterval
 )
 from kiali_qe.pages import GraphPage
@@ -18,7 +18,7 @@ def test_duration(browser):
     # get page instance
     page = GraphPage(browser)
     # test options
-    options_defined = [item.text for item in GraphPageDuration]
+    options_defined = [item.text for item in TimeIntervalUIText]
     duration = page.duration
     options_listed = duration.options
     logger.debug('Options[defined:{}, listed:{}]'.format(options_defined, options_listed))
