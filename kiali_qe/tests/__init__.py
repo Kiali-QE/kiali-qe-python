@@ -20,7 +20,7 @@ from kiali_qe.components.enums import (
     MetricsHistograms,
     InboundMetricsFilter,
     OutboundMetricsFilter,
-    GraphPageDuration,
+    TimeIntervalUIText,
     GraphRefreshInterval,
     OverviewPageType,
     RoutingWizardType,
@@ -365,7 +365,7 @@ class AbstractListPageTest(object):
         self._assert_metrics_options(metrics_page, MetricsSource, 'destination')
 
     def _assert_metrics_duration(self, metrics_page):
-        self._assert_metrics_options(metrics_page, GraphPageDuration, 'duration')
+        self._assert_metrics_options(metrics_page, TimeIntervalUIText, 'duration')
 
     def _assert_metrics_interval(self, metrics_page):
         self._assert_metrics_options(metrics_page, GraphRefreshInterval, 'interval')
