@@ -52,7 +52,7 @@ class PaginationPerPage(Enum):
     FIFTEEN = 15
 
 
-class GraphPageDuration(StringEnum):
+class TimeIntervalUIText(StringEnum):
     LAST_MINUTE = ('Last 1m')
     LAST_5_MINUTES = ('Last 5m')
     LAST_10_MINUTES = ('Last 10m')
@@ -60,6 +60,16 @@ class GraphPageDuration(StringEnum):
     LAST_HOUR = ('Last 1h')
     LAST_3_HOURS = ('Last 3h')
     LAST_6_HOURS = ('Last 6h')
+
+
+class TimeIntervalRestParam(StringEnum):
+    LAST_MINUTE = ('1m')
+    LAST_5_MINUTES = ('5m')
+    LAST_10_MINUTES = ('10m')
+    LAST_30_MINUTES = ('30m')
+    LAST_HOUR = ('1h')
+    LAST_3_HOURS = ('3h')
+    LAST_6_HOURS = ('6h')
 
 
 class GraphRefreshInterval(StringEnum):
