@@ -515,8 +515,6 @@ def _istio_config_test(kiali_client, openshift_client, browser, config_dict,
         _istio_config_create(
             openshift_client, config_dict, config_yaml, kind, api_version, namespace)
 
-        tests.assert_all_items(namespaces=[namespace], filters=filters)
-
         _istio_config_details_test(kiali_client,
                                    openshift_client,
                                    browser,

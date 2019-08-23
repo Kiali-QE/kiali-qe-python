@@ -199,8 +199,9 @@ class ServiceDetails(EntityBase):
             return False
         if self.labels != other.labels:
             return False
-        if self.selectors != other.selectors:
-            return False
+        # TODO KIALI-2967
+        # if self.selectors != other.selectors:
+        #    return False
         # advanced check
         if not advanced_check:
             return True
