@@ -4,6 +4,7 @@ from kiali_qe.components.enums import HelpMenuEnum, MainMenuEnum, UserMenuEnum
 from kiali_qe.pages import RootPage
 from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
+from kiali_qe.utils.conf import env as cfg
 
 
 @pytest.mark.p_atomic
@@ -12,10 +13,8 @@ def test_menu(browser, kiali_client):
     # load root page
     page = RootPage(browser)
     # test available menus
-    _response = kiali_client.get_response('getStatus')
-    _products = _response['externalServices']
     options_defined = [item.text for item in MainMenuEnum]
-    if (any((d['name'] == 'Jaeger' and 'url' not in d) for d in _products)):
+    if cfg.kiali.skip_jaeger:
         options_defined.remove(MainMenuEnum.DISTRIBUTED_TRACING.value)
     options_listed = page.main_menu.items
     logger.debug('menus[defined:{}, listed:{}]'.format(options_defined, options_listed))

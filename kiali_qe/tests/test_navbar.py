@@ -4,6 +4,7 @@ from kiali_qe.components.enums import ApplicationVersionEnum, MaistraEnum, HelpM
 from kiali_qe.pages import RootPage
 from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
+from kiali_qe.utils.conf import env as cfg
 
 
 @pytest.mark.p_atomic
@@ -24,6 +25,9 @@ def test_about(browser, kiali_client):
     else:
         versions_defined = [item.text for item in ApplicationVersionEnum]
 
+    if cfg.kiali.skip_jaeger:
+        versions_defined.remove(MaistraEnum.JAEGER.value)
+
     logger.debug('Versions information in UI:{}'.format(versions_ui))
     logger.debug('Application version keys: defined:{}, available:{}'.format(
         versions_defined, versions_ui.keys()))
@@ -35,7 +39,8 @@ def test_about(browser, kiali_client):
     # kiali core version
     _core_rest = '{} ({})'.format(
         _response['status']['Kiali core version'], _response['status']['Kiali core commit hash'])
-    assert versions_ui[ApplicationVersionEnum.KIALI_CORE.text] == _core_rest
+    assert versions_ui[
+            ApplicationVersionEnum.KIALI_CORE.text] == _core_rest.replace(' (unknown)', '')
 
     # versions mismatch between console on UI
     # TODO: check with manual test team and enable this
