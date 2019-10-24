@@ -8,7 +8,6 @@ from kiali_qe.components import (
     ListViewAbstract
 )
 from kiali_qe.components.enums import (
-    PaginationPerPage,
     ServicesPageFilter,
     IstioConfigPageFilter,
     WorkloadsPageFilter,
@@ -30,8 +29,7 @@ from kiali_qe.components.enums import (
     ServicesPageSort,
     IstioConfigPageSort,
     RoutingWizardTLS,
-    RoutingWizardLoadBalancer,
-    BreadCrumbObjectType
+    RoutingWizardLoadBalancer
 )
 from kiali_qe.utils import is_equal, is_sublist, word_in_text
 from kiali_qe.utils.log import logger
@@ -41,15 +39,16 @@ from kiali_qe.pages import (
     IstioConfigPage,
     WorkloadsPage,
     ApplicationsPage,
-    OverviewPage
+    OverviewPage,
+    DistributedTracingPage
 )
 
 
 class AbstractListPageTest(object):
     FILTER_ENUM = None
     SORT_ENUM = None
-    SELECT_ITEM = ListViewAbstract.ITEMS + '//*[text()="{}"]'
-    SELECT_ITEM_WITH_NAMESPACE = SELECT_ITEM + '/small[text()="{}"]'
+    SELECT_ITEM = ListViewAbstract.ITEMS + '//a[text()="{}"]'
+    SELECT_ITEM_WITH_NAMESPACE = SELECT_ITEM + '/../../td[contains(text(), "{}")]/..//a'
 
     def __init__(self, kiali_client, openshift_client, page):
         self.kiali_client = kiali_client
@@ -98,7 +97,7 @@ class AbstractListPageTest(object):
         wait_to_spinner_disappear(self.browser)
         wait_displayed(self.page.content)
 
-    def is_in_details_page(self, name, object_type, namespace):
+    def is_in_details_page(self, name, namespace):
         breadcrumb = BreadCrumb(self.page)
         if len(breadcrumb.locations) < 3:
             return False
@@ -109,7 +108,7 @@ class AbstractListPageTest(object):
         if namespace_location != "Namespace: " + namespace:
             return False
         object_location = breadcrumb.active_location
-        if object_location != "{}: {}".format(object_type, name):
+        if object_location != "{}".format(name):
             return False
         return True
 
@@ -258,52 +257,6 @@ class AbstractListPageTest(object):
                 self.assert_all_items(namespaces=[], filters=[], force_clear_all=True)
                 break
 
-    def assert_pagination_feature(self):
-        pagination = self.page.pagination
-        # test options
-        options_defined = [item.value for item in PaginationPerPage]
-        options_listed = pagination.items_per_page_options
-        logger.debug('options[defined:{}, listed:{}]'.format(options_defined, options_listed))
-        assert is_equal(options_defined, options_listed), \
-            ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
-        # set to minimum value so there is more pages to test
-        pagination.set_items_per_page(PaginationPerPage.FIVE.value)
-        # test page next, previous, first, last, to page
-        total_pages = pagination.total_pages
-        logger.debug('Total pages found:{}'.format(total_pages))
-        if total_pages > 1:
-            # last page
-            pagination.move_to_last_page()
-            assert pagination.current_page == total_pages
-            # first page
-            pagination.move_to_first_page()
-            assert pagination.current_page == 1
-            # next page
-            pagination.move_to_next_page()
-            assert pagination.current_page == 2
-            # previous page
-            pagination.move_to_previous_page()
-            assert pagination.current_page == 1
-            # to page
-            pagination.move_to_page(2)
-            assert pagination.current_page == 2
-            # navigate to all pages
-            for to_page in range(1, total_pages + 1):
-                pagination.move_to_page(to_page)
-                assert pagination.current_page == to_page
-        # test items per page and options
-        for per_page in options_listed:
-            if pagination.total_items > per_page:
-                pagination.set_items_per_page(per_page)
-                assert len(self.page.content.items) == per_page
-                assert pagination.items_per_page == per_page
-        # test total items
-        total_items_pagin = pagination.total_items
-        total_items_page = len(self.page.content.all_items)
-        assert total_items_pagin == total_items_page, \
-            'Total items mismatch: pagination:{}, page:{}'.format(total_items_pagin,
-                                                                  total_items_page)
-
     def sort(self, sort_options=[]):
         """
         Sorts the listed items.
@@ -392,10 +345,16 @@ class AbstractListPageTest(object):
         breadcrumb.click_location(namespace_location)
         self.assert_applied_namespaces(filters=[namespace])
 
-    def assert_breadcrumb_object(self, name, namespace, object_type):
+    def assert_breadcrumb_object(self, name, namespace):
         breadcrumb = self.load_details_page(name, namespace, force_refresh=False, load_only=True)
         object_location = breadcrumb.active_location
-        assert object_location == "{}: {}".format(object_type, name)
+        assert object_location == "{}".format(name)
+
+    def assert_traces_tab(self, traces_tab):
+        traces_tab.open()
+        assert not traces_tab.traces.is_oc_login_displayed, "OC Login should not be displayed"
+        if not traces_tab.traces.has_no_results:
+            assert traces_tab.traces.has_results
 
 
 class OverviewPageTest(AbstractListPageTest):
@@ -471,7 +430,6 @@ class ApplicationsPageTest(AbstractListPageTest):
     def _prepare_load_details_page(self, name, namespace):
         # load the page first
         self.page.load(force_load=True)
-        # TODO apply pagination feature in get_details
         # apply namespace
         self.apply_namespaces(namespaces=[namespace])
         # apply filters
@@ -479,7 +437,7 @@ class ApplicationsPageTest(AbstractListPageTest):
             {'name': ApplicationsPageFilter.APP_NAME.text, 'value': name}])
 
     def load_details_page(self, name, namespace, force_refresh, load_only=False):
-        if not self.is_in_details_page(name, BreadCrumbObjectType.APPLICATIONS.text, namespace):
+        if not self.is_in_details_page(name, namespace):
             self._prepare_load_details_page(name, namespace)
             self.open(name, namespace, force_refresh)
         return self.page.content.get_details(load_only)
@@ -625,7 +583,6 @@ class WorkloadsPageTest(AbstractListPageTest):
     def _prepare_load_details_page(self, name, namespace):
         # load the page first
         self.page.load(force_load=True)
-        # TODO apply pagination feature in get_details
         # apply namespace
         self.apply_namespaces(namespaces=[namespace])
         # apply filters
@@ -633,7 +590,7 @@ class WorkloadsPageTest(AbstractListPageTest):
             {'name': WorkloadsPageFilter.WORKLOAD_NAME.text, 'value': name}])
 
     def load_details_page(self, name, namespace, force_refresh, load_only=False):
-        if not self.is_in_details_page(name, BreadCrumbObjectType.WORKLOADS.text, namespace):
+        if not self.is_in_details_page(name, namespace):
             self._prepare_load_details_page(name, namespace)
             self.open(name, namespace, force_refresh)
         return self.page.content.get_details(load_only)
@@ -799,7 +756,6 @@ class ServicesPageTest(AbstractListPageTest):
     def _prepare_load_details_page(self, name, namespace):
         # load the page first
         self.page.load(force_load=True)
-        # TODO apply pagination feature in get_details
         # apply namespace
         self.apply_namespaces(namespaces=[namespace])
         # apply filters
@@ -807,7 +763,7 @@ class ServicesPageTest(AbstractListPageTest):
             {'name': ServicesPageFilter.SERVICE_NAME.text, 'value': name}])
 
     def load_details_page(self, name, namespace, force_refresh, load_only=False):
-        if not self.is_in_details_page(name, BreadCrumbObjectType.SERVICES.text, namespace):
+        if not self.is_in_details_page(name, namespace):
             self._prepare_load_details_page(name, namespace)
             self.open(name, namespace, force_refresh)
         return self.page.content.get_details(load_only)
@@ -886,8 +842,9 @@ class ServicesPageTest(AbstractListPageTest):
                 if virtual_service_ui.is_equal(virtual_service_rest, advanced_check=False):
                     found = True
                     break
-            assert found, 'VS {} not found in REST {}'.format(virtual_service_ui,
-                                                              virtual_service_rest)
+            if not found:
+                assert found, 'VS {} not found in REST {}'.format(virtual_service_ui,
+                                                                  virtual_service_rest)
             vs_overview = self.page.content.table_view_vs.get_overview(virtual_service_ui.name)
             assert vs_overview.is_equal(virtual_service_rest, advanced_check=True)
 
@@ -897,8 +854,9 @@ class ServicesPageTest(AbstractListPageTest):
                 if destination_rule_ui.is_equal(destination_rule_rest, advanced_check=True):
                     found = True
                     break
-            assert found, 'DR {} not found in REST {}'.format(destination_rule_ui,
-                                                              destination_rule_rest)
+            if not found:
+                assert found, 'DR {} not found in REST {}'.format(destination_rule_ui,
+                                                                  destination_rule_rest)
             dr_overview = self.page.content.table_view_dr.get_overview(destination_rule_ui.name)
             # TODO advanced_check=True when KIALI-2152 is done
             assert dr_overview.is_equal(destination_rule_ui, advanced_check=False)
@@ -915,6 +873,8 @@ class ServicesPageTest(AbstractListPageTest):
                     traffic_ui)
         if check_metrics:
             self.assert_metrics_options(service_details_ui.inbound_metrics)
+        # TODO KIALI-3262
+        # self.assert_traces_tab(service_details_ui.traces_tab)
 
     def get_workload_names_set(self, source_workloads):
         workload_names = []
@@ -1150,7 +1110,6 @@ class IstioConfigPageTest(AbstractListPageTest):
     def _prepare_load_details_page(self, name, namespace):
         # load the page first
         self.page.load(force_load=True)
-        # TODO apply pagination feature in get_details
         # apply namespace
         self.apply_namespaces(namespaces=[namespace])
         # apply filters
@@ -1158,7 +1117,7 @@ class IstioConfigPageTest(AbstractListPageTest):
             {'name': IstioConfigPageFilter.ISTIO_NAME.text, 'value': name}])
 
     def load_details_page(self, name, namespace, force_refresh, load_only=False):
-        if not self.is_in_details_page(name, BreadCrumbObjectType.ISTIO_CONFIG.text, namespace):
+        if not self.is_in_details_page(name, namespace):
             self._prepare_load_details_page(name, namespace)
             self.open(name, namespace, force_refresh)
         return self.page.content.get_details(name, load_only)
@@ -1360,3 +1319,25 @@ class IstioConfigPageTest(AbstractListPageTest):
                 }
             ]
         return []
+
+
+class DistributedTracingPageTest(AbstractListPageTest):
+
+    def load_page(self, namespaces, force_clear_all):
+        self.page.load(force_load=True)
+        # apply namespaces
+        self.apply_namespaces(namespaces, force_clear_all=force_clear_all)
+
+    def __init__(self, kiali_client, openshift_client, browser):
+        AbstractListPageTest.__init__(
+            self, kiali_client=kiali_client,
+            openshift_client=openshift_client, page=DistributedTracingPage(browser))
+        self.browser = browser
+
+    def assert_search_traces(self, service_name, namespaces=[], force_clear_all=True):
+        # test Search Traces for provided Namespace and Service
+        self.load_page(namespaces, force_clear_all)
+        self.page.traces.search_traces(service_name)
+        assert not self.page.traces.is_oc_login_displayed, "OC Login should not be displayed"
+        if not self.page.traces.has_no_results:
+            assert self.page.traces.has_results

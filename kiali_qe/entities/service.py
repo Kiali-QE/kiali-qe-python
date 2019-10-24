@@ -112,8 +112,8 @@ class Service(EntityBase):
         # advanced check
         if not advanced_check:
             return True
-        if self.istio_sidecar != other.istio_sidecar:
-            return False
+        # if self.istio_sidecar != other.istio_sidecar:
+        #    return False
         if self.health != other.health:
             return False
         return True
@@ -160,6 +160,8 @@ class ServiceDetails(EntityBase):
             if 'traffic' in kwargs else None
         self.inbound_metrics = kwargs['inbound_metrics']\
             if 'inbound_metrics' in kwargs else None
+        self.traces_tab = kwargs['traces_tab']\
+            if 'traces_tab' in kwargs else None
 
     def __str__(self):
         return 'name:{}, created_at: {}, service_type: {}, resource_version: {}, \
@@ -204,8 +206,8 @@ class ServiceDetails(EntityBase):
         # advanced check
         if not advanced_check:
             return True
-        if self.istio_sidecar != other.istio_sidecar:
-            return False
+        # if self.istio_sidecar != other.istio_sidecar:
+        #    return False
         if self.health != other.health:
             return False
         return True
@@ -222,7 +224,8 @@ class VirtualService(EntityBase):
         resource_version: resource version
     """
 
-    def __init__(self, status, name, created_at, resource_version, hosts=[], weights=[]):
+    def __init__(self, status, name, created_at, resource_version, hosts=[], weights=[],
+                 gateways=[]):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
@@ -231,6 +234,7 @@ class VirtualService(EntityBase):
         self.status = status
         self.hosts = hosts
         self.weights = weights
+        self.gateways = gateways
 
     def __str__(self):
         return 'name:{}, status:{}, created_at:{}, '\
@@ -323,6 +327,48 @@ class VirtualServiceWeight(EntityBase):
         if self.port != other.port:
             return False
         if self.weight != other.weight:
+            return False
+        return True
+
+
+class VirtualServiceGateway(EntityBase):
+    """
+    Service class provides information details on Gateway of VS Overview.
+
+    """
+
+    def __init__(self, text, link=None):
+        if text is None:
+            raise KeyError("'text' should not be 'None'")
+        self.text = text
+        self.link = link
+
+    def __str__(self):
+        return 'text:{}, link:{}'.format(
+            self.text, self.link)
+
+    def __repr__(self):
+        return "{}({}, {}, {})".format(
+            type(self).__name__,
+            repr(self.text),
+            repr(self.link))
+
+    def __hash__(self):
+        return (hash(self.text))
+
+    def __eq__(self, other):
+        return self.is_equal(other, advanced_check=True)
+
+    def is_equal(self, other, advanced_check=True):
+        # basic check
+        if not isinstance(other, VirtualServiceGateway):
+            return False
+        if self.text != other.text:
+            return False
+        # advanced check
+        if not advanced_check:
+            return True
+        if self.link != other.link:
             return False
         return True
 

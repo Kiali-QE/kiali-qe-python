@@ -44,8 +44,8 @@ class OpenshiftExtendedClient(object):
         'QuotaSpec': '_quotaspec',
         'QuotaSpecBinding': '_quotaspecbinding',
         'Policy': '_policy',
-        'MeshPolicy': '_meshpolicy',
-        'ClusterRbacConfig': '_clusterrbacconfig',
+        'ServiceMeshPolicy': '_servicemeshpolicy',
+        'ServiceMeshRbacConfig': '_servicemeshrbacconfig',
         'RbacConfig': '_rbacconfig',
         'ServiceRole': '_servicerole',
         'ServiceRoleBinding': '_servicerolebinding'
@@ -170,12 +170,12 @@ class OpenshiftExtendedClient(object):
         return self._istio_config(kind='Policy', api_version='v1alpha1')
 
     @property
-    def _meshpolicy(self):
-        return self._istio_config(kind='MeshPolicy', api_version='v1alpha1')
+    def _servicemeshpolicy(self):
+        return self._istio_config(kind='ServiceMeshPolicy', api_version='v1')
 
     @property
-    def _clusterrbacconfig(self):
-        return self._istio_config(kind='ClusterRbacConfig', api_version='v1alpha1')
+    def _servicemeshrbacconfig(self):
+        return self._istio_config(kind='ServiceMeshRbacConfig', api_version='v1')
 
     @property
     def _rbacconfig(self):
@@ -385,8 +385,8 @@ class OpenshiftExtendedClient(object):
                                  resource_type, _item.kind))
                 # append this item to the final list
                 items.append(_rule)
-            elif str(resource_type) == IstioConfigObjectType.MESH_POLICY.text or\
-                    str(resource_type) == IstioConfigObjectType.CLUSTER_RBAC_CONFIG.text:
+            elif str(resource_type) == IstioConfigObjectType.SERVICE_MESH_POLICY.text or\
+                    str(resource_type) == IstioConfigObjectType.SERVICE_MESH_RBAC_CONFIG.text:
                 _config = IstioConfig(name=_item.metadata.name,
                                       namespace="istio-system",
                                       object_type=resource_type)

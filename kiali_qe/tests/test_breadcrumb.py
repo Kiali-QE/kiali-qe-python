@@ -6,7 +6,6 @@ from kiali_qe.tests import (
     ServicesPageTest,
     IstioConfigPageTest
 )
-from kiali_qe.components.enums import BreadCrumbObjectType
 
 BOOKINFO_2 = 'bookinfo2'
 ISTIO_SYSTEM = 'istio-system'
@@ -38,8 +37,7 @@ def test_workload_breadcrumb_object(kiali_client, openshift_client, browser, pic
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     namespace = pick_namespace(BOOKINFO_2)
-    tests.assert_breadcrumb_object(name='details-v1', namespace=namespace,
-                                   object_type=BreadCrumbObjectType.WORKLOADS.text)
+    tests.assert_breadcrumb_object(name='details-v1', namespace=namespace)
 
 
 # putting to p_ro_top group although right now there are no tests changing health of app so
@@ -68,8 +66,7 @@ def test_application_breadcrumb_object(kiali_client, openshift_client, browser, 
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     namespace = pick_namespace(BOOKINFO_2)
-    tests.assert_breadcrumb_object(name='details', namespace=namespace,
-                                   object_type=BreadCrumbObjectType.APPLICATIONS.text)
+    tests.assert_breadcrumb_object(name='details', namespace=namespace)
 
 
 # putting to p_ro_top group although right now there are no tests changing health of app so
@@ -98,8 +95,7 @@ def test_service_breadcrumb_object(kiali_client, openshift_client, browser, pick
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     namespace = pick_namespace(BOOKINFO_2)
-    tests.assert_breadcrumb_object(name='details', namespace=namespace,
-                                   object_type=BreadCrumbObjectType.SERVICES.text)
+    tests.assert_breadcrumb_object(name='details', namespace=namespace)
 
 
 # putting to p_ro_top group although right now there are no tests changing health of app so
@@ -125,5 +121,4 @@ def test_config_breadcrumb_namespace(kiali_client, openshift_client, browser):
 def test_config_breadcrumb_object(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.assert_breadcrumb_object(name='istio-policy', namespace=ISTIO_SYSTEM,
-                                   object_type=BreadCrumbObjectType.ISTIO_CONFIG.text)
+    tests.assert_breadcrumb_object(name='istio-policy', namespace=ISTIO_SYSTEM)
