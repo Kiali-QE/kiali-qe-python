@@ -1829,7 +1829,7 @@ class TableViewAbstract(Widget):
     COLUMN = './/td'
     ROW_BY_NAME = \
         '//div[@id="{}"]//table[contains(@class, "table")]//tbody//tr//a[text()="{}"]/../..'
-    MISSING_SIDECAR = './/span[contains(@class, "pficon-blueprint")]'
+    MISSING_SIDECAR = './/span//svg'
     CREATED_AT = 'Created at'
     RESOURCE_VERSION = 'Resource Version'
     HOST = 'Host'
@@ -1913,10 +1913,10 @@ class TableViewAbstract(Widget):
 
 
 class TableViewAppWorkloads(TableViewAbstract):
-    ROWS = '//div[contains(@class, "card-pf-body")]\
-    //div[contains(@class, "row")]\
-    //div[contains(@class, "list-view-pf-main-info")]'
-    COLUMN = './/div[contains(@class, "list-view-pf-description")]'
+    ROWS = ('//div[contains(@class, "resourceList")]'
+            '//h3[contains(text(), "Workloads")]/..'
+            '/ul[contains(@class, "pf-c-list")]/li')
+    COLUMN = './/a'
 
     @property
     def items(self):
@@ -1924,23 +1924,21 @@ class TableViewAppWorkloads(TableViewAbstract):
         _items = []
         for el in self.browser.elements(locator=self.ROWS,
                                         parent=self.ROOT):
-            _values = self.browser.element(
-                locator=self.COLUMN, parent=el).text.split('\n')
+            _value = self.browser.element(
+                locator=self.COLUMN, parent=el).text
             # create Workload instance
-            if _values[0] == 'WORKLOAD':
-                _workload = AppWorkload(
-                    name=_values[1] if len(_values) >= 2 else '',
-                    istio_sidecar=self._item_sidecar(el))
-                # append this item to the final list
-                _items.append(_workload)
+            _workload = AppWorkload(
+                name=_value,
+                istio_sidecar=self._item_sidecar(el))
+            # append this item to the final list
+            _items.append(_workload)
         return _items
 
 
 class TableViewAppServices(TableViewAbstract):
-    ROWS = '//div[contains(@class, "card-pf-body")]\
-    //div[contains(@class, "row")]\
-    //div[contains(@class, "list-view-pf-main-info")]'
-    COLUMN = './/div[contains(@class, "list-view-pf-description")]'
+    ROWS = ('//div[contains(@class, "resourceList")]'
+            '//h3[contains(text(), "Services")]/..'
+            '/ul[contains(@class, "pf-c-list")]/li/a')
 
     @property
     def items(self):
@@ -1948,12 +1946,7 @@ class TableViewAppServices(TableViewAbstract):
         _items = []
         for el in self.browser.elements(locator=self.ROWS,
                                         parent=self.ROOT):
-            _values = self.browser.element(
-                locator=self.COLUMN, parent=el).text.split('\n')
-            # create Service instance
-            if _values[0] == 'SERVICE':
-                # append this item to the final list
-                _items.append(_values[1])
+            _items.append(el.text)
         return _items
 
 
