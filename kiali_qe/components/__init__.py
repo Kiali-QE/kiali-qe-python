@@ -1493,6 +1493,10 @@ class ListViewAbstract(Widget):
 
     @property
     def all_items(self):
+        # always refresh the windown so we are sure we are at the top of the page before scrolling
+        self.browser.refresh()
+        wait_to_spinner_disappear(self.browser)
+        wait_displayed(self)
         height = self._get_height()
         prev_height = 0
         scroll_size = self.browser.element(self.ROOT).size['height']
