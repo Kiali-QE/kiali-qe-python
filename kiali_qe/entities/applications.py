@@ -120,6 +120,8 @@ class ApplicationDetails(EntityBase):
             if 'workloads' in kwargs else None
         self.services = kwargs['services']\
             if 'services' in kwargs else None
+        self.traffic_tab = kwargs['traffic_tab']\
+            if 'traffic_tab' in kwargs else None
         self.inbound_metrics = kwargs['inbound_metrics']\
             if 'inbound_metrics' in kwargs else None
         self.outbound_metrics = kwargs['outbound_metrics']\

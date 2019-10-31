@@ -29,7 +29,8 @@ from kiali_qe.components.enums import (
     ServicesPageSort,
     IstioConfigPageSort,
     RoutingWizardTLS,
-    RoutingWizardLoadBalancer
+    RoutingWizardLoadBalancer,
+    TrafficType
 )
 from kiali_qe.utils import is_equal, is_sublist, word_in_text
 from kiali_qe.utils.log import logger
@@ -356,6 +357,30 @@ class AbstractListPageTest(object):
         if not traces_tab.traces.has_no_results:
             assert traces_tab.traces.has_results
 
+    def assert_traffic(self, name, traffic_tab, self_object_type, traffic_object_type):
+        inbound_traffic = traffic_tab.inbound_items()
+        for inbound_item in inbound_traffic:
+            if inbound_item.object_type == traffic_object_type:
+                # skip istio traffic
+                if "istio" in inbound_item.name:
+                    continue
+                outbound_traffic = traffic_tab.click_on(
+                    object_type=traffic_object_type, name=inbound_item.name, inbound=True)
+                found = False
+                for outbound_item in outbound_traffic:
+                    if (outbound_item.name == name
+                        and outbound_item.object_type == self_object_type
+                            and outbound_item.request_type == inbound_item.request_type):
+                        # TODO check traffic
+                        found = True
+                if not found:
+                    assert found, "{} {} {} not found in {}".format(name,
+                                                                    self_object_type,
+                                                                    inbound_item.request_type,
+                                                                    outbound_traffic)
+                # check only the first item
+                break
+
 
 class OverviewPageTest(AbstractListPageTest):
     FILTER_ENUM = OverviewPageFilter
@@ -516,6 +541,8 @@ class ApplicationsPageTest(AbstractListPageTest):
             self.assert_metrics_options(application_details_ui.inbound_metrics)
 
             self.assert_metrics_options(application_details_ui.outbound_metrics)
+        self.assert_traffic(name, application_details_ui.traffic_tab,
+                            self_object_type=TrafficType.APP, traffic_object_type=TrafficType.APP)
 
     def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True):
         # apply namespaces
@@ -675,22 +702,14 @@ class WorkloadsPageTest(AbstractListPageTest):
                     break
             if not found:
                 assert found, 'Service {} not found in REST {}'.format(service_ui, service_rest)
-        for traffic_rest in workload_details_rest.traffic:
-            found = False
-            for traffic_ui in workload_details_ui.traffic:
-                if traffic_ui.is_equal(traffic_rest,
-                                       advanced_check=False):
-                    found = True
-                    break
-            if not found:
-                assert found, 'Outbound Traffic Service {} not found in UI {}'.format(
-                    traffic_rest,
-                    traffic_ui)
 
         if check_metrics:
             self.assert_metrics_options(workload_details_ui.inbound_metrics)
 
             self.assert_metrics_options(workload_details_ui.outbound_metrics)
+        self.assert_traffic(name, workload_details_ui.traffic_tab,
+                            self_object_type=TrafficType.WORKLOAD,
+                            traffic_object_type=TrafficType.SERVICE)
 
     def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True):
         # apply namespaces
@@ -860,21 +879,15 @@ class ServicesPageTest(AbstractListPageTest):
             dr_overview = self.page.content.table_view_dr.get_overview(destination_rule_ui.name)
             # TODO advanced_check=True when KIALI-2152 is done
             assert dr_overview.is_equal(destination_rule_ui, advanced_check=False)
-        for traffic_rest in service_details_rest.traffic:
-            found = False
-            for traffic_ui in service_details_ui.traffic:
-                if traffic_ui.is_equal(traffic_rest,
-                                       advanced_check=False):
-                    found = True
-                    break
-            if not found:
-                assert found, 'Outbound Traffic Service {} not found in UI {}'.format(
-                    traffic_rest,
-                    traffic_ui)
+
         if check_metrics:
             self.assert_metrics_options(service_details_ui.inbound_metrics)
         # TODO KIALI-3262
         # self.assert_traces_tab(service_details_ui.traces_tab)
+        # service traffic is linked to workloads
+        self.assert_traffic(name, service_details_ui.traffic_tab,
+                            self_object_type=TrafficType.SERVICE,
+                            traffic_object_type=TrafficType.WORKLOAD)
 
     def get_workload_names_set(self, source_workloads):
         workload_names = []
