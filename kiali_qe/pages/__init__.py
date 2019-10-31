@@ -49,11 +49,14 @@ class RootPage(View):
 
     def load(self, force_load=False, force_refresh=False):
         # if auto login enabled, do login. else do logout
-        if self._auto_login:
+        # TODO: SWSQE-992 this was throwing selenium.common.exceptions.WebDriverException:
+        # Message: unknown error: failed to parse value of getElementRegion
+        # login function is not working anyway now so disabling it to get rid of that failure
+        # if self._auto_login:
             # if login page displayed, do login
-            self.login()
-        else:
-            self.logout()
+        #    self.login()
+        # else:
+        #     self.logout()
         # load particular page, only if PAGE_MENU is supplied
         if self.PAGE_MENU is not None and \
                 (self.main_menu.selected != self.PAGE_MENU or force_load):
@@ -61,6 +64,8 @@ class RootPage(View):
         if force_refresh:
             self.page_refresh()
 
+    # TODO: SWSQE-992 login via kiali username is no longer suported,
+    # this needs to be updated to use OCP login page
     def login(self, username=None, password=None, force_login=False):
         if force_login:
             if not self.logout():
