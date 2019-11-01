@@ -1419,8 +1419,7 @@ class ListViewAbstract(Widget):
         wait_displayed(self)
         _labels = self.browser.elements(
             parent=self.DETAILS_ROOT,
-            locator=('//h3[contains(text(), "Labels")]'
-                     '/../../div[@id="labels"]//*[contains(@class, "label-pair")]'))
+            locator=('//div[@id="labels"]//*[contains(@class, "label-pair")]'))
         if _labels:
             for _label in _labels:
                 _label_key = self.browser.element(

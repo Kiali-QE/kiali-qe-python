@@ -31,7 +31,7 @@ from wait_for import wait_for
 XP_DROP_DOWN = '//*[contains(@class, "pf-c-select")]/*[contains(@aria-labelledby, "{}")]'
 SORT_DROP_DOWN = '//*[contains(@class, "pf-l-toolbar__item")]/*[contains(@aria-label, "{}")]/..'
 XP_BUTTON_SWITCH = '//*[contains(@class, "bootstrap-switch")]//*[text()="{}"]/../..'
-REFRESH_BUTTON = './/button//*[contains(@class, "fa-refresh")]'
+REFRESH_BUTTON = '//button[@id="refresh_button"]'
 
 
 class RootPage(View):

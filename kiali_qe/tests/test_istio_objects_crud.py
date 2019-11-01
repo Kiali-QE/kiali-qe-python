@@ -1,5 +1,6 @@
 
 import pytest
+import time
 from openshift.dynamic.exceptions import InternalServerError
 from kiali_qe.tests import IstioConfigPageTest, ServicesPageTest
 
@@ -535,6 +536,8 @@ def _istio_config_test(kiali_client, openshift_client, browser, config_dict,
         _istio_config_create(
             openshift_client, config_dict, config_yaml, kind, api_version, namespace)
 
+        # sleep 1 minute to wait for metrics to be collected before checking
+        time.sleep(1)
         tests.assert_all_items(namespaces=[namespace], filters=filters)
 
         _istio_config_details_test(kiali_client,
@@ -583,4 +586,4 @@ def _service_details_test(kiali_client, openshift_client, browser, config_dict,
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
 
-    tests.assert_details(name=service_name, namespace=namespace)
+    tests.assert_details(name=service_name, namespace=namespace, force_refresh=True)

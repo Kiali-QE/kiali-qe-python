@@ -47,8 +47,8 @@ def test_type(browser):
     page = GraphPage(browser)
     # test options
     options_defined = [item.text for item in GraphType]
-    type = page.type
-    options_listed = type.options
+    p_type = page.type
+    options_listed = p_type.options
     assert is_equal(options_defined, options_listed), \
         ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
 
