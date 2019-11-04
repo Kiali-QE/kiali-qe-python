@@ -1,4 +1,5 @@
 import pytest
+import os
 
 from kiali_qe.components.enums import ApplicationVersionEnum, HelpMenuEnum
 from kiali_qe.pages import RootPage
@@ -32,7 +33,9 @@ def test_about(browser, kiali_client):
     # kiali core version
     _core_rest = '{} ({})'.format(
         _response['status']['Kiali core version'], _response['status']['Kiali core commit hash'])
-    assert versions_ui[ApplicationVersionEnum.KIALI_CORE.text] == _core_rest
+    # skip in case of code coverage run where the version is not set correctly during the build
+    if "ENABLE_CODE_COVERAGE" not in os.environ or os.environ["ENABLE_CODE_COVERAGE"] != "true":
+            assert versions_ui[ApplicationVersionEnum.KIALI_CORE.text] == _core_rest
 
     # versions mismatch between console on UI
     # TODO: check with manual test team and enable this
