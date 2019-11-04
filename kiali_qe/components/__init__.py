@@ -1375,7 +1375,7 @@ class ListViewAbstract(Widget):
     def _get_item_validation(self, element):
         _valid = len(self.browser.elements(
             parent=element,
-            locator='.//*[contains(@style, "success")]')) > 0
+            locator='.//*[contains(@style, "color: rgb(62, 134, 53)")]')) > 0
         _not_valid = len(self.browser.elements(
             parent=element,
             locator='.//*[contains(@style, "danger")]')) > 0
@@ -1884,7 +1884,7 @@ class TableViewAbstract(Widget):
     def _get_item_status(self, element):
         _valid = len(self.browser.elements(
             parent=element,
-            locator='.//*[contains(@style, "success")]')) > 0
+            locator='.//*[contains(@style, "color: rgb(62, 134, 53)")]')) > 0
         _not_valid = len(self.browser.elements(
             parent=element,
             locator='.//*[contains(@style, "danger")]')) > 0
