@@ -11,7 +11,9 @@ from kiali_qe.components.enums import (
     HealthType,
     IstioConfigValidation,
     MeshWideTLSType,
-    RoutingWizardTLS)
+    RoutingWizardTLS,
+    TrafficType)
+from kiali_qe.entities import TrafficItem
 from kiali_qe.entities.service import (
     Service,
     ServiceDetails,
@@ -25,8 +27,7 @@ from kiali_qe.entities.istio_config import IstioConfig, Rule, IstioConfigDetails
 from kiali_qe.entities.workload import (
     Workload,
     WorkloadDetails,
-    WorkloadPod,
-    DestinationService
+    WorkloadPod
 )
 from kiali_qe.entities.applications import Application, ApplicationDetails, AppWorkload
 from kiali_qe.entities.overview import Overview
@@ -1596,6 +1597,8 @@ class ListViewApplications(ListViewAbstract):
 
         _table_view_services = TableViewAppServices(self.parent, self.locator, self.logger)
 
+        _traffic_tab = TrafficView(parent=self.parent, locator=self.locator, logger=self.logger)
+
         _inbound_metrics = MetricsView(self.parent, self.INBOUND_METRICS)
 
         _outbound_metrics = MetricsView(self.parent,
@@ -1606,6 +1609,7 @@ class ListViewApplications(ListViewAbstract):
                                   health=self._get_details_health(),
                                   workloads=_table_view_workloads.all_items,
                                   services=_table_view_services.all_items,
+                                  traffic_tab=_traffic_tab,
                                   inbound_metrics=_inbound_metrics,
                                   outbound_metrics=_outbound_metrics)
 
@@ -1650,7 +1654,7 @@ class ListViewWorkloads(ListViewAbstract):
 
         _table_view_services = TableViewServices(self.parent, self.locator, self.logger)
 
-        _traffic = TrafficView(parent=self.parent, locator=self.locator, logger=self.logger)
+        _traffic_tab = TrafficView(parent=self.parent, locator=self.locator, logger=self.logger)
 
         _inbound_metrics = MetricsView(parent=self.parent, tab_name=self.INBOUND_METRICS)
 
@@ -1668,7 +1672,7 @@ class ListViewWorkloads(ListViewAbstract):
                                pods=_table_view_pods.all_items,
                                services=_table_view_services.all_items,
                                labels=self._get_details_labels(),
-                               traffic=_traffic.items,
+                               traffic_tab=_traffic_tab,
                                inbound_metrics=_inbound_metrics,
                                outbound_metrics=_outbound_metrics)
 
@@ -1720,7 +1724,7 @@ class ListViewServices(ListViewAbstract):
 
         _table_view_wl = TableViewWorkloads(self.parent, self.locator, self.logger)
 
-        _traffic = TrafficView(parent=self.parent, locator=self.locator, logger=self.logger)
+        _traffic_tab = TrafficView(parent=self.parent, locator=self.locator, logger=self.logger)
 
         _inbound_metrics = MetricsView(parent=self.parent, tab_name=self.INBOUND_METRICS)
 
@@ -1742,7 +1746,7 @@ class ListViewServices(ListViewAbstract):
                               workloads=_table_view_wl.all_items,
                               virtual_services=self.table_view_vs.all_items,
                               destination_rules=self.table_view_dr.all_items,
-                              traffic=_traffic.items,
+                              traffic_tab=_traffic_tab,
                               inbound_metrics=_inbound_metrics,
                               traces_tab=_traces_tab)
 
@@ -2388,8 +2392,9 @@ class TabViewAbstract(Widget):
 class TrafficView(TabViewAbstract):
     TRAFFIC_TAB = '//button[text()="Traffic"]'
     TRAFFIC_ROOT = '//section[@id="pf-tab-section-1-basic-tabs"]'
-    ROWS = '//span[contains(@class, "table-grid-pf-col")]'\
-        '//span[contains(@class, "pficon-service")]/../a'
+    ROWS = ('//table[contains(@class, "pf-c-table")]'
+            '//span[contains(text(), "{}")]/../../tbody/tr')
+    COLUMN = './/td'
 
     def open(self):
         tab = self.browser.element(locator=self.TRAFFIC_TAB,
@@ -2400,21 +2405,72 @@ class TrafficView(TabViewAbstract):
             self.browser.click(tab)
         wait_displayed(self)
 
-    @property
-    def items(self):
+    def inbound_items(self):
+        return self._bound_items(inbound=True)
+
+    def outbound_items(self):
+        return self._bound_items(inbound=False)
+
+    def _bound_items(self, inbound=True):
         self.open()
 
         _items = []
-        for el in self.browser.elements(locator=self.ROWS,
-                                        parent=self.TRAFFIC_ROOT):
-            # destination service object creation
-            _service = DestinationService(
-                _from=None,
-                name=el.text.strip())
+        for el in self.browser.elements(
+            locator=self.ROWS.format("Inbound" if inbound else "Outbound"),
+                parent=self.TRAFFIC_ROOT):
+            if "Not enough" in el.text:
+                break
+            _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
+
+            _name = _columns[1].text.strip()
+            _request_type = _columns[2].text.strip()
+            _traffic = _columns[3].text.strip()
+
+            # Traffic Item object creation
+            _item = TrafficItem(
+                # TODO status
+                status=None,
+                name=_name,
+                object_type=self._get_type(_columns[1]),
+                request_type=_request_type,
+                traffic=_traffic)
             # append this item to the final list
-            _items.append(_service)
-        self.back_to_info()
+            _items.append(_item)
         return _items
+
+    def click_on(self, object_type, name, inbound=True):
+        self.open()
+
+        for el in self.browser.elements(
+            locator=self.ROWS.format("Inbound" if inbound else "Outbound"),
+                parent=self.TRAFFIC_ROOT):
+            if "Not enough" in el.text:
+                continue
+            _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
+
+            if name == _columns[1].text.strip() and self._get_type(_columns[1]) == object_type:
+                self.browser.click(self.browser.element(parent=_columns[1], locator='.//a'))
+                return self._bound_items(not inbound)
+        return []
+
+    def _get_type(self, element):
+        _appliction = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@d, "M950")]')) > 0
+        _workload = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@d, "M348")]')) > 0
+        _service = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@d, "M1316")]')) > 0
+        if _appliction:
+            return TrafficType.APP
+        elif _workload:
+            return TrafficType.WORKLOAD
+        elif _service:
+            return TrafficType.SERVICE
+        else:
+            return TrafficType.UNKNOWN
 
 
 class MetricsView(TabViewAbstract):

@@ -100,3 +100,29 @@ class DeploymentStatus(EntityBase):
          and self.name == other.name\
          and self.replicas == other.replicas\
          and self.available == other.available
+
+
+class TrafficItem(EntityBase):
+
+    def __init__(self, status, name, object_type, request_type, traffic):
+        self.name = name
+        self.status = status
+        self.object_type = object_type
+        self.request_type = request_type
+        self.traffic = traffic
+
+    def __str__(self):
+        return 'name:{}, object_type: {}, status:{}, request_type:{}'.format(
+            self.name, self.object_type, self.status, self.request_type)
+
+    def __repr__(self):
+        return "{}({}, {}, {}, {})".format(
+            type(self).__name__, repr(self.name), repr(self.object_type),
+            repr(self.status), repr(self.request_type))
+
+    def is_equal(self, other):
+        return isinstance(other, TrafficItem)\
+         and self.name == other.name\
+         and self.object_type == other.object_type\
+         and self.status == other.status\
+         and self.request_type == other.request_type

@@ -307,3 +307,10 @@ class RoutingWizardLoadBalancer(StringEnum):
     LEAST_CONN = ('LEAST_CONN')
     RANDOM = ('RANDOM')
     PASSTHROUGH = ('PASSTHROUGH')
+
+
+class TrafficType(StringEnum):
+    APP = ('App')
+    SERVICE = ('Service')
+    WORKLOAD = ('Workload')
+    UNKNOWN = ('Unknown')

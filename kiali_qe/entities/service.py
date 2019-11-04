@@ -156,8 +156,8 @@ class ServiceDetails(EntityBase):
             if 'destination_rules' in kwargs else None
         self.workloads = kwargs['workloads']\
             if 'workloads' in kwargs else None
-        self.traffic = kwargs['traffic']\
-            if 'traffic' in kwargs else None
+        self.traffic_tab = kwargs['traffic_tab']\
+            if 'traffic_tab' in kwargs else None
         self.inbound_metrics = kwargs['inbound_metrics']\
             if 'inbound_metrics' in kwargs else None
         self.traces_tab = kwargs['traces_tab']\
