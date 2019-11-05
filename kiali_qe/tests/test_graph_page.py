@@ -53,6 +53,7 @@ def test_type(browser):
         ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
 
 
+@pytest.mark.skip(reason="https://issues.jboss.org/browse/OSSM-109")
 @pytest.mark.p_atomic
 @pytest.mark.p_ro_group3
 def test_filter(browser):

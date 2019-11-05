@@ -5,6 +5,7 @@ from kiali_qe.tests import DistributedTracingPageTest
 BOOKINFO = 'bookinfo'
 
 
+@pytest.mark.skip(reason="https://issues.jboss.org/browse/OSSM-91")
 @pytest.mark.p_atomic
 @pytest.mark.p_ro_group6
 def test_search_traces(kiali_client, openshift_client, browser):
