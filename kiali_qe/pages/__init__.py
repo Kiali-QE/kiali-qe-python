@@ -44,6 +44,7 @@ class RootPage(View):
 
     _login = Login()
     main_menu = MainMenu()
+    namespace_filter = NamespaceFilter()
     page_header = Text(locator='//*[contains(@class, "container-fluid")]//h2')
     notifications = Notifications()
 
@@ -57,10 +58,11 @@ class RootPage(View):
         #    self.login()
         # else:
         #     self.logout()
-        # load particular page, only if PAGE_MENU is supplied
+        # load particular page, only if PAGE_MENU is supplied and is not already displayed
         if self.PAGE_MENU is not None and \
-                (self.main_menu.selected != self.PAGE_MENU or force_load):
-            self.main_menu.select(self.PAGE_MENU)
+                (self.main_menu.selected != self.PAGE_MENU or (self.PAGE_MENU != MENU.OVERVIEW.text
+                 and not self.namespace_filter.is_available) or force_load):
+                    self.main_menu.select(self.PAGE_MENU)
         if force_refresh:
             self.page_refresh()
 
