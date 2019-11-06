@@ -1061,6 +1061,10 @@ class NamespaceFilter(CheckBoxFilter):
     def is_displayed(self):
         return self.browser.is_displayed(self.ROOT)
 
+    @property
+    def is_available(self):
+        return self.browser.is_displayed(self._filter_button.locator)
+
     def clear_all(self):
         self.open()
         self.browser.click(Button(
