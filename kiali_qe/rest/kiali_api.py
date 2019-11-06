@@ -555,7 +555,10 @@ class KialiExtendedClient(KialiClient):
             if _service_data['destinationRules'] \
                     and len(_service_data['destinationRules']['items']) > 0:
                 for _dr_data in _service_data['destinationRules']['items']:
-                    _traffic_policy = to_linear_string(_dr_data['spec']['trafficPolicy'])
+                    if 'trafficPolicy' in _dr_data['spec']:
+                        _traffic_policy = to_linear_string(_dr_data['spec']['trafficPolicy'])
+                    else:
+                        _traffic_policy = 'none'
                     destination_rules.append(DestinationRule(
                         status=self.get_istio_config_validation(
                             _dr_data['metadata']['namespace'],
