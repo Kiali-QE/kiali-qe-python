@@ -1043,7 +1043,7 @@ class CheckBoxFilter(Widget):
 
 
 class NamespaceFilter(CheckBoxFilter):
-    ROOT = ('//*[@id="namespace-list-layers-popover"]')
+    ROOT = ('//*[contains(@class, "pf-c-dropdown__menu")]')
     CB_ITEMS = './/input[@type="checkbox"]/../span'
     ITEM = './/span[normalize-space(text())="{}"]/../input'
 
