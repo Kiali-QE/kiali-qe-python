@@ -558,7 +558,12 @@ class KialiExtendedClient(KialiClient):
                     if 'trafficPolicy' in _dr_data['spec']:
                         _traffic_policy = to_linear_string(_dr_data['spec']['trafficPolicy'])
                     else:
-                        _traffic_policy = 'none'
+                        _traffic_policy = None
+                    if 'subsets' in _dr_data['spec']:
+                        _subsets = to_linear_string(
+                            self.get_subset_labels(_dr_data['spec']['subsets']))
+                    else:
+                        _subsets = None
                     destination_rules.append(DestinationRule(
                         status=self.get_istio_config_validation(
                             _dr_data['metadata']['namespace'],
@@ -566,9 +571,8 @@ class KialiExtendedClient(KialiClient):
                             _dr_data['metadata']['name']),
                         name=_dr_data['metadata']['name'],
                         host=_dr_data['spec']['host'],
-                        traffic_policy=_traffic_policy if _traffic_policy != 'none' else '',
-                        subsets=to_linear_string(
-                            self.get_subset_labels(_dr_data['spec']['subsets'])),
+                        traffic_policy=_traffic_policy if _traffic_policy else '',
+                        subsets=_subsets if _subsets else '',
                         created_at=parse_from_rest(_dr_data['metadata']['creationTimestamp']),
                         resource_version=_dr_data['metadata']['resourceVersion']))
             _ports = ''
