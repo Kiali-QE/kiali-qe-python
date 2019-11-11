@@ -1154,9 +1154,10 @@ class NavBar(Widget):
 class BreadCrumb(Widget):
     """Represents the Patternfly BreadCrumb.
     """
-    ROOT = './/ol[contains(@class, "breadcrumb")]'
-    ELEMENTS = ".//li"
-    LINKS = ".//li//a"
+    ROOT = '//div[@id="content-scrollable"]'
+    BREADCRUMB_ROOT = './/ol[contains(@class, "breadcrumb")]'
+    ELEMENTS = BREADCRUMB_ROOT + "//li"
+    LINKS = ELEMENTS + "//a"
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent=parent, logger=logger)
@@ -1263,7 +1264,7 @@ class ListViewAbstract(Widget):
     ITEM_TEXT = './/*[contains(@class, "virtualitem_definition_link")]'
     DETAILS_ROOT = ('.//section[@id="pf-tab-section-0-basic-tabs"]'
                     '/div[contains(@class, "pf-l-grid")]')
-    HEADER = './/div[contains(@class, "container-fluid")]//h2'
+    HEADER = './/div[contains(@class, "f1ujuer8")]//h2'
     ISTIO_PROPERTIES = ('.//*[contains(@class, "pf-l-stack__item")]'
                         '//h3[normalize-space(text())="{}"]/..')
     NETWORK_PROPERTIES = ('.//*[contains(@class, "pf-l-stack__item")]'
@@ -1505,6 +1506,8 @@ class ListViewAbstract(Widget):
         prev_height = 0
         scroll_size = self.browser.element(self.ROOT).size['height']
         scroll_height = 0
+        # Here sleep is required as there is no spinner shown while scrolling
+        sleep(0.5)
         items = self.items
         while prev_height != height or scroll_height - height < scroll_size:
             prev_height = height
@@ -1826,9 +1829,9 @@ class ListViewIstioConfig(ListViewAbstract):
 
 
 class TableViewAbstract(Widget):
-    SERVICE_DETAILS_ROOT = './/div[contains(@class, "container-fluid")]'
+    SERVICE_DETAILS_ROOT = './/div[contains(@class, "f1cshr0l")]'
     OVERVIEW_DETAILS_ROOT = './/div[contains(@class, "row-cards-pf")]'
-    OVERVIEW_HEADER = './/div[contains(@class, "container-fluid")]//h1[@data-pf-content="true"]'
+    OVERVIEW_HEADER = './/div[contains(@class, "f1cshr0l")]//h1[@data-pf-content="true"]'
     OVERVIEW_PROPERTIES = ('.//div[contains(@class, "pf-c-card__body")]//'
                            'h3[@data-pf-content="true" and contains(text(), "{}")]/..')
     HOSTS_PROPERTIES = './/div/h3[contains(text(), "{}")]/..//li'
