@@ -876,7 +876,7 @@ class Actions(Widget):
 
 
 class Traces(Widget):
-    ROOT = '//*[@id="content-scrollable"]'
+    ROOT = '//section[contains(@class, "pf-c-page__main-section")]'
     SEARCH_TRACES_BUTTON = './/button[contains(@aria-label, "SearchTraces")]'
     SHOW_HIDE_OPTIONS = '//button[contains(@class, "pf-c-expandable__toggle")]/span[text()="{}"]/..'
 
@@ -1154,7 +1154,7 @@ class NavBar(Widget):
 class BreadCrumb(Widget):
     """Represents the Patternfly BreadCrumb.
     """
-    ROOT = '//div[@id="content-scrollable"]'
+    ROOT = '//section[contains(@class, "pf-c-page__main-section")]'
     BREADCRUMB_ROOT = './/ol[contains(@class, "breadcrumb")]'
     ELEMENTS = BREADCRUMB_ROOT + "//li"
     LINKS = ELEMENTS + "//a"
@@ -1517,7 +1517,7 @@ class ListViewAbstract(Widget):
                 + str(scroll_height) + ");")
             height = self._get_height()
             # Here sleep is required as there is no spinner shown while scrolling
-            sleep(0.05)
+            sleep(0.5)
             items.extend(self.items)
         return set(items)
 
@@ -1628,6 +1628,7 @@ class ListViewApplications(ListViewAbstract):
             _name = self.browser.element(
                 locator=self.ITEM_TEXT, parent=columns[0]).text.strip()
             _namespace = self._item_namespace(columns[1])
+
             # TODO Error Rate
             # application object creation
             _application = Application(
@@ -1693,6 +1694,7 @@ class ListViewWorkloads(ListViewAbstract):
                 locator=self.ITEM_TEXT, parent=columns[0]).text.strip()
             _namespace = self._item_namespace(columns[1])
             _type = columns[2].text.strip()
+
             _label_keys = self._get_item_label_keys(columns[5])
             # workload object creation
             _workload = Workload(
@@ -1812,6 +1814,7 @@ class ListViewIstioConfig(ListViewAbstract):
                 locator=self.ITEM_TEXT, parent=columns[0]).text.strip()
             _namespace = self._item_namespace(columns[1])
             _object_type = columns[2].text.strip()
+
             if str(_object_type) == IstioConfigObjectType.RULE.text or \
                     '{}: '.format(IstioConfigObjectType.ADAPTER.text) in str(_object_type) or \
                     '{}: '.format(IstioConfigObjectType.TEMPLATE.text) in str(_object_type):

@@ -576,7 +576,9 @@ class ApplicationsPageTest(AbstractListPageTest):
         logger.debug('Applications REST:{}'.format(applications_rest))
         logger.debug('Applications OC:{}'.format(applications_oc))
 
-        assert len(applications_ui) == len(applications_rest)
+        assert len(applications_ui) == len(applications_rest), \
+            "UI {} and REST {} applications number not equal".format(applications_ui,
+                                                                     applications_ui)
         assert len(applications_rest) <= len(applications_oc)
 
         for application_ui in applications_ui:
@@ -741,7 +743,8 @@ class WorkloadsPageTest(AbstractListPageTest):
         logger.debug('Workloads REST:{}'.format(workloads_rest))
         logger.debug('Workloads OC:{}'.format(workloads_oc))
 
-        assert len(workloads_ui) == len(workloads_rest)
+        assert len(workloads_ui) == len(workloads_rest), \
+            "UI {} and REST {} workloads number not equal".format(workloads_ui, workloads_rest)
         # TODO when workloads are filtered put == here
         assert len(workloads_rest) <= len(workloads_oc)
 
@@ -926,7 +929,8 @@ class ServicesPageTest(AbstractListPageTest):
         logger.debug('Services REST:{}'.format(services_rest))
         logger.debug('Services OC:{}'.format(services_oc))
 
-        assert len(services_ui) == len(services_rest)
+        assert len(services_ui) == len(services_rest), \
+            "UI {} and REST {} services number not equal".format(services_ui, services_rest)
         assert len(services_rest) <= len(services_oc)
 
         for service_ui in services_ui:
@@ -1165,7 +1169,8 @@ class IstioConfigPageTest(AbstractListPageTest):
         logger.debug('Istio config list OC API:{}]'.format(config_list_oc))
 
         # compare 3 way results
-        assert len(config_list_ui) == len(config_list_rest)
+        assert len(config_list_ui) == len(config_list_rest), \
+            "UI {} and REST {} config number not equal".format(config_list_ui, config_list_rest)
         assert len(config_list_ui) == len(config_list_oc)
         for config_ui in config_list_ui:
             found = False
