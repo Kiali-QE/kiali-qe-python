@@ -586,6 +586,14 @@ class ApplicationsPageTest(AbstractListPageTest):
             for application_rest in applications_rest:
                 if application_ui.is_equal(application_rest, advanced_check=True):
                     found = True
+                    if application_ui.application_status:
+                        assert application_ui.application_status.is_healthy() == \
+                            application_ui.health, \
+                            "Application Tooltip Health {} is not equal to UI Health {} for {}"\
+                            .format(
+                            application_ui.application_status.is_healthy(),
+                            application_ui.health,
+                            application_ui.name)
                     break
             if not found:
                 assert found, '{} not found in REST'.format(application_ui)
@@ -753,6 +761,11 @@ class WorkloadsPageTest(AbstractListPageTest):
             for workload_rest in workloads_rest:
                 if workload_ui.is_equal(workload_rest, advanced_check=True):
                     found = True
+                    if workload_ui.workload_status:
+                        assert workload_ui.workload_status.is_healthy() == workload_ui.health, \
+                                "Workload Tooltip Health {} is not equal to UI Health {}".format(
+                                workload_ui.workload_status.is_healthy(),
+                                workload_ui.health)
                     break
             if not found:
                 assert found, '{} not found in REST'.format(workload_ui)
@@ -938,6 +951,11 @@ class ServicesPageTest(AbstractListPageTest):
             for service_rest in services_rest:
                 if service_ui.is_equal(service_rest, advanced_check=True):
                     found = True
+                    if service_ui.service_status:
+                        assert service_ui.service_status.is_healthy() == service_ui.health, \
+                                "Service Tooltip Health {} is not equal to UI Health {}".format(
+                                service_ui.service_status.is_healthy(),
+                                service_ui.health)
                     break
             if not found:
                 assert found, '{} not found in REST'.format(service_ui)
