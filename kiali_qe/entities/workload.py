@@ -5,7 +5,8 @@ from kiali_qe.components.enums import HealthType
 class Workload(EntityBase):
 
     def __init__(self, name, namespace, workload_type,
-                 istio_sidecar=None, app_label=None, version_label=None, health=None):
+                 istio_sidecar=None, app_label=None, version_label=None, health=None,
+                 workload_status=None):
         self.name = name
         self.namespace = namespace
         self.workload_type = workload_type
@@ -13,6 +14,7 @@ class Workload(EntityBase):
         self.app_label = app_label
         self.version_label = version_label
         self.health = health
+        self.workload_status = workload_status
 
     def __str__(self):
         return 'name:{}, namespace:{}, type:{}, sidecar:{}, app:{}, version:{}, health:{}'.format(

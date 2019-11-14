@@ -13,7 +13,12 @@ from kiali_qe.components.enums import (
     MeshWideTLSType,
     RoutingWizardTLS,
     TrafficType)
-from kiali_qe.entities import TrafficItem
+from kiali_qe.entities import (
+    TrafficItem,
+    DeploymentStatus,
+    AppRequests,
+    Requests
+)
 from kiali_qe.entities.service import (
     Service,
     ServiceDetails,
@@ -21,15 +26,22 @@ from kiali_qe.entities.service import (
     DestinationRule,
     SourceWorkload,
     VirtualServiceWeight,
-    VirtualServiceGateway
+    VirtualServiceGateway,
+    ServiceHealth
 )
 from kiali_qe.entities.istio_config import IstioConfig, Rule, IstioConfigDetails
 from kiali_qe.entities.workload import (
     Workload,
     WorkloadDetails,
-    WorkloadPod
+    WorkloadPod,
+    WorkloadHealth
 )
-from kiali_qe.entities.applications import Application, ApplicationDetails, AppWorkload
+from kiali_qe.entities.applications import (
+    Application,
+    ApplicationDetails,
+    AppWorkload,
+    ApplicationHealth
+)
 from kiali_qe.entities.overview import Overview
 from kiali_qe.utils.date import parse_from_ui
 from time import sleep
@@ -55,8 +67,8 @@ def wait_not_displayed(obj, timeout='10s'):
 
 def wait_to_spinner_disappear(browser, timeout='5s', very_quiet=True, silent_failure=True):
     def _is_disappeared(browser):
-        return len(browser.elements(locator='//*[contains(@class, " spinner ")]',
-                                    parent='//*[contains(@class, "navbar")]')) == 0
+        return len(browser.elements(locator='//*[contains(@d, "M304")]',
+                                    parent='//*[contains(@class, "pf-c-page__header-tools")]')) == 0
     wait_for(
         _is_disappeared, func_args=[browser], timeout=timeout,
         delay=0.2, very_quiet=very_quiet, silent_failure=silent_failure)
@@ -1378,6 +1390,94 @@ class ListViewAbstract(Widget):
             _health = HealthType.NA
         return _health
 
+    def _get_workload_health(self, name, element):
+        statuses = self._get_health_tooltip(element)
+        if len(statuses) > 0:
+            return WorkloadHealth(
+                workload_status=self._get_deployment_status(statuses, name),
+                requests=self._get_apprequests(statuses))
+        else:
+            return None
+
+    def _get_application_health(self, element):
+        statuses = self._get_health_tooltip(element)
+        if len(statuses) > 0:
+            return ApplicationHealth(
+                deployment_statuses=self._get_deployment_statuses(statuses),
+                requests=self._get_apprequests(statuses))
+        else:
+            return None
+
+    def _get_service_health(self, element):
+        statuses = self._get_health_tooltip(element)
+        if len(statuses) > 0:
+            return ServiceHealth(
+                deployment_statuses=self._get_deployment_statuses(statuses),
+                requests=self._get_requests(statuses))
+        else:
+            return None
+
+    def _get_health_tooltip(self, element):
+        statuses = []
+        try:
+            self.browser.move_to_element(locator='.//*[contains(@class, "icon")]', parent=element)
+            sleep(0.5)
+            statuses = self.browser.element(
+                locator=('.//*[contains(text(), "Pods Status") or ' +
+                         'contains(text(), "Error Rate")]/../..'),
+                parent=self.locator).text.split('\n')
+        except (NoSuchElementException, StaleElementReferenceException):
+            # skip errors caused by browser delays, this health will be ignored
+            pass
+        finally:
+            self.browser.send_keys_to_focused_element(Keys.ESCAPE)
+            sleep(0.5)
+            return statuses
+
+    def _get_deployment_status(self, statuses, name=None):
+        result = self._get_deployment_statuses(statuses, name)
+        if len(result) > 0:
+            return result[0]
+        return None
+
+    def _get_deployment_statuses(self, statuses, name=None):
+        result = []
+        for _status in statuses:
+            if '/' in _status:
+                _label, _value = _status.split(':')
+                _replicas, _available = _value.split('/')
+                result.append(DeploymentStatus(
+                        name=(name if name else _label),
+                        replicas=int(_replicas),
+                        available=int(_available)))
+        return result
+
+    def _get_apprequests(self, statuses):
+        _inbound = "Inbound:"
+        _outbound = "Outbound:"
+        _no_requests = 'No requests'
+        _inbound_text = _no_requests
+        _outbound_text = _no_requests
+        for _request in statuses:
+            if _inbound in _request:
+                _inbound_text = _request.replace(_inbound, '').replace('%', '').strip()
+            if _outbound in _request:
+                _outbound_text = _request.replace(_outbound, '').replace('%', '').strip()
+        return AppRequests(
+                inboundErrorRatio=float(_inbound_text.replace(_no_requests, '-1')) / 100,
+                outboundErrorRatio=float(_outbound_text.replace(_no_requests, '-1')) / 100)
+
+    def _get_requests(self, statuses):
+        _no_requests = 'No requests'
+        _no_istio_sidecar = 'No Istio sidecar'
+        _inbound_text = _no_requests
+        for _request in statuses:
+            if 'Error Rate' in _request:
+                _inbound_text = _request.split(':')[1].replace('%', '').strip()
+        return Requests(
+                errorRatio=float(_inbound_text.replace(_no_requests, '-1').
+                                 replace(_no_istio_sidecar, '-1')) / 100)
+
     def _get_item_validation(self, element):
         _valid = len(self.browser.elements(
             parent=element,
@@ -1498,28 +1598,29 @@ class ListViewAbstract(Widget):
 
     @property
     def all_items(self):
-        # always refresh the windown so we are sure we are at the top of the page before scrolling
+        SCROLL_PAUSE_TIME = 0.5
+        # always refresh the window so we are sure we are at the top of the page before scrolling
         self.browser.refresh()
-        wait_to_spinner_disappear(self.browser)
         wait_displayed(self)
+        wait_to_spinner_disappear(self.browser)
+        # Here sleep is required as there is no spinner shown while scrolling
         height = self._get_height()
         prev_height = 0
         scroll_size = self.browser.element(self.ROOT).size['height']
         scroll_height = 0
-        # Here sleep is required as there is no spinner shown while scrolling
-        sleep(0.5)
-        items = self.items
+        all_items = self.items
         while prev_height != height or scroll_height - height < scroll_size:
             prev_height = height
             scroll_height += scroll_size
             self.browser.execute_script(
-                "document.getElementsByClassName(\"pf-c-window-scroller\")[0].scroll(0, "
-                + str(scroll_height) + ");")
+                 "document.getElementsByClassName(\"pf-c-window-scroller\")[0].scroll(0, "
+                 + str(scroll_height) + ");")
             height = self._get_height()
             # Here sleep is required as there is no spinner shown while scrolling
-            sleep(0.5)
-            items.extend(self.items)
-        return set(items)
+            sleep(SCROLL_PAUSE_TIME)
+            wait_to_spinner_disappear(self.browser)
+            all_items.extend(self.items)
+        return set(all_items)
 
     def _get_height(self):
         try:
@@ -1529,6 +1630,13 @@ class ListViewAbstract(Widget):
                 parent=self.ROOT).size['height']
         except NoSuchElementException:
             return 0
+
+    def _is_tooltip_visible(self, index, number):
+        # TODO better way to find tooltip visiblity
+        # now skip the first and after 7th rows
+        if index > 0 and index < min(number, 7):
+            return True
+        return False
 
 
 class ListViewOverview(ListViewAbstract):
@@ -1623,18 +1731,21 @@ class ListViewApplications(ListViewAbstract):
     @property
     def items(self):
         _items = []
-        for el in self.browser.elements(self.ITEMS, parent=self):
+        _elements = self.browser.elements(self.ITEMS, parent=self)
+        for index, el in enumerate(_elements):
             columns = self.browser.elements(self.ITEM_COL, parent=el)
             _name = self.browser.element(
                 locator=self.ITEM_TEXT, parent=columns[0]).text.strip()
             _namespace = self._item_namespace(columns[1])
 
-            # TODO Error Rate
             # application object creation
             _application = Application(
                 name=_name, namespace=_namespace,
                 istio_sidecar=self._item_sidecar(el),
-                health=self._get_item_health(element=el))
+                health=self._get_item_health(element=el),
+                application_status=(self._get_application_health(element=columns[2])
+                                    if self._is_tooltip_visible(index=index,
+                                                                number=len(_elements)) else None))
             # append this item to the final list
             _items.append(_application)
         return _items
@@ -1687,7 +1798,8 @@ class ListViewWorkloads(ListViewAbstract):
     @property
     def items(self):
         _items = []
-        for el in self.browser.elements(self.ITEMS, parent=self):
+        _elements = self.browser.elements(self.ITEMS, parent=self)
+        for index, el in enumerate(_elements):
             # get workload name and namespace
             columns = self.browser.elements(self.ITEM_COL, parent=el)
             _name = self.browser.element(
@@ -1702,7 +1814,10 @@ class ListViewWorkloads(ListViewAbstract):
                 istio_sidecar=self._item_sidecar(el),
                 app_label='app' in _label_keys,
                 version_label='version' in _label_keys,
-                health=self._get_item_health(element=el))
+                health=self._get_item_health(element=el),
+                workload_status=(self._get_workload_health(name=_name, element=columns[3])
+                                 if self._is_tooltip_visible(index=index,
+                                                             number=len(_elements)) else None))
             # append this item to the final list
             _items.append(_workload)
         return _items
@@ -1762,7 +1877,8 @@ class ListViewServices(ListViewAbstract):
     @property
     def items(self):
         _items = []
-        for el in self.browser.elements(self.ITEMS, parent=self):
+        _elements = self.browser.elements(self.ITEMS, parent=self)
+        for index, el in enumerate(_elements):
             # get rule name and namespace
             columns = self.browser.elements(self.ITEM_COL, parent=el)
             _name = self.browser.element(
@@ -1774,7 +1890,10 @@ class ListViewServices(ListViewAbstract):
                 name=_name,
                 namespace=_namespace,
                 istio_sidecar=self._item_sidecar(el),
-                health=self._get_item_health(element=el))
+                health=self._get_item_health(element=el),
+                service_status=(self._get_service_health(element=columns[2])
+                                if self._is_tooltip_visible(index=index,
+                                                            number=len(_elements)) else None))
             # append this item to the final list
             _items.append(_service)
         return _items

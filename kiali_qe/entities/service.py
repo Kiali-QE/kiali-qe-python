@@ -70,7 +70,8 @@ class Service(EntityBase):
     """
 
     def __init__(self, name, namespace, istio_sidecar=None,
-                 app_label=None, version_label=None, health=None):
+                 app_label=None, version_label=None, health=None,
+                 service_status=None):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         if namespace is None:
@@ -81,6 +82,7 @@ class Service(EntityBase):
         self.app_label = app_label
         self.version_label = version_label
         self.health = health
+        self.service_status = service_status
 
     def __str__(self):
         return 'name:{}, namespace:{}, istio_sidecar:{}, app_label:{}, '\

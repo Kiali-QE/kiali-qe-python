@@ -69,11 +69,13 @@ class ApplicationHealth(EntityBase):
 
 class Application(EntityBase):
 
-    def __init__(self, name, namespace, istio_sidecar=None, health=None):
+    def __init__(self, name, namespace, istio_sidecar=None, health=None,
+                 application_status=None):
         self.name = name
         self.namespace = namespace
         self.istio_sidecar = istio_sidecar
         self.health = health
+        self.application_status = application_status
 
     def __str__(self):
         return 'name:{}, namespace:{}, sidecar:{}, health:{}'.format(
