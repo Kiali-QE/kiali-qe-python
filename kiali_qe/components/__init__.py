@@ -1289,6 +1289,7 @@ class ListViewAbstract(Widget):
     CONFIG = 'strong[normalize-space(text()="{}:")]/..//'.format(CONFIG_TEXT)
     CONFIG_TABS_PARENT = './/ul[contains(@class, "pf-c-tabs__list")]'
     CONFIG_TAB_OVERVIEW = './/button[@id="pf-tab-0-basic-tabs"]'
+    ACTIVE_TAB_YAML = './/li[contains(@class, "pf-m-current")]//button[@id="pf-tab-1-basic-tabs"]'
     CONFIG_TAB_YAML = './/button[@id="pf-tab-1-basic-tabs"]'
 
     def __init__(self, parent, locator=None, logger=None):
@@ -1305,6 +1306,10 @@ class ListViewAbstract(Widget):
         return len(self.browser.elements(locator=self.CONFIG_TAB_OVERVIEW,
                                          parent=self.CONFIG_TABS_PARENT)) > 0
 
+    def is_yaml_tab_active(self):
+        return len(self.browser.elements(locator=self.ACTIVE_TAB_YAML,
+                                         parent=self.CONFIG_TABS_PARENT)) > 0
+
     def display_overview_editor(self):
         if self.has_overview_tab():
             self.browser.click(self.browser.element(locator=self.CONFIG_TAB_OVERVIEW,
@@ -1312,9 +1317,10 @@ class ListViewAbstract(Widget):
             wait_displayed(self)
 
     def display_yaml_editor(self):
-        self.browser.click(self.browser.element(locator=self.CONFIG_TAB_YAML,
-                                                parent=self.CONFIG_TABS_PARENT))
-        wait_displayed(self)
+        if not self.is_yaml_tab_active():
+            self.browser.click(self.browser.element(locator=self.CONFIG_TAB_YAML,
+                                                    parent=self.CONFIG_TABS_PARENT))
+            wait_displayed(self)
 
     def _item_sidecar(self, element):
         # TODO sidecar is not shown yet

@@ -1318,6 +1318,13 @@ class IstioConfigPageTest(AbstractListPageTest):
             locator=('.//button[text()="Delete"]')))
         wait_displayed(self.page.content)
 
+    def click_on_gateway(self, name, namespace):
+        self.browser.click(self.browser.element(locator=self.page.content.CONFIG_TAB_OVERVIEW,
+                                                parent=self.page.content.CONFIG_TABS_PARENT))
+        self.browser.click(
+            './/a[contains(@href, "/namespaces/{}/istio/gateways/{}")]'.format(namespace, name),
+            parent=self.page.content.locator)
+
     def get_additional_filters(self, namespaces, current_filters):
         logger.debug('Current filters:{}'.format(current_filters))
         # get rules of a namespace
