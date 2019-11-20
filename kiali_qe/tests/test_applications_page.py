@@ -34,7 +34,7 @@ def test_sort_options(kiali_client, openshift_client, browser):
 # putting to p_ro_top group although right now there are no tests changing health of app so
 # it could be in p_ro_top_safe
 @pytest.mark.p_ro_top
-@pytest.mark.p_ro_group1
+@pytest.mark.p_ro_group5
 def test_all_applications(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)

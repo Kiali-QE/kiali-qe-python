@@ -1,6 +1,4 @@
-
 import pytest
-import time
 from openshift.dynamic.exceptions import InternalServerError
 from kiali_qe.tests import IstioConfigPageTest, ServicesPageTest
 
@@ -548,8 +546,6 @@ def _istio_config_test(kiali_client, openshift_client, browser, config_dict,
         _istio_config_create(
             openshift_client, config_dict, config_yaml, kind, api_version, namespace)
 
-        # sleep 1 minute to wait for metrics to be collected before checking
-        time.sleep(1)
         tests.assert_all_items(namespaces=[namespace], filters=filters)
 
         _istio_config_details_test(kiali_client,
@@ -575,8 +571,8 @@ def _istio_config_test(kiali_client, openshift_client, browser, config_dict,
 
         if delete_istio_config:
             _ui_istio_config_delete(tests, config_dict, namespace)
-
-            tests.assert_all_items(namespaces=[namespace], filters=filters)
+            # TODO: check that the config was correclty removed
+            # tests.assert_all_items(namespaces=[namespace], filters=filters)
     finally:
         if delete_istio_config:
             _istio_config_delete(openshift_client, config_dict, kind, api_version, namespace)
