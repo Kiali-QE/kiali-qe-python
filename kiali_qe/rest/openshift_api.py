@@ -13,6 +13,7 @@ from kiali_qe.entities.applications import (
     AppWorkload
 )
 from kiali_qe.utils.date import parse_from_rest
+from kiali_qe.utils.log import logger
 
 
 class OpenshiftExtendedClient(object):
@@ -511,6 +512,7 @@ class OpenshiftExtendedClient(object):
         return config
 
     def delete_istio_config(self, name, namespace, kind, api_version):
+        logger.debug('Deleting istio config: {}, from namespace: {}'.format(name, namespace))
         try:
             self._istio_config(kind=kind, api_version=api_version).delete(name=name,
                                                                           namespace=namespace)
@@ -518,6 +520,8 @@ class OpenshiftExtendedClient(object):
             pass
 
     def create_istio_config(self, body, namespace, kind, api_version):
+        logger.debug('Creating istio config: {}, from namespace: {}'.
+                     format(body['metadata']['name'], namespace))
         resp = self._istio_config(kind=kind, api_version=api_version).create(body=body,
                                                                              namespace=namespace)
         return resp

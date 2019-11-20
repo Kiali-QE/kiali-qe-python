@@ -8,7 +8,7 @@ ISTIO_SYSTEM = 'istio-system'
 
 
 @pytest.mark.p_ro_top_safe
-@pytest.mark.p_ro_group7
+@pytest.mark.p_ro_group5
 def test_namespaces(kiali_client, openshift_client, browser):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)

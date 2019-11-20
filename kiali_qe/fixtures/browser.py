@@ -25,6 +25,7 @@ def browser(kiali_client):
     else:
         selenium.get(
             'https://{}'.format(cfg.kiali.hostname))
+    logger.debug('Launching kiali browser')
     # load KialiBrowser
     kiali_browser = KialiBrowser(
         selenium, logger=logger,
