@@ -1967,7 +1967,7 @@ class TableViewAbstract(Widget):
     ROOT = '//[contains(@class, "tab-pane") and contains(@class, "active") and \
         contains(@class, "in")]'
     ROWS = ('//section[@id="{}"]//table[contains(@class, "table")]'
-            '//tbody//tr/td/div[not(contains(@class, "pf-c-empty-state"))]/../..')
+            '//tbody//tr')
     COLUMN = './/td'
     ROW_BY_NAME = \
         '//div[@id="{}"]//table[contains(@class, "table")]//tbody//tr//a[text()="{}"]/../..'
@@ -2287,7 +2287,9 @@ class TableViewVirtualServices(TableViewAbstract):
             'pf-tab-section-1-service-tabs'),
                                         parent=self.ROOT):
             _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
-
+            if len(_columns) < 2:
+                # empty row
+                continue
             _name = _columns[1].text.strip()
             _created_at = _columns[2].text.strip()
             _resource_version = _columns[3].text.strip()
@@ -2380,7 +2382,9 @@ class TableViewDestinationRules(TableViewAbstract):
                 'pf-tab-section-2-service-tabs'),
                                         parent=self.ROOT):
             _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
-
+            if len(_columns) < 2:
+                # empty row
+                continue
             _name = _columns[1].text.strip()
             _traffic_policy = _columns[2].text.strip()
             _subsets = _columns[3].text.strip()
