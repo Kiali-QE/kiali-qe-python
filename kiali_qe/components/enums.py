@@ -124,6 +124,7 @@ class OverviewPageSort(StringEnum):
     NAME = ('Name')
     STATUS = ('Status')
     MTLS = ('mTLS')
+    ISTIO_CONFIG = ('Istio Config')
 
 
 class OverviewPageType(StringEnum):
