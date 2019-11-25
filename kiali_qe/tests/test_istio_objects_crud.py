@@ -86,7 +86,8 @@ def test_destination_rule_broken(kiali_client, openshift_client, browser):
                        api_version='networking.istio.io/v1alpha3',
                        service_name=DETAILS,
                        error_messages=['This host has no matching entry in the '
-                                       'service registry (service, workload or service entries)'],
+                                       'service registry (service, workload or service entries)',
+                                       'This subset\'s labels are not found in any matching host'],
                        check_service_details=True)
 
 

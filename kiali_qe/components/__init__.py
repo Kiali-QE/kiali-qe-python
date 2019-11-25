@@ -29,7 +29,11 @@ from kiali_qe.entities.service import (
     VirtualServiceGateway,
     ServiceHealth
 )
-from kiali_qe.entities.istio_config import IstioConfig, Rule, IstioConfigDetails
+from kiali_qe.entities.istio_config import (
+    IstioConfig,
+    Rule,
+    IstioConfigDetails
+)
 from kiali_qe.entities.workload import (
     Workload,
     WorkloadDetails,
@@ -1302,6 +1306,8 @@ class ListViewAbstract(Widget):
     SHOW_ON_GRAPH_TEXT = '(Show on graph)'
     HEALTH_TEXT = "Health"
     CONFIG_TEXT = "Config"
+    SUBSETS = 'Subsets'
+    OVERVIEW_DETAILS_ROOT = './/div[contains(@class, "row-cards-pf")]'
     CONFIG = 'strong[normalize-space(text()="{}:")]/..//'.format(CONFIG_TEXT)
     CONFIG_TABS_PARENT = './/ul[contains(@class, "pf-c-tabs__list")]'
     CONFIG_TAB_OVERVIEW = './/button[@id="pf-tab-0-basic-tabs"]'
@@ -1514,6 +1520,39 @@ class ListViewAbstract(Widget):
             return IstioConfigValidation.WARNING
         else:
             return IstioConfigValidation.VALID
+
+    def _get_overview_error_messages(self):
+        return self._get_subsets_error_messages()
+
+    def _get_subsets_error_messages(self):
+        _messages = []
+        _subsets_tr = self.browser.elements(
+            locator=('.//div[contains(@class, "pf-c-card__body")]//'
+                     'h2[@data-pf-content="true" and contains(text(), "{}")]/..//tbody/tr').format(
+                        self.SUBSETS),
+            parent=self.OVERVIEW_DETAILS_ROOT)
+        for subset_tr in _subsets_tr:
+            columns = self.browser.elements(self.ITEM_COL, parent=subset_tr)
+            validation = self._get_item_validation(columns[0])
+            message = ""
+            if validation == IstioConfigValidation.WARNING or \
+                    validation == IstioConfigValidation.NOT_VALID:
+                try:
+                    self.browser.move_to_element(
+                        locator='.//*[contains(@style, "color")]', parent=columns[0])
+                    sleep(0.5)
+                    message = self.browser.text(
+                        locator=('.//*[contains(@class, "tippy-popper")]'),
+                        parent='/').strip()
+                except (NoSuchElementException, StaleElementReferenceException):
+                    # skip errors caused by browser delays, this health will be ignored
+                    pass
+                finally:
+                    self.browser.send_keys_to_focused_element(Keys.ESCAPE)
+                    sleep(0.2)
+            if message:
+                _messages.append(message)
+        return _messages
 
     def _get_item_label_keys(self, element):
         _label_keys = []
@@ -1926,11 +1965,13 @@ class ListViewIstioConfig(ListViewAbstract):
     def get_details(self, name, load_only=False):
         if load_only:
             return BreadCrumb(self.parent)
+        _error_messages = self._get_overview_error_messages()
         self.display_yaml_editor()
         _text = self.browser.text(locator=self.CONFIG_TEXT,
                                   parent=self.CONFIG_DETAILS_ROOT)
         return IstioConfigDetails(name=name, text=_text,
-                                  validation=self._get_details_validation())
+                                  validation=self._get_details_validation(),
+                                  error_messages=_error_messages)
 
     @property
     def items(self):
