@@ -1263,8 +1263,14 @@ class IstioConfigPageTest(AbstractListPageTest):
         assert name == config_details_oc.name
         for error_message in error_messages:
             assert error_message in config_details_rest.error_messages, \
-                'Error messages:{} is not in List:{}'.format(error_message,
-                                                             config_details_rest.error_messages)
+                'Expected Error messages:{} is not in REST:{}'.format(
+                    error_message,
+                    config_details_rest.error_messages)
+        for error_message in config_details_ui.error_messages:
+            assert error_message in config_details_rest.error_messages, \
+                'UI Error messages:{} is not in REST:{}'.format(
+                    error_message,
+                    config_details_rest.error_messages)
         # TODO for Gateways there is no way to check in UI if it is valid or N/A
         assert config_details_ui.is_equal(
             config_details_rest,
