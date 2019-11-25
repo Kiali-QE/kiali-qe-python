@@ -45,6 +45,7 @@ from kiali_qe.entities.applications import (
 from kiali_qe.entities.overview import Overview
 from kiali_qe.utils.date import parse_from_ui
 from time import sleep
+from kiali_qe.utils.log import logger
 from wait_for import wait_for
 from kiali_qe.utils import (
     get_validation,
@@ -56,19 +57,21 @@ from kiali_qe.utils import (
 def wait_displayed(obj, timeout='10s'):
     wait_for(
         lambda: obj.is_displayed, timeout=timeout,
-        delay=0.2, very_quiet=True, silent_failure=True)
+        delay=0.2, very_quiet=True, silent_failure=False)
 
 
 def wait_not_displayed(obj, timeout='10s'):
     wait_for(
         lambda: not obj.is_displayed, timeout=timeout,
-        delay=0.2, very_quiet=True, silent_failure=True)
+        delay=0.2, very_quiet=True, silent_failure=False)
 
 
-def wait_to_spinner_disappear(browser, timeout='5s', very_quiet=True, silent_failure=True):
+def wait_to_spinner_disappear(browser, timeout='10s', very_quiet=True, silent_failure=False):
     def _is_disappeared(browser):
-        return len(browser.elements(locator='//*[contains(@d, "M304")]',
-                                    parent='//*[contains(@class, "pf-c-page__header-tools")]')) == 0
+        count = len(browser.elements(locator='//*[contains(@d, "M304")]',
+                                     parent='//*[contains(@class, "pf-c-page__header-tools")]'))
+        logger.debug("Count of spinner elements: {}".format(count))
+        return count == 0
     wait_for(
         _is_disappeared, func_args=[browser], timeout=timeout,
         delay=0.2, very_quiet=very_quiet, silent_failure=silent_failure)
@@ -83,7 +86,6 @@ class Button(Widget):
             self.locator = locator
         else:
             self.locator = self.ROOT
-        wait_displayed(self)
 
     def __locator__(self):
         return self.locator
@@ -131,12 +133,12 @@ class Notifications(Widget):
     ROOT = '//*[contains(@class, "pf-c-form__helper-text")]'
 
     def __init__(self, parent, locator=None, logger=None):
+        logger.debug('Loading notifications widget')
         Widget.__init__(self, parent, logger=logger)
         if locator:
             self.locator = locator
         else:
             self.locator = self.ROOT
-        wait_displayed(self)
 
     def __locator__(self):
         return self.locator
@@ -242,7 +244,6 @@ class DropDown(Widget):
             self.locator = locator
         else:
             self.locator = self.ROOT
-        wait_displayed(self)
 
     def __locator__(self):
         return self.locator
@@ -542,7 +543,6 @@ class FilterList(Widget):
     @property
     def active_filters(self):
         _filters = []
-        wait_displayed(self, timeout='5s')
         if not self.is_displayed:
             return _filters
         for el in self.browser.elements(parent=self, locator=self.ITEMS, force_check_safe=True):
@@ -711,11 +711,9 @@ class Actions(Widget):
             return False
         else:
             self.select(self.DELETE_ALL_TRAFFIC_ROUTING)
-            wait_displayed(self)
             self.browser.click(self.browser.element(
                 parent=self.DIALOG_ROOT,
                 locator=('.//button[text()="Delete"]')))
-            # wait to Spinner disappear
             wait_to_spinner_disappear(self.browser)
             return True
 
@@ -732,7 +730,6 @@ class Actions(Widget):
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
                                   include_mesh_gateway=include_mesh_gateway)
-            wait_displayed(self)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.CREATE_BUTTON)))
@@ -752,7 +749,6 @@ class Actions(Widget):
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
                                   include_mesh_gateway=include_mesh_gateway)
-            wait_displayed(self)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.UPDATE_BUTTON)))
@@ -776,7 +772,6 @@ class Actions(Widget):
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
                                   include_mesh_gateway=include_mesh_gateway)
-            wait_displayed(self)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.ADD_RULE_BUTTON)))
@@ -801,7 +796,6 @@ class Actions(Widget):
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
                                   include_mesh_gateway=include_mesh_gateway)
-            wait_displayed(self)
             self._rule_actions.select(self.REMOVE_RULE)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
@@ -830,7 +824,6 @@ class Actions(Widget):
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
                                   include_mesh_gateway=include_mesh_gateway)
-            wait_displayed(self)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.CREATE_BUTTON)))
@@ -850,7 +843,6 @@ class Actions(Widget):
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
                                   include_mesh_gateway=include_mesh_gateway)
-            wait_displayed(self)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.UPDATE_BUTTON)))
@@ -1060,6 +1052,7 @@ class NamespaceFilter(CheckBoxFilter):
     ITEM = './/span[normalize-space(text())="{}"]/../input'
 
     def __init__(self, parent, locator=None, logger=None):
+        logger.debug('Loading namespace filter widget')
         Widget.__init__(self, parent, logger=logger)
         if locator:
             self.locator = locator
@@ -1075,6 +1068,7 @@ class NamespaceFilter(CheckBoxFilter):
 
     @property
     def is_available(self):
+        logger.debug('Checking if available')
         return self.browser.is_displayed(self._filter_button.locator)
 
     def clear_all(self):
@@ -1098,7 +1092,6 @@ class About(Widget):
 
     def __init__(self, parent, logger=None):
         Widget.__init__(self, parent, logger=logger)
-        wait_displayed(self)
 
     @property
     def application_logo(self):
@@ -1146,20 +1139,25 @@ class NavBar(Widget):
     USER_SELECT_BUTTON = '//*[contains(@class, "pf-c-dropdown__toggle-text")]/..'
 
     def __init__(self, parent, logger=None):
+        logger.debug('Loading navbar')
         Widget.__init__(self, parent, logger=logger)
+        logger.debug('Loading help menu')
         self.help_menu = MenuDropDown(
             parent=self, locator=self.NAVBAR_HELP,
             logger=logger, force_open=True)
+        logger.debug('Loading user menu')
         self.user_menu = MenuDropDown(
             parent=self, locator=self.NAVBAR_USER,
             logger=logger, force_open=True,
             select_button=self.USER_SELECT_BUTTON)
 
     def about(self):
+        logger.debug('Opening about box')
         self.help_menu.select(HelpMenuEnum.ABOUT.text)
         return About(parent=self.parent, logger=self.logger)
 
     def toggle(self):
+        logger.debug('Clicking navigation toggle')
         self.browser.click(self.browser.element(self.TOGGLE_NAVIGATION, parent=self))
 
 
@@ -1214,15 +1212,20 @@ class MainMenu(Widget):
                         ' and contains(@class, "pf-c-nav__link")]/..')
 
     def __init__(self, parent, logger=None):
+        logger.debug('Loading main menu widget')
         Widget.__init__(self, parent, logger=logger)
         self.navbar = NavBar(parent=self.parent, logger=logger)
+        wait_displayed(self)
 
     def select(self, menu):
+        logger.debug('Selecting menu: {}'.format(menu))
         self.browser.click(self.browser.element(self.MENU_ITEM.format(menu), parent=self))
 
     @property
     def selected(self):
-        return self.browser.text(self.browser.element(self.MENU_ITEM_ACTIVE, parent=self))
+        sel_menu = self.browser.text(self.browser.element(self.MENU_ITEM_ACTIVE, parent=self))
+        logger.debug('Selected menu: {}'.format(sel_menu))
+        return sel_menu
 
     @property
     def items(self):
@@ -1251,6 +1254,7 @@ class Login(Widget):
     SUBMIT = './/button[@type="submit"]'
 
     def __init__(self, parent, logger=None):
+        logger.debug('Loading login widget')
         Widget.__init__(self, parent, logger=logger)
         self.username = TextInput(parent=self, locator=self.USERNAME)
         self.password = TextInput(parent=self, locator=self.PASSWORD)
@@ -1323,16 +1327,17 @@ class ListViewAbstract(Widget):
                                          parent=self.CONFIG_TABS_PARENT)) > 0
 
     def display_overview_editor(self):
+        logger.debug('Opening overview editor')
         if self.has_overview_tab():
             self.browser.click(self.browser.element(locator=self.CONFIG_TAB_OVERVIEW,
                                                     parent=self.CONFIG_TABS_PARENT))
-            wait_displayed(self)
 
     def display_yaml_editor(self):
+        logger.debug('Opening yaml editor')
         if not self.is_yaml_tab_active():
             self.browser.click(self.browser.element(locator=self.CONFIG_TAB_YAML,
                                                     parent=self.CONFIG_TABS_PARENT))
-            wait_displayed(self)
+            self.browser.wait_for_element(locator=self.CONFIG_TEXT, parent=self.CONFIG_DETAILS_ROOT)
 
     def _item_sidecar(self, element):
         # TODO sidecar is not shown yet
@@ -1528,7 +1533,6 @@ class ListViewAbstract(Widget):
                 locator=('.//a[text()="More labels..."]')))
         except NoSuchElementException:
             pass
-        wait_displayed(self)
         _labels = self.browser.elements(
             parent=self.DETAILS_ROOT,
             locator=('//div[@id="labels"]//*[contains(@class, "label-pair")]'))
@@ -1551,7 +1555,6 @@ class ListViewAbstract(Widget):
                 locator=('.//a[text()="More selectors..."]')))
         except NoSuchElementException:
             pass
-        wait_displayed(self)
         _selectors = self.browser.elements(
             parent=self.DETAILS_ROOT,
             locator=('//h3[contains(text(), "Selectors")]'
@@ -2006,7 +2009,6 @@ class TableViewAbstract(Widget):
                 parent=element, locator=self.MISSING_SIDECAR)) > 0
 
     def _get_overview_status(self, element):
-        wait_displayed(self)
         _not_valid = len(self.browser.elements(
             parent=element,
             locator='.//*[contains(@style, "danger")]')) > 0
@@ -2034,7 +2036,6 @@ class TableViewAbstract(Widget):
 
     def _get_labels(self, el):
         _label_dict = {}
-        wait_displayed(self)
         _labels = self.browser.elements(
             parent=el,
             locator='.//*[contains(@class, "label-pair")]')
@@ -2102,7 +2103,9 @@ class TableViewWorkloads(TableViewAbstract):
             self.browser.click(tab)
         finally:
             self.browser.click(tab)
-        wait_displayed(self)
+        wait_to_spinner_disappear(self.browser)
+        self.browser.wait_for_element(locator='//section[@id="pf-tab-section-0-service-tabs"]',
+                                      parent=self.ROOT)
 
     @property
     def number(self):
@@ -2152,7 +2155,8 @@ class TableViewSourceWorkloads(TableViewAbstract):
             self.browser.click(tab)
         finally:
             self.browser.click(tab)
-        wait_displayed(self)
+        wait_to_spinner_disappear(self.browser)
+        self.browser.wait_for_element(locator=self.ROWS, parent=self.ROOT)
 
     @property
     def number(self):
@@ -2196,11 +2200,12 @@ class TableViewVirtualServices(TableViewAbstract):
             self.browser.click(tab)
         finally:
             self.browser.click(tab)
-        wait_displayed(self)
+        wait_to_spinner_disappear(self.browser)
+        self.browser.wait_for_element(locator='//section[@id="pf-tab-section-1-service-tabs"]',
+                                      parent=self.ROOT)
 
     def get_overview(self, name):
         self.open()
-        wait_displayed(self)
 
         _row = self.browser.element(locator=self.VS_ROWS.format(
                 'pf-tab-section-1-service-tabs', name),
@@ -2208,8 +2213,8 @@ class TableViewVirtualServices(TableViewAbstract):
         _columns = list(self.browser.elements(locator=self.COLUMN, parent=_row))
 
         self.browser.click('.//a', parent=_columns[1])
-
-        wait_displayed(self)
+        self.browser.wait_for_element(locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
+                                      parent=self.OVERVIEW_DETAILS_ROOT)
 
         _name = self.browser.text(
             locator=self.OVERVIEW_HEADER,
@@ -2316,7 +2321,9 @@ class TableViewDestinationRules(TableViewAbstract):
             self.browser.click(tab)
         finally:
             self.browser.click(tab)
-        wait_displayed(self)
+        wait_to_spinner_disappear(self.browser)
+        self.browser.wait_for_element(locator='//section[@id="pf-tab-section-2-service-tabs"]',
+                                      parent=self.ROOT)
 
     def get_overview(self, name):
         self.open()
@@ -2327,8 +2334,8 @@ class TableViewDestinationRules(TableViewAbstract):
         _columns = list(self.browser.elements(locator=self.COLUMN, parent=_row))
 
         self.browser.click('.//a', parent=_columns[1])
-
-        wait_displayed(self)
+        self.browser.wait_for_element(locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
+                                      parent=self.OVERVIEW_DETAILS_ROOT)
 
         _name = self.browser.text(
             locator=self.OVERVIEW_HEADER.format('DestinationRule'),
@@ -2408,6 +2415,8 @@ class TableViewDestinationRules(TableViewAbstract):
 
 class TableViewWorkloadPods(TableViewAbstract):
     POD_TEXT = 'Pods'
+    PODS_SECTION_ROOT = '//section[@id="pf-tab-section-0-service-tabs"]'
+    TABLE_ROOT = '//table[contains(@class, "pf-c-table")]'
 
     def open(self):
         tab = self.browser.element(locator=self.SERVICES_TAB.format(self.POD_TEXT),
@@ -2416,7 +2425,8 @@ class TableViewWorkloadPods(TableViewAbstract):
             self.browser.click(tab)
         finally:
             self.browser.click(tab)
-        wait_displayed(self)
+        wait_to_spinner_disappear(self.browser)
+        self.browser.wait_for_element(locator=self.TABLE_ROOT, parent=self.PODS_SECTION_ROOT)
 
     @property
     def number(self):
@@ -2455,6 +2465,8 @@ class TableViewWorkloadPods(TableViewAbstract):
 
 class TableViewServices(TableViewAbstract):
     SERVICES_TEXT = 'Services'
+    PODS_SECTION_ROOT = '//section[@id="pf-tab-section-1-service-tabs"]'
+    TABLE_ROOT = '//table[contains(@class, "pf-c-table")]'
 
     def open(self):
         tab = self.browser.element(locator=self.SERVICES_TAB.format(self.SERVICES_TEXT),
@@ -2463,7 +2475,8 @@ class TableViewServices(TableViewAbstract):
             self.browser.click(tab)
         finally:
             self.browser.click(tab)
-        wait_displayed(self)
+        wait_to_spinner_disappear(self.browser)
+        self.browser.wait_for_element(locator=self.TABLE_ROOT, parent=self.PODS_SECTION_ROOT)
 
     @property
     def number(self):
@@ -2525,7 +2538,7 @@ class TabViewAbstract(Widget):
             self.browser.click(tab)
         finally:
             self.browser.click(tab)
-        wait_displayed(self)
+        wait_to_spinner_disappear(self.browser)
 
 
 class TrafficView(TabViewAbstract):
@@ -2542,7 +2555,8 @@ class TrafficView(TabViewAbstract):
             self.browser.click(tab)
         finally:
             self.browser.click(tab)
-        wait_displayed(self)
+        wait_to_spinner_disappear(self.browser)
+        self.browser.wait_for_element(locator=self.ROWS.format("Inbound"), parent=self.TRAFFIC_ROOT)
 
     def inbound_items(self):
         return self._bound_items(inbound=True)
@@ -2632,8 +2646,8 @@ class MetricsView(TabViewAbstract):
                 self.browser.click(tab)
             except StaleElementReferenceException:
                 pass
-        wait_displayed(self)
         wait_to_spinner_disappear(self.browser)
+        wait_displayed(self.destination)
 
 
 class TracesView(TabViewAbstract):
@@ -2647,4 +2661,4 @@ class TracesView(TabViewAbstract):
             self.browser.click(tab)
         finally:
             self.browser.click(tab)
-        wait_displayed(self)
+        wait_to_spinner_disappear(self.browser)

@@ -1,10 +1,10 @@
 import random
 import re
+import time
 
 from kiali_qe.components import (
     BreadCrumb,
     wait_to_spinner_disappear,
-    wait_displayed,
     ListViewAbstract
 )
 from kiali_qe.components.enums import (
@@ -96,7 +96,6 @@ class AbstractListPageTest(object):
         if force_refresh:
             self.page.page_refresh()
         wait_to_spinner_disappear(self.browser)
-        wait_displayed(self.page.content)
 
     def is_in_details_page(self, name, namespace):
         breadcrumb = BreadCrumb(self.page)
@@ -125,6 +124,7 @@ class AbstractListPageTest(object):
             Default False.
             If this value is True, all existing applied namespaces will be removed.
         """
+        logger.debug('Setting namespace filter: {}'.format(namespaces))
         _pre_filters = []
         # clear all filters
         if force_clear_all:
@@ -161,6 +161,7 @@ class AbstractListPageTest(object):
             otherwise, will be adjusted with pre filter.
             on both case final outcome will be same.
         """
+        logger.debug('Setting filters: {}'.format(filters))
         _pre_filters = []
         # clear all filters
         if force_clear_all:
@@ -268,6 +269,7 @@ class AbstractListPageTest(object):
             option: SortEnum item, the sorting option to select
             is_ascending: boolean, sort ascending or descending
         """
+        logger.debug('Sorting by: {}'.format(sort_options))
         if len(sort_options) == 2:
             self.page.sort.select(sort_options[0], sort_options[1])
 
@@ -462,9 +464,11 @@ class ApplicationsPageTest(AbstractListPageTest):
             {'name': ApplicationsPageFilter.APP_NAME.text, 'value': name}])
 
     def load_details_page(self, name, namespace, force_refresh, load_only=False):
+        logger.debug('Loading details page for application: {}'.format(name))
         if not self.is_in_details_page(name, namespace):
             self._prepare_load_details_page(name, namespace)
             self.open(name, namespace, force_refresh)
+            self.browser.wait_for_element(locator='//strong[contains(., "Error Rate")]')
         return self.page.content.get_details(load_only)
 
     def assert_random_details(self, namespaces=[], filters=[], force_refresh=False):
@@ -490,7 +494,7 @@ class ApplicationsPageTest(AbstractListPageTest):
                 force_refresh=force_refresh)
 
     def assert_details(self, name, namespace, check_metrics=False, force_refresh=False):
-        logger.debug('Details: {}, {}'.format(name, namespace))
+        logger.debug('Asserting details for: {}, in namespace: {}'.format(name, namespace))
 
         # load application details page
         application_details_ui = self.load_details_page(name, namespace, force_refresh)
@@ -627,9 +631,11 @@ class WorkloadsPageTest(AbstractListPageTest):
             {'name': WorkloadsPageFilter.WORKLOAD_NAME.text, 'value': name}])
 
     def load_details_page(self, name, namespace, force_refresh, load_only=False):
+        logger.debug('Loading details page for workload: {}'.format(name))
         if not self.is_in_details_page(name, namespace):
             self._prepare_load_details_page(name, namespace)
             self.open(name, namespace, force_refresh)
+            self.browser.wait_for_element(locator='//strong[contains(., "Error Rate")]')
         return self.page.content.get_details(load_only)
 
     def assert_random_details(self, namespaces=[], filters=[],
@@ -656,7 +662,7 @@ class WorkloadsPageTest(AbstractListPageTest):
 
     def assert_details(self, name, namespace, workload_type, check_metrics=False,
                        force_refresh=False):
-        logger.debug('Details: {}, {}'.format(name, namespace))
+        logger.debug('Asserting details for: {}, in namespace: {}'.format(name, namespace))
 
         # load workload details page
         workload_details_ui = self.load_details_page(name, namespace, force_refresh)
@@ -798,9 +804,12 @@ class ServicesPageTest(AbstractListPageTest):
             {'name': ServicesPageFilter.SERVICE_NAME.text, 'value': name}])
 
     def load_details_page(self, name, namespace, force_refresh, load_only=False):
+        logger.debug('Loading details page for service: {}'.format(name))
         if not self.is_in_details_page(name, namespace):
             self._prepare_load_details_page(name, namespace)
             self.open(name, namespace, force_refresh)
+            self.browser.wait_for_element(locator='//strong[contains(., "Error Rate")]',
+                                          parent='//*[@id="health"]')
         return self.page.content.get_details(load_only)
 
     def assert_random_details(self, namespaces=[], filters=[], force_refresh=False):
@@ -824,7 +833,7 @@ class ServicesPageTest(AbstractListPageTest):
 
     def assert_details(self, name, namespace, check_metrics=False,
                        force_refresh=False):
-        logger.debug('Details: {}, {}'.format(name, namespace))
+        logger.debug('Asserting details for: {}, in namespace: {}'.format(name, namespace))
         # load service details page
         service_details_ui = self.load_details_page(name, namespace, force_refresh)
         assert service_details_ui
@@ -1152,12 +1161,16 @@ class IstioConfigPageTest(AbstractListPageTest):
             {'name': IstioConfigPageFilter.ISTIO_NAME.text, 'value': name}])
 
     def load_details_page(self, name, namespace, force_refresh, load_only=False):
+        logger.debug('Loading details page for istio config: {}'.format(name))
         if not self.is_in_details_page(name, namespace):
             self._prepare_load_details_page(name, namespace)
             self.open(name, namespace, force_refresh)
+            self.browser.wait_for_element(locator='//button[contains(., "YAML")]',
+                                          parent='//*[contains(@class, "pf-c-page__main-section")]')
         return self.page.content.get_details(name, load_only)
 
     def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True):
+        logger.debug('Asserting all istio config items')
         logger.debug('Filters:{}'.format(filters))
 
         # apply namespaces
@@ -1205,6 +1218,7 @@ class IstioConfigPageTest(AbstractListPageTest):
                     break
             if not found:
                 assert found, '{} not found in OC'.format(config_ui)
+        logger.debug('Done asserting all istio config items')
 
     def assert_random_details(self, namespaces=[], filters=[]):
         # get istio config from rest api
@@ -1225,7 +1239,7 @@ class IstioConfigPageTest(AbstractListPageTest):
 
     def assert_details(self, name, object_type,
                        namespace=None, error_messages=[], apply_filters=True):
-        logger.debug('Details: {}, {}'.format(name, namespace))
+        logger.debug('Asserting details for: {}, in namespace: {}'.format(name, namespace))
 
         # load config details page
         config_details_ui = self.load_details_page(name, namespace, force_refresh=False)
@@ -1326,15 +1340,17 @@ class IstioConfigPageTest(AbstractListPageTest):
                             break
                 if not found:
                     assert found, '{} {} not found in OC'.format(ui_key, config_ui)
+        logger.debug('Done asserting details for: {}, in namespace: {}'.format(name, namespace))
 
     def delete_istio_config(self, name, namespace=None):
+        logger.debug('Deleting istio config: {}, from namespace: {}'.format(name, namespace))
         self.load_details_page(name, namespace, force_refresh=False, load_only=True)
+        # TODO: wait for all notification boxes to disappear, those are blocking the button
+        time.sleep(10)
         self.page.actions.select('Delete')
-        wait_displayed(self.page.content)
         self.browser.click(self.browser.element(
             parent=ListViewAbstract.DIALOG_ROOT,
             locator=('.//button[text()="Delete"]')))
-        wait_displayed(self.page.content)
 
     def click_on_gateway(self, name, namespace):
         self.browser.click(self.browser.element(locator=self.page.content.CONFIG_TAB_OVERVIEW,

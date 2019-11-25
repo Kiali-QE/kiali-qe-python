@@ -20,6 +20,7 @@ from kiali_qe.components import (
     NamespaceFilter,
     Actions,
     Traces)
+from kiali_qe.components import wait_displayed, wait_to_spinner_disappear
 
 from kiali_qe.components.enums import (
     MainMenuEnum as MENU,
@@ -42,19 +43,20 @@ class RootPage(View):
         self._auto_login = auto_login
         self.load()
 
-    _login = Login()
-    main_menu = MainMenu()
-    namespace_filter = NamespaceFilter()
+    _login = Login(logger=logger)
+    main_menu = MainMenu(logger=logger)
+    namespace_filter = NamespaceFilter(logger=logger)
     page_header = Text(locator='//*[contains(@class, "container-fluid")]//h2')
-    notifications = Notifications()
+    notifications = Notifications(logger=logger)
 
     def load(self, force_load=False, force_refresh=False):
+        logger.debug('Loading page')
         # if auto login enabled, do login. else do logout
         # TODO: SWSQE-992 this was throwing selenium.common.exceptions.WebDriverException:
         # Message: unknown error: failed to parse value of getElementRegion
         # login function is not working anyway now so disabling it to get rid of that failure
         # if self._auto_login:
-            # if login page displayed, do login
+        #     if login page displayed, do login
         #    self.login()
         # else:
         #     self.logout()
@@ -65,6 +67,8 @@ class RootPage(View):
                     self.main_menu.select(self.PAGE_MENU)
         if force_refresh:
             self.page_refresh()
+        wait_to_spinner_disappear(self.browser)
+        wait_displayed(self)
 
     # TODO: SWSQE-992 login via kiali username is no longer suported,
     # this needs to be updated to use OCP login page
@@ -93,11 +97,15 @@ class RootPage(View):
         return self._login.is_displayed
 
     def reload(self):
+        logger.debug('Reloading page')
         self.browser.refresh()
         self.load()
 
     def page_refresh(self):
+        logger.debug('Refreshing page')
         self.browser.click(self.refresh)
+        wait_to_spinner_disappear(self.browser)
+        wait_displayed(self)
 
     @property
     def navbar(self):
@@ -112,8 +120,8 @@ class GraphPage(RootPage):
     PAGE_MENU = MENU.GRAPH.text
 
     namespace = NamespaceFilter()
-    duration = ItemDropDown(locator=XP_DROP_DOWN.format('graph_filter_duration'))
-    interval = ItemDropDown(locator=XP_DROP_DOWN.format('graph_refresh_dropdown'))
+    duration = ItemDropDown(locator=XP_DROP_DOWN.format('time_range_duration'))
+    interval = ItemDropDown(locator=XP_DROP_DOWN.format('time_range_refresh'))
     edge_labels = DropDown(locator=XP_DROP_DOWN.format('graph_filter_edge_labels'))
     type = ItemDropDown(locator=XP_DROP_DOWN.format('graph_filter_view_type'))
     # TODO Layout

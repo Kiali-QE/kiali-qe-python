@@ -36,6 +36,7 @@ from kiali_qe.entities.applications import (
 from kiali_qe.entities.overview import Overview
 from kiali_qe.utils import to_linear_string
 from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
+from kiali_qe.utils.log import logger
 
 ISTIO_CONFIG_TYPES = {'DestinationRule': 'destinationrules',
                       'VirtualService': 'virtualservices',
@@ -851,6 +852,8 @@ class KialiExtendedClient(KialiClient):
             api_version: Config api version (not used)
         """
 
+        logger.debug('Creating istio config: {}, from namespace: {}'.
+                     format(body['metadata']['name'], namespace))
         return self.post_response('istioConfigCreate',
                                   namespace=namespace,
                                   object_type=ISTIO_CONFIG_TYPES[kind],
@@ -865,6 +868,7 @@ class KialiExtendedClient(KialiClient):
             api_version: Config api version (not used)
         """
 
+        logger.debug('Deleting istio config: {}, from namespace: {}'.format(name, namespace))
         return self.delete_response('istioConfigDelete',
                                     namespace=namespace,
                                     object_type=ISTIO_CONFIG_TYPES[kind],
