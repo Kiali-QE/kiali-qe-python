@@ -375,6 +375,9 @@ class AbstractListPageTest(object):
                             and outbound_item.request_type == inbound_item.request_type):
                         # TODO check traffic
                         found = True
+                        assert inbound_item.status == outbound_item.status, \
+                            "Inbound Status {} is not equal to Outbound Status {} for {}".format(
+                                inbound_item.status, outbound_item.status, name)
                 if not found:
                     assert found, "{} {} {} not found in {}".format(name,
                                                                     self_object_type,
