@@ -52,7 +52,7 @@ class IstioConfigDetails(EntityBase):
         self.error_messages = error_messages
 
     def __str__(self):
-        return 'name{}, text:{}, {}'.format(
+        return 'name:{}, text:{}, {}'.format(
             self.name, self.text, self.validation)
 
     def __repr__(self):

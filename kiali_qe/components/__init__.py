@@ -2401,12 +2401,13 @@ class TableViewDestinationRules(TableViewAbstract):
             parent=self.OVERVIEW_DETAILS_ROOT).\
             replace(self.NO_SUBSETS, self.NONE).\
             replace(' :', '').strip()
+        _status = self._get_overview_status(self.OVERVIEW_DETAILS_ROOT)
 
         # back to service details
         self.back_to_service_info(parent=self.OVERVIEW_DETAILS_ROOT)
 
         return DestinationRule(
-                status=None,
+                status=_status,
                 name=_name,
                 host=_host,
                 created_at=parse_from_ui(_created_at),
