@@ -30,7 +30,8 @@ from kiali_qe.utils.conf import env as cfg
 from wait_for import wait_for
 
 XP_DROP_DOWN = '//*[contains(@class, "pf-c-select")]/*[contains(@aria-labelledby, "{}")]'
-SORT_DROP_DOWN = '//*[contains(@class, "pf-l-toolbar__item")]/*[contains(@aria-label, "{}")]/..'
+SORT_DROP_DOWN = '//*[contains(@class, "pf-l-toolbar__item")]' +\
+    '//*[contains(@aria-labelledby, "{}")]/../..'
 XP_BUTTON_SWITCH = '//*[contains(@class, "bootstrap-switch")]//*[text()="{}"]/../..'
 REFRESH_BUTTON = '//button[@id="refresh_button"]'
 
@@ -64,7 +65,7 @@ class RootPage(View):
         if self.PAGE_MENU is not None and \
                 (self.main_menu.selected != self.PAGE_MENU or (self.PAGE_MENU != MENU.OVERVIEW.text
                  and not self.namespace_filter.is_available) or force_load):
-                    self.main_menu.select(self.PAGE_MENU)
+            self.main_menu.select(self.PAGE_MENU)
         if force_refresh:
             self.page_refresh()
         wait_to_spinner_disappear(self.browser)
@@ -134,7 +135,7 @@ class OverviewPage(RootPage):
     PAGE_MENU = MENU.OVERVIEW.text
 
     filter = Filter()
-    sort = SortDropDown(locator=SORT_DROP_DOWN.format('Sort_Selector'))
+    sort = SortDropDown(locator=SORT_DROP_DOWN.format('sort_selector'))
     type = TypeDropDown(locator=XP_DROP_DOWN.format('overview-type'))
     duration = DropDown(locator=XP_DROP_DOWN.format('overvoew-duration'))
     interval = DropDown(locator=XP_DROP_DOWN.format('overview-refresh'))

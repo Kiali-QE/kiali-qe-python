@@ -448,7 +448,7 @@ class Sort(Widget):
 
 
 class SortDropDown(Widget):
-    ROOT = '//*[contains(@class, "pf-c-form-control")]/../button/svg/../..'
+    ROOT = '//*[contains(@class, "pf-c-select")]/../button/svg/../..'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -456,8 +456,9 @@ class SortDropDown(Widget):
             self.locator = locator
         else:
             self.locator = self.ROOT
-        self._drop_down = SelectDropDown(
-            parent=self, locator=self.locator)
+        self._drop_down = TypeDropDown(
+            parent=self, locator=self.locator,
+            select_button='//*[contains(@class, "pf-c-select")]')
         self._sort = Sort(
             parent=self,
             locator=self.locator + '/../button/svg/..')
