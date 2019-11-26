@@ -2583,6 +2583,30 @@ class TabViewAbstract(Widget):
             self.browser.click(tab)
         wait_to_spinner_disappear(self.browser)
 
+    def _get_item_health(self, element):
+        _healthy = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@d, "M504")]')) > 0
+        _not_healthy = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@d, "M506")]')) > 0
+        _degraded = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@d, "M569")]')) > 0
+        _not_available = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@d, "M520")]')) > 0
+        _health = None
+        if _healthy:
+            _health = HealthType.HEALTHY
+        elif _not_healthy:
+            _health = HealthType.FAILURE
+        elif _degraded:
+            _health = HealthType.DEGRADED
+        elif _not_available:
+            _health = HealthType.NA
+        return _health
+
 
 class TrafficView(TabViewAbstract):
     TRAFFIC_TAB = '//button[text()="Traffic"]'
@@ -2624,8 +2648,7 @@ class TrafficView(TabViewAbstract):
 
             # Traffic Item object creation
             _item = TrafficItem(
-                # TODO status
-                status=None,
+                status=self._get_item_health(_columns[0]),
                 name=_name,
                 object_type=self._get_type(_columns[1]),
                 request_type=_request_type,
