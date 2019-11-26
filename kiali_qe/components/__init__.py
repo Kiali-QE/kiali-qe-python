@@ -448,7 +448,7 @@ class Sort(Widget):
 
 
 class SortDropDown(Widget):
-    ROOT = '//*[contains(@class, "pf-c-form-control")]/../button/svg/../..'
+    ROOT = '//*[contains(@class, "pf-c-select")]/../button/svg/../..'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -456,8 +456,9 @@ class SortDropDown(Widget):
             self.locator = locator
         else:
             self.locator = self.ROOT
-        self._drop_down = SelectDropDown(
-            parent=self, locator=self.locator)
+        self._drop_down = TypeDropDown(
+            parent=self, locator=self.locator,
+            select_button='//*[contains(@class, "pf-c-select")]')
         self._sort = Sort(
             parent=self,
             locator=self.locator + '/../button/svg/..')
@@ -2401,12 +2402,13 @@ class TableViewDestinationRules(TableViewAbstract):
             parent=self.OVERVIEW_DETAILS_ROOT).\
             replace(self.NO_SUBSETS, self.NONE).\
             replace(' :', '').strip()
+        _status = self._get_overview_status(self.OVERVIEW_DETAILS_ROOT)
 
         # back to service details
         self.back_to_service_info(parent=self.OVERVIEW_DETAILS_ROOT)
 
         return DestinationRule(
-                status=None,
+                status=_status,
                 name=_name,
                 host=_host,
                 created_at=parse_from_ui(_created_at),

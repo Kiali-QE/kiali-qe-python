@@ -903,7 +903,11 @@ class ServicesPageTest(AbstractListPageTest):
                                                                   destination_rule_rest)
             dr_overview = self.page.content.table_view_dr.get_overview(destination_rule_ui.name)
             # TODO advanced_check=True when KIALI-2152 is done
-            assert dr_overview.is_equal(destination_rule_ui, advanced_check=False)
+            assert dr_overview.is_equal(
+                destination_rule_ui,
+                advanced_check=True if
+                destination_rule_ui.status == IstioConfigValidation.NOT_VALID
+                else False)
 
         if check_metrics:
             self.assert_metrics_options(service_details_ui.inbound_metrics)
