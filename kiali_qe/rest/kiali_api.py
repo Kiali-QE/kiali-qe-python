@@ -35,7 +35,7 @@ from kiali_qe.entities.applications import (
 )
 from kiali_qe.entities.overview import Overview
 from kiali_qe.utils import to_linear_string
-from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
+from kiali_qe.utils.date import parse_from_rest
 from kiali_qe.utils.log import logger
 
 ISTIO_CONFIG_TYPES = {'DestinationRule': 'destinationrules',
@@ -654,7 +654,7 @@ class KialiExtendedClient(KialiClient):
                                                    _pod_data['createdBy'][0]['kind'])
                     _pod = WorkloadPod(
                         name=str(_pod_data['name']),
-                        created_at=from_rest_to_ui(_pod_data['createdAt']),
+                        created_at=parse_from_rest(_pod_data['createdAt']),
                         created_by=_created_by,
                         labels=self.get_labels(_pod_data),
                         istio_init_containers=str(_istio_init_containers),

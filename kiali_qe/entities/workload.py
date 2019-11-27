@@ -176,9 +176,8 @@ class WorkloadPod(EntityBase):
             return False
         if self.name != other.name:
             return False
-        # TODO compare multiple created at dates
-        # if self.created_at != other.created_at:
-        #    return False
+        if self.created_at != other.created_at:
+            return False
         if self.created_by != other.created_by:
             return False
         if self.labels != other.labels:
