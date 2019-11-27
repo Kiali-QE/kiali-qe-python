@@ -19,7 +19,8 @@ from kiali_qe.components import (
     CheckBoxFilter,
     NamespaceFilter,
     Actions,
-    Traces)
+    Traces,
+    GraphLayout)
 from kiali_qe.components import wait_displayed, wait_to_spinner_disappear
 
 from kiali_qe.components.enums import (
@@ -125,7 +126,7 @@ class GraphPage(RootPage):
     interval = ItemDropDown(locator=XP_DROP_DOWN.format('time_range_refresh'))
     edge_labels = DropDown(locator=XP_DROP_DOWN.format('graph_filter_edge_labels'))
     type = ItemDropDown(locator=XP_DROP_DOWN.format('graph_filter_view_type'))
-    # TODO Layout
+    layout = GraphLayout()
     filter = CheckBoxFilter("Display")
     refresh = Button(locator=REFRESH_BUTTON)
     # TODO: implement graph control code

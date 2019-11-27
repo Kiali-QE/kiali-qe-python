@@ -12,7 +12,8 @@ from kiali_qe.components.enums import (
     IstioConfigValidation,
     MeshWideTLSType,
     RoutingWizardTLS,
-    TrafficType)
+    TrafficType,
+    GraphPageLayout)
 from kiali_qe.entities import (
     TrafficItem,
     DeploymentStatus,
@@ -1049,6 +1050,42 @@ class CheckBoxFilter(Widget):
                 checked_items.append(_cb_item)
         self.close()
         return checked_items
+
+
+class GraphLayout(Widget):
+    ROOT = ('//*[contains(@class, "pf-l-toolbar")]')
+
+    def __init__(self, parent, locator=None, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        if locator:
+            self.locator = locator
+        else:
+            self.locator = self.ROOT
+        self._buttons = {}
+        self._buttons[GraphPageLayout.DAGRE] = '//button[@id="toolbar_layout_default"]'
+        self._buttons[GraphPageLayout.COSE] = '//button[@id="toolbar_layout1"]'
+        self._buttons[GraphPageLayout.COLA] = '//button[@id="toolbar_layout2"]'
+
+    def __locator__(self):
+        return self.locator
+
+    def check(self, button_type):
+        self.browser.click(
+            self.browser.element(locator=self._buttons[button_type],
+                                 parent=self.locator))
+
+    def _is_active(self, button_locator):
+        return 'pf-m-active' in self.browser.element(
+            locator=button_locator,
+            parent=self.locator).get_attribute("class")
+
+    @property
+    def active_items(self):
+        active_items = []
+        for _key, _value in self._buttons.items():
+            if self._is_active(_value):
+                active_items.append(_key)
+        return active_items
 
 
 class NamespaceFilter(CheckBoxFilter):

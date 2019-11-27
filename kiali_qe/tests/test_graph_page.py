@@ -3,6 +3,7 @@ from kiali_qe.components.enums import (
     GraphPageBadgesFilter,
     GraphPageDisplayFilter,
     GraphType,
+    GraphPageLayout,
     EdgeLabelsFilter,
     TimeIntervalUIText,
     GraphRefreshInterval
@@ -10,6 +11,8 @@ from kiali_qe.components.enums import (
 from kiali_qe.pages import GraphPage
 from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
+
+ISTIO_SYSTEM = 'istio-system'
 
 
 @pytest.mark.p_atomic
@@ -82,6 +85,28 @@ def test_filter(browser):
     # select each filter in radio
     for filter_name in edge_options_listed:
         _filter_test(page, filter_name, uncheck=False)
+
+
+@pytest.mark.p_atomic
+@pytest.mark.p_ro_group3
+def test_layout(browser):
+    # get page instance
+    page = GraphPage(browser)
+    page.namespace.check(ISTIO_SYSTEM)
+    # test default layout
+    p_layout = page.layout
+    active_items = p_layout.active_items
+    assert [GraphPageLayout.DAGRE] == active_items, \
+        ('Options mismatch: defined:{}, listed:{}'.format(GraphPageLayout.DAGRE, active_items))
+    # test selected layout
+    p_layout.check(GraphPageLayout.COLA)
+    active_items = p_layout.active_items
+    assert [GraphPageLayout.COLA] == active_items, \
+        ('Options mismatch: defined:{}, listed:{}'.format(GraphPageLayout.COLA, active_items))
+    p_layout.check(GraphPageLayout.COSE)
+    active_items = p_layout.active_items
+    assert [GraphPageLayout.COSE] == active_items, \
+        ('Options mismatch: defined:{}, listed:{}'.format(GraphPageLayout.COSE, active_items))
 
 
 def _filter_test(page, filter_name, uncheck=True):
