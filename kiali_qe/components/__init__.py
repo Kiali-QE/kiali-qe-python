@@ -2083,6 +2083,16 @@ class TableViewAbstract(Widget):
         except NoSuchElementException:
             self.browser.execute_script("history.back();")
 
+    def click_more_labels(self, parent):
+        try:
+            elements = self.browser.elements(
+                parent=parent,
+                locator=('.//a[text()="More labels..."]'))
+            for element in elements:
+                self.browser.click(element)
+        except NoSuchElementException:
+            pass
+
     def _item_sidecar(self, element):
         return not len(self.browser.elements(
                 parent=element, locator=self.MISSING_SIDECAR)) > 0
@@ -2495,7 +2505,8 @@ class TableViewDestinationRules(TableViewAbstract):
 
 class TableViewWorkloadPods(TableViewAbstract):
     POD_TEXT = 'Pods'
-    PODS_SECTION_ROOT = '//section[@id="pf-tab-section-0-service-tabs"]'
+    SECTION_ID = 'pf-tab-section-0-service-tabs'
+    PODS_SECTION_ROOT = '//section[@id="{}"]'.format(SECTION_ID)
     TABLE_ROOT = '//table[contains(@class, "pf-c-table")]'
 
     def open(self):
@@ -2517,13 +2528,16 @@ class TableViewWorkloadPods(TableViewAbstract):
     @property
     def items(self):
         self.open()
+        self.click_more_labels(parent=self.ROOT)
 
         _items = []
         for el in self.browser.elements(locator=self.ROWS.format(
-            'service-tabs-pane-pods'),
+            self.SECTION_ID),
                                         parent=self.ROOT):
             _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
-
+            if len(_columns) < 2:
+                # empty row
+                continue
             _name = _columns[1].text.strip()
             _created_at = _columns[2].text.strip()
             _created_by = _columns[3].text.strip()
@@ -2533,7 +2547,7 @@ class TableViewWorkloadPods(TableViewAbstract):
 
             _items.append(WorkloadPod(
                         name=str(_name),
-                        created_at=_created_at,
+                        created_at=parse_from_ui(_created_at),
                         created_by=_created_by,
                         labels=self._get_labels(_columns[4]),
                         istio_init_containers=_istio_init_containers,
@@ -2545,7 +2559,8 @@ class TableViewWorkloadPods(TableViewAbstract):
 
 class TableViewServices(TableViewAbstract):
     SERVICES_TEXT = 'Services'
-    PODS_SECTION_ROOT = '//section[@id="pf-tab-section-1-service-tabs"]'
+    SECTION_ID = 'pf-tab-section-1-service-tabs'
+    PODS_SECTION_ROOT = '//section[@id="{}"]'.format(SECTION_ID)
     TABLE_ROOT = '//table[contains(@class, "pf-c-table")]'
 
     def open(self):
@@ -2567,13 +2582,16 @@ class TableViewServices(TableViewAbstract):
     @property
     def items(self):
         self.open()
+        self.click_more_labels(parent=self.ROOT)
 
         _items = []
         for el in self.browser.elements(locator=self.ROWS.format(
-            'service-tabs-pane-services'),
+            self.SECTION_ID),
                                         parent=self.ROOT):
             _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
-
+            if len(_columns) < 2:
+                # empty row
+                continue
             _name = _columns[0].text.strip()
             _created_at = _columns[1].text.strip()
             _type = _columns[2].text.strip()
