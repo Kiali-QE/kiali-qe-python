@@ -2644,7 +2644,7 @@ class TabViewAbstract(Widget):
             locator='.//*[contains(@d, "M504")]')) > 0
         _not_healthy = len(self.browser.elements(
             parent=element,
-            locator='.//*[contains(@d, "M506")]')) > 0
+            locator='.//*[contains(@d, "M512")]')) > 0
         _degraded = len(self.browser.elements(
             parent=element,
             locator='.//*[contains(@d, "M569")]')) > 0
