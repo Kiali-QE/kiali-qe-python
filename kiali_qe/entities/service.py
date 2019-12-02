@@ -203,8 +203,9 @@ class ServiceDetails(EntityBase):
             return False
         if self.labels != other.labels:
             return False
-        if self.selectors != other.selectors:
-            return False
+        # https://github.com/kiali/kiali/issues/1382
+        # if self.selectors != other.selectors:
+        #    return False
         # advanced check
         if not advanced_check:
             return True
