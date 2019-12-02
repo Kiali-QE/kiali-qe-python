@@ -493,6 +493,10 @@ def _istio_config_delete(openshift_client, config_dict, kind, api_version, names
                                          api_version=api_version)
 
 
+def _istio_config_list(kiali_client, name, namespace=BOOKINFO_1):
+    return kiali_client.istio_config_list(namespaces=[namespace], config_names=[name])
+
+
 def _ui_istio_config_delete(tests, config_dict, namespace=BOOKINFO_1):
     tests.delete_istio_config(name=config_dict.metadata.name,
                               namespace=namespace)
@@ -572,8 +576,7 @@ def _istio_config_test(kiali_client, openshift_client, browser, config_dict,
 
         if delete_istio_config:
             _ui_istio_config_delete(tests, config_dict, namespace)
-            # TODO: check that the config was correclty removed
-            # tests.assert_all_items(namespaces=[namespace], filters=filters)
+            assert len(_istio_config_list(kiali_client, config_dict.metadata.name, namespace)) == 0
     finally:
         if delete_istio_config:
             _istio_config_delete(openshift_client, config_dict, kind, api_version, namespace)
