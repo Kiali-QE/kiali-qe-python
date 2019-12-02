@@ -1,6 +1,7 @@
 import random
 import re
 import time
+import math
 
 from kiali_qe.components import (
     BreadCrumb,
@@ -373,11 +374,20 @@ class AbstractListPageTest(object):
                     if (outbound_item.name == name
                         and outbound_item.object_type == self_object_type
                             and outbound_item.request_type == inbound_item.request_type):
-                        # TODO check traffic
                         found = True
                         assert inbound_item.status == outbound_item.status, \
                             "Inbound Status {} is not equal to Outbound Status {} for {}".format(
                                 inbound_item.status, outbound_item.status, name)
+                        assert math.isclose(inbound_item.rps, outbound_item.rps, abs_tol=0.2), \
+                            "Inbound RPS {} is not equal to Outbound RPS {} for {}".format(
+                                inbound_item.rps,
+                                outbound_item.rps,
+                                name)
+                        assert math.isclose(inbound_item.success_rate,
+                                            outbound_item.success_rate,
+                                            abs_tol=1.0), \
+                            "Inbound Rate {} is not equal to Outbound Rate {} for {}".format(
+                                inbound_item.success_rate, outbound_item.success_rate, name)
                 if not found:
                     assert found, "{} {} {} not found in {}".format(name,
                                                                     self_object_type,
