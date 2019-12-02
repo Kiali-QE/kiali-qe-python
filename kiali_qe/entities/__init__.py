@@ -104,12 +104,13 @@ class DeploymentStatus(EntityBase):
 
 class TrafficItem(EntityBase):
 
-    def __init__(self, status, name, object_type, request_type, traffic):
+    def __init__(self, status, name, object_type, request_type, rps, success_rate):
         self.name = name
         self.status = status
         self.object_type = object_type
         self.request_type = request_type
-        self.traffic = traffic
+        self.rps = rps
+        self.success_rate = success_rate
 
     def __str__(self):
         return 'name:{}, object_type: {}, status:{}, request_type:{}'.format(

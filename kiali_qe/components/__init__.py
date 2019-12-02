@@ -2699,7 +2699,7 @@ class TrafficView(TabViewAbstract):
 
             _name = _columns[1].text.strip()
             _request_type = _columns[2].text.strip()
-            _traffic = _columns[3].text.strip()
+            _traffic = _columns[3].text.strip().replace('N/A', '0.0')
 
             # Traffic Item object creation
             _item = TrafficItem(
@@ -2707,7 +2707,8 @@ class TrafficView(TabViewAbstract):
                 name=_name,
                 object_type=self._get_type(_columns[1]),
                 request_type=_request_type,
-                traffic=_traffic)
+                rps=float(re.sub('rps.*', '', _traffic).strip()),
+                success_rate=float(re.sub('\\%.*', '', re.sub('.*\\|', '', _traffic)).strip()))
             # append this item to the final list
             _items.append(_item)
         return _items
