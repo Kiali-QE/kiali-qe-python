@@ -2770,6 +2770,13 @@ class MetricsView(TabViewAbstract):
                 pass
         wait_to_spinner_disappear(self.browser)
         wait_displayed(self.destination)
+        try:
+            self.view_in_grafana = self.browser.get_attribute(
+                'href', self.browser.element(locator='//a[contains(text(), "View in Grafana")]',
+                                             parent=self.ROOT))
+        except (NoSuchElementException):
+            self.view_in_grafana = None
+            pass
 
 
 class TracesView(TabViewAbstract):
