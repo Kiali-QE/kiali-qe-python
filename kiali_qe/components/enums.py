@@ -133,6 +133,20 @@ class OverviewPageType(StringEnum):
     WORKLOADS = ('Workloads')
 
 
+class OverviewLinks(StringEnum):
+    GRAPH = ('graph')
+    APPLICATIONS = ('applications')
+    WORKLOADS = ('workloads')
+    SERVICES = ('services')
+    ISTIO_CONFIG = ('istio')
+
+
+class OverviewGraphTypeLink(StringEnum):
+    APP = ('app')
+    WORKLOAD = ('workload')
+    SERVICE = ('service')
+
+
 class WorkloadsPageFilter(StringEnum):
     WORKLOAD_NAME = ('Workload Name')
     WORKLOAD_TYPE = ('Workload Type')
