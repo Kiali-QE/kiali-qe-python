@@ -105,3 +105,9 @@ def word_in_text(word, text, contains=True):
         return word in text
     else:
         return word not in text
+
+
+def get_url(products, key):
+    for item in products:
+        if item['name'] == key and 'url' in item:
+            return item['url']

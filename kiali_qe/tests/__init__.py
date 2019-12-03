@@ -33,7 +33,7 @@ from kiali_qe.components.enums import (
     RoutingWizardLoadBalancer,
     TrafficType
 )
-from kiali_qe.utils import is_equal, is_sublist, word_in_text
+from kiali_qe.utils import is_equal, is_sublist, word_in_text, get_url
 from kiali_qe.utils.log import logger
 
 from kiali_qe.pages import (
@@ -282,12 +282,14 @@ class AbstractListPageTest(object):
         assert is_equal(options_defined, options_listed), \
             'Defined: {}  Listed: {}'.format(options_defined, options_listed)
 
-    def assert_metrics_options(self, metrics_page):
+    def assert_metrics_options(self, metrics_page, check_grafana=False):
         metrics_page.open()
         self._assert_metrics_settings(metrics_page)
         self._assert_metrics_destination(metrics_page)
         self._assert_metrics_duration(metrics_page)
         self._assert_metrics_interval(metrics_page)
+        if check_grafana:
+            self._assert_grafana_link(metrics_page)
 
     def _assert_metrics_settings(self, metrics_page):
         # test available filters
@@ -334,6 +336,12 @@ class AbstractListPageTest(object):
         logger.debug('Options[defined:{}, listed:{}]'.format(options_defined, options_listed))
         assert is_equal(options_defined, options_listed), \
             ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
+
+    def _assert_grafana_link(self, metrics_page):
+        _response = self.kiali_client.get_response('getStatus')
+        _products = _response['externalServices']
+        assert metrics_page.view_in_grafana
+        assert get_url(_products, 'Grafana') in metrics_page.view_in_grafana
 
     def assert_breadcrumb_menu(self, name, namespace):
         breadcrumb = self.load_details_page(name, namespace, force_refresh=False, load_only=True)
@@ -670,7 +678,7 @@ class WorkloadsPageTest(AbstractListPageTest):
             self.assert_details(_selected_workload.name,
                                 _selected_workload.namespace,
                                 _selected_workload.workload_type,
-                                True if _idx == 0 else False,
+                                check_metrics=True if _idx == 0 else False,
                                 force_refresh=force_refresh)
 
     def assert_details(self, name, namespace, workload_type, check_metrics=False,
@@ -733,9 +741,9 @@ class WorkloadsPageTest(AbstractListPageTest):
                 assert found, 'Service {} not found in REST {}'.format(service_ui, service_rest)
 
         if check_metrics:
-            self.assert_metrics_options(workload_details_ui.inbound_metrics)
+            self.assert_metrics_options(workload_details_ui.inbound_metrics, check_grafana=True)
 
-            self.assert_metrics_options(workload_details_ui.outbound_metrics)
+            self.assert_metrics_options(workload_details_ui.outbound_metrics, check_grafana=True)
         self.assert_traffic(name, workload_details_ui.traffic_tab,
                             self_object_type=TrafficType.WORKLOAD,
                             traffic_object_type=TrafficType.SERVICE)
@@ -923,7 +931,7 @@ class ServicesPageTest(AbstractListPageTest):
                 else False)
 
         if check_metrics:
-            self.assert_metrics_options(service_details_ui.inbound_metrics)
+            self.assert_metrics_options(service_details_ui.inbound_metrics, check_grafana=True)
         # TODO KIALI-3262
         # self.assert_traces_tab(service_details_ui.traces_tab)
         # service traffic is linked to workloads
