@@ -388,7 +388,7 @@ class AbstractListPageTest(object):
                         assert inbound_item.status == outbound_item.status, \
                             "Inbound Status {} is not equal to Outbound Status {} for {}".format(
                                 inbound_item.status, outbound_item.status, name)
-                        assert math.isclose(inbound_item.rps, outbound_item.rps, abs_tol=0.2), \
+                        assert math.isclose(inbound_item.rps, outbound_item.rps, abs_tol=1.0), \
                             "Inbound RPS {} is not equal to Outbound RPS {} for {}".format(
                                 inbound_item.rps,
                                 outbound_item.rps,
