@@ -5,6 +5,7 @@ from kiali_qe.components.enums import MeshWideTLSType
 class Overview(EntityBase):
 
     def __init__(self, overview_type, namespace, items,
+                 config_status=None,
                  graph_link=None, apps_link=None, workloads_link=None,
                  services_link=None, configs_link=None,
                  healthy=0, unhealthy=0, degraded=0, na=0,
@@ -12,6 +13,7 @@ class Overview(EntityBase):
         self.overview_type = overview_type
         self.namespace = namespace
         self.items = items
+        self.config_status = config_status
         self.graph_link = graph_link
         self.apps_link = apps_link
         self.workloads_link = workloads_link
