@@ -388,7 +388,7 @@ class AbstractListPageTest(object):
                         assert inbound_item.status == outbound_item.status, \
                             "Inbound Status {} is not equal to Outbound Status {} for {}".format(
                                 inbound_item.status, outbound_item.status, name)
-                        assert math.isclose(inbound_item.rps, outbound_item.rps, abs_tol=0.2), \
+                        assert math.isclose(inbound_item.rps, outbound_item.rps, abs_tol=1.0), \
                             "Inbound RPS {} is not equal to Outbound RPS {} for {}".format(
                                 inbound_item.rps,
                                 outbound_item.rps,
@@ -480,6 +480,7 @@ class OverviewPageTest(AbstractListPageTest):
                                        overview_ui.namespace)
             self._assert_overview_link(OverviewLinks.ISTIO_CONFIG.text, overview_ui.configs_link,
                                        overview_ui.namespace)
+            self._assert_overview_config_status(overview_ui.namespace, overview_ui.config_status)
 
     def _prepare_graph_link(self, namespace, graph_type):
         return "/console/graph/namespaces?namespaces={}&graphType={}".format(namespace, graph_type)
@@ -496,6 +497,25 @@ class OverviewPageTest(AbstractListPageTest):
         expected_link = self._prepare_overview_link(link_type, namespace)
         assert expected_link in ui_link, "Expected {} link in UI {} not found".format(
             expected_link, ui_link)
+
+    def _assert_overview_config_status(self, namespace, config_status):
+        expected_status = IstioConfigValidation.NA
+        # get configs from rest api
+        config_list_rest = self.kiali_client.istio_config_list(
+            namespaces=[namespace])
+        for config_rest in config_list_rest:
+            if hasattr(config_rest, 'validation'):
+                if config_rest.validation == IstioConfigValidation.NOT_VALID:
+                    expected_status = IstioConfigValidation.NOT_VALID
+                elif config_rest.validation == IstioConfigValidation.WARNING:
+                    if expected_status != IstioConfigValidation.NOT_VALID:
+                        expected_status = IstioConfigValidation.WARNING
+                elif config_rest.validation == IstioConfigValidation.VALID:
+                    if expected_status == IstioConfigValidation.NA:
+                        expected_status = IstioConfigValidation.VALID
+        assert expected_status == config_status, \
+            'Expected {} but got {} for {} as Config Status'.format(
+                config_status, expected_status, namespace)
 
 
 class ApplicationsPageTest(AbstractListPageTest):

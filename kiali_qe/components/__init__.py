@@ -1775,6 +1775,8 @@ class ListViewOverview(ListViewAbstract):
                 overview_type=_overview_type,
                 namespace=_namespace,
                 items=_item_numbers,
+                config_status=self._get_item_validation(
+                    self.browser.element(locator='.//p[@data-pf-content="true"]', parent=el)),
                 healthy=_healthy,
                 unhealthy=_unhealthy,
                 degraded=_degraded,
