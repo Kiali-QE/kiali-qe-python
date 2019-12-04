@@ -13,7 +13,8 @@ from kiali_qe.components.enums import (
     MeshWideTLSType,
     RoutingWizardTLS,
     TrafficType,
-    GraphPageLayout)
+    GraphPageLayout,
+    OverviewLinks)
 from kiali_qe.entities import (
     TrafficItem,
     DeploymentStatus,
@@ -1778,10 +1779,24 @@ class ListViewOverview(ListViewAbstract):
                 unhealthy=_unhealthy,
                 degraded=_degraded,
                 na=(_item_numbers - (_healthy + _unhealthy + _degraded)),
-                tls_type=self.get_namespace_wide_tls(el))
+                tls_type=self.get_namespace_wide_tls(el),
+                graph_link=self._get_link(OverviewLinks.GRAPH.text, el),
+                apps_link=self._get_link(OverviewLinks.APPLICATIONS.text, el),
+                workloads_link=self._get_link(OverviewLinks.WORKLOADS.text, el),
+                services_link=self._get_link(OverviewLinks.SERVICES.text, el),
+                configs_link=self._get_link(OverviewLinks.ISTIO_CONFIG.text, el))
             # append this item to the final list
             _items.append(_overview)
         return _items
+
+    def _get_link(self, link_type, element):
+        try:
+            return self.browser.get_attribute(
+                'href', self.browser.element(
+                    locator='.//a[contains(@href, "/{}")]'.format(link_type),
+                    parent=element))
+        except (NoSuchElementException):
+            return None
 
 
 class ListViewApplications(ListViewAbstract):
@@ -2772,8 +2787,9 @@ class MetricsView(TabViewAbstract):
         wait_displayed(self.destination)
         try:
             self.view_in_grafana = self.browser.get_attribute(
-                'href', self.browser.element(locator='//a[contains(text(), "View in Grafana")]',
-                                             parent=self.ROOT))
+                'href', self.browser.element(
+                    locator='//a[contains(text(), "View in Grafana")]',
+                    parent=self.ROOT))
         except (NoSuchElementException):
             self.view_in_grafana = None
             pass

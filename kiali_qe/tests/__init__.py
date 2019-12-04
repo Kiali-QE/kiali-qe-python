@@ -31,7 +31,9 @@ from kiali_qe.components.enums import (
     IstioConfigPageSort,
     RoutingWizardTLS,
     RoutingWizardLoadBalancer,
-    TrafficType
+    TrafficType,
+    OverviewLinks,
+    OverviewGraphTypeLink
 )
 from kiali_qe.utils import is_equal, is_sublist, word_in_text, get_url
 from kiali_qe.utils.log import logger
@@ -409,6 +411,9 @@ class OverviewPageTest(AbstractListPageTest):
     FILTER_ENUM = OverviewPageFilter
     TYPE_ENUM = OverviewPageType
     SORT_ENUM = OverviewPageSort
+    GRAPH_LINK_TYPES = {TYPE_ENUM.APPS: OverviewGraphTypeLink.APP,
+                        TYPE_ENUM.SERVICES: OverviewGraphTypeLink.SERVICE,
+                        TYPE_ENUM.WORKLOADS: OverviewGraphTypeLink.WORKLOAD}
 
     def _namespaces_ui(self):
         return self.page.filter.filter_options(filter_name=self.FILTER_ENUM.NAME.text)
@@ -463,6 +468,34 @@ class OverviewPageTest(AbstractListPageTest):
                     found = True
                     break
             assert found, '{} not found in REST {}'.format(overview_ui, overviews_rest)
+
+            self._assert_graph_link(overview_ui.graph_link,
+                                    overview_ui.namespace,
+                                    self.GRAPH_LINK_TYPES[overview_type].text)
+            self._assert_overview_link(OverviewLinks.APPLICATIONS.text, overview_ui.apps_link,
+                                       overview_ui.namespace)
+            self._assert_overview_link(OverviewLinks.WORKLOADS.text, overview_ui.workloads_link,
+                                       overview_ui.namespace)
+            self._assert_overview_link(OverviewLinks.SERVICES.text, overview_ui.services_link,
+                                       overview_ui.namespace)
+            self._assert_overview_link(OverviewLinks.ISTIO_CONFIG.text, overview_ui.configs_link,
+                                       overview_ui.namespace)
+
+    def _prepare_graph_link(self, namespace, graph_type):
+        return "/console/graph/namespaces?namespaces={}&graphType={}".format(namespace, graph_type)
+
+    def _assert_graph_link(self, ui_link, namespace, graph_type):
+        expected_link = self._prepare_graph_link(namespace, graph_type)
+        assert expected_link in ui_link, "Expected {} link in UI {} not found".format(
+            expected_link, ui_link)
+
+    def _prepare_overview_link(self, link_type, namespace):
+        return "/console/{}?namespaces={}".format(link_type, namespace)
+
+    def _assert_overview_link(self, link_type, ui_link, namespace):
+        expected_link = self._prepare_overview_link(link_type, namespace)
+        assert expected_link in ui_link, "Expected {} link in UI {} not found".format(
+            expected_link, ui_link)
 
 
 class ApplicationsPageTest(AbstractListPageTest):
