@@ -163,13 +163,15 @@ class KialiExtendedClient(KialiClient):
             _applications = _data['applications']
             if _applications:
                 for _application_rest in _applications:
+                    _app_health = self.get_app_health(
+                            namespace=_namespace,
+                            app_name=_application_rest['name'])
                     _application = Application(
                         namespace=_namespace,
                         name=_application_rest['name'],
                         istio_sidecar=_application_rest['istioSidecar'],
-                        health=self.get_app_health(
-                            namespace=_namespace,
-                            app_name=_application_rest['name']))
+                        health=_app_health.is_healthy() if _app_health else None,
+                        application_status=_app_health)
                     items.append(_application)
         # filter by application name
         if len(application_names) > 0:
@@ -197,6 +199,9 @@ class KialiExtendedClient(KialiClient):
             _workloads = _data['workloads']
             if _workloads:
                 for _workload_rest in _workloads:
+                    _workload_health = self.get_workload_health(
+                        namespace=_namespace,
+                        workload_name=_workload_rest['name'])
                     _labels = self.get_labels(_workload_rest)
                     _workload = Workload(
                         namespace=_namespace,
@@ -205,9 +210,8 @@ class KialiExtendedClient(KialiClient):
                         istio_sidecar=_workload_rest['istioSidecar'],
                         app_label='app' in _labels.keys(),
                         version_label='version' in _labels.keys(),
-                        health=self.get_workload_health(
-                            namespace=_namespace,
-                            workload_name=_workload_rest['name']))
+                        health=_workload_health.is_healthy() if _workload_health else None,
+                        workload_status=_workload_health)
                     items.append(_workload)
         # filter by workload name
         if len(workload_names) > 0:
@@ -696,15 +700,17 @@ class KialiExtendedClient(KialiClient):
                         phase=_workload_pods[0].phase)
                     _pods.append(_pod)
 
+            _workload_health = self.get_workload_health(
+                        namespace=namespace,
+                        workload_name=_workload_data['name'])
             _workload = WorkloadDetails(
                 name=_workload_data['name'],
                 istio_sidecar=_workload_rest.istio_sidecar,
                 workload_type=_workload_data['type'],
                 created_at=parse_from_rest(_workload_data['createdAt']),
                 resource_version=_workload_data['resourceVersion'],
-                health=self.get_workload_health(
-                        namespace=namespace,
-                        workload_name=_workload_data['name']),
+                health=_workload_health.is_healthy() if _workload_health else None,
+                workload_status=_workload_health,
                 labels=self.get_labels(_workload_data),
                 pods_number=len(_pods),
                 services_number=len(_services),
@@ -737,12 +743,14 @@ class KialiExtendedClient(KialiClient):
             if 'serviceNames' in _application_data:
                 for _service in _application_data['serviceNames']:
                     _services.append(_service)
+            _app_health = self.get_app_health(
+                            namespace=namespace,
+                            app_name=_application_data['name'])
             _application = ApplicationDetails(
                 name=_application_data['name'],
                 istio_sidecar=_application_rest.istio_sidecar,
-                health=self.get_app_health(
-                            namespace=namespace,
-                            app_name=_application_data['name']),
+                health=_app_health.is_healthy() if _app_health else None,
+                application_status=_app_health,
                 workloads=_workloads,
                 services=_services)
         return _application
@@ -780,7 +788,7 @@ class KialiExtendedClient(KialiClient):
                                          path={'namespace': namespace, 'workload': workload_name},
                                          params={'rateInterval': time_interval})
         if _health_data:
-            return WorkloadHealth.get_from_rest(_health_data).is_healthy()
+            return WorkloadHealth.get_from_rest(_health_data)
         else:
             return None
 
@@ -797,7 +805,7 @@ class KialiExtendedClient(KialiClient):
                                          path={'namespace': namespace, 'app': app_name},
                                          params={'rateInterval': time_interval})
         if _health_data:
-            return ApplicationHealth.get_from_rest(_health_data).is_healthy()
+            return ApplicationHealth.get_from_rest(_health_data)
         else:
             return None
 
