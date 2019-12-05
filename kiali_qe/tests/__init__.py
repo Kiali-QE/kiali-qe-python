@@ -33,7 +33,8 @@ from kiali_qe.components.enums import (
     RoutingWizardLoadBalancer,
     TrafficType,
     OverviewLinks,
-    OverviewGraphTypeLink
+    OverviewGraphTypeLink,
+    TailLines
 )
 from kiali_qe.utils import is_equal, is_sublist, word_in_text, get_url
 from kiali_qe.utils.log import logger
@@ -369,6 +370,18 @@ class AbstractListPageTest(object):
         assert not traces_tab.traces.is_oc_login_displayed, "OC Login should not be displayed"
         if not traces_tab.traces.has_no_results:
             assert traces_tab.traces.has_results
+
+    def assert_logs_tab(self, logs_tab, all_pods=[]):
+        logs_tab.open()
+        assert is_equal(all_pods, logs_tab.pods.options)
+        assert logs_tab.containers.options
+        assert is_equal([item.text for item in TailLines],
+                        logs_tab.tail_lines.options)
+        assert is_equal([item.text for item in TimeIntervalUIText],
+                        logs_tab.interval.options)
+        self.browser.click(logs_tab.refresh)
+        wait_to_spinner_disappear(self.browser)
+        assert logs_tab.textarea.text
 
     def assert_traffic(self, name, traffic_tab, self_object_type, traffic_object_type):
         inbound_traffic = traffic_tab.inbound_items()
@@ -774,7 +787,9 @@ class WorkloadsPageTest(AbstractListPageTest):
         # if workload_details_ui.destination_services_number \
         #         != workload_details_rest.destination_services_number:
         #     return False
+        all_pods = []
         for pod_ui in workload_details_ui.pods:
+            all_pods.append(pod_ui.name)
             found = False
             for pod_rest in workload_details_rest.pods:
                 if pod_ui.is_equal(pod_rest,
@@ -793,6 +808,7 @@ class WorkloadsPageTest(AbstractListPageTest):
             if not found:
                 assert found, 'Service {} not found in REST {}'.format(service_ui, service_rest)
 
+        self.assert_logs_tab(workload_details_ui.logs_tab, all_pods)
         if check_metrics:
             self.assert_metrics_options(workload_details_ui.inbound_metrics, check_grafana=True)
 
