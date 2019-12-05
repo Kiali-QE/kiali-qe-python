@@ -85,6 +85,8 @@ class WorkloadDetails(EntityBase):
             if 'services' in kwargs else None
         self.traffic_tab = kwargs['traffic_tab']\
             if 'traffic_tab' in kwargs else None
+        self.logs_tab = kwargs['logs_tab']\
+            if 'logs_tab' in kwargs else None
         self.pods = kwargs['pods']\
             if 'pods' in kwargs else None
         self.inbound_metrics = kwargs['inbound_metrics']\

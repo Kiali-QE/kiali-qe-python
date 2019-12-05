@@ -1,7 +1,7 @@
 """ Update this doc"""
 import re
 
-from widgetastic.widget import Checkbox, TextInput, Widget
+from widgetastic.widget import Checkbox, TextInput, Widget, Text
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 from kiali_qe.components.enums import (
@@ -1878,6 +1878,8 @@ class ListViewWorkloads(ListViewAbstract):
 
         _traffic_tab = TrafficView(parent=self.parent, locator=self.locator, logger=self.logger)
 
+        _logs_tab = LogsView(parent=self.parent)
+
         _inbound_metrics = MetricsView(parent=self.parent, tab_name=self.INBOUND_METRICS)
 
         _outbound_metrics = MetricsView(parent=self.parent,
@@ -1895,6 +1897,7 @@ class ListViewWorkloads(ListViewAbstract):
                                services=_table_view_services.all_items,
                                labels=self._get_details_labels(),
                                traffic_tab=_traffic_tab,
+                               logs_tab=_logs_tab,
                                inbound_metrics=_inbound_metrics,
                                outbound_metrics=_outbound_metrics)
 
@@ -2763,6 +2766,30 @@ class TrafficView(TabViewAbstract):
             return TrafficType.SERVICE
         else:
             return TrafficType.UNKNOWN
+
+
+class LogsView(TabViewAbstract):
+    LOGS_TAB = '//button[contains(text(), "Logs")]'
+    DROP_DOWN = '//*[contains(@class, "pf-c-select")]/*[contains(@aria-labelledby, "{}")]/..'
+
+    pods = DropDown(locator=DROP_DOWN.format('wpl_pods'))
+    containers = DropDown(locator=DROP_DOWN.format('wpl_containers'))
+    tail_lines = DropDown(locator=DROP_DOWN.format('wpl_tailLines'))
+    interval = DropDown(locator=DROP_DOWN.format('metrics_filter_interval_duration'))
+    refresh = Button(locator='//button[@id="refresh_button"]')
+    textarea = Text(locator='//textarea')
+
+    def open(self):
+        tab = self.browser.element(locator=self.LOGS_TAB,
+                                   parent=self.ROOT)
+        try:
+            self.browser.click(tab)
+        except (NoSuchElementException, StaleElementReferenceException):
+            try:
+                self.browser.click(tab)
+            except StaleElementReferenceException:
+                pass
+        wait_to_spinner_disappear(self.browser)
 
 
 class MetricsView(TabViewAbstract):
