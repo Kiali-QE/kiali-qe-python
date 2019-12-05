@@ -54,19 +54,24 @@ class Workload(EntityBase):
                 return False
             if self.version_label != other.version_label:
                 return False
+            # TODO in case of unstable env pods can recreate
+            # if self.workload_status and other.workload_status and \
+            #         not self.workload_status.is_equal(other.workload_status):
+            #     return False
         return True
 
 
 class WorkloadDetails(EntityBase):
 
     def __init__(self, name, workload_type, created_at, resource_version,
-                 istio_sidecar=False, health=None, **kwargs):
+                 istio_sidecar=False, health=None, workload_status=None, **kwargs):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
         self.workload_type = workload_type
         self.istio_sidecar = istio_sidecar
         self.health = health
+        self.workload_status = workload_status
         self.created_at = created_at
         self.resource_version = resource_version
         self.labels = kwargs['labels']\
@@ -133,6 +138,9 @@ class WorkloadDetails(EntityBase):
             # if self.istio_sidecar != other.istio_sidecar:
             #    return False
             if self.health != other.health:
+                return False
+            if self.workload_status and \
+                    not self.workload_status.is_equal(other.workload_status):
                 return False
         return True
 
@@ -245,10 +253,16 @@ class WorkloadHealth(EntityBase):
             # update requests
         _r_rest = health['requests']
         _requests = AppRequests(
-            inboundErrorRatio=_r_rest['inboundErrorRatio'],
-            outboundErrorRatio=_r_rest['outboundErrorRatio'])
+            inboundErrorRatio=cls._get_error_ratio(_r_rest['inboundErrorRatio']),
+            outboundErrorRatio=cls._get_error_ratio(_r_rest['outboundErrorRatio']))
         return WorkloadHealth(
             workload_status=_workload_status, requests=_requests)
+
+    @classmethod
+    def _get_error_ratio(cls, error_ratio):
+        if error_ratio != -1:
+            return float(error_ratio)
+        return float(error_ratio / 100)
 
 
 class DestinationService(EntityBase):

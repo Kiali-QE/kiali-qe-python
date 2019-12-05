@@ -602,6 +602,14 @@ class ApplicationsPageTest(AbstractListPageTest):
                                                advanced_check=True), \
             'Application UI {} not equal to REST {}'\
             .format(application_details_ui, application_details_rest)
+        if application_details_ui.application_status:
+            assert application_details_ui.application_status.is_healthy() == \
+                application_details_ui.health, \
+                "Application Details Status {} is not equal to UI Health {} for {}"\
+                .format(
+                application_details_ui.application_status.is_healthy(),
+                application_details_ui.health,
+                application_details_ui.name)
         for workload_ui in application_details_ui.workloads:
             found = False
             for workload_rest in application_details_rest.workloads:
@@ -784,9 +792,14 @@ class WorkloadsPageTest(AbstractListPageTest):
             return False
         if workload_details_ui.services_number != workload_details_rest.services_number:
             return False
-        # if workload_details_ui.destination_services_number \
-        #         != workload_details_rest.destination_services_number:
-        #     return False
+        if workload_details_ui.workload_status:
+            assert workload_details_ui.workload_status.is_healthy() == \
+                workload_details_ui.health, \
+                "Workload Details Status {} is not equal to UI Health {} for {}"\
+                .format(
+                workload_details_ui.workload_status.is_healthy(),
+                workload_details_ui.health,
+                workload_details_ui.name)
         all_pods = []
         for pod_ui in workload_details_ui.pods:
             all_pods.append(pod_ui.name)

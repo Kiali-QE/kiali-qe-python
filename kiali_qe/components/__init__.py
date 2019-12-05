@@ -1478,10 +1478,7 @@ class ListViewAbstract(Widget):
         try:
             self.browser.move_to_element(locator='.//*[contains(@class, "icon")]', parent=element)
             sleep(0.5)
-            statuses = self.browser.element(
-                locator=('.//*[contains(text(), "Pods Status") or ' +
-                         'contains(text(), "Error Rate")]/../..'),
-                parent=self.locator).text.split('\n')
+            statuses = self._get_request_statuses()
         except (NoSuchElementException, StaleElementReferenceException):
             # skip errors caused by browser delays, this health will be ignored
             pass
@@ -1489,6 +1486,30 @@ class ListViewAbstract(Widget):
             self.browser.send_keys_to_focused_element(Keys.ESCAPE)
             sleep(0.5)
             return statuses
+
+    def _get_application_details_health(self):
+        statuses = self._get_request_statuses()
+        if len(statuses) > 0:
+            return ApplicationHealth(
+                deployment_statuses=self._get_deployment_statuses(statuses),
+                requests=self._get_apprequests(statuses))
+        else:
+            return None
+
+    def _get_workload_details_health(self, name):
+        statuses = self._get_request_statuses()
+        if len(statuses) > 0:
+            return WorkloadHealth(
+                workload_status=self._get_deployment_status(statuses, name),
+                requests=self._get_apprequests(statuses))
+        else:
+            return None
+
+    def _get_request_statuses(self):
+        return self.browser.element(
+            locator=('.//*[contains(text(), "Pods Status") or ' +
+                     'contains(text(), "Error Rate")]/../..'),
+            parent=self.locator).text.split('\n')
 
     def _get_deployment_status(self, statuses, name=None):
         result = self._get_deployment_statuses(statuses, name)
@@ -1825,6 +1846,7 @@ class ListViewApplications(ListViewAbstract):
         return ApplicationDetails(name=str(_name),
                                   istio_sidecar=self._details_sidecar(),
                                   health=self._get_details_health(),
+                                  application_status=self._get_application_details_health(),
                                   workloads=_table_view_workloads.all_items,
                                   services=_table_view_services.all_items,
                                   traffic_tab=_traffic_tab,
@@ -1891,6 +1913,7 @@ class ListViewWorkloads(ListViewAbstract):
                                resource_version=_resource_version,
                                istio_sidecar=self._details_sidecar(),
                                health=self._get_details_health(),
+                               workload_status=self._get_workload_details_health(_name),
                                pods_number=_table_view_pods.number,
                                services_number=_table_view_services.number,
                                pods=_table_view_pods.all_items,
