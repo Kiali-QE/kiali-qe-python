@@ -975,6 +975,15 @@ class ServicesPageTest(AbstractListPageTest):
         assert service_details_ui.destination_rules_number\
             == len(service_details_ui.destination_rules)
 
+        if service_details_ui.service_status:
+            assert service_details_ui.service_status.is_healthy() == \
+                service_details_ui.health, \
+                "Service Details Status {} is not equal to UI Health {} for {}"\
+                .format(
+                service_details_ui.service_status.is_healthy(),
+                service_details_ui.health,
+                service_details_ui.name)
+
         for workload_ui in service_details_ui.workloads:
             found = False
             for workload_rest in service_details_rest.workloads:
