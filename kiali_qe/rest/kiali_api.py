@@ -10,6 +10,7 @@ from kiali_qe.components.enums import (
     TimeIntervalRestParam,
     HealthType as HEALTH_TYPE
 )
+from kiali_qe.entities import Requests
 from kiali_qe.entities.istio_config import IstioConfig, IstioConfigDetails, Rule
 from kiali_qe.entities.service import (
     ServiceHealth,
@@ -84,14 +85,16 @@ class KialiExtendedClient(KialiClient):
             _services = _data['services']
             # update all the services to our custom entity
             for _service_rest in _services:
+                _service_health = self.get_service_health(
+                    namespace=_namespace,
+                    service_name=_service_rest['name'],
+                    istioSidecar=_service_rest['istioSidecar'])
                 _service = Service(
                     namespace=_namespace,
                     name=_service_rest['name'],
                     istio_sidecar=_service_rest['istioSidecar'],
-                    health=self.get_service_health(
-                        namespace=_namespace,
-                        service_name=_service_rest['name'],
-                        istioSidecar=_service_rest['istioSidecar']))
+                    health=_service_health.is_healthy() if _service_health else None,
+                    service_status=_service_health)
                 items.append(_service)
         # filter by service name
         if len(service_names) > 0:
@@ -585,6 +588,14 @@ class KialiExtendedClient(KialiClient):
                 _ports += '{}{} ({}) '.format(_port['protocol'],
                                               ' ' + _port['name'] if _port['name'] != '' else '',
                                               _port['port'])
+            endpoints = []
+            if _service_data['endpoints']:
+                for _endpoint in _service_data['endpoints'][0]['addresses']:
+                    endpoints.append(_endpoint['ip'])
+            _service_health = self.get_service_health(
+                namespace=namespace,
+                service_name=service_name,
+                istioSidecar=_service_rest.istio_sidecar)
             _service = ServiceDetails(
                     name=_service_data['service']['name'],
                     istio_sidecar=_service_rest.istio_sidecar,
@@ -593,13 +604,12 @@ class KialiExtendedClient(KialiClient):
                     resource_version=_service_data['service']['resourceVersion'],
                     service_type=_service_data['service']['type'],
                     ip=_service_data['service']['ip'],
+                    endpoints=endpoints,
                     ports=_ports.strip(),
                     labels=self.get_labels(_service_data['service']),
                     selectors=self.get_selectors(_service_data['service']),
-                    health=self.get_service_health(
-                        namespace=namespace,
-                        service_name=service_name,
-                        istioSidecar=_service_rest.istio_sidecar),
+                    health=_service_health.is_healthy() if _service_health else None,
+                    service_status=_service_health,
                     workloads=workloads,
                     traffic=source_workloads,
                     virtual_services=virtual_services,
@@ -765,13 +775,13 @@ class KialiExtendedClient(KialiClient):
         """
 
         if not istioSidecar:  # without sidecar no health is available
-            return HEALTH_TYPE.NA
+            return ServiceHealth(requests=Requests(errorRatio=-0.01))
 
         _health_data = self.get_response(method_name='serviceHealth',
                                          path={'namespace': namespace, 'service': service_name},
                                          params={'rateInterval': time_interval})
         if _health_data:
-            return ServiceHealth.get_from_rest(_health_data).is_healthy()
+            return ServiceHealth.get_from_rest(_health_data)
         else:
             return None
 
