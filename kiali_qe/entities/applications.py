@@ -1,5 +1,6 @@
 from kiali_qe.entities import EntityBase, DeploymentStatus, AppRequests
 from kiali_qe.components.enums import HealthType
+from kiali_qe.utils import is_equal
 
 
 class ApplicationHealth(EntityBase):
@@ -41,7 +42,7 @@ class ApplicationHealth(EntityBase):
     def is_equal(self, other):
         if not isinstance(other, ApplicationHealth):
             return False
-        if not self.deployment_statuses.is_equal(other.deployment_statuses):
+        if not is_equal(self.deployment_statuses, other.deployment_statuses):
             return False
         if not self.requests.is_equal(other.requests):
             return False
@@ -61,10 +62,16 @@ class ApplicationHealth(EntityBase):
             # update requests
         _r_rest = health['requests']
         _requests = AppRequests(
-            inboundErrorRatio=_r_rest['inboundErrorRatio'],
-            outboundErrorRatio=_r_rest['outboundErrorRatio'])
+            inboundErrorRatio=cls._get_error_ratio(_r_rest['inboundErrorRatio']),
+            outboundErrorRatio=cls._get_error_ratio(_r_rest['outboundErrorRatio']))
         return ApplicationHealth(
             deployment_statuses=_deployment_status_list, requests=_requests)
+
+    @classmethod
+    def _get_error_ratio(cls, error_ratio):
+        if error_ratio != -1:
+            return float(error_ratio)
+        return float(error_ratio / 100)
 
 
 class Application(EntityBase):
@@ -106,18 +113,23 @@ class Application(EntityBase):
         if advanced_check:
             if self.health != other.health:
                 return False
+            # TODO in case of unstable env pods can recreate
+            # if self.application_status and other.application_status and \
+            #         not self.application_status.is_equal(other.application_status):
+            #     return False
         return True
 
 
 class ApplicationDetails(EntityBase):
 
     def __init__(self, name,
-                 istio_sidecar=False, health=None, **kwargs):
+                 istio_sidecar=False, health=None, application_status=None, **kwargs):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
         self.istio_sidecar = istio_sidecar
         self.health = health
+        self.application_status = application_status
         self.workloads = kwargs['workloads']\
             if 'workloads' in kwargs else None
         self.services = kwargs['services']\
@@ -155,6 +167,9 @@ class ApplicationDetails(EntityBase):
             # if self.istio_sidecar != other.istio_sidecar:
             #    return False
             if self.health != other.health:
+                return False
+            if self.application_status and \
+                    not self.application_status.is_equal(other.application_status):
                 return False
         return True
 

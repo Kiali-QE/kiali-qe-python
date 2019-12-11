@@ -1,4 +1,8 @@
+import math
 from kiali_qe.components.enums import HealthType
+
+
+ERROR_RATIO_ABS_TOTAL = 0.09
 
 
 class EntityBase(object):
@@ -38,7 +42,9 @@ class Requests(EntityBase):
 
     def is_equal(self, other):
         return isinstance(other, Requests)\
-         and self.errorRatio == other.errorRatio
+         and math.isclose(self.errorRatio,
+                          other.errorRatio,
+                          abs_tol=ERROR_RATIO_ABS_TOTAL)
 
 
 class AppRequests(EntityBase):
@@ -67,9 +73,13 @@ class AppRequests(EntityBase):
             return HealthType.DEGRADED
 
     def is_equal(self, other):
-        return isinstance(other, Requests)\
-         and self.inboundErrorRatio == other.inboundErrorRatio\
-         and self.outboundErrorRatio == other.outboundErrorRatio
+        return isinstance(other, AppRequests)\
+            and math.isclose(self.inboundErrorRatio,
+                             other.inboundErrorRatio,
+                             abs_tol=ERROR_RATIO_ABS_TOTAL)\
+            and math.isclose(self.outboundErrorRatio,
+                             other.outboundErrorRatio,
+                             abs_tol=ERROR_RATIO_ABS_TOTAL)
 
 
 class DeploymentStatus(EntityBase):
