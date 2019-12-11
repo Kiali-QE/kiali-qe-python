@@ -461,6 +461,7 @@ class OpenshiftExtendedClient(object):
             resource_version=_response.metadata.resourceVersion,
             service_type=_response.spec.type,
             ip=_response.spec.clusterIP,
+            # TODO endpoints from Deployments
             ports=_ports.strip(),
             labels=dict(_response.metadata.labels),
             selectors=dict(_response.spec.selector if _response.spec.selector else {}),

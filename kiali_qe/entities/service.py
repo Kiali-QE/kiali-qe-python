@@ -1,24 +1,24 @@
-from kiali_qe.entities import EntityBase, DeploymentStatus, Requests
+from kiali_qe.entities import EntityBase, Requests
 from kiali_qe.components.enums import HealthType
-from kiali_qe.utils import is_equal as compare_lists
+from kiali_qe.utils import is_equal as compare_lists, is_equal
 
 
 class ServiceHealth(EntityBase):
 
-    def __init__(self, deployment_statuses, requests):
-        self.deployment_statuses = deployment_statuses
+    def __init__(self, requests):
         self.requests = requests
 
     def __str__(self):
-        return 'deployment_statuses:{}, requests:{}'.format(
-            self.deployment_statuses, self.requests)
+        return 'requests:{}'.format(self.requests)
 
     def __repr__(self):
-        return "{}({}, {})".format(
+        return "{}({})".format(
             type(self).__name__,
-            repr(self.deployment_statuses), repr(self.requests))
+            repr(self.requests))
 
     def is_healthy(self):
+        if not self.requests:
+            return HealthType.NA
         if self.requests.is_healthy() == HealthType.NA:
             return HealthType.NA
         elif self.requests.is_healthy() == HealthType.FAILURE:
@@ -31,29 +31,23 @@ class ServiceHealth(EntityBase):
     def is_equal(self, other):
         if not isinstance(other, ServiceHealth):
             return False
-        if not self.deployment_statuses.is_equal(other.deployment_statuses):
-            return False
         if not self.requests.is_equal(other.requests):
             return False
         return True
 
     @classmethod
     def get_from_rest(cls, health):
-        # update deployment statuses
-        _deployment_status_list = []
-        if 'deploymentStatuses' in health:
-            for _d_in_rest in health['deploymentStatuses']:
-                deployment_status = DeploymentStatus(
-                    name=_d_in_rest['name'],
-                    replicas=_d_in_rest['desiredReplicas'],
-                    available=_d_in_rest['availableReplicas'])
-                _deployment_status_list.append(deployment_status)
-            # update requests
+        # update requests
         _r_rest = health['requests']
         _requests = Requests(
-            errorRatio=_r_rest['errorRatio'])
-        return ServiceHealth(
-            deployment_statuses=_deployment_status_list, requests=_requests)
+            errorRatio=cls._get_error_ratio(_r_rest['errorRatio']))
+        return ServiceHealth(requests=_requests)
+
+    @classmethod
+    def _get_error_ratio(cls, error_ratio):
+        if error_ratio != -1:
+            return float(error_ratio)
+        return float(error_ratio / 100)
 
 
 class Service(EntityBase):
@@ -118,6 +112,9 @@ class Service(EntityBase):
         #    return False
         if self.health != other.health:
             return False
+        if self.service_status and other.service_status and \
+                not self.service_status.is_equal(other.service_status):
+            return False
         return True
 
 
@@ -133,7 +130,8 @@ class ServiceDetails(EntityBase):
 
     def __init__(self, name, created_at, service_type,
                  resource_version, ip, ports, labels={}, selectors={},
-                 istio_sidecar=False, health=None, **kwargs):
+                 istio_sidecar=False, health=None, service_status=None,
+                 endpoints=[], **kwargs):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
@@ -146,6 +144,8 @@ class ServiceDetails(EntityBase):
         self.ports = ports
         self.labels = labels
         self.selectors = selectors
+        self.service_status = service_status
+        self.endpoints = endpoints
         self.workloads_number = kwargs['workloads_number']\
             if 'workloads_number' in kwargs else None
         self.virtual_services_number = kwargs['virtual_services_number']\
@@ -167,10 +167,11 @@ class ServiceDetails(EntityBase):
 
     def __str__(self):
         return 'name:{}, created_at: {}, service_type: {}, resource_version: {}, \
-        ip: {}, ports: {}, istio_sidecar:{}, health:{}, labels:{}, selectors:{}'.format(
+        ip: {}, endpoints: {}, ports: {}, \
+        istio_sidecar:{}, health:{}, labels:{}, selectors:{}'.format(
             self.name, self.created_at,
             self.service_type, self.resource_version,
-            self.ip, self.ports,
+            self.ip, self.endpoints, self.ports,
             self.istio_sidecar, self.health, self.labels, self.selectors)
 
     def __repr__(self):
@@ -209,9 +210,14 @@ class ServiceDetails(EntityBase):
         # advanced check
         if not advanced_check:
             return True
+        if not is_equal(self.endpoints, other.endpoints):
+            return False
         # if self.istio_sidecar != other.istio_sidecar:
         #    return False
         if self.health != other.health:
+            return False
+        if self.service_status and other.service_status and \
+                not self.service_status.is_equal(other.service_status):
             return False
         return True
 

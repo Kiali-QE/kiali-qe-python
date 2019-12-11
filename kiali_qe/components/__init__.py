@@ -1397,6 +1397,14 @@ class ListViewAbstract(Widget):
             parent=self.DETAILS_ROOT,
             locator=self.MISSING_SIDECAR)) > 0
 
+    def _get_service_endpoints(self, element):
+        result = []
+        _endpoints = self.browser.elements(
+            locator='.//div[@id="endpoints"]//span', parent=element)
+        for endpoint in _endpoints:
+            result.append(endpoint.text)
+        return result
+
     def _get_details_health(self):
         _health_sublocator = '/../..//h3[normalize-space(text())="Health"]'
         _healthy = len(self.browser.elements(
@@ -1467,9 +1475,7 @@ class ListViewAbstract(Widget):
     def _get_service_health(self, element):
         statuses = self._get_health_tooltip(element)
         if len(statuses) > 0:
-            return ServiceHealth(
-                deployment_statuses=self._get_deployment_statuses(statuses),
-                requests=self._get_requests(statuses))
+            return ServiceHealth(requests=self._get_requests(statuses))
         else:
             return None
 
@@ -1502,6 +1508,13 @@ class ListViewAbstract(Widget):
             return WorkloadHealth(
                 workload_status=self._get_deployment_status(statuses, name),
                 requests=self._get_apprequests(statuses))
+        else:
+            return None
+
+    def _get_service_details_health(self):
+        statuses = self._get_request_statuses()
+        if len(statuses) > 0:
+            return ServiceHealth(requests=self._get_requests(statuses))
         else:
             return None
 
@@ -1989,7 +2002,9 @@ class ListViewServices(ListViewAbstract):
                               resource_version=_resource_version,
                               ip=_ip,
                               ports=str(_ports.replace('\n', ' ')),
+                              endpoints=self._get_service_endpoints(self.DETAILS_ROOT),
                               health=self._get_details_health(),
+                              service_status=self._get_service_details_health(),
                               istio_sidecar=self._details_sidecar(),
                               labels=self._get_details_labels(),
                               selectors=self._get_details_selectors(),
