@@ -6,6 +6,12 @@ class StringEnum(Enum):
         self.text = text
 
 
+class StringTupleEnum(Enum):
+    def __init__(self, key, text):
+        self.key = key
+        self.text = text
+
+
 class MainMenuEnum(StringEnum):
     OVERVIEW = ('Overview')
     GRAPH = ('Graph')
@@ -326,6 +332,13 @@ class RoutingWizardTLS(StringEnum):
     DISABLE = ('DISABLE')
     ISTIO_MUTUAL = ('ISTIO_MUTUAL')
     SIMPLE = ('SIMPLE')
+    MUTUAL = ('MUTUAL')
+
+
+class TLSMutualValues(StringTupleEnum):
+    CA_CERT = ('caCertificates', 'ca_cert')
+    CLIENT_CERT = ('clientCertificate', 'client_cert')
+    PRIVATE_KEY = ('privateKey', 'private_key')
 
 
 class RoutingWizardLoadBalancer(StringEnum):
