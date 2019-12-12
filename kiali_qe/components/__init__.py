@@ -14,7 +14,8 @@ from kiali_qe.components.enums import (
     RoutingWizardTLS,
     TrafficType,
     GraphPageLayout,
-    OverviewLinks)
+    OverviewLinks,
+    TLSMutualValues)
 from kiali_qe.entities import (
     TrafficItem,
     DeploymentStatus,
@@ -657,6 +658,10 @@ class Actions(Widget):
         self._rule_actions = MenuDropDown(parent=self, locator=self.RULE_ACTIONS,
                                           select_button='', force_open=True)
         self._tls = SelectDropDown(parent=self, locator=self.TLS_DROPDOWN, select_button='')
+        self._client_certificate = TextInput(parent=self,
+                                             locator='//input[@id="clientCertificate"]')
+        self._private_key = TextInput(parent=self, locator='//input[@id="privateKey"]')
+        self._ca_certificate = TextInput(parent=self, locator='//input[@id="caCertificates"]')
         self._loadbalancer_switch = ButtonSwitch(parent=self, label="Add LoadBalancer")
         self._loadbalancer_type = SelectDropDown(
             parent=self, locator=self.LOAD_BALANCER_TYPE_DROPDOWN,
@@ -871,6 +876,11 @@ class Actions(Widget):
         wait_displayed(self._tls)
         if tls:
             self._tls.select(tls.text)
+            if tls == RoutingWizardTLS.MUTUAL:
+                wait_displayed(self._client_certificate)
+                self._client_certificate.fill(TLSMutualValues.CLIENT_CERT.text)
+                self._private_key.fill(TLSMutualValues.PRIVATE_KEY.text)
+                self._ca_certificate.fill(TLSMutualValues.CA_CERT.text)
         if load_balancer and load_balancer_type:
             self._loadbalancer_switch.on()
             if load_balancer_type:

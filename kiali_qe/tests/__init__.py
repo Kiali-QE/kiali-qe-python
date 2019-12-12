@@ -34,7 +34,8 @@ from kiali_qe.components.enums import (
     TrafficType,
     OverviewLinks,
     OverviewGraphTypeLink,
-    TailLines
+    TailLines,
+    TLSMutualValues
 )
 from kiali_qe.utils import is_equal, is_sublist, word_in_text, get_url
 from kiali_qe.utils.log import logger
@@ -1164,6 +1165,16 @@ class ServicesPageTest(AbstractListPageTest):
             assert word_in_text(tls.text.lower(),
                                 service_details_rest.destination_rules[0].traffic_policy,
                                 tls)
+            if tls == RoutingWizardTLS.MUTUAL:
+                assert word_in_text('{} {}'.format(TLSMutualValues.CLIENT_CERT.key.lower(),
+                                                   TLSMutualValues.CLIENT_CERT.text),
+                                    service_details_rest.destination_rules[0].traffic_policy)
+                assert word_in_text('{} {}'.format(TLSMutualValues.PRIVATE_KEY.key.lower(),
+                                                   TLSMutualValues.PRIVATE_KEY.text),
+                                    service_details_rest.destination_rules[0].traffic_policy)
+                assert word_in_text('{} {}'.format(TLSMutualValues.CA_CERT.key.lower(),
+                                                   TLSMutualValues.CA_CERT.text),
+                                    service_details_rest.destination_rules[0].traffic_policy)
         # get virtual service details from rest
         istio_config_details_rest = self.kiali_client.istio_config_details(
             namespace=namespace,
