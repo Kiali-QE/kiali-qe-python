@@ -15,7 +15,8 @@ from kiali_qe.components.enums import (
     TrafficType,
     GraphPageLayout,
     OverviewLinks,
-    TLSMutualValues)
+    TLSMutualValues,
+    Rule3ScaleHandler)
 from kiali_qe.entities import (
     TrafficItem,
     DeploymentStatus,
@@ -635,8 +636,12 @@ class Actions(Widget):
         '//select[@id="trafficPolicy-lb"]'
     INCLUDE_MESH_GATEWAY = '//label[contains(text(), "Include")]/..//input[@type="checkbox"]'
     SHOW_ADVANCED_OPTIONS = '//span[text()="Show Advanced Options"]/..'
+    SHOW_CREATE_HANDLER = '//span[text()="Show Create Handler"]/..'
+    CREATE_HANDLER_BUTTON = './/button[text()="Create Handler"]'
+    EXPANDABLE_CONTENT = '//div[@class="pf-c-expandable__content"]'
     CREATE_BUTTON = './/button[text()="Create"]'
     UPDATE_BUTTON = './/button[text()="Update"]'
+    SELECT_BUTTON = './/button[text()="SELECT"]'
     REMOVE_RULE = 'Remove Rule'
     ADD_RULE_BUTTON = './/button[text()="Add Rule"]'
     DELETE_ALL_TRAFFIC_ROUTING = 'Delete ALL Traffic Routing'
@@ -646,6 +651,9 @@ class Actions(Widget):
     UPDATE_WEIGHTED_ROUTING = 'Update Weighted Routing'
     SUSPEND_TRAFFIC = 'Suspend Traffic'
     UPDATE_SUSPENDED_TRAFFIC = 'Update Suspended Traffic'
+    CREATE_3SCALE_RULE = 'Add 3scale API Management Rule'
+    DELETE_3SCALE_RULE = 'Delete 3Scale API Management Rule'
+    UPDATE_3SCALE_RULE = 'Update 3scale API Management Rule'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -668,6 +676,14 @@ class Actions(Widget):
             select_button='')
         self._gateway_switch = ButtonSwitch(parent=self, label="Add Gateway")
         self._include_mesh_gateway = Checkbox(locator=self.INCLUDE_MESH_GATEWAY, parent=self)
+        self._handler_name = TextInput(parent=self,
+                                       locator=self.EXPANDABLE_CONTENT + '//input[@id="handlerName"]')
+        self._service_id = TextInput(parent=self,
+                                     locator=self.EXPANDABLE_CONTENT + '//input[@id="serviceId"]')
+        self._system_url = TextInput(parent=self,
+                                     locator=self.EXPANDABLE_CONTENT + '//input[@id="systemUrl"]')
+        self._access_token = TextInput(parent=self, 
+                                       locator=self.EXPANDABLE_CONTENT + '//input[@id="accessToken"]')
 
     def __locator__(self):
         return self.locator
@@ -690,6 +706,21 @@ class Actions(Widget):
 
     def is_delete_disabled(self):
         return self.DELETE_ALL_TRAFFIC_ROUTING in self.disabled_actions
+
+    def is_delete_3scale_disabled(self):
+        return self.DELETE_3SCALE_RULE in self.disabled_actions
+
+    def is_create_3scale_disabled(self):
+        return self.CREATE_3SCALE_RULE in self.disabled_actions
+
+    def is_create_3scale_enabled(self):
+        return self.CREATE_3SCALE_RULE in self.actions
+
+    def is_update_3scale_disabled(self):
+        return self.UPDATE_3SCALE_RULE in self.disabled_actions
+
+    def is_update_3scale_enabled(self):
+        return self.UPDATE_3SCALE_RULE in self.actions
 
     def is_create_weighted_disabled(self):
         return self.CREATE_WEIGHTED_ROUTING in self.disabled_actions
@@ -894,6 +925,79 @@ class Actions(Widget):
             self._include_mesh_gateway.fill(include_mesh_gateway)
         else:
             self._gateway_switch.off()
+
+    def create_3scale_rule(self, handler_name):
+        if self.is_create_3scale_disabled():
+            return False
+        else:
+            self.select(self.CREATE_3SCALE_RULE)
+            self.create_3scale_handler(handler_name)
+            create_button = self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.CREATE_BUTTON))
+            wait_displayed(create_button)
+            self.browser.click(create_button)
+            wait_not_displayed(self)
+            # wait to Spinner disappear
+            wait_to_spinner_disappear(self.browser)
+            return True
+
+    def update_3scale_rule(self, handler_name):
+        if self.is_update_3scale_enabled():
+            self.select(self.UPDATE_3SCALE_RULE)
+            self.create_3scale_handler(handler_name)
+            update_button = self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.UPDATE_BUTTON))
+            wait_displayed(update_button)
+            self.browser.click(update_button)
+            wait_not_displayed(self)
+            # wait to Spinner disappear
+            wait_to_spinner_disappear(self.browser)
+            return True
+        else:
+            return False
+
+    def delete_3scale_rule(self):
+        if self.is_delete_3scale_disabled():
+            return False
+        else:
+            self.select(self.DELETE_3SCALE_RULE)
+            self.browser.click(self.browser.element(
+                parent=self.DIALOG_ROOT,
+                locator=('.//button[text()="Delete"]')))
+            wait_to_spinner_disappear(self.browser)
+            return True
+
+    def create_3scale_handler(self, handler_name):
+        """
+        Creates 3scale Handler for Rule.
+        """
+        try:
+            wait_to_spinner_disappear(self.browser)
+            self.browser.click(Button(parent=self.parent, locator=self.SHOW_CREATE_HANDLER))
+        except (NoSuchElementException, StaleElementReferenceException):
+            # skip error if button does not exist
+            pass
+        wait_displayed(self._handler_name)
+        self._handler_name.fill(handler_name)
+        self._service_id.fill(Rule3ScaleHandler.SERVICE_ID.text)
+        self._system_url.fill(Rule3ScaleHandler.SYSTEM_URL.text)
+        self._access_token.fill(Rule3ScaleHandler.ACCESS_TOKEN.text)
+        create_button = self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.CREATE_HANDLER_BUTTON))
+        wait_displayed(create_button)
+        self.browser.click(create_button)
+        try:
+            wait_to_spinner_disappear(self.browser)
+            self.browser.click(Button(
+                parent=self.parent,
+                locator='li//*[text()="{}"]/../../..//button[text()="Select"]'.format(
+                                        handler_name)))
+        except (NoSuchElementException, StaleElementReferenceException):
+            # skip error if button does not exist
+            pass
 
 
 class Traces(Widget):
@@ -1347,6 +1451,7 @@ class ListViewAbstract(Widget):
     SERVICE_IP = 'Service IP'
     PORTS = 'Ports'
     CREATED_AT = 'Created at'
+    RULE_3SCALE_HANDLER = '3scale API handler'
     RESOURCE_VERSION = 'Resource Version'
     INBOUND_METRICS = 'Inbound Metrics'
     OUTBOUND_METRICS = 'Outbound Metrics'
@@ -1999,6 +2104,11 @@ class ListViewServices(ListViewAbstract):
             locator=self.PROPERTY_SECTIONS.format(self.PORTS),
             parent=self.DETAILS_ROOT).replace(self.PORTS, '').strip()
 
+        _3scale_api_handler = self.browser.text_or_default(
+            locator=self.ISTIO_PROPERTIES.format(self.RULE_3SCALE_HANDLER),
+            parent=self.DETAILS_ROOT,
+            default='').replace(self.RULE_3SCALE_HANDLER, '').strip()
+
         _table_view_wl = TableViewWorkloads(self.parent, self.locator, self.logger)
 
         _traffic_tab = TrafficView(parent=self.parent, locator=self.locator, logger=self.logger)
@@ -2013,6 +2123,8 @@ class ListViewServices(ListViewAbstract):
                               resource_version=_resource_version,
                               ip=_ip,
                               ports=str(_ports.replace('\n', ' ')),
+                              rule_3scale_api_handler=_3scale_api_handler
+                              if _3scale_api_handler != '' else None,
                               endpoints=self._get_service_endpoints(self.DETAILS_ROOT),
                               health=self._get_details_health(),
                               service_status=self._get_service_details_health(),

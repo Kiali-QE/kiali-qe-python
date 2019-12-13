@@ -35,7 +35,8 @@ from kiali_qe.components.enums import (
     OverviewLinks,
     OverviewGraphTypeLink,
     TailLines,
-    TLSMutualValues
+    TLSMutualValues,
+    Rule3ScaleHandler
 )
 from kiali_qe.utils import is_equal, is_sublist, word_in_text, get_url
 from kiali_qe.utils.log import logger
@@ -1278,6 +1279,51 @@ class ServicesPageTest(AbstractListPageTest):
             service_name=name)
         assert len(service_details_rest.virtual_services) == 0, 'Service should have no VS'
         assert len(service_details_rest.destination_rules) == 0, 'Service should have no DR'
+
+    def test_3scale_rule_create(self, name, namespace):
+        logger.debug('3Scale Rule Create for Service: {}, {}'.format(name, namespace))
+        # load service details page
+        self._prepare_load_details_page(name, namespace)
+        self.open(name, namespace)
+        self.page.actions.delete_3scale_rule()
+        handler_name = '{}{}'.format(Rule3ScaleHandler.HANDLER_NAME.text, random.randint(1, 100))
+        assert self.page.actions.create_3scale_rule(handler_name=handler_name)
+        assert not self.page.actions.is_delete_3scale_disabled()
+        assert self.page.actions.is_update_3scale_enabled()
+
+        service_details_ui = self.page.content.get_details()
+        assert service_details_ui.rule_3scale_api_handler == handler_name, \
+            'Selected {} != proposed {}'.format(
+                service_details_ui.rule_3scale_api_handler,
+                handler_name)
+
+    def test_3scale_rule_update(self, name, namespace):
+        logger.debug('3Scale Rule Update for Service: {}, {}'.format(name, namespace))
+        # load service details page
+        self._prepare_load_details_page(name, namespace)
+        self.open(name, namespace)
+        handler_name = '{}{}'.format(Rule3ScaleHandler.HANDLER_NAME.text, random.randint(101, 200))
+        assert self.page.actions.update_3scale_rule(handler_name=handler_name)
+        assert not self.page.actions.is_delete_3scale_disabled()
+        assert self.page.actions.is_update_3scale_enabled()
+
+        service_details_ui = self.page.content.get_details()
+        assert service_details_ui.rule_3scale_api_handler == handler_name, \
+            'Selected {} != proposed {}'.format(
+                service_details_ui.rule_3scale_api_handler,
+                handler_name)
+
+    def test_3scale_rule_delete(self, name, namespace):
+        logger.debug('3Scale Rule Delete for Service: {}, {}'.format(name, namespace))
+        # load service details page
+        self._prepare_load_details_page(name, namespace)
+        self.open(name, namespace)
+        assert self.page.actions.delete_3scale_rule()
+        assert self.page.actions.is_delete_3scale_disabled()
+        assert not self.page.actions.is_update_3scale_enabled()
+
+        service_details_ui = self.page.content.get_details()
+        assert not service_details_ui.rule_3scale_api_handler
 
 
 class IstioConfigPageTest(AbstractListPageTest):

@@ -129,7 +129,8 @@ class ServiceDetails(EntityBase):
     """
 
     def __init__(self, name, created_at, service_type,
-                 resource_version, ip, ports, labels={}, selectors={},
+                 resource_version, ip, ports, rule_3scale_api_handler=None,
+                 labels={}, selectors={},
                  istio_sidecar=False, health=None, service_status=None,
                  endpoints=[], **kwargs):
         if name is None:
@@ -142,6 +143,7 @@ class ServiceDetails(EntityBase):
         self.resource_version = resource_version
         self.ip = ip
         self.ports = ports
+        self.rule_3scale_api_handler = rule_3scale_api_handler
         self.labels = labels
         self.selectors = selectors
         self.service_status = service_status
