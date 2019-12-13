@@ -326,6 +326,9 @@ class RoutingWizardType(StringEnum):
     UPDATE_MATCHING_ROUTING = ('Update Matching Routing')
     SUSPEND_TRAFFIC = ('Suspend Traffic')
     UPDATE_SUSPENDED_TRAFFIC = ('Update Suspended Traffic')
+    ADD_3_SCALE_RULE = ('Add 3scale API Management Rule')
+    UPDATE_3_SCALE_RULE = ('Update 3scale API Management Rule')
+    DELETE_3_SCALE_RULE = ('Delete 3Scale API Management Rule')
 
 
 class RoutingWizardTLS(StringEnum):
@@ -346,6 +349,13 @@ class RoutingWizardLoadBalancer(StringEnum):
     LEAST_CONN = ('LEAST_CONN')
     RANDOM = ('RANDOM')
     PASSTHROUGH = ('PASSTHROUGH')
+
+
+class Rule3ScaleHandler(StringTupleEnum):
+    HANDLER_NAME = ('handlerName', 'handler')
+    SERVICE_ID = ('serviceId', 'service_id')
+    SYSTEM_URL = ('systemUrl', 'https://kiali-admin.3scale.net')
+    ACCESS_TOKEN = ('accessToken', 'my_token')
 
 
 class TrafficType(StringEnum):
