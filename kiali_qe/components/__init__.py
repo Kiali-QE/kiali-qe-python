@@ -1839,7 +1839,8 @@ class ListViewOverview(ListViewAbstract):
         try:
             return self.browser.get_attribute(
                 'href', self.browser.element(
-                    locator='.//a[contains(@href, "/{}")]'.format(link_type),
+                    locator='.//a[contains(@href, "/{}") and normalize-space(text())=""]'.format(
+                        link_type),
                     parent=element))
         except (NoSuchElementException):
             return None
