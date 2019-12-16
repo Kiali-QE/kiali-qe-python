@@ -92,3 +92,16 @@ def test_tls_mutual(kiali_client, openshift_client, browser, pick_namespace):
                               load_balancer_type=RoutingWizardLoadBalancer.PASSTHROUGH,
                               gateway=True, include_mesh_gateway=True)
     tests.test_routing_delete(name=name, namespace=namespace)
+
+
+@pytest.mark.p_ro_namespace
+@pytest.mark.p_crud_group6
+def test_3scale_rule(kiali_client, openshift_client, browser, pick_namespace):
+    tests = ServicesPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    # use only bookinfo2 namespace where colliding tests are in the same p_group
+    namespace = pick_namespace(BOOKINFO_2)
+    name = 'details'
+    tests.test_3scale_rule_create(name=name, namespace=namespace)
+    tests.test_3scale_rule_update(name=name, namespace=namespace)
+    tests.test_3scale_rule_delete(name=name, namespace=namespace)
