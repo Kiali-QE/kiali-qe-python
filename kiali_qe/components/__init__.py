@@ -676,14 +676,18 @@ class Actions(Widget):
             select_button='')
         self._gateway_switch = ButtonSwitch(parent=self, label="Add Gateway")
         self._include_mesh_gateway = Checkbox(locator=self.INCLUDE_MESH_GATEWAY, parent=self)
-        self._handler_name = TextInput(parent=self,
-                                       locator=self.EXPANDABLE_CONTENT + '//input[@id="handlerName"]')
-        self._service_id = TextInput(parent=self,
-                                     locator=self.EXPANDABLE_CONTENT + '//input[@id="serviceId"]')
-        self._system_url = TextInput(parent=self,
-                                     locator=self.EXPANDABLE_CONTENT + '//input[@id="systemUrl"]')
-        self._access_token = TextInput(parent=self, 
-                                       locator=self.EXPANDABLE_CONTENT + '//input[@id="accessToken"]')
+        self._handler_name = TextInput(
+            parent=self,
+            locator=self.EXPANDABLE_CONTENT + '//input[@id="handlerName"]')
+        self._service_id = TextInput(
+            parent=self,
+            locator=self.EXPANDABLE_CONTENT + '//input[@id="serviceId"]')
+        self._system_url = TextInput(
+            parent=self,
+            locator=self.EXPANDABLE_CONTENT + '//input[@id="systemUrl"]')
+        self._access_token = TextInput(
+            parent=self,
+            locator=self.EXPANDABLE_CONTENT + '//input[@id="accessToken"]')
 
     def __locator__(self):
         return self.locator

@@ -24,10 +24,13 @@ DEST_RULE = 'destination-rule-cb-details.yaml'
 DEST_RULE_VS_RATINGS = 'destination-rule-ratings.yaml'
 DEST_RULE_VS_REVIEWS = 'destination-rule-reviews.yaml'
 DEST_RULE_BROKEN = 'destination-rule-cb-broken.yaml'
+DEST_RULE_WARNING = 'dest-rules-svc.yaml'
 VIRTUAL_SERVICE = 'virtual-service.yaml'
 VIRTUAL_SERVICE_BROKEN = 'virtual-service-broken.yaml'
 VIRTUAL_SERVICE_BROKEN_WEIGHT = 'virtual-service-broken-weight.yaml'
 VIRTUAL_SERVICE_BROKEN_WEIGHT_TEXT = 'virtual-service-broken-weight-text.yaml'
+VIRTUAL_SERVICE_SVC = 'virtual-service-svc.yaml'
+VIRTUAL_SERVICE_SVC2 = 'virtual-service-svc2.yaml'
 QUOTA_SPEC = 'quota-spec.yaml'
 QUOTA_SPEC_BINDING = 'quota-spec-binding.yaml'
 GATEWAY = 'gateway.yaml'
@@ -92,6 +95,34 @@ def test_destination_rule_broken(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group1
+def test_destination_rule_svc_warning(kiali_client, openshift_client, browser):
+    destination_rule_warning = get_yaml(istio_objects_path.strpath, DEST_RULE_WARNING)
+    destination_rule_warning_dict = get_dict(istio_objects_path.strpath, DEST_RULE_WARNING)
+    _create_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
+
+    _istio_config_test(kiali_client, openshift_client, browser,
+                       destination_rule_warning_dict,
+                       destination_rule_warning,
+                       [
+                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
+                         'value': IstioConfigObjectType.DESTINATION_RULE.text},
+                        {'name': IstioConfigPageFilter.CONFIG.text,
+                         'value': IstioConfigValidationType.WARNING.text},
+                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
+                         'value': 'reviews-dr2-svc'}
+                        ],
+                       namespace=BOOKINFO_1,
+                       kind='DestinationRule',
+                       api_version='networking.istio.io/v1alpha3',
+                       service_name=DETAILS,
+                       error_messages=[
+                           'More than one DestinationRules for the same host subset combination'],
+                       check_service_details=False)
+    _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
+
+
+@pytest.mark.p_crud_resource
 @pytest.mark.p_crud_group2
 def test_virtual_service(kiali_client, openshift_client, browser):
     gateway = get_yaml(istio_objects_path.strpath, GATEWAY)
@@ -128,6 +159,46 @@ def test_virtual_service(kiali_client, openshift_client, browser):
                           namespace=BOOKINFO_1)
     _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
     _delete_gateway_vs(openshift_client, GATEWAY)
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group2
+def test_virtual_service_svc_warning(kiali_client, openshift_client, browser):
+    virtual_service = get_yaml(istio_objects_path.strpath, VIRTUAL_SERVICE_SVC)
+    virtual_service_dict = get_dict(istio_objects_path.strpath, VIRTUAL_SERVICE_SVC)
+    _istio_config_create(openshift_client, virtual_service_dict, virtual_service,
+                         'VirtualService',
+                         'networking.istio.io/v1alpha3',
+                         namespace=BOOKINFO_1)
+    virtual_service2 = get_yaml(istio_objects_path.strpath, VIRTUAL_SERVICE_SVC2)
+    virtual_service_dict2 = get_dict(istio_objects_path.strpath, VIRTUAL_SERVICE_SVC2)
+    _istio_config_create(openshift_client, virtual_service_dict2, virtual_service2,
+                         'VirtualService',
+                         'networking.istio.io/v1alpha3',
+                         namespace=BOOKINFO_1)
+    _create_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
+
+    _istio_config_details_test(kiali_client,
+                               openshift_client,
+                               browser,
+                               virtual_service_dict,
+                               virtual_service,
+                               namespace=BOOKINFO_1,
+                               kind='VirtualService',
+                               api_version='networking.istio.io/v1alpha3',
+                               error_messages=[
+                                   'More than one Virtual Service for same host'])
+    _istio_config_details_test(kiali_client,
+                               openshift_client,
+                               browser,
+                               virtual_service_dict2,
+                               virtual_service2,
+                               namespace=BOOKINFO_1,
+                               kind='VirtualService',
+                               api_version='networking.istio.io/v1alpha3',
+                               error_messages=[
+                                   'More than one Virtual Service for same host'])
+    _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
 
 @pytest.mark.p_crud_resource
