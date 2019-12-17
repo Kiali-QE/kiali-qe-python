@@ -2231,7 +2231,8 @@ class ListViewIstioConfig(ListViewAbstract):
             if str(_object_type) == IstioConfigObjectType.RULE.text or \
                     '{}: '.format(IstioConfigObjectType.ADAPTER.text) in str(_object_type) or \
                     '{}: '.format(IstioConfigObjectType.TEMPLATE.text) in str(_object_type):
-                _rule = Rule(name=_name, namespace=_namespace, object_type=_object_type)
+                _rule = Rule(name=_name, namespace=_namespace, object_type=_object_type,
+                             validation=IstioConfigValidation.NA)
                 # append this item to the final list
                 _items.append(_rule)
             else:
