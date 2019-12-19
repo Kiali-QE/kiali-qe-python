@@ -8,7 +8,16 @@ spec:
   gateways:
   - bookinfo-gateway-auto-bad
   http:
-  - route:
-    - destination:
-        host: reviews-bad
-        subset: v1
+    - match:
+      - uri:
+          exact: /reviews
+      - uri:
+          exact: /login
+      - uri:
+          exact: /logout
+      - uri:
+          prefix: /api/v1/products
+      route:
+         - destination:
+             host: reviews-bad
+             subset: v1
