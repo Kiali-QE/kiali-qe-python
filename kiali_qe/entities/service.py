@@ -235,14 +235,15 @@ class VirtualService(EntityBase):
         resource_version: resource version
     """
 
-    def __init__(self, status, name, created_at, resource_version, hosts=[], weights=[],
-                 gateways=[]):
+    def __init__(self, status, name, created_at, resource_version,
+                 http_route=None, hosts=[], weights=[], gateways=[]):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
         self.created_at = created_at
         self.resource_version = resource_version
         self.status = status
+        self.http_route = http_route
         self.hosts = hosts
         self.weights = weights
         self.gateways = gateways
@@ -281,6 +282,8 @@ class VirtualService(EntityBase):
         if not advanced_check:
             return True
         if self.status != other.status:
+            return False
+        if self.http_route != other.http_route:
             return False
         if not compare_lists(self.hosts, other.hosts):
             return False
