@@ -266,6 +266,7 @@ class IstioConfigObjectType(StringEnum):
 class IstioConfigValidationType(StringEnum):
     VALID = ('Valid')
     NOT_VALID = ('Not Valid')
+    WARNING = ('Warning')
     NOT_VALIDATED = ('Not Validated')
 
 
