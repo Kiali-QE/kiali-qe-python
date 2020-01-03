@@ -139,15 +139,15 @@ class OverviewPageFilter(StringEnum):
 
 class OverviewPageSort(StringEnum):
     NAME = ('Name')
-    STATUS = ('Status')
+    HEALTH = ('Health')
     MTLS = ('mTLS')
     ISTIO_CONFIG = ('Istio Config')
 
 
 class OverviewPageType(StringEnum):
     APPS = ('Apps')
-    SERVICES = ('Services')
     WORKLOADS = ('Workloads')
+    SERVICES = ('Services')
 
 
 class OverviewLinks(StringEnum):
