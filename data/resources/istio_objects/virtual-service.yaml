@@ -8,12 +8,21 @@ spec:
   gateways:
   - bookinfo-gateway-auto
   http:
-  - route:
-    - destination:
-        host: reviews
-        subset: v1
-      weight: 50
-    - destination:
-        host: reviews
-        subset: v2
-      weight: 50
+    - match:
+      - uri:
+          exact: /reviews
+      - uri:
+          exact: /login
+      - uri:
+          exact: /logout
+      - uri:
+          prefix: /api/v1/products
+      route:
+         - destination:
+             host: reviews
+             subset: v1
+           weight: 50
+         - destination:
+             host: reviews
+             subset: v2
+           weight: 50

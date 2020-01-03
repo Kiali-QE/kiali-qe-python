@@ -2248,6 +2248,7 @@ class TableViewAbstract(Widget):
     TRAFFIC_POLICY = 'Traffic Policy'
     NO_TRAFFIC_POLICY = 'No traffic policy defined.'
     SUBSETS = 'Subsets'
+    HTTP_ROUTE = 'HTTP Route'
     NO_SUBSETS = 'No subsets defined.'
     NONE = 'None'
 
@@ -2502,6 +2503,9 @@ class TableViewVirtualServices(TableViewAbstract):
         _hosts = get_texts_of_elements(self.browser.elements(
             locator=self.HOSTS_PROPERTIES.format(self.HOSTS),
             parent=self.OVERVIEW_DETAILS_ROOT))
+        _http_route = self.browser.text_or_default(
+            locator=self.OVERVIEW_PROPERTIES.format(self.HTTP_ROUTE),
+            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.HTTP_ROUTE, '').strip()
         _gateway_elements = self.browser.elements(
             locator='//div[contains(@class, "pf-c-card__body")]/ul[contains(@class, "details")]/li',
             parent=self.OVERVIEW_DETAILS_ROOT)
@@ -2547,6 +2551,8 @@ class TableViewVirtualServices(TableViewAbstract):
                 name=_name,
                 created_at=parse_from_ui(_created_at),
                 resource_version=_resource_version,
+                http_route=to_linear_string(
+                    _http_route if _http_route != self.NONE else ''),
                 hosts=_hosts,
                 weights=_weights,
                 gateways=_gateways)

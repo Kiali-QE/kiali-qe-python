@@ -549,6 +549,11 @@ class KialiExtendedClient(KialiClient):
                             weight=_route['weight'] if
                             ('weight' in _route and _route['weight'] != 0) else None)
                         )
+                    if 'match' in _vs_data['spec']['http'][0]:
+                        _http_route = 'match ' + \
+                            to_linear_string(_vs_data['spec']['http'][0]['match'])
+                    else:
+                        _http_route = ''
                     virtual_services.append(VirtualService(
                         status=self.get_istio_config_validation(
                             _vs_data['metadata']['namespace'],
@@ -557,6 +562,7 @@ class KialiExtendedClient(KialiClient):
                         name=_vs_data['metadata']['name'],
                         created_at=parse_from_rest(_vs_data['metadata']['creationTimestamp']),
                         resource_version=_vs_data['metadata']['resourceVersion'],
+                        http_route=_http_route,
                         hosts=_vs_data['spec']['hosts'],
                         weights=_weights))
             destination_rules = []
