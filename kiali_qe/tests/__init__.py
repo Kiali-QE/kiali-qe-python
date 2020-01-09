@@ -3,6 +3,7 @@ import re
 import time
 import math
 
+
 from kiali_qe.components import (
     BreadCrumb,
     wait_to_spinner_disappear,
@@ -38,8 +39,9 @@ from kiali_qe.components.enums import (
     TLSMutualValues,
     Rule3ScaleHandler
 )
-from kiali_qe.utils import is_equal, is_sublist, word_in_text, get_url
+from kiali_qe.utils import is_equal, is_sublist, word_in_text, get_url, get_yaml_path
 from kiali_qe.utils.log import logger
+from kiali_qe.utils.command_exec import oc_apply, oc_delete
 
 from kiali_qe.pages import (
     ServicesPage,
@@ -1591,3 +1593,119 @@ class DistributedTracingPageTest(AbstractListPageTest):
         assert not self.page.traces.is_oc_login_displayed, "OC Login should not be displayed"
         if not self.page.traces.has_no_results:
             assert self.page.traces.has_results
+
+
+class ValidationsTest(object):
+
+    def __init__(self, kiali_client, objects_path, openshift_client=None, browser=None):
+        self.kiali_client = kiali_client
+        self.openshift_client = openshift_client
+        self.browser = browser
+        self.objects_path = objects_path
+
+    def _istio_config_create(self, yaml_file, namespace):
+        self._istio_config_delete(yaml_file, namespace=namespace)
+
+        oc_apply(yaml_file=yaml_file,
+                 namespace=namespace)
+
+    def _istio_config_delete(self, yaml_file, namespace):
+        oc_delete(yaml_file=yaml_file,
+                  namespace=namespace)
+
+    def test_istio_objects(self, scenario, namespace=None,
+                           config_validation_objects=[],
+                           tls_type=None,
+                           namespace_tls_objects=[],
+                           ignore_common_errors=True):
+        """
+            All the testing logic goes here.
+            It creates the provided scenario yaml into provider namespace.
+            And then validates the provided Istio objects if they have the error_messages
+        """
+        yaml_file = get_yaml_path(self.objects_path, scenario)
+
+        try:
+            self._istio_config_create(yaml_file, namespace=namespace)
+
+            for _object in config_validation_objects:
+                self._test_validation_errors(object_type=_object.object_type,
+                                             object_name=_object.object_name,
+                                             namespace=_object.namespace,
+                                             error_messages=_object.error_messages,
+                                             ignore_common_errors=ignore_common_errors)
+
+            if tls_type:
+                self._test_mtls_settings(tls_type,
+                                         namespace_tls_objects)
+        finally:
+            self._istio_config_delete(yaml_file, namespace=namespace)
+
+    def _test_validation_errors(self, object_type, object_name, namespace,
+                                error_messages=[], ignore_common_errors=True):
+        # get config detals from rest
+        config_details_rest = self.kiali_client.istio_config_details(
+            namespace=namespace,
+            object_type=object_type,
+            object_name=object_name)
+
+        rest_error_messages = config_details_rest.error_messages
+
+        if ignore_common_errors:
+            try:
+                rest_error_messages.remove(
+                    'More than one DestinationRules for the same host subset combination')
+            except ValueError:
+                pass
+            try:
+                rest_error_messages.remove(
+                    'More than one Gateway for the same host port combination')
+            except ValueError:
+                pass
+
+        assert len(error_messages) == len(rest_error_messages), \
+            'Error messages are different Expected:{}, Got:{}'.\
+            format(error_messages,
+                   rest_error_messages)
+
+        for error_message in error_messages:
+            assert error_message in rest_error_messages, \
+                'Error messages:{} is not in List:{}'.\
+                format(error_message,
+                       rest_error_messages)
+
+    def _test_mtls_settings(self, tls_type, namespace_tls_objects):
+        """
+            Validates both Mesh-wide mTLS settings in toolbar,
+            and namespace wide TLS settings per namespace in Overview page.
+        """
+        _tests = OverviewPageTest(
+                kiali_client=self.kiali_client, openshift_client=self.openshift_client,
+                browser=self.browser)
+        actual_mtls_type = _tests.get_mesh_wide_tls()
+        assert actual_mtls_type == tls_type, \
+            'Mesh-wide TLS type expected: {} got: {}'.format(tls_type, actual_mtls_type)
+        if namespace_tls_objects:
+            overview_items = _tests.page.content.all_items
+            for tls_object in namespace_tls_objects:
+                for overview_item in overview_items:
+                    if overview_item.namespace == tls_object.namespace:
+                        assert tls_object.tls_type == overview_item.tls_type, \
+                            'Namespace TLS type expected: {} got: {}'.format(tls_object.tls_type,
+                                                                             overview_item.tls_type)
+
+
+class ConfigValidationObject(object):
+
+    def __init__(self, object_type, object_name, namespace=None, error_messages=[]):
+        self.namespace = namespace
+        self.object_type = object_type
+        self.object_name = object_name
+        self.error_messages = error_messages
+
+
+class NamespaceTLSObject(object):
+
+    def __init__(self, namespace, tls_type):
+        self.namespace = namespace
+        self.tls_type = tls_type

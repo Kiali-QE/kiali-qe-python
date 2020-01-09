@@ -2,6 +2,7 @@ import json
 
 from itertools import groupby
 
+from selenium.common.exceptions import NoSuchElementException
 from kiali.client import KialiClient
 from kiali_qe.components.enums import (
     IstioConfigObjectType as OBJECT_TYPE,
@@ -422,7 +423,7 @@ class KialiExtendedClient(KialiClient):
         return items
 
     def istio_config_details(self, namespace, object_type, object_name):
-        """Returns details of istio config.
+        """Returns details of istio config or None if does not exist.
         Args:
             namespaces: namespace where istio config is located
             object_type: type of istio config
@@ -434,7 +435,9 @@ class KialiExtendedClient(KialiClient):
                                         'object': object_name})
         config = None
         config_data = None
-        if _data:
+        if 'error' in _data:
+            raise NoSuchElementException(_data['error'])
+        else:
             # get DestinationRule
             if _data['destinationRule']:
                 config_data = _data['destinationRule']

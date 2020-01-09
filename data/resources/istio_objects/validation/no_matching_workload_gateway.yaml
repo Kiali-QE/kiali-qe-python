@@ -1,0 +1,16 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: bookinfo-gateway-auto-not-match
+  namespace: bookinfo
+spec:
+  selector:
+    app: nonexisting # workload doesn't exist in the namespace
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+ 
