@@ -511,7 +511,8 @@ class KialiExtendedClient(KialiClient):
         """
 
         _service_data = self.get_response('serviceDetails',
-                                          path={'namespace': namespace, 'service': service_name})
+                                          path={'namespace': namespace, 'service': service_name},
+                                          params={'validate': 'true'})
         _service = None
         if _service_data:
             _service_rest = self.service_list(namespaces=[namespace],
@@ -601,6 +602,11 @@ class KialiExtendedClient(KialiClient):
             if _service_data['endpoints']:
                 for _endpoint in _service_data['endpoints'][0]['addresses']:
                     endpoints.append(_endpoint['ip'])
+            _validations = []
+            if _service_data['validations'] \
+                    and len(_service_data['validations']['service']) > 0:
+                for _data in _service_data['validations']['service'][service_name]['checks']:
+                    _validations.append(_data['message'])
             _service_health = self.get_service_health(
                 namespace=namespace,
                 service_name=service_name,
@@ -614,6 +620,7 @@ class KialiExtendedClient(KialiClient):
                     service_type=_service_data['service']['type'],
                     ip=_service_data['service']['ip'],
                     endpoints=endpoints,
+                    validations=_validations,
                     ports=_ports.strip(),
                     labels=self.get_labels(_service_data['service']),
                     selectors=self.get_selectors(_service_data['service']),

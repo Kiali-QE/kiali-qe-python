@@ -1,7 +1,7 @@
 import pytest
 
 from selenium.common.exceptions import NoSuchElementException
-from kiali_qe.tests import ValidationsTest, ConfigValidationObject
+from kiali_qe.tests import ValidationsTest, ConfigValidationObject, ServiceValidationObject
 from kiali_qe.utils.path import istio_objects_validation_path
 
 
@@ -26,6 +26,8 @@ SCENARIO_10 = "non_existing_gateway.yaml"
 SCENARIO_11 = "not_defined_protocol.yaml"
 SCENARIO_12 = "destination_rule_fqdn.yaml"
 SCENARIO_13 = "destination_rule_wrong_fqdn.yaml"
+SCENARIO_14 = "ratings_java_svc.yaml"
+SCENARIO_15 = "port_name_suffix_missing.yaml"
 
 
 @pytest.mark.p_group_last
@@ -316,3 +318,35 @@ def test_dr_fqdn_not_exist(kiali_client):
                                 error_message2,
                                 error_message2])
         ])
+
+
+@pytest.mark.p_group_last
+def test_deployment_port_not_found(kiali_client):
+    """ Deployment exposing same port as Service not found
+    """
+    error_message = 'Deployment exposing same port as Service not found'
+    tests = ValidationsTest(
+        kiali_client=kiali_client,
+        objects_path=istio_objects_validation_path.strpath)
+    tests.test_service_validation(
+        scenario=SCENARIO_14, service_name='ratings-java-svc',
+        namespace='bookinfo',
+        service_validation_objects=[
+            ServiceValidationObject(
+                error_message=error_message)])
+
+
+@pytest.mark.p_group_last
+def test_port_name_suffix(kiali_client):
+    """ Port name must follow <protocol>[-suffix] form
+    """
+    error_message = 'Port name must follow <protocol>[-suffix] form'
+    tests = ValidationsTest(
+        kiali_client=kiali_client,
+        objects_path=istio_objects_validation_path.strpath)
+    tests.test_service_validation(
+        scenario=SCENARIO_15, service_name='ratings-java-svc-suffix',
+        namespace='bookinfo',
+        service_validation_objects=[
+            ServiceValidationObject(
+                error_message=error_message)])
