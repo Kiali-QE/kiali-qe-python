@@ -132,7 +132,8 @@ class ServiceDetails(EntityBase):
                  resource_version, ip, ports, rule_3scale_api_handler=None,
                  labels={}, selectors={},
                  istio_sidecar=False, health=None, service_status=None,
-                 endpoints=[], **kwargs):
+                 endpoints=[],
+                 validations=[], **kwargs):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
@@ -148,6 +149,7 @@ class ServiceDetails(EntityBase):
         self.selectors = selectors
         self.service_status = service_status
         self.endpoints = endpoints
+        self.validations = validations
         self.workloads_number = kwargs['workloads_number']\
             if 'workloads_number' in kwargs else None
         self.virtual_services_number = kwargs['virtual_services_number']\
