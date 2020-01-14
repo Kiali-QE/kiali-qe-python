@@ -119,7 +119,7 @@ class EdgeLabelsFilter(StringEnum):
 
 
 class ApplicationsPageFilter(StringEnum):
-    APP_NAME = ('App Name')
+    APP_NAME = ('Name')
     ISTIO_SIDECAR = ('Istio Sidecar')
     HEALTH = ('Health')
 
@@ -165,8 +165,8 @@ class OverviewGraphTypeLink(StringEnum):
 
 
 class WorkloadsPageFilter(StringEnum):
-    WORKLOAD_NAME = ('Workload Name')
-    WORKLOAD_TYPE = ('Workload Type')
+    WORKLOAD_NAME = ('Name')
+    WORKLOAD_TYPE = ('Type')
     ISTIO_SIDECAR = ('Istio Sidecar')
     HEALTH = ('Health')
     APP_LABEL = ('App Label')
@@ -210,7 +210,7 @@ class VersionLabel(StringEnum):
 
 
 class ServicesPageFilter(StringEnum):
-    SERVICE_NAME = ('Service Name')
+    SERVICE_NAME = ('Name')
     ISTIO_SIDECAR = ('Istio Sidecar')
     HEALTH = ('Health')
 
@@ -231,8 +231,8 @@ class ServicesPageRateInterval(StringEnum):
 
 
 class IstioConfigPageFilter(StringEnum):
-    ISTIO_TYPE = ('Istio Type')
-    ISTIO_NAME = ('Istio Name')
+    ISTIO_TYPE = ('Type')
+    ISTIO_NAME = ('Name')
     CONFIG = ('Config')
 
 
