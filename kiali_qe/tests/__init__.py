@@ -1641,6 +1641,33 @@ class ValidationsTest(object):
         finally:
             self._istio_config_delete(yaml_file, namespace=namespace)
 
+    def test_service_validation(self, scenario, service_name, namespace,
+                                service_validation_objects=[]):
+        """
+            All the testing logic goes here.
+            It creates the provided service scenario yaml into provided namespace.
+            And then validates the provided Service objects if they have the error_messages
+        """
+        yaml_file = get_yaml_path(self.objects_path, scenario)
+
+        try:
+            self._istio_config_create(yaml_file, namespace=namespace)
+
+            for _object in service_validation_objects:
+                service_details_rest = self.kiali_client.service_details(
+                    namespace=namespace,
+                    service_name=service_name)
+                found = False
+                for error_message in service_details_rest.validations:
+                    if error_message == _object.error_message:
+                        found = True
+
+                assert found, 'Error messages:{} is not in List:{}'.\
+                    format(_object.error_message,
+                           service_details_rest.validations)
+        finally:
+            self._istio_config_delete(yaml_file, namespace=namespace)
+
     def _test_validation_errors(self, object_type, object_name, namespace,
                                 error_messages=[], ignore_common_errors=True):
         # get config detals from rest
@@ -1702,6 +1729,13 @@ class ConfigValidationObject(object):
         self.object_type = object_type
         self.object_name = object_name
         self.error_messages = error_messages
+
+
+class ServiceValidationObject(object):
+
+    def __init__(self, error_message, severity=None):
+        self.error_message = error_message
+        self.severity = severity
 
 
 class NamespaceTLSObject(object):
