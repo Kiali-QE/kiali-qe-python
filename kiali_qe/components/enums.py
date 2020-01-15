@@ -33,8 +33,9 @@ class UserMenuEnum(StringEnum):
 
 
 class ApplicationVersionEnum(StringEnum):
-    KIALI_UI = ("Kiali-ui")
-    KIALI_CORE = ("Kiali")
+    KIALI_UI = ("Kiali UI")
+    KIALI_CORE = ("Kiali Server")
+    KIALI_CONTAINER = ("Kiali Container")
     ISTIO = ("OpenShift Service Mesh")
     PROMETHEUS = ("Prometheus")
     KUBERNETES = ("Kubernetes")
