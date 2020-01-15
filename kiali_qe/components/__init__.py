@@ -381,7 +381,7 @@ class ItemDropDown(DropDown):
 class TypeDropDown(DropDown):
     ROOT = '//*[contains(@class, "pf-c-select")]'
     SELECT_BUTTON = '//*[contains(@class, "pf-c-select__toggle")]'
-    OPTIONS_LIST = '//li/button[contains(@role, "option")]'
+    OPTIONS_LIST = '/..//li/button[contains(@role, "option")]'
     OPTION = ('//li//button[contains(@role, "option") and contains(text(), "{}")]')
 
     def __init__(self, parent, force_open=True, locator=None, logger=None, select_button=None):
