@@ -4,11 +4,13 @@ from kiali_qe.utils import is_equal
 
 class IstioConfig(EntityBase):
 
-    def __init__(self, name, namespace, object_type, validation=None):
+    def __init__(self, name, namespace, object_type, validation=None,
+                 config_link=None):
         self.name = name
         self.namespace = namespace
         self.object_type = object_type
         self.validation = validation
+        self.config_link = config_link
 
     def __str__(self):
         return 'name:{}, namespace:{}, object_type:{}, validation:{}'.format(
