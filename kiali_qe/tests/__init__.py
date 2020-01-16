@@ -39,6 +39,7 @@ from kiali_qe.components.enums import (
     TLSMutualValues,
     Rule3ScaleHandler
 )
+from kiali_qe.rest.kiali_api import ISTIO_CONFIG_TYPES
 from kiali_qe.utils import is_equal, is_sublist, word_in_text, get_url, get_yaml_path
 from kiali_qe.utils.log import logger
 from kiali_qe.utils.command_exec import oc_apply, oc_delete
@@ -542,9 +543,14 @@ class OverviewPageTest(AbstractListPageTest):
                 elif config_rest.validation == IstioConfigValidation.VALID:
                     if expected_status == IstioConfigValidation.NA:
                         expected_status = IstioConfigValidation.VALID
-        assert expected_status == config_status, \
+        assert expected_status == config_status.validation, \
             'Expected {} but got {} for {} as Config Status'.format(
-                config_status, expected_status, namespace)
+                config_status.validation, expected_status, namespace)
+        if config_status.validation != IstioConfigValidation.NA:
+                assert '/console/istio?namespaces={}'.format(
+                    namespace) in \
+                        config_status.link, 'Wrong config overview link {}'.format(
+                            config_status.link)
 
 
 class ApplicationsPageTest(AbstractListPageTest):
@@ -1107,6 +1113,12 @@ class ServicesPageTest(AbstractListPageTest):
                     break
             if not found:
                 assert found, '{} not found in OC'.format(service_ui)
+            if service_ui.config_status.validation != IstioConfigValidation.NA:
+                assert '/console/namespaces/{}/services/{}'.format(
+                    service_ui.namespace,
+                    service_ui.name) in \
+                        service_ui.config_status.link, 'Wrong service link {}'.format(
+                            service_ui.config_status.link)
 
     def get_additional_filters(self, namespaces, current_filters):
         logger.debug('Current filters:{}'.format(current_filters))
@@ -1405,6 +1417,13 @@ class IstioConfigPageTest(AbstractListPageTest):
                     break
             if not found:
                 assert found, '{} not found in OC'.format(config_ui)
+            if config_ui.validation != IstioConfigValidation.NA:
+                assert '/console/namespaces/{}/istio/{}/{}?list=yaml'.format(
+                    config_ui.namespace,
+                    ISTIO_CONFIG_TYPES[config_ui.object_type],
+                    config_ui.name) in \
+                        config_ui.config_link, 'Wrong config link {}'.format(
+                            config_ui.config_link)
         logger.debug('Done asserting all istio config items')
 
     def assert_random_details(self, namespaces=[], filters=[]):

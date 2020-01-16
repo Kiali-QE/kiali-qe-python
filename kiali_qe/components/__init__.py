@@ -21,7 +21,8 @@ from kiali_qe.entities import (
     TrafficItem,
     DeploymentStatus,
     AppRequests,
-    Requests
+    Requests,
+    ConfigurationStatus
 )
 from kiali_qe.entities.service import (
     Service,
@@ -1433,10 +1434,10 @@ class Login(Widget):
 
 
 class ListViewAbstract(Widget):
-    ROOT = '//*[contains(@class, "pf-c-table") and contains(@class, "pf-c-virtualized")]'
+    ROOT = '//*[contains(@style, "overflow-y")]'
     BODY = '//*[contains(@class, "ReactVirtualized__VirtualGrid__innerScrollContainer")]'
     DIALOG_ROOT = '//*[@role="dialog"]'
-    ITEMS = './/tr[contains(@class, "isVisible")]'
+    ITEMS = './/tr[contains(@role, "row")]'
     ITEM_COL = './/td'
     ITEM_TEXT = './/*[contains(@class, "virtualitem_definition_link")]'
     DETAILS_ROOT = ('.//section[@id="pf-tab-section-0-basic-tabs"]'
@@ -1482,6 +1483,10 @@ class ListViewAbstract(Widget):
     def __locator__(self):
         return self.locator
 
+    @property
+    def is_displayed(self):
+        return self.browser.is_displayed(self.ROOT)
+
     def has_overview_tab(self):
         return len(self.browser.elements(locator=self.CONFIG_TAB_OVERVIEW,
                                          parent=self.CONFIG_TABS_PARENT)) > 0
@@ -1525,7 +1530,7 @@ class ListViewAbstract(Widget):
         return result
 
     def _get_details_health(self):
-        _health_sublocator = '/../..//h3[normalize-space(text())="Health"]'
+        _health_sublocator = '/../..//h3[normalize-space(text())="Overall Health"]'
         _healthy = len(self.browser.elements(
             parent=self.DETAILS_ROOT,
             locator='.//*[contains(@class, "icon-healthy")]' + _health_sublocator)) > 0
@@ -1572,6 +1577,22 @@ class ListViewAbstract(Widget):
         elif _not_available:
             _health = HealthType.NA
         return _health
+
+    def _get_item_config_status(self, element):
+        return ConfigurationStatus(
+             self._get_item_validation(element),
+             self._get_item_config_link(element)
+            )
+
+    def _get_item_config_link(self, element):
+        try:
+            return self.browser.get_attribute(
+                'href',
+                self.browser.element(
+                    locator='.//a',
+                    parent=element))
+        except (NoSuchElementException):
+            return None
 
     def _get_workload_health(self, name, element):
         statuses = self._get_health_tooltip(element)
@@ -1681,7 +1702,7 @@ class ListViewAbstract(Widget):
         _no_istio_sidecar = 'No Istio sidecar'
         _inbound_text = _no_requests
         for _request in statuses:
-            if 'Error Rate' in _request:
+            if 'Inbound' in _request:
                 _inbound_text = _request.split(':')[1].replace('%', '').strip()
         return Requests(
                 errorRatio=float(_inbound_text.replace(_no_requests, '-1').
@@ -1838,38 +1859,10 @@ class ListViewAbstract(Widget):
 
     @property
     def all_items(self):
-        SCROLL_PAUSE_TIME = 0.5
-        # always refresh the window so we are sure we are at the top of the page before scrolling
         self.browser.refresh()
         wait_displayed(self)
         wait_to_spinner_disappear(self.browser)
-        # Here sleep is required as there is no spinner shown while scrolling
-        height = self._get_height()
-        prev_height = 0
-        scroll_size = self.browser.element(self.ROOT).size['height']
-        scroll_height = 0
-        all_items = self.items
-        while prev_height != height or scroll_height - height < scroll_size:
-            prev_height = height
-            scroll_height += scroll_size
-            self.browser.execute_script(
-                 "document.getElementsByClassName(\"pf-c-window-scroller\")[0].scroll(0, "
-                 + str(scroll_height) + ");")
-            height = self._get_height()
-            # Here sleep is required as there is no spinner shown while scrolling
-            sleep(SCROLL_PAUSE_TIME)
-            wait_to_spinner_disappear(self.browser)
-            all_items.extend(self.items)
-        return set(all_items)
-
-    def _get_height(self):
-        try:
-            return self.browser.element(
-                locator='//*[contains(@class, '
-                '"ReactVirtualized__VirtualGrid__innerScrollContainer")]',
-                parent=self.ROOT).size['height']
-        except NoSuchElementException:
-            return 0
+        return self.items
 
     def _is_tooltip_visible(self, index, number):
         # TODO better way to find tooltip visiblity
@@ -1928,7 +1921,7 @@ class ListViewOverview(ListViewAbstract):
                 overview_type=_overview_type,
                 namespace=_namespace,
                 items=_item_numbers,
-                config_status=self._get_item_validation(
+                config_status=self._get_item_config_status(
                     self.browser.element(locator='.//p[@data-pf-content="true"]', parent=el)),
                 healthy=_healthy,
                 unhealthy=_unhealthy,
@@ -2164,7 +2157,8 @@ class ListViewServices(ListViewAbstract):
                 health=self._get_item_health(element=el),
                 service_status=(self._get_service_health(element=columns[2])
                                 if self._is_tooltip_visible(index=index,
-                                                            number=len(_elements)) else None))
+                                                            number=len(_elements)) else None),
+                config_status=self._get_item_config_status(columns[4]))
             # append this item to the final list
             _items.append(_service)
         return _items
@@ -2217,7 +2211,8 @@ class ListViewIstioConfig(ListViewAbstract):
                 _config = IstioConfig(name=_name,
                                       namespace=_namespace,
                                       object_type=_object_type,
-                                      validation=self._get_item_validation(el))
+                                      validation=self._get_item_validation(el),
+                                      config_link=self._get_item_config_link(columns[3]))
                 # append this item to the final list
                 _items.append(_config)
         return _items
