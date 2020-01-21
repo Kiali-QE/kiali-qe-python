@@ -137,3 +137,23 @@ class TrafficItem(EntityBase):
          and self.object_type == other.object_type\
          and self.status == other.status\
          and self.request_type == other.request_type
+
+
+class ConfigurationStatus(EntityBase):
+
+    def __init__(self, validation, link=None):
+        self.validation = validation
+        self.link = link
+
+    def __str__(self):
+        return 'validation:{}, link: {}'.format(
+            self.validation, self.link)
+
+    def __repr__(self):
+        return "{}({}, {}, {}, {})".format(
+            type(self).__name__, repr(self.validation), repr(self.link))
+
+    def is_equal(self, other):
+        return isinstance(other, ConfigurationStatus)\
+         and self.validation == other.validation\
+         and self.link == other.link
