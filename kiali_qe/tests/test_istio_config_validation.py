@@ -28,6 +28,7 @@ SCENARIO_12 = "destination_rule_fqdn.yaml"
 SCENARIO_13 = "destination_rule_wrong_fqdn.yaml"
 SCENARIO_14 = "ratings_java_svc.yaml"
 SCENARIO_15 = "port_name_suffix_missing.yaml"
+SCENARIO_16 = "virtual-service-less-than-100-weight.yaml"
 
 
 @pytest.mark.p_group_last
@@ -350,3 +351,22 @@ def test_port_name_suffix(kiali_client):
         service_validation_objects=[
             ServiceValidationObject(
                 error_message=error_message)])
+
+
+@pytest.mark.p_group_last
+def test_vs_less_than_100_weight(kiali_client):
+    """ VirtualService has only weight < 100
+    """
+    error_message = 'The weight is assumed to be 100 because there is only one route destination'
+    tests = ValidationsTest(
+        kiali_client=kiali_client,
+        objects_path=istio_objects_validation_path.strpath)
+    tests.test_istio_objects(
+        scenario=SCENARIO_16, namespace=BOOKINFO,
+        config_validation_objects=[
+            ConfigValidationObject(
+                object_type='VirtualService',
+                object_name='virtual-service-less-100-weight-auto',
+                namespace=BOOKINFO,
+                error_messages=[error_message])
+        ])
