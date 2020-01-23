@@ -130,7 +130,7 @@ class ServiceDetails(EntityBase):
         health: health status
     """
 
-    def __init__(self, name, created_at, service_type,
+    def __init__(self, name, created_at, created_at_ui, service_type,
                  resource_version, ip, ports, rule_3scale_api_handler=None,
                  labels={}, selectors={},
                  istio_sidecar=False, health=None, service_status=None,
@@ -142,6 +142,7 @@ class ServiceDetails(EntityBase):
         self.istio_sidecar = istio_sidecar
         self.health = health
         self.created_at = created_at
+        self.created_at_ui = created_at_ui
         self.service_type = service_type
         self.resource_version = resource_version
         self.ip = ip
@@ -200,6 +201,8 @@ class ServiceDetails(EntityBase):
             return False
         if self.created_at != other.created_at:
             return False
+        if self.created_at_ui != other.created_at_ui:
+            return False
         if self.service_type != other.service_type:
             return False
         if self.resource_version != other.resource_version:
@@ -239,12 +242,14 @@ class VirtualService(EntityBase):
         resource_version: resource version
     """
 
-    def __init__(self, status, name, created_at, resource_version,
+    def __init__(self, status, name, created_at, created_at_ui,
+                 resource_version,
                  http_route=None, hosts=[], weights=[], gateways=[]):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
         self.created_at = created_at
+        self.created_at_ui = created_at_ui
         self.resource_version = resource_version
         self.status = status
         self.http_route = http_route
@@ -279,6 +284,8 @@ class VirtualService(EntityBase):
         if self.name != other.name:
             return False
         if self.created_at != other.created_at:
+            return False
+        if self.created_at_ui != other.created_at_ui:
             return False
         if self.resource_version != other.resource_version:
             return False
@@ -405,7 +412,8 @@ class DestinationRule(EntityBase):
         resource_version: resource version
     """
 
-    def __init__(self, status, name, host, traffic_policy, subsets, created_at, resource_version):
+    def __init__(self, status, name, host, traffic_policy, subsets,
+                 created_at, created_at_ui, resource_version):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
@@ -413,6 +421,7 @@ class DestinationRule(EntityBase):
         self.traffic_policy = traffic_policy
         self.subsets = subsets
         self.created_at = created_at
+        self.created_at_ui = created_at_ui
         self.resource_version = resource_version
         self.status = status
 
@@ -447,6 +456,8 @@ class DestinationRule(EntityBase):
         if self.host != other.host:
             return False
         if self.created_at != other.created_at:
+            return False
+        if self.created_at_ui != other.created_at_ui:
             return False
         if self.resource_version != other.resource_version:
             return False
