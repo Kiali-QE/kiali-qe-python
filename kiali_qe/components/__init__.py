@@ -52,7 +52,7 @@ from kiali_qe.entities.applications import (
     ApplicationHealth
 )
 from kiali_qe.entities.overview import Overview
-from kiali_qe.utils.date import parse_from_ui
+from kiali_qe.utils.date import parse_from_rest
 from time import sleep
 from kiali_qe.utils.log import logger
 from wait_for import wait_for
@@ -1433,7 +1433,27 @@ class Login(Widget):
         self.browser.click(self.submit)
 
 
-class ListViewAbstract(Widget):
+class ViewAbstract(Widget):
+    POPOVER = './/*[contains(@class, "tippy-popper")]'
+
+    def _get_date_tooltip(self, element):
+        date_text = ''
+        try:
+            self.browser.move_to_element(locator='.//span', parent=element)
+            sleep(1.5)
+            date_text = self.browser.element(
+                locator=(self.POPOVER),
+                parent='/').text
+        except (NoSuchElementException, StaleElementReferenceException):
+            # skip errors caused by browser delays, this health will be ignored
+            pass
+        finally:
+            self.browser.send_keys_to_focused_element(Keys.ESCAPE)
+            sleep(0.5)
+            return date_text
+
+
+class ListViewAbstract(ViewAbstract):
     ROOT = '//*[contains(@style, "overflow-y")]'
     BODY = '//*[contains(@class, "ReactVirtualized__VirtualGrid__innerScrollContainer")]'
     DIALOG_ROOT = '//*[@role="dialog"]'
@@ -2013,9 +2033,12 @@ class ListViewWorkloads(ListViewAbstract):
             .replace(self.SHOW_ON_GRAPH_TEXT, '').strip()
         _type = self.browser.text(locator=self.ISTIO_PROPERTIES.format(self.TYPE),
                                   parent=self.DETAILS_ROOT).replace(self.TYPE, '').strip()
-        _created_at = self.browser.text(locator=self.ISTIO_PROPERTIES.format(self.CREATED_AT),
-                                        parent=self.DETAILS_ROOT).replace(
+        _created_at_ui = self.browser.text(locator=self.ISTIO_PROPERTIES.format(self.CREATED_AT),
+                                           parent=self.DETAILS_ROOT).replace(
                                             self.CREATED_AT, '').strip()
+        _created_at = self._get_date_tooltip(self.browser.element(
+            locator=self.ISTIO_PROPERTIES.format(self.CREATED_AT),
+            parent=self.DETAILS_ROOT))
         _resource_version = self.browser.text(
             locator=self.ISTIO_PROPERTIES.format(self.RESOURCE_VERSION),
             parent=self.DETAILS_ROOT).replace(self.RESOURCE_VERSION, '').strip()
@@ -2035,7 +2058,8 @@ class ListViewWorkloads(ListViewAbstract):
 
         return WorkloadDetails(name=str(_name),
                                workload_type=_type,
-                               created_at=parse_from_ui(_created_at),
+                               created_at_ui=_created_at_ui,
+                               created_at=parse_from_rest(_created_at),
                                resource_version=_resource_version,
                                istio_sidecar=self._details_sidecar(),
                                health=self._get_details_health(),
@@ -2091,9 +2115,12 @@ class ListViewServices(ListViewAbstract):
                                   parent=self.DETAILS_ROOT).replace(self.TYPE, '').strip()
         _ip = self.browser.text(locator=self.NETWORK_PROPERTIES.format(self.SERVICE_IP),
                                 parent=self.DETAILS_ROOT).replace(self.SERVICE_IP, '').strip()
-        _created_at = self.browser.text(
+        _created_at_ui = self.browser.text(
             locator=self.ISTIO_PROPERTIES.format(self.CREATED_AT),
             parent=self.DETAILS_ROOT).replace(self.CREATED_AT, '').strip()
+        _created_at = self._get_date_tooltip(self.browser.element(
+            locator=self.ISTIO_PROPERTIES.format(self.CREATED_AT),
+            parent=self.DETAILS_ROOT))
         _resource_version = self.browser.text(
             locator=self.ISTIO_PROPERTIES.format(self.RESOURCE_VERSION),
             parent=self.DETAILS_ROOT).replace(self.RESOURCE_VERSION, '').strip()
@@ -2115,7 +2142,8 @@ class ListViewServices(ListViewAbstract):
         _traces_tab = TracesView(parent=self.parent, locator=self.locator, logger=self.logger)
 
         return ServiceDetails(name=_name,
-                              created_at=parse_from_ui(_created_at),
+                              created_at=parse_from_rest(_created_at),
+                              created_at_ui=_created_at_ui,
                               service_type=_type,
                               resource_version=_resource_version,
                               ip=_ip,
@@ -2218,7 +2246,7 @@ class ListViewIstioConfig(ListViewAbstract):
         return _items
 
 
-class TableViewAbstract(Widget):
+class TableViewAbstract(ViewAbstract):
     SERVICE_DETAILS_ROOT = './/div[contains(@class, "f1cshr0l")]'
     OVERVIEW_DETAILS_ROOT = './/div[contains(@class, "row-cards-pf")]'
     OVERVIEW_HEADER = './/div[contains(@class, "f1cshr0l")]//h1[@data-pf-content="true"]'
@@ -2395,7 +2423,8 @@ class TableViewWorkloads(TableViewAbstract):
 
             _name = _columns[0].text.strip()
             _type = _columns[1].text.strip()
-            _created_at = _columns[3].text.strip()
+            _created_at_ui = _columns[3].text.strip()
+            _created_at = self._get_date_tooltip(_columns[1])
             _resource_version = _columns[4].text.strip()
 
             # workload object creation
@@ -2403,7 +2432,8 @@ class TableViewWorkloads(TableViewAbstract):
                 name=_name,
                 workload_type=_type,
                 labels=self._get_labels(_columns[2]),
-                created_at=parse_from_ui(_created_at),
+                created_at=parse_from_rest(_created_at),
+                created_at_ui=_created_at_ui,
                 resource_version=_resource_version)
             # append this item to the final list
             _items.append(_workload)
@@ -2489,9 +2519,12 @@ class TableViewVirtualServices(TableViewAbstract):
         _name = self.browser.text(
             locator=self.OVERVIEW_HEADER,
             parent=self.OVERVIEW_DETAILS_ROOT).strip()
-        _created_at = self.browser.text(locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
-                                        parent=self.OVERVIEW_DETAILS_ROOT).replace(
+        _created_at_ui = self.browser.text(locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
+                                           parent=self.OVERVIEW_DETAILS_ROOT).replace(
                                             self.CREATED_AT, '').strip()
+        _created_at = self._get_date_tooltip(self.browser.element(
+            locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
+            parent=self.OVERVIEW_DETAILS_ROOT))
         _resource_version = self.browser.text(
             locator=self.OVERVIEW_PROPERTIES.format(self.RESOURCE_VERSION),
             parent=self.OVERVIEW_DETAILS_ROOT).replace(self.RESOURCE_VERSION, '').strip()
@@ -2544,7 +2577,8 @@ class TableViewVirtualServices(TableViewAbstract):
         return VirtualService(
                 status=_status,
                 name=_name,
-                created_at=parse_from_ui(_created_at),
+                created_at=parse_from_rest(_created_at),
+                created_at_ui=_created_at_ui,
                 resource_version=_resource_version,
                 http_route=to_linear_string(
                     _http_route if _http_route != self.NONE else ''),
@@ -2571,13 +2605,15 @@ class TableViewVirtualServices(TableViewAbstract):
                 # empty row
                 continue
             _name = _columns[1].text.strip()
-            _created_at = _columns[2].text.strip()
+            _created_at_ui = _columns[2].text.strip()
+            _created_at = self._get_date_tooltip(_columns[2])
             _resource_version = _columns[3].text.strip()
             # create Virtual Service instance
             _virtual_service = VirtualService(
                 status=self._get_item_status(_columns[0]),
                 name=_name,
-                created_at=parse_from_ui(_created_at),
+                created_at=parse_from_rest(_created_at),
+                created_at_ui=_created_at_ui,
                 resource_version=_resource_version)
             # append this item to the final list
             _items.append(_virtual_service)
@@ -2615,9 +2651,12 @@ class TableViewDestinationRules(TableViewAbstract):
         _name = self.browser.text(
             locator=self.OVERVIEW_HEADER.format('DestinationRule'),
             parent=self.OVERVIEW_DETAILS_ROOT).replace('DestinationRule:', '').strip()
-        _created_at = self.browser.text(locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
-                                        parent=self.OVERVIEW_DETAILS_ROOT).replace(
+        _created_at_ui = self.browser.text(locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
+                                           parent=self.OVERVIEW_DETAILS_ROOT).replace(
                                             self.CREATED_AT, '').strip()
+        _created_at = self._get_date_tooltip(self.browser.element(
+            locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
+            parent=self.OVERVIEW_DETAILS_ROOT))
         _resource_version = self.browser.text(
             locator=self.OVERVIEW_PROPERTIES.format(self.RESOURCE_VERSION),
             parent=self.OVERVIEW_DETAILS_ROOT).replace(self.RESOURCE_VERSION, '').strip()
@@ -2644,7 +2683,8 @@ class TableViewDestinationRules(TableViewAbstract):
                 status=_status,
                 name=_name,
                 host=_host,
-                created_at=parse_from_ui(_created_at),
+                created_at=parse_from_rest(_created_at),
+                created_at_ui=_created_at_ui,
                 resource_version=_resource_version,
                 traffic_policy=to_linear_string(
                     _traffic_policy if _traffic_policy != self.NONE else ''),
@@ -2672,14 +2712,16 @@ class TableViewDestinationRules(TableViewAbstract):
             _traffic_policy = _columns[2].text.strip()
             _subsets = _columns[3].text.strip()
             _host = _columns[4].text.strip()
-            _created_at = _columns[5].text.strip()
+            _created_at_ui = _columns[5].text.strip()
+            _created_at = self._get_date_tooltip(_columns[5])
             _resource_version = _columns[6].text.strip()
             # create Destination Rule instance
             _destination_rule = DestinationRule(
                 status=self._get_item_status(_columns[0]),
                 name=_name,
                 host=_host,
-                created_at=parse_from_ui(_created_at),
+                created_at=parse_from_rest(_created_at),
+                created_at_ui=_created_at_ui,
                 resource_version=_resource_version,
                 traffic_policy=to_linear_string(
                     _traffic_policy if _traffic_policy != self.NONE else ''),
@@ -2725,7 +2767,8 @@ class TableViewWorkloadPods(TableViewAbstract):
                 # empty row
                 continue
             _name = _columns[1].text.strip()
-            _created_at = _columns[2].text.strip()
+            _created_at_ui = _columns[2].text.strip()
+            _created_at = self._get_date_tooltip(_columns[2])
             _created_by = _columns[3].text.strip()
             _istio_init_containers = _columns[5].text.strip()
             _istio_containers = _columns[6].text.strip()
@@ -2733,7 +2776,8 @@ class TableViewWorkloadPods(TableViewAbstract):
 
             _items.append(WorkloadPod(
                         name=str(_name),
-                        created_at=parse_from_ui(_created_at),
+                        created_at=parse_from_rest(_created_at),
+                        created_at_ui=_created_at_ui,
                         created_by=_created_by,
                         labels=self._get_labels(_columns[4]),
                         istio_init_containers=_istio_init_containers,
@@ -2779,7 +2823,8 @@ class TableViewServices(TableViewAbstract):
                 # empty row
                 continue
             _name = _columns[0].text.strip()
-            _created_at = _columns[1].text.strip()
+            _created_at_ui = _columns[1].text.strip()
+            _created_at = self._get_date_tooltip(_columns[1])
             _type = _columns[2].text.strip()
             _resource_version = _columns[4].text.strip()
             _ip = _columns[5].text.strip()
@@ -2787,7 +2832,8 @@ class TableViewServices(TableViewAbstract):
 
             _items.append(ServiceDetails(
                         name=_name,
-                        created_at=parse_from_ui(_created_at),
+                        created_at=parse_from_rest(_created_at),
+                        created_at_ui=_created_at_ui,
                         service_type=str(_type),
                         labels=self._get_labels(_columns[3]),
                         resource_version=str(_resource_version),

@@ -63,7 +63,7 @@ class Workload(EntityBase):
 
 class WorkloadDetails(EntityBase):
 
-    def __init__(self, name, workload_type, created_at, resource_version,
+    def __init__(self, name, workload_type, created_at, created_at_ui, resource_version,
                  istio_sidecar=False, health=None, workload_status=None, **kwargs):
         if name is None:
             raise KeyError("'name' should not be 'None'")
@@ -73,6 +73,7 @@ class WorkloadDetails(EntityBase):
         self.health = health
         self.workload_status = workload_status
         self.created_at = created_at
+        self.created_at_ui = created_at_ui
         self.resource_version = resource_version
         self.labels = kwargs['labels']\
             if 'labels' in kwargs else {}
@@ -129,6 +130,8 @@ class WorkloadDetails(EntityBase):
             return False
         if self.created_at != other.created_at:
             return False
+        if self.created_at_ui != other.created_at_ui:
+            return False
         if self.resource_version != other.resource_version:
             return False
         if self.labels != other.labels:
@@ -147,11 +150,12 @@ class WorkloadDetails(EntityBase):
 
 class WorkloadPod(EntityBase):
 
-    def __init__(self, name, created_at, created_by, labels={},
+    def __init__(self, name, created_at, created_at_ui, created_by, labels={},
                  istio_init_containers=None, istio_containers=None, status=None, phase=None):
         self.name = name
         self.created_at = created_at
         self.created_by = created_by
+        self.created_at_ui = created_at_ui
         self.labels = labels
         self.istio_init_containers = istio_init_containers
         self.istio_containers = istio_containers
@@ -187,6 +191,8 @@ class WorkloadPod(EntityBase):
         if self.name != other.name:
             return False
         if self.created_at != other.created_at:
+            return False
+        if self.created_at_ui != other.created_at_ui:
             return False
         if self.created_by != other.created_by:
             return False
