@@ -37,7 +37,7 @@ from kiali_qe.entities.applications import (
 )
 from kiali_qe.entities.overview import Overview
 from kiali_qe.utils import to_linear_string
-from kiali_qe.utils.date import parse_from_rest
+from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
 from kiali_qe.utils.log import logger
 
 ISTIO_CONFIG_TYPES = {'DestinationRule': 'destinationrules',
@@ -525,6 +525,7 @@ class KialiExtendedClient(KialiClient):
                         workload_type=_wl_data['type'],
                         labels=self.get_labels(_wl_data),
                         created_at=parse_from_rest(_wl_data['createdAt']),
+                        created_at_ui=from_rest_to_ui(_wl_data['createdAt']),
                         resource_version=_wl_data['resourceVersion']))
             source_workloads = []
             # TODO better way to find Traffic
@@ -565,6 +566,7 @@ class KialiExtendedClient(KialiClient):
                             _vs_data['metadata']['name']),
                         name=_vs_data['metadata']['name'],
                         created_at=parse_from_rest(_vs_data['metadata']['creationTimestamp']),
+                        created_at_ui=from_rest_to_ui(_vs_data['metadata']['creationTimestamp']),
                         resource_version=_vs_data['metadata']['resourceVersion'],
                         http_route=_http_route,
                         hosts=_vs_data['spec']['hosts'],
@@ -592,6 +594,7 @@ class KialiExtendedClient(KialiClient):
                         traffic_policy=_traffic_policy if _traffic_policy else '',
                         subsets=_subsets if _subsets else '',
                         created_at=parse_from_rest(_dr_data['metadata']['creationTimestamp']),
+                        created_at_ui=from_rest_to_ui(_dr_data['metadata']['creationTimestamp']),
                         resource_version=_dr_data['metadata']['resourceVersion']))
             _ports = ''
             for _port in _service_data['service']['ports']:
@@ -615,6 +618,8 @@ class KialiExtendedClient(KialiClient):
                     name=_service_data['service']['name'],
                     istio_sidecar=_service_rest.istio_sidecar,
                     created_at=parse_from_rest(
+                        _service_data['service']['createdAt']),
+                    created_at_ui=from_rest_to_ui(
                         _service_data['service']['createdAt']),
                     resource_version=_service_data['service']['resourceVersion'],
                     service_type=_service_data['service']['type'],
@@ -657,6 +662,7 @@ class KialiExtendedClient(KialiClient):
                     _services.append(ServiceDetails(
                         name=_ws_data['name'],
                         created_at=parse_from_rest(_ws_data['createdAt']),
+                        created_at_ui=from_rest_to_ui(_ws_data['createdAt']),
                         service_type=_ws_data['type'],
                         ip=_ws_data['ip'],
                         ports=_ports.strip(),
@@ -685,6 +691,7 @@ class KialiExtendedClient(KialiClient):
                     _pod = WorkloadPod(
                         name=str(_pod_data['name']),
                         created_at=parse_from_rest(_pod_data['createdAt']),
+                        created_at_ui=from_rest_to_ui(_pod_data['createdAt']),
                         created_by=_created_by,
                         labels=self.get_labels(_pod_data),
                         istio_init_containers=str(_istio_init_containers),
@@ -707,6 +714,7 @@ class KialiExtendedClient(KialiClient):
                         name='{}... ({} replicas)'.format(_pod.name[:-5], len(_workload_pods)),
                         created_at='{} and {}'.format(
                             _pod.created_at, _workload_pods[len(_workload_pods)-1].created_at),
+                        created_at_ui=_pod.created_at_ui,
                         created_by=_created_by,
                         labels=_workload_pods[0].labels,
                         istio_init_containers=_workload_pods[0].istio_init_containers,
@@ -718,6 +726,7 @@ class KialiExtendedClient(KialiClient):
                     _pod = WorkloadPod(
                         name=_workload_pods[0].name,
                         created_at=_workload_pods[0].created_at,
+                        created_at_ui=_workload_pods[0].created_at_ui,
                         created_by=_created_by,
                         labels=_workload_pods[0].labels,
                         istio_init_containers=_workload_pods[0].istio_init_containers,
@@ -734,6 +743,7 @@ class KialiExtendedClient(KialiClient):
                 istio_sidecar=_workload_rest.istio_sidecar,
                 workload_type=_workload_data['type'],
                 created_at=parse_from_rest(_workload_data['createdAt']),
+                created_at_ui=from_rest_to_ui(_workload_data['createdAt']),
                 resource_version=_workload_data['resourceVersion'],
                 health=_workload_health.is_healthy() if _workload_health else None,
                 workload_status=_workload_health,

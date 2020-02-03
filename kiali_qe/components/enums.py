@@ -44,13 +44,24 @@ class ApplicationVersionEnum(StringEnum):
 
 
 class TimeIntervalUIText(StringEnum):
-    LAST_MINUTE = ('Last 1m')
-    LAST_5_MINUTES = ('Last 5m')
-    LAST_10_MINUTES = ('Last 10m')
-    LAST_30_MINUTES = ('Last 30m')
-    LAST_HOUR = ('Last 1h')
-    LAST_3_HOURS = ('Last 3h')
-    LAST_6_HOURS = ('Last 6h')
+    LAST_MINUTE = ('1m Traffic')
+    LAST_5_MINUTES = ('5m Traffic')
+    LAST_10_MINUTES = ('10m Traffic')
+    LAST_30_MINUTES = ('30m Traffic')
+    LAST_HOUR = ('1h Traffic')
+    LAST_3_HOURS = ('3h Traffic')
+    LAST_6_HOURS = ('6h Traffic')
+
+
+class MetricsTimeInterval(StringEnum):
+    LAST_MINUTE = ('1m Traffic')
+    LAST_5_MINUTES = ('5m Traffic')
+    LAST_10_MINUTES = ('10m Traffic')
+    LAST_30_MINUTES = ('30m Traffic')
+    LAST_HOUR = ('1h Traffic')
+    LAST_3_HOURS = ('3h Traffic')
+    LAST_6_HOURS = ('6h Traffic')
+    CUSTOM = ('Custom')
 
 
 class TimeIntervalRestParam(StringEnum):

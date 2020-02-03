@@ -12,7 +12,7 @@ from kiali_qe.entities.applications import (
     ApplicationDetails,
     AppWorkload
 )
-from kiali_qe.utils.date import parse_from_rest
+from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
 from kiali_qe.utils.log import logger
 
 
@@ -458,6 +458,8 @@ class OpenshiftExtendedClient(object):
             istio_sidecar=None,
             created_at=parse_from_rest(
                 _response.metadata.creationTimestamp),
+            created_at_ui=from_rest_to_ui(
+                _response.metadata.creationTimestamp),
             resource_version=_response.metadata.resourceVersion,
             service_type=_response.spec.type,
             ip=_response.spec.clusterIP,
@@ -485,6 +487,8 @@ class OpenshiftExtendedClient(object):
             workload_type=_response.kind,
             name=_response.metadata.name,
             created_at=parse_from_rest(
+                _response.metadata.creationTimestamp),
+            created_at_ui=from_rest_to_ui(
                 _response.metadata.creationTimestamp),
             resource_version=_response.metadata.resourceVersion,
             istio_sidecar=None,
