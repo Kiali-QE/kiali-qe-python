@@ -2423,7 +2423,7 @@ class TableViewWorkloads(TableViewAbstract):
             _name = _columns[0].text.strip()
             _type = _columns[1].text.strip()
             _created_at_ui = _columns[3].text.strip()
-            _created_at = self._get_date_tooltip(_columns[1])
+            _created_at = self._get_date_tooltip(_columns[3])
             _resource_version = _columns[4].text.strip()
 
             # workload object creation
