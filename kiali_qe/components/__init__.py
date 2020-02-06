@@ -2895,7 +2895,7 @@ class TableViewServices(TableViewAbstract):
         return _items
 
 
-class TabViewAbstract(Widget):
+class TabViewAbstract(ViewAbstract):
     """
         Abstract base class for all Tabs besides the Info tab.
         After opening the tab and reading the data, it it can back to Info tab.
