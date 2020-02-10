@@ -38,7 +38,6 @@ class OpenshiftExtendedClient(object):
         'Rule': '_rule',
         'Adapter': '_handler',
         'Adapter: adapter': '_adapter',
-        'Template: logentry': '_logentry',
         'Template: kubernetes': '_kubernetes',
         'Template: metric': '_metric',
         'Template: template': '_template',
@@ -133,10 +132,6 @@ class OpenshiftExtendedClient(object):
     @property
     def _rule(self):
         return self._istio_config(kind='rule', api_version='v1alpha2')
-
-    @property
-    def _logentry(self):
-        return self._istio_config(kind='logentry', api_version='v1alpha2')
 
     @property
     def _kubernetes(self):
