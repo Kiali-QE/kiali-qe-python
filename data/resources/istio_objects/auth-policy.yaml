@@ -13,10 +13,10 @@ spec:
    - source:
        principals: ["cluster.local/ns/default/sa/sleep"]
    - source:
-       namespaces: ["test"]
+       namespaces: ["test", "bookinfo"]
    to:
    - operation:
-       methods: ["GET"]
+       methods: ["GET", "WRONG"]
        paths: ["/info*"]
    - operation:
        methods: ["POST"]
@@ -24,3 +24,4 @@ spec:
    when:
    - key: request.auth.claims[iss]
      values: ["https://accounts.google.com"]
+
