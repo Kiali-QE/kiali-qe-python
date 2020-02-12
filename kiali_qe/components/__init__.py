@@ -15,8 +15,8 @@ from kiali_qe.components.enums import (
     TrafficType,
     GraphPageLayout,
     OverviewLinks,
-    TLSMutualValues,
-    Rule3ScaleHandler)
+    TLSMutualValues
+)
 from kiali_qe.entities import (
     TrafficItem,
     DeploymentStatus,
@@ -38,6 +38,9 @@ from kiali_qe.entities.istio_config import (
     IstioConfig,
     Rule,
     IstioConfigDetails
+)
+from kiali_qe.entities.three_scale_config import (
+    ThreeScaleHandler
 )
 from kiali_qe.entities.workload import (
     Workload,
@@ -637,7 +640,6 @@ class Actions(Widget):
     INCLUDE_MESH_GATEWAY = '//label[contains(text(), "Include")]/..//input[@type="checkbox"]'
     SHOW_ADVANCED_OPTIONS = '//span[text()="Show Advanced Options"]/..'
     SHOW_CREATE_HANDLER = '//span[text()="Show Create Handler"]/..'
-    CREATE_HANDLER_BUTTON = './/button[text()="Create Handler"]'
     EXPANDABLE_CONTENT = '//div[@class="pf-c-expandable__content"]'
     CREATE_BUTTON = './/button[text()="Create"]'
     UPDATE_BUTTON = './/button[text()="Update"]'
@@ -676,18 +678,6 @@ class Actions(Widget):
             select_button='')
         self._gateway_switch = ButtonSwitch(parent=self, label="Add Gateway")
         self._include_mesh_gateway = Checkbox(locator=self.INCLUDE_MESH_GATEWAY, parent=self)
-        self._handler_name = TextInput(
-            parent=self,
-            locator=self.EXPANDABLE_CONTENT + '//input[@id="handlerName"]')
-        self._service_id = TextInput(
-            parent=self,
-            locator=self.EXPANDABLE_CONTENT + '//input[@id="serviceId"]')
-        self._system_url = TextInput(
-            parent=self,
-            locator=self.EXPANDABLE_CONTENT + '//input[@id="systemUrl"]')
-        self._access_token = TextInput(
-            parent=self,
-            locator=self.EXPANDABLE_CONTENT + '//input[@id="accessToken"]')
 
     def __locator__(self):
         return self.locator
@@ -935,7 +925,7 @@ class Actions(Widget):
             return False
         else:
             self.select(self.CREATE_3SCALE_RULE)
-            self.create_3scale_handler(handler_name)
+            self.select_three_scale_handler(handler_name)
             create_button = self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.CREATE_BUTTON))
@@ -949,7 +939,7 @@ class Actions(Widget):
     def update_3scale_rule(self, handler_name):
         if self.is_update_3scale_enabled():
             self.select(self.UPDATE_3SCALE_RULE)
-            self.create_3scale_handler(handler_name)
+            self.select_three_scale_handler(handler_name)
             update_button = self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.UPDATE_BUTTON))
@@ -973,31 +963,13 @@ class Actions(Widget):
             wait_to_spinner_disappear(self.browser)
             return True
 
-    def create_3scale_handler(self, handler_name):
-        """
-        Creates 3scale Handler for Rule.
-        """
-        try:
-            wait_to_spinner_disappear(self.browser)
-            self.browser.click(Button(parent=self.parent, locator=self.SHOW_CREATE_HANDLER))
-        except (NoSuchElementException, StaleElementReferenceException):
-            # skip error if button does not exist
-            pass
-        wait_displayed(self._handler_name)
-        self._handler_name.fill(handler_name)
-        self._service_id.fill(Rule3ScaleHandler.SERVICE_ID.text)
-        self._system_url.fill(Rule3ScaleHandler.SYSTEM_URL.text)
-        self._access_token.fill(Rule3ScaleHandler.ACCESS_TOKEN.text)
-        create_button = self.browser.element(
-                parent=self.WIZARD_ROOT,
-                locator=(self.CREATE_HANDLER_BUTTON))
-        wait_displayed(create_button)
-        self.browser.click(create_button)
+    def select_three_scale_handler(self, handler_name):
         try:
             wait_to_spinner_disappear(self.browser)
             self.browser.click(Button(
                 parent=self.parent,
-                locator='li//*[text()="{}"]/../../..//button[text()="Select"]'.format(
+                locator='//li//*[contains(text(), "{}")]'
+                        '/../../..//button[contains(text(), "Select")]'.format(
                                         handler_name)))
         except (NoSuchElementException, StaleElementReferenceException):
             # skip error if button does not exist
@@ -2351,6 +2323,87 @@ class TableViewAbstract(ViewAbstract):
     @property
     def all_items(self):
         return self.items
+
+
+class TableView3ScaleConfig(TableViewAbstract):
+    CREATE_3SCALE_HANDLER = 'Create New 3scale Handler'
+    TABLE_ROOT = './/table[contains(@class, "pf-c-table")]'
+    CONFIG_INPUT = '//input[@id="{}"]'
+    CONFIG_DETAILS_ROOT = './/*[contains(@class, "pf-c-form")]'
+    CREATE_HANDLER_BUTTON = './/button[text()="Create"]'
+    UPDATE_HANDLER_BUTTON = './/button[text()="Save"]'
+
+    def __init__(self, parent, locator=None, logger=None):
+        TableViewAbstract.__init__(self, parent, locator=self.CONFIG_DETAILS_ROOT, logger=logger)
+        self._handler_name = TextInput(parent=self,
+                                       locator=self.CONFIG_INPUT.format('handlerName'))
+        self._service_id = TextInput(parent=self,
+                                     locator=self.CONFIG_INPUT.format('serviceId'))
+        self._system_url = TextInput(parent=self,
+                                     locator=self.CONFIG_INPUT.format('systemUrl'))
+        self._access_token = TextInput(parent=self,
+                                       locator=self.CONFIG_INPUT.format('accessToken'))
+
+    def get_details(self, load_only=False):
+        if load_only:
+            return BreadCrumb(self.parent)
+        _name = self._handler_name.value
+        _service_id = self._service_id.value
+        _system_url = self._system_url.value
+        _access_token = self._access_token.value
+        return ThreeScaleHandler(name=_name,
+                                 service_id=_service_id,
+                                 system_url=_system_url,
+                                 access_token=_access_token)
+
+    @property
+    def items(self):
+        self.browser.click(self.parent.refresh)
+        wait_to_spinner_disappear(self.browser)
+
+        _items = []
+        for el in self.browser.elements('//tbody//tr', parent=self.TABLE_ROOT):
+            # get rule name and namespace
+            _columns = self.browser.elements(self.COLUMN, parent=el)
+            _name = _columns[0].text.replace('3S', '').strip()
+            _service_id = _columns[1].text.replace('ID', '').strip()
+            _system_url = _columns[2].text.replace('URL', '').strip()
+
+            _config = ThreeScaleHandler(name=_name,
+                                        service_id=_service_id,
+                                        system_url=_system_url)
+            # append this item to the final list
+            _items.append(_config)
+        return _items
+
+    def create_3scale_handler(self, name, service_id, system_url, access_token):
+        """
+        Creates 3scale Handler.
+        """
+        self.parent.actions.select(self.CREATE_3SCALE_HANDLER)
+        wait_to_spinner_disappear(self.browser)
+        self._handler_name.fill(name)
+        self._service_id.fill(service_id)
+        self._system_url.fill(system_url)
+        self._access_token.fill(access_token)
+        create_button = self.browser.element(
+                parent=self.CONFIG_DETAILS_ROOT,
+                locator=(self.CREATE_HANDLER_BUTTON))
+        wait_displayed(create_button)
+        self.browser.click(create_button)
+
+    def update_3scale_handler(self, service_id, system_url, access_token):
+        """
+        Update 3scale Handler.
+        """
+        self._service_id.fill(service_id)
+        self._system_url.fill(system_url)
+        self._access_token.fill(access_token)
+        save_button = self.browser.element(
+                parent=self.CONFIG_DETAILS_ROOT,
+                locator=(self.UPDATE_HANDLER_BUTTON))
+        wait_displayed(save_button)
+        self.browser.click(save_button)
 
 
 class TableViewAppWorkloads(TableViewAbstract):

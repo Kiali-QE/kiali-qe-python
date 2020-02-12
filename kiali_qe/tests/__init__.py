@@ -38,7 +38,7 @@ from kiali_qe.components.enums import (
     OverviewGraphTypeLink,
     TailLines,
     TLSMutualValues,
-    Rule3ScaleHandler
+    ThreeScaleConfigPageSort
 )
 from kiali_qe.rest.kiali_api import ISTIO_CONFIG_TYPES
 from kiali_qe.utils import is_equal, is_sublist, word_in_text, get_url, get_yaml_path
@@ -51,7 +51,8 @@ from kiali_qe.pages import (
     WorkloadsPage,
     ApplicationsPage,
     OverviewPage,
-    DistributedTracingPage
+    DistributedTracingPage,
+    ThreeScaleConfigPage
 )
 
 
@@ -1295,13 +1296,12 @@ class ServicesPageTest(AbstractListPageTest):
         assert len(service_details_rest.virtual_services) == 0, 'Service should have no VS'
         assert len(service_details_rest.destination_rules) == 0, 'Service should have no DR'
 
-    def test_3scale_rule_create(self, name, namespace):
+    def test_3scale_rule_create(self, name, namespace, handler_name):
         logger.debug('3Scale Rule Create for Service: {}, {}'.format(name, namespace))
         # load service details page
         self._prepare_load_details_page(name, namespace)
         self.open(name, namespace)
         self.page.actions.delete_3scale_rule()
-        handler_name = '{}{}'.format(Rule3ScaleHandler.HANDLER_NAME.text, random.randint(1, 100))
         assert self.page.actions.create_3scale_rule(handler_name=handler_name)
         assert not self.page.actions.is_delete_3scale_disabled()
         assert self.page.actions.is_update_3scale_enabled()
@@ -1312,12 +1312,11 @@ class ServicesPageTest(AbstractListPageTest):
                 service_details_ui.rule_3scale_api_handler,
                 handler_name)
 
-    def test_3scale_rule_update(self, name, namespace):
+    def test_3scale_rule_update(self, name, namespace, handler_name):
         logger.debug('3Scale Rule Update for Service: {}, {}'.format(name, namespace))
         # load service details page
         self._prepare_load_details_page(name, namespace)
         self.open(name, namespace)
-        handler_name = '{}{}'.format(Rule3ScaleHandler.HANDLER_NAME.text, random.randint(101, 200))
         assert self.page.actions.update_3scale_rule(handler_name=handler_name)
         assert not self.page.actions.is_delete_3scale_disabled()
         assert self.page.actions.is_update_3scale_enabled()
@@ -1740,6 +1739,89 @@ class ValidationsTest(object):
                         assert tls_object.tls_type == overview_item.tls_type, \
                             'Namespace TLS type expected: {} got: {}'.format(tls_object.tls_type,
                                                                              overview_item.tls_type)
+
+
+class ThreeScaleConfigPageTest(AbstractListPageTest):
+    SORT_ENUM = ThreeScaleConfigPageSort
+    SELECT_ITEM = './/tr//a[text()="{}"]'
+
+    def __init__(self, kiali_client, openshift_client, browser):
+        AbstractListPageTest.__init__(
+            self, kiali_client=kiali_client,
+            openshift_client=openshift_client, page=ThreeScaleConfigPage(browser))
+        self.browser = browser
+
+    def _prepare_load_details_page(self):
+        # load the page first
+        self.page.load(force_load=True)
+
+    def load_details_page(self, name, force_refresh):
+        logger.debug('Loading details page for 3scale config handler: {}'.format(name))
+        self._prepare_load_details_page()
+        self.open(name=name, force_refresh=force_refresh)
+        return self.page.content.get_details()
+
+    def assert_all_items(self):
+        logger.debug('Asserting all 3scale handler items')
+
+        # get handlers from ui
+        handler_list_ui = self.page.content.all_items
+        logger.debug('3Scale handler list UI:{}]'.format(handler_list_ui))
+
+        # get handlers from rest api
+        handler_list_rest = self.kiali_client.three_scale_handler_list()
+        logger.debug('3Scale handler list REST:{}]'.format(handler_list_rest))
+
+        assert len(handler_list_ui) == len(handler_list_rest), \
+            "UI {} and REST {} handler number not equal".format(handler_list_ui, handler_list_rest)
+        for handler_ui in handler_list_ui:
+            found = False
+            for handler_rest in handler_list_rest:
+                if handler_ui.is_equal(handler_rest, advanced_check=False):
+                    found = True
+                    break
+            if not found:
+                assert found, '{} not found in REST'.format(handler_ui)
+
+        logger.debug('Done asserting all handler items')
+
+    def assert_details(self, name, service_id, system_url, access_token):
+        logger.debug('Asserting details for: {}'.format(name))
+
+        # load handler page
+        handler_details_ui = self.load_details_page(name, force_refresh=False)
+        assert handler_details_ui
+        assert name == handler_details_ui.name
+        assert service_id == handler_details_ui.service_id
+        assert system_url == handler_details_ui.system_url
+        assert access_token == handler_details_ui.access_token
+        # get handler details from rest
+        handlers_rest = self.kiali_client.three_scale_handler_list(
+            handler_names=[name])
+        assert len(handlers_rest) == 1
+        assert handler_details_ui.is_equal(handlers_rest[0], advanced_check=True)
+
+    def assert_three_scale_handler_creation(self, name, service_id, system_url, access_token):
+        logger.debug('Creating 3Scale handler: {}'.format(name))
+
+        self.page.content.create_3scale_handler(name, service_id, system_url, access_token)
+        self.assert_details(name, service_id, system_url, access_token)
+
+    def assert_three_scale_handler_update(self, name, service_id, system_url, access_token):
+        logger.debug('Update 3Scale handler: {}'.format(name))
+
+        self.load_details_page(name, force_refresh=False)
+        self.page.content.update_3scale_handler(service_id, system_url, access_token)
+        self.assert_details(name, service_id, system_url, access_token)
+
+    def assert_three_scale_handler_delete(self, name):
+        logger.debug('Delete 3Scale handler: {}'.format(name))
+
+        self.load_details_page(name, force_refresh=False)
+        self.page.actions.select('Delete')
+        self.browser.click(self.browser.element(
+            parent=ListViewAbstract.DIALOG_ROOT,
+            locator=('.//button[text()="Delete"]')))
 
 
 class ConfigValidationObject(object):
