@@ -8,6 +8,14 @@ from kiali_qe.components.enums import (
 )
 
 BOOKINFO_2 = 'bookinfo2'
+HANDLER_NAME1 = 'handlerrule1'
+HANDLER_NAME2 = 'handlerrule2'
+SERVICE_ID1 = 'serviceid1'
+SERVICE_ID2 = 'serviceid2'
+SYSTEM_URL1 = 'systemurl1'
+SYSTEM_URL2 = 'systemurl2'
+ACCESS_TOKEN1 = 'token1'
+ACCESS_TOKEN2 = 'token2'
 
 
 @pytest.mark.p_ro_namespace
@@ -102,6 +110,13 @@ def test_3scale_rule(kiali_client, openshift_client, browser, pick_namespace):
     # use only bookinfo2 namespace where colliding tests are in the same p_group
     namespace = pick_namespace(BOOKINFO_2)
     name = 'details'
-    tests.test_3scale_rule_create(name=name, namespace=namespace)
-    tests.test_3scale_rule_update(name=name, namespace=namespace)
+    _handler_create(kiali_client, HANDLER_NAME1, SERVICE_ID1, SYSTEM_URL1, ACCESS_TOKEN1)
+    _handler_create(kiali_client, HANDLER_NAME2, SERVICE_ID2, SYSTEM_URL2, ACCESS_TOKEN2)
+    tests.test_3scale_rule_create(name=name, namespace=namespace, handler_name=HANDLER_NAME1)
+    tests.test_3scale_rule_update(name=name, namespace=namespace, handler_name=HANDLER_NAME2)
     tests.test_3scale_rule_delete(name=name, namespace=namespace)
+
+
+def _handler_create(kiali_client, name, service_id, system_url, access_token):
+    kiali_client.delete_three_scale_handler(name=name)
+    kiali_client.create_three_scale_handler(name, service_id, system_url, access_token)
