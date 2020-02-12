@@ -1,5 +1,6 @@
 import pytest
 from openshift.dynamic.exceptions import InternalServerError
+from kubernetes.client.rest import ApiException
 from kiali_qe.tests import IstioConfigPageTest, ServicesPageTest
 
 from kiali_qe.utils import get_yaml, get_dict
@@ -37,6 +38,7 @@ GATEWAY = 'gateway.yaml'
 SERVICE_ENTRY = 'service-entry.yaml'
 SERVICE_MESH_RBAC_CONFIG = 'service-mesh-rbac-config.yaml'
 RBAC_CONFIG = 'rbac-config.yaml'
+AUTH_POLICY = 'auth-policy.yaml'
 SERVICE_ROLE = 'service-role.yaml'
 SERVICE_ROLE_BROKEN = 'service-role-broken.yaml'
 SERVICE_ROLE_BINDING = 'service-role-binding.yaml'
@@ -248,7 +250,7 @@ def test_virtual_service_broken_weight(kiali_client, openshift_client, browser):
                             {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
                              'value': IstioConfigObjectType.VIRTUAL_SERVICE.text},
                             {'name': IstioConfigPageFilter.CONFIG.text,
-                             'value': IstioConfigValidationType.NOT_VALID.text},
+                             'value': IstioConfigValidationType.WARNING.text},
                             {'name': IstioConfigPageFilter.ISTIO_NAME.text,
                              'value': virtual_service_broken_dict.metadata.name}
                             ],
@@ -259,7 +261,7 @@ def test_virtual_service_broken_weight(kiali_client, openshift_client, browser):
                            error_messages=['Weight sum should be 100'],
                            check_service_details=False)
         _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
-    except InternalServerError:
+    except (ApiException, InternalServerError):
         pass
 
 
@@ -292,7 +294,7 @@ def test_virtual_service_broken_weight_text(kiali_client, openshift_client, brow
                                            'Weight sum should be 100'],
                            check_service_details=False)
         _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_RATINGS)
-    except InternalServerError:
+    except (ApiException, InternalServerError):
         pass
 
 
@@ -386,28 +388,6 @@ def test_service_entry(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_group6
-def test_service_mesh_rbac_config(kiali_client, openshift_client, browser):
-    yaml = get_yaml(istio_objects_path.strpath, SERVICE_MESH_RBAC_CONFIG)
-    _dict = get_dict(istio_objects_path.strpath, SERVICE_MESH_RBAC_CONFIG)
-
-    _istio_config_test(kiali_client, openshift_client, browser,
-                       _dict,
-                       yaml,
-                       [
-                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
-                         'value': IstioConfigObjectType.SERVICE_MESH_RBAC_CONFIG.text},
-                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': _dict.metadata.name}
-                        ],
-                       namespace='istio-system',
-                       kind='ServiceMeshRbacConfig',
-                       api_version='rbac.maistra.io/v1',
-                       service_name=DETAILS,
-                       check_service_details=False)
-
-
-@pytest.mark.p_crud_resource
 @pytest.mark.p_crud_group4
 def test_rbac_config(kiali_client, openshift_client, browser):
     yaml = get_yaml(istio_objects_path.strpath, RBAC_CONFIG)
@@ -425,6 +405,28 @@ def test_rbac_config(kiali_client, openshift_client, browser):
                        namespace=BOOKINFO_1,
                        kind='RbacConfig',
                        api_version='rbac.istio.io/v1alpha1',
+                       service_name=DETAILS,
+                       check_service_details=False)
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group4
+def test_auth_policy(kiali_client, openshift_client, browser):
+    yaml = get_yaml(istio_objects_path.strpath, AUTH_POLICY)
+    _dict = get_dict(istio_objects_path.strpath, AUTH_POLICY)
+
+    _istio_config_test(kiali_client, openshift_client, browser,
+                       _dict,
+                       yaml,
+                       [
+                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
+                         'value': IstioConfigObjectType.AUTHORIZATION_POLICY.text},
+                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
+                         'value': _dict.metadata.name}
+                        ],
+                       namespace=BOOKINFO_1,
+                       kind='AuthorizationPolicy',
+                       api_version='security.istio.io/v1beta1',
                        service_name=DETAILS,
                        check_service_details=False)
 
