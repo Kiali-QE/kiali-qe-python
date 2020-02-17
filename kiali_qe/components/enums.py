@@ -20,6 +20,7 @@ class MainMenuEnum(StringEnum):
     SERVICES = ('Services')
     ISTIO_CONFIG = ('Istio Config')
     DISTRIBUTED_TRACING = ('Distributed Tracing')
+    THREESCALE_CONFIG = ('3scale Config')
 
 
 class HelpMenuEnum(StringEnum):
@@ -366,11 +367,10 @@ class RoutingWizardLoadBalancer(StringEnum):
     PASSTHROUGH = ('PASSTHROUGH')
 
 
-class Rule3ScaleHandler(StringTupleEnum):
-    HANDLER_NAME = ('handlerName', 'handler')
-    SERVICE_ID = ('serviceId', 'service_id')
-    SYSTEM_URL = ('systemUrl', 'https://kiali-admin.3scale.net')
-    ACCESS_TOKEN = ('accessToken', 'my_token')
+class ThreeScaleConfigPageSort(StringEnum):
+    HANDLER_NAME = ('Handler Name')
+    SERVICE_ID = ('Service Id')
+    SYSTEM_URL = ('System Url')
 
 
 class TrafficType(StringEnum):
