@@ -428,7 +428,10 @@ def test_auth_policy(kiali_client, openshift_client, browser):
                        kind='AuthorizationPolicy',
                        api_version='security.istio.io/v1beta1',
                        service_name=DETAILS,
-                       check_service_details=False)
+                       check_service_details=False,
+                       error_messages=[
+                           'Namespace not found for this rule',
+                            'Only HTTP methods and fully-qualified gRPC names are allowed'])
 
 
 @pytest.mark.p_crud_resource
