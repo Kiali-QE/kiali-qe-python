@@ -1406,6 +1406,16 @@ class Login(Widget):
 
 class ViewAbstract(Widget):
     POPOVER = './/*[contains(@class, "tippy-popper")]'
+    MISSING_SIDECAR_TEXT = 'Missing Sidecar'
+    MISSING_TEXT_SIDECAR = './/span[normalize-space(text())="{}"]'.format(MISSING_SIDECAR_TEXT)
+    MISSING_ICON_SIDECAR = './/span//svg'
+
+    def back_to_service_info(self, parent):
+        # TODO find a better way after KIALI-2251
+        try:
+            self.browser.click('.//a[contains(@href, "/services/")]', parent)
+        except NoSuchElementException:
+            self.browser.execute_script("history.back();")
 
     def _get_date_tooltip(self, element):
         date_text = ''
@@ -1422,6 +1432,30 @@ class ViewAbstract(Widget):
             self.browser.send_keys_to_focused_element(Keys.ESCAPE)
             sleep(0.5)
             return date_text
+
+    def click_more_labels(self, parent):
+        try:
+            elements = self.browser.elements(
+                parent=parent,
+                locator=('.//a[text()="More labels..."]'))
+            for element in elements:
+                self.browser.click(element)
+        except NoSuchElementException:
+            pass
+
+    def _item_sidecar_text(self, element):
+        # TODO sidecar is not shown yet
+        return not len(self.browser.elements(
+                parent=element, locator=self.MISSING_TEXT_SIDECAR)) > 0
+
+    def _details_sidecar_text(self):
+        return not len(self.browser.elements(
+            parent=self.DETAILS_ROOT,
+            locator=self.MISSING_TEXT_SIDECAR)) > 0
+
+    def _item_sidecar_icon(self, element):
+        return not len(self.browser.elements(
+                parent=element, locator=self.MISSING_ICON_SIDECAR)) > 0
 
 
 class ListViewAbstract(ViewAbstract):
@@ -1451,8 +1485,6 @@ class ListViewAbstract(ViewAbstract):
     RESOURCE_VERSION = 'Resource Version'
     INBOUND_METRICS = 'Inbound Metrics'
     OUTBOUND_METRICS = 'Outbound Metrics'
-    MISSING_SIDECAR_TEXT = 'Missing Sidecar'
-    MISSING_SIDECAR = './/span[normalize-space(text())="{}"]'.format(MISSING_SIDECAR_TEXT)
     SHOW_ON_GRAPH_TEXT = '(Show on graph)'
     HEALTH_TEXT = "Health"
     CONFIG_TEXT = "Config"
@@ -1499,18 +1531,8 @@ class ListViewAbstract(ViewAbstract):
                                                     parent=self.CONFIG_TABS_PARENT))
             self.browser.wait_for_element(locator=self.CONFIG_TEXT, parent=self.CONFIG_DETAILS_ROOT)
 
-    def _item_sidecar(self, element):
-        # TODO sidecar is not shown yet
-        return not len(self.browser.elements(
-                parent=element, locator=self.MISSING_SIDECAR)) > 0
-
     def _item_namespace(self, cell):
         return cell.text.strip().replace('NS', '')
-
-    def _details_sidecar(self):
-        return not len(self.browser.elements(
-            parent=self.DETAILS_ROOT,
-            locator=self.MISSING_SIDECAR)) > 0
 
     def _get_service_endpoints(self, element):
         result = []
@@ -1961,7 +1983,7 @@ class ListViewApplications(ListViewAbstract):
                                         self.OUTBOUND_METRICS)
 
         return ApplicationDetails(name=str(_name),
-                                  istio_sidecar=self._details_sidecar(),
+                                  istio_sidecar=self._details_sidecar_text(),
                                   health=self._get_details_health(),
                                   application_status=self._get_application_details_health(),
                                   workloads=_table_view_workloads.all_items,
@@ -1983,7 +2005,7 @@ class ListViewApplications(ListViewAbstract):
             # application object creation
             _application = Application(
                 name=_name, namespace=_namespace,
-                istio_sidecar=self._item_sidecar(el),
+                istio_sidecar=self._item_sidecar_text(el),
                 health=self._get_item_health(element=el),
                 application_status=(self._get_application_health(element=columns[2])
                                     if self._is_tooltip_visible(index=index,
@@ -2032,7 +2054,7 @@ class ListViewWorkloads(ListViewAbstract):
                                created_at_ui=_created_at_ui,
                                created_at=parse_from_rest(_created_at),
                                resource_version=_resource_version,
-                               istio_sidecar=self._details_sidecar(),
+                               istio_sidecar=self._details_sidecar_text(),
                                health=self._get_details_health(),
                                workload_status=self._get_workload_details_health(_name),
                                pods_number=_table_view_pods.number,
@@ -2061,7 +2083,7 @@ class ListViewWorkloads(ListViewAbstract):
             # workload object creation
             _workload = Workload(
                 name=_name, namespace=_namespace, workload_type=_type,
-                istio_sidecar=self._item_sidecar(el),
+                istio_sidecar=self._item_sidecar_text(el),
                 app_label='app' in _label_keys,
                 version_label='version' in _label_keys,
                 health=self._get_item_health(element=el),
@@ -2124,7 +2146,7 @@ class ListViewServices(ListViewAbstract):
                               endpoints=self._get_service_endpoints(self.DETAILS_ROOT),
                               health=self._get_details_health(),
                               service_status=self._get_service_details_health(),
-                              istio_sidecar=self._details_sidecar(),
+                              istio_sidecar=self._details_sidecar_text(),
                               labels=self._get_details_labels(),
                               selectors=self._get_details_selectors(),
                               workloads_number=_table_view_wl.number,
@@ -2152,7 +2174,7 @@ class ListViewServices(ListViewAbstract):
             _service = Service(
                 name=_name,
                 namespace=_namespace,
-                istio_sidecar=self._item_sidecar(el),
+                istio_sidecar=self._item_sidecar_text(el),
                 health=self._get_item_health(element=el),
                 service_status=(self._get_service_health(element=columns[2])
                                 if self._is_tooltip_visible(index=index,
@@ -2233,7 +2255,6 @@ class TableViewAbstract(ViewAbstract):
     COLUMN = './/td'
     ROW_BY_NAME = \
         '//div[@id="{}"]//table[contains(@class, "table")]//tbody//tr//a[text()="{}"]/../..'
-    MISSING_SIDECAR = './/span//svg'
     CREATED_AT = 'Created at'
     RESOURCE_VERSION = 'Resource Version'
     HOST = 'Host'
@@ -2256,27 +2277,6 @@ class TableViewAbstract(ViewAbstract):
 
     def __locator__(self):
         return self.locator
-
-    def back_to_service_info(self, parent):
-        # TODO find a better way after KIALI-2251
-        try:
-            self.browser.click('.//a[contains(@href, "/services/")]', parent)
-        except NoSuchElementException:
-            self.browser.execute_script("history.back();")
-
-    def click_more_labels(self, parent):
-        try:
-            elements = self.browser.elements(
-                parent=parent,
-                locator=('.//a[text()="More labels..."]'))
-            for element in elements:
-                self.browser.click(element)
-        except NoSuchElementException:
-            pass
-
-    def _item_sidecar(self, element):
-        return not len(self.browser.elements(
-                parent=element, locator=self.MISSING_SIDECAR)) > 0
 
     def _get_overview_status(self, element):
         _not_valid = len(self.browser.elements(
@@ -2423,7 +2423,7 @@ class TableViewAppWorkloads(TableViewAbstract):
             # create Workload instance
             _workload = AppWorkload(
                 name=_value,
-                istio_sidecar=self._item_sidecar(el))
+                istio_sidecar=self._item_sidecar_icon(el))
             # append this item to the final list
             _items.append(_workload)
         return _items
@@ -2895,7 +2895,7 @@ class TableViewServices(TableViewAbstract):
         return _items
 
 
-class TabViewAbstract(Widget):
+class TabViewAbstract(ViewAbstract):
     """
         Abstract base class for all Tabs besides the Info tab.
         After opening the tab and reading the data, it it can back to Info tab.
