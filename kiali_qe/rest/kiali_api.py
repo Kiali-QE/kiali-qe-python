@@ -9,7 +9,8 @@ from kiali_qe.components.enums import (
     IstioConfigValidation,
     OverviewPageType,
     TimeIntervalRestParam,
-    HealthType as HEALTH_TYPE
+    HealthType as HEALTH_TYPE,
+    ItemIconType
 )
 from kiali_qe.entities import Requests
 from kiali_qe.entities.istio_config import IstioConfig, IstioConfigDetails, Rule
@@ -99,7 +100,8 @@ class KialiExtendedClient(KialiClient):
                     name=_service_rest['name'],
                     istio_sidecar=_service_rest['istioSidecar'],
                     health=_service_health.is_healthy() if _service_health else None,
-                    service_status=_service_health)
+                    service_status=_service_health,
+                    icon=self.get_icon_type(_service_rest))
                 items.append(_service)
         # filter by service name
         if len(service_names) > 0:
@@ -219,6 +221,7 @@ class KialiExtendedClient(KialiClient):
                         app_label='app' in _labels.keys(),
                         version_label='version' in _labels.keys(),
                         health=_workload_health.is_healthy() if _workload_health else None,
+                        icon=self.get_icon_type(_workload_rest),
                         workload_status=_workload_health)
                     items.append(_workload)
         # filter by workload name
@@ -690,6 +693,7 @@ class KialiExtendedClient(KialiClient):
                     selectors=self.get_selectors(_service_data['service']),
                     health=_service_health.is_healthy() if _service_health else None,
                     service_status=_service_health,
+                    icon=self.get_icon_type(_service_data),
                     workloads=workloads,
                     traffic=source_workloads,
                     virtual_services=virtual_services,
@@ -806,6 +810,7 @@ class KialiExtendedClient(KialiClient):
                 resource_version=_workload_data['resourceVersion'],
                 health=_workload_health.is_healthy() if _workload_health else None,
                 workload_status=_workload_health,
+                icon=self.get_icon_type(_workload_data),
                 labels=self.get_labels(_workload_data),
                 pods_number=len(_pods),
                 services_number=len(_services),
@@ -1002,6 +1007,14 @@ class KialiExtendedClient(KialiClient):
         return self.delete_response('deleteThreeScaleHandler',
                                     threescaleHandlerName=name)
 
+    def get_icon_type(self, object_rest):
+        _icon = None
+        if 'additionalDetailSample' in object_rest and object_rest['additionalDetailSample']:
+            if object_rest['additionalDetailSample']['title'] \
+                    == ItemIconType.API_DOCUMENTATION.text:
+                _icon = ItemIconType.API_DOCUMENTATION
+        return _icon
+
     def get_labels(self, object_rest):
         _labels = {}
         if 'labels' in object_rest:
@@ -1053,7 +1066,7 @@ class KialiExtendedClient(KialiClient):
         return response['validation'] if 'validation' in response else None
 
     def get_pod_status(self, istioSidecar, pod_data):
-        if not istioSidecar or not pod_data['versionLabel'] or not pod_data['appLabel'] \
+        if not pod_data['versionLabel'] or not pod_data['appLabel'] \
                 or pod_data['status'] == 'Pending':
             return IstioConfigValidation.WARNING
         else:

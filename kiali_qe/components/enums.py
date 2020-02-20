@@ -378,3 +378,7 @@ class TrafficType(StringEnum):
     SERVICE = ('Service')
     WORKLOAD = ('Workload')
     UNKNOWN = ('Unknown')
+
+
+class ItemIconType(StringEnum):
+    API_DOCUMENTATION = ('API Documentation')
