@@ -758,7 +758,7 @@ class WorkloadsPageTest(AbstractListPageTest):
         if not self.is_in_details_page(name, namespace):
             self._prepare_load_details_page(name, namespace)
             self.open(name, namespace, force_refresh)
-            self.browser.wait_for_element(locator='//strong[contains(., "Error Rate")]')
+            self.browser.wait_for_element(locator='//*[contains(., "Workload Overview")]')
         return self.page.content.get_details(load_only)
 
     def assert_random_details(self, namespaces=[], filters=[],

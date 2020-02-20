@@ -66,7 +66,8 @@ class Service(EntityBase):
     def __init__(self, name, namespace, istio_sidecar=None,
                  app_label=None, version_label=None, health=None,
                  service_status=None,
-                 config_status=None):
+                 config_status=None,
+                 icon=None):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         if namespace is None:
@@ -79,6 +80,7 @@ class Service(EntityBase):
         self.health = health
         self.service_status = service_status
         self.config_status = config_status
+        self.icon = icon
 
     def __str__(self):
         return 'name:{}, namespace:{}, istio_sidecar:{}, app_label:{}, '\
@@ -117,6 +119,8 @@ class Service(EntityBase):
         if self.service_status and other.service_status and \
                 not self.service_status.is_equal(other.service_status):
             return False
+        if self.icon != other.icon:
+            return False
         return True
 
 
@@ -135,7 +139,7 @@ class ServiceDetails(EntityBase):
                  labels={}, selectors={},
                  istio_sidecar=False, health=None, service_status=None,
                  endpoints=[],
-                 validations=[], **kwargs):
+                 validations=[], icon=None, **kwargs):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
@@ -153,6 +157,7 @@ class ServiceDetails(EntityBase):
         self.service_status = service_status
         self.endpoints = endpoints
         self.validations = validations
+        self.icon = icon
         self.workloads_number = kwargs['workloads_number']\
             if 'workloads_number' in kwargs else None
         self.virtual_services_number = kwargs['virtual_services_number']\
@@ -227,6 +232,8 @@ class ServiceDetails(EntityBase):
             return False
         if self.service_status and other.service_status and \
                 not self.service_status.is_equal(other.service_status):
+            return False
+        if self.icon != other.icon:
             return False
         return True
 

@@ -6,6 +6,7 @@ class Workload(EntityBase):
 
     def __init__(self, name, namespace, workload_type,
                  istio_sidecar=None, app_label=None, version_label=None, health=None,
+                 icon=None,
                  workload_status=None):
         self.name = name
         self.namespace = namespace
@@ -14,6 +15,7 @@ class Workload(EntityBase):
         self.app_label = app_label
         self.version_label = version_label
         self.health = health
+        self.icon = icon
         self.workload_status = workload_status
 
     def __str__(self):
@@ -50,6 +52,8 @@ class Workload(EntityBase):
         if advanced_check:
             if self.health != other.health:
                 return False
+            if self.icon != other.icon:
+                return False
             if self.app_label != other.app_label:
                 return False
             if self.version_label != other.version_label:
@@ -64,7 +68,7 @@ class Workload(EntityBase):
 class WorkloadDetails(EntityBase):
 
     def __init__(self, name, workload_type, created_at, created_at_ui, resource_version,
-                 istio_sidecar=False, health=None, workload_status=None, **kwargs):
+                 istio_sidecar=False, health=None, workload_status=None, icon=None, **kwargs):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
@@ -72,6 +76,7 @@ class WorkloadDetails(EntityBase):
         self.istio_sidecar = istio_sidecar
         self.health = health
         self.workload_status = workload_status
+        self.icon = icon
         self.created_at = created_at
         self.created_at_ui = created_at_ui
         self.resource_version = resource_version
@@ -141,6 +146,8 @@ class WorkloadDetails(EntityBase):
             # if self.istio_sidecar != other.istio_sidecar:
             #    return False
             if self.health != other.health:
+                return False
+            if self.icon != other.icon:
                 return False
             if self.workload_status and \
                     not self.workload_status.is_equal(other.workload_status):

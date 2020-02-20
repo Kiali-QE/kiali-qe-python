@@ -60,6 +60,14 @@ def test_all_services_namespace(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_ro_namespace
+@pytest.mark.p_ro_group7
+def test_service_details_kiali(kiali_client, openshift_client, browser, pick_namespace):
+    tests = ServicesPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.assert_details(name='kiali', namespace=ISTIO_SYSTEM)
+
+
+@pytest.mark.p_ro_namespace
 @pytest.mark.p_ro_group9
 def test_service_details_random(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
