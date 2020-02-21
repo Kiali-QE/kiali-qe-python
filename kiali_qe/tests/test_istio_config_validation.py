@@ -3,6 +3,21 @@ import pytest
 from selenium.common.exceptions import NoSuchElementException
 from kiali_qe.tests import ValidationsTest, ConfigValidationObject, ServiceValidationObject
 from kiali_qe.utils.path import istio_objects_validation_path
+from kiali_qe.components.error_codes import (
+    KIA0205,
+    KIA0401,
+    KIA0301,
+    KIA0302,
+    KIA0201,
+    KIA0202,
+    KIA0203,
+    KIA1002,
+    KIA0701,
+    KIA0601,
+    KIA1004,
+    KIA0204,
+    KIA1003
+)
 
 
 '''
@@ -35,7 +50,6 @@ SCENARIO_16 = "virtual-service-less-than-100-weight.yaml"
 def test_two_gateways_same_host(kiali_client):
     """ More than one Gateway for the same host port combination
     """
-    error_message = 'More than one Gateway for the same host port combination'
     tests = ValidationsTest(
         kiali_client=kiali_client,
         objects_path=istio_objects_validation_path.strpath)
@@ -46,12 +60,12 @@ def test_two_gateways_same_host(kiali_client):
                 object_type='Gateway',
                 object_name='bookinfo-gateway-auto',
                 namespace=BOOKINFO,
-                error_messages=[error_message]),
+                error_messages=[KIA0301]),
             ConfigValidationObject(
                 object_type='Gateway',
                 object_name='bookinfo-gateway-auto-copy',
                 namespace=BOOKINFO2,
-                error_messages=[error_message])
+                error_messages=[KIA0301])
         ],
         ignore_common_errors=False)
 
@@ -60,7 +74,6 @@ def test_two_gateways_same_host(kiali_client):
 def test_gateway_no_matching_workload(kiali_client):
     """ No matching workload found for gateway selector in this namespace
     """
-    error_message = 'No matching workload found for gateway selector in this namespace'
     tests = ValidationsTest(
         kiali_client=kiali_client,
         objects_path=istio_objects_validation_path.strpath)
@@ -71,15 +84,14 @@ def test_gateway_no_matching_workload(kiali_client):
                 object_type='Gateway',
                 object_name='bookinfo-gateway-auto-not-match',
                 namespace=BOOKINFO,
-                error_messages=[error_message])
+                error_messages=[KIA0302])
         ])
 
 
 @pytest.mark.p_group_last
 def test_more_drs_same_host_port(kiali_client):
-    """ More than one Gateway for the same host port combination
+    """ More than one DestinationRules for the same host subset combination
     """
-    error_message = 'More than one DestinationRules for the same host subset combination'
     tests = ValidationsTest(
         kiali_client=kiali_client,
         objects_path=istio_objects_validation_path.strpath)
@@ -90,12 +102,12 @@ def test_more_drs_same_host_port(kiali_client):
                 object_type='DestinationRule',
                 object_name='reviews-dr1-auto',
                 namespace=BOOKINFO,
-                error_messages=[error_message]),
+                error_messages=[KIA0201]),
             ConfigValidationObject(
                 object_type='DestinationRule',
                 object_name='reviews-dr2-auto',
                 namespace=BOOKINFO,
-                error_messages=[error_message])
+                error_messages=[KIA0201])
         ],
         ignore_common_errors=False)
 
@@ -105,9 +117,6 @@ def test_no_matching_entry_dr(kiali_client):
     """ This host has no matching entry in the service registry
         (service, workload or service entries)
     """
-    error_message = 'This host has no matching entry in the service '\
-        'registry (service, workload or service entries)'
-    error_message2 = 'This subset\'s labels are not found in any matching host'
     tests = ValidationsTest(
         kiali_client=kiali_client,
         objects_path=istio_objects_validation_path.strpath)
@@ -118,10 +127,10 @@ def test_no_matching_entry_dr(kiali_client):
                 object_type='DestinationRule',
                 object_name='reviews-no-match-entry-auto',
                 namespace=BOOKINFO,
-                error_messages=[error_message,
-                                error_message2,
-                                error_message2,
-                                error_message2])
+                error_messages=[KIA0202,
+                                KIA0203,
+                                KIA0203,
+                                KIA0203])
         ])
 
 
@@ -129,7 +138,6 @@ def test_no_matching_entry_dr(kiali_client):
 def test_subset_label_not_found(kiali_client):
     """ This subset’s labels are not found in any matching host
     """
-    error_message = 'This subset\'s labels are not found in any matching host'
     tests = ValidationsTest(
         kiali_client=kiali_client,
         objects_path=istio_objects_validation_path.strpath)
@@ -140,8 +148,8 @@ def test_subset_label_not_found(kiali_client):
                 object_type='DestinationRule',
                 object_name='reviews-no-subset-label-auto',
                 namespace=BOOKINFO,
-                error_messages=[error_message,
-                                error_message])
+                error_messages=[KIA0203,
+                                KIA0203])
         ])
 
 
@@ -149,7 +157,6 @@ def test_subset_label_not_found(kiali_client):
 def test_mesh_policy_not_found(kiali_client):
     """ MeshPolicy enabling mTLS is missing
     """
-    error_message = 'MeshPolicy enabling mTLS is missing'
     tests = ValidationsTest(
         kiali_client=kiali_client,
         objects_path=istio_objects_validation_path.strpath)
@@ -160,7 +167,7 @@ def test_mesh_policy_not_found(kiali_client):
                 object_type='DestinationRule',
                 object_name='default',
                 namespace=ISTIO_SYSTEM,
-                error_messages=[error_message])
+                error_messages=[KIA0205])
         ])
 
 
@@ -168,8 +175,6 @@ def test_mesh_policy_not_found(kiali_client):
 def test_mtls_settings_overridden(kiali_client):
     """ mTLS settings of a non-local Destination Rule are overridden
     """
-    error_message = 'mTLS settings of a non-local Destination Rule are overridden'
-    error_message2 = 'MeshPolicy enabling mTLS is missing'
     tests = ValidationsTest(
         kiali_client=kiali_client,
         objects_path=istio_objects_validation_path.strpath)
@@ -180,12 +185,12 @@ def test_mtls_settings_overridden(kiali_client):
                 object_type='DestinationRule',
                 object_name='default',
                 namespace=ISTIO_SYSTEM,
-                error_messages=[error_message2]),
+                error_messages=[KIA0205]),
             ConfigValidationObject(
                 object_type='DestinationRule',
                 object_name='reviews-overridden-auto',
                 namespace=BOOKINFO,
-                error_messages=[error_message])
+                error_messages=[KIA0204])
         ])
 
 
@@ -233,7 +238,7 @@ def test_meshpolicy_mtls_enable_ok(kiali_client):
                 object_type='MeshPolicy',
                 object_name='default',
                 namespace=ISTIO_SYSTEM,
-                error_messages=['Mesh-wide Destination Rule enabling mTLS is missing'])
+                error_messages=[KIA0401])
         ])
 
 
@@ -241,7 +246,6 @@ def test_meshpolicy_mtls_enable_ok(kiali_client):
 def test_vs_to_non_existing_gateway(kiali_client):
     """ VirtualService is pointing to a non-existent gateway
     """
-    error_message = 'VirtualService is pointing to a non-existent gateway'
     tests = ValidationsTest(
         kiali_client=kiali_client,
         objects_path=istio_objects_validation_path.strpath)
@@ -252,7 +256,7 @@ def test_vs_to_non_existing_gateway(kiali_client):
                 object_type='VirtualService',
                 object_name='details-vs-non-existing-gateway-auto',
                 namespace=BOOKINFO,
-                error_messages=[error_message])
+                error_messages=[KIA1002])
         ])
 
 
@@ -260,7 +264,6 @@ def test_vs_to_non_existing_gateway(kiali_client):
 def test_vs_not_defined_protocol(kiali_client):
     """ VirtualService doesn’t define any route protocol
     """
-    error_message = 'VirtualService doesn\'t define any valid route protocol'
     try:
         tests = ValidationsTest(
             kiali_client=kiali_client,
@@ -272,7 +275,7 @@ def test_vs_not_defined_protocol(kiali_client):
                     object_type='VirtualService',
                     object_name='details-not-defined-protocol',
                     namespace=BOOKINFO,
-                    error_messages=[error_message])
+                    error_messages=[KIA1003])
             ])
     except NoSuchElementException:
         # because vs should have protocol defined
@@ -301,9 +304,6 @@ def test_dr_fqdn_ok(kiali_client):
 def test_dr_fqdn_not_exist(kiali_client):
     """ Host in DR is given in FQDN which does not exist
     """
-    error_message = 'This host has no matching entry in '\
-        'the service registry (service, workload or service entries)'
-    error_message2 = 'This subset\'s labels are not found in any matching host'
     tests = ValidationsTest(
         kiali_client=kiali_client,
         objects_path=istio_objects_validation_path.strpath)
@@ -314,10 +314,10 @@ def test_dr_fqdn_not_exist(kiali_client):
                 object_type='DestinationRule',
                 object_name='reviews-dr-wrong-fqdn-auto',
                 namespace=BOOKINFO,
-                error_messages=[error_message,
-                                error_message2,
-                                error_message2,
-                                error_message2])
+                error_messages=[KIA0202,
+                                KIA0203,
+                                KIA0203,
+                                KIA0203])
         ])
 
 
@@ -325,7 +325,6 @@ def test_dr_fqdn_not_exist(kiali_client):
 def test_deployment_port_not_found(kiali_client):
     """ Deployment exposing same port as Service not found
     """
-    error_message = 'Deployment exposing same port as Service not found'
     tests = ValidationsTest(
         kiali_client=kiali_client,
         objects_path=istio_objects_validation_path.strpath)
@@ -334,14 +333,13 @@ def test_deployment_port_not_found(kiali_client):
         namespace='bookinfo',
         service_validation_objects=[
             ServiceValidationObject(
-                error_message=error_message)])
+                error_message=KIA0701)])
 
 
 @pytest.mark.p_group_last
 def test_port_name_suffix(kiali_client):
     """ Port name must follow <protocol>[-suffix] form
     """
-    error_message = 'Port name must follow <protocol>[-suffix] form'
     tests = ValidationsTest(
         kiali_client=kiali_client,
         objects_path=istio_objects_validation_path.strpath)
@@ -350,14 +348,13 @@ def test_port_name_suffix(kiali_client):
         namespace='bookinfo',
         service_validation_objects=[
             ServiceValidationObject(
-                error_message=error_message)])
+                error_message=KIA0601)])
 
 
 @pytest.mark.p_group_last
 def test_vs_less_than_100_weight(kiali_client):
     """ VirtualService has only weight < 100
     """
-    error_message = 'The weight is assumed to be 100 because there is only one route destination'
     tests = ValidationsTest(
         kiali_client=kiali_client,
         objects_path=istio_objects_validation_path.strpath)
@@ -368,5 +365,5 @@ def test_vs_less_than_100_weight(kiali_client):
                 object_type='VirtualService',
                 object_name='virtual-service-less-100-weight-auto',
                 namespace=BOOKINFO,
-                error_messages=[error_message])
+                error_messages=[KIA1004])
         ])
