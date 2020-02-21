@@ -40,6 +40,10 @@ from kiali_qe.components.enums import (
     TLSMutualValues,
     ThreeScaleConfigPageSort
 )
+from kiali_qe.components.error_codes import (
+    KIA0201,
+    KIA0301
+)
 from kiali_qe.rest.kiali_api import ISTIO_CONFIG_TYPES
 from kiali_qe.utils import is_equal, is_sublist, word_in_text, get_url, get_yaml_path
 from kiali_qe.utils.log import logger
@@ -1699,13 +1703,11 @@ class ValidationsTest(object):
 
         if ignore_common_errors:
             try:
-                rest_error_messages.remove(
-                    'More than one DestinationRules for the same host subset combination')
+                rest_error_messages.remove(KIA0201)
             except ValueError:
                 pass
             try:
-                rest_error_messages.remove(
-                    'More than one Gateway for the same host port combination')
+                rest_error_messages.remove(KIA0301)
             except ValueError:
                 pass
 

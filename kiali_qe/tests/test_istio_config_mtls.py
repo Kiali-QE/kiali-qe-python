@@ -3,6 +3,14 @@ import pytest
 from kiali_qe.tests import ValidationsTest, ConfigValidationObject, NamespaceTLSObject
 from kiali_qe.utils.path import istio_objects_mtls_path
 from kiali_qe.components.enums import MeshWideTLSType
+from kiali_qe.components.error_codes import (
+    KIA0207,
+    KIA0501,
+    KIA0208,
+    KIA0205,
+    KIA0401,
+    KIA0206
+)
 
 '''
 Tests are divided into groups using different services and namespaces. This way the group of tests
@@ -62,13 +70,11 @@ def test_scenario2(kiali_client, openshift_client, browser):
             ConfigValidationObject(
                  'DestinationRule', 'disable-mtls',
                  namespace=BOOKINFO,
-                 error_messages=[
-                     'Policy with TLS strict mode found, it should be permissive']),
+                 error_messages=[KIA0207]),
             ConfigValidationObject(
                 'Policy', 'default',
                 namespace=BOOKINFO,
-                error_messages=[
-                    'Destination Rule enabling namespace-wide mTLS is missing'])
+                error_messages=[KIA0501])
              ])
 
 
@@ -86,9 +92,7 @@ def test_scenario3(kiali_client, openshift_client, browser):
             ConfigValidationObject(
                 'DestinationRule', 'disable-mtls',
                 namespace=BOOKINFO,
-                error_messages=[
-                    'MeshPolicy enabling mTLS found, '
-                    'permissive policy is needed']),
+                error_messages=[KIA0208]),
             ConfigValidationObject(
                 'MeshPolicy', 'default',
                 namespace='istio-system', error_messages=[]),
@@ -193,8 +197,7 @@ def test_scenario6(kiali_client, openshift_client, browser):
             ConfigValidationObject(
                 'Policy', 'default',
                 namespace=BOOKINFO,
-                error_messages=[
-                    'Destination Rule enabling namespace-wide mTLS is missing'])
+                error_messages=[KIA0501])
         ])
 
 
@@ -245,7 +248,7 @@ def test_scenario8(kiali_client, openshift_client, browser):
             ConfigValidationObject(
                 'DestinationRule', 'enable-mtls',
                 namespace=BOOKINFO,
-                error_messages=['MeshPolicy enabling mTLS is missing']),
+                error_messages=[KIA0205]),
             ConfigValidationObject(
                 'Policy', 'default', namespace=BOOKINFO,
                 error_messages=[])
@@ -268,8 +271,7 @@ def test_scenario9(kiali_client, openshift_client, browser):
             ConfigValidationObject(
                 'Policy', 'default',
                 namespace=BOOKINFO,
-                error_messages=[
-                    'Destination Rule enabling namespace-wide mTLS is missing'])
+                error_messages=[KIA0501])
         ])
 
 
@@ -350,8 +352,7 @@ def test_scenario13(kiali_client, openshift_client, browser):
             ConfigValidationObject(
                 'MeshPolicy', 'default',
                 namespace='istio-system',
-                error_messages=[
-                    'Mesh-wide Destination Rule enabling mTLS is missing'])
+                error_messages=[KIA0401])
         ],
         tls_type=MeshWideTLSType.PARTLY_ENABLED)
 
@@ -370,8 +371,7 @@ def test_scenario14(kiali_client, openshift_client, browser):
             ConfigValidationObject(
                 'DestinationRule', 'enable-mtls',
                 namespace=BOOKINFO,
-                error_messages=[
-                    'Policy enabling namespace-wide mTLS is missing'])
+                error_messages=[KIA0206])
         ])
 
 
