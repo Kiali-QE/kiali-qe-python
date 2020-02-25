@@ -1,4 +1,7 @@
 
+KIA0001 = 'KIA0001 Unable to verify the validity, '\
+    'cross-namespace validation is not supported for this field'
+
 KIA0202 = 'KIA0202 This host has no matching entry in the '\
     'service registry (service, workload or service entries)'
 
@@ -60,3 +63,10 @@ KIA0601 = 'KIA0601 Port name must follow <protocol>[-suffix] form'
 
 KIA1004 = 'KIA1004 The weight is assumed to be '\
     '100 because there is only one route destination'
+
+KIA0103 = 'KIA0103 No matching workload found for '\
+    'authorization policy selector in this namespace'
+
+KIA1005 = 'KIA1005 This subset is already referenced in another route destination'
+
+KIA1008 = 'KIA1008 Destination field is mandatory'
