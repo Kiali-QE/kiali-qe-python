@@ -21,7 +21,10 @@ from kiali_qe.components.error_codes import (
     KIA0902,
     KIA0901,
     KIA0903,
-    KIA1001
+    KIA1001,
+    KIA0103,
+    KIA0001,
+    KIA1005
 )
 
 '''
@@ -39,7 +42,9 @@ DEST_RULE_VS_RATINGS = 'destination-rule-ratings.yaml'
 DEST_RULE_VS_REVIEWS = 'destination-rule-reviews.yaml'
 DEST_RULE_BROKEN = 'destination-rule-cb-broken.yaml'
 DEST_RULE_WARNING = 'dest-rules-svc.yaml'
+DEST_RULE_HOST_WARNING = 'destination-rule-host-wrong.yaml'
 VIRTUAL_SERVICE = 'virtual-service.yaml'
+VIRTUAL_SERVICE_SUBSET = 'virtual-service-subset-duplicate.yaml'
 VIRTUAL_SERVICE_BROKEN = 'virtual-service-broken.yaml'
 VIRTUAL_SERVICE_BROKEN_WEIGHT = 'virtual-service-broken-weight.yaml'
 VIRTUAL_SERVICE_BROKEN_WEIGHT_TEXT = 'virtual-service-broken-weight-text.yaml'
@@ -135,6 +140,31 @@ def test_destination_rule_svc_warning(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group1
+def test_destination_rule_host_warning(kiali_client, openshift_client, browser):
+    destination_rule_warning = get_yaml(istio_objects_path.strpath, DEST_RULE_HOST_WARNING)
+    destination_rule_warning_dict = get_dict(istio_objects_path.strpath, DEST_RULE_HOST_WARNING)
+
+    _istio_config_test(kiali_client, openshift_client, browser,
+                       destination_rule_warning_dict,
+                       destination_rule_warning,
+                       [
+                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
+                         'value': IstioConfigObjectType.DESTINATION_RULE.text},
+                        {'name': IstioConfigPageFilter.CONFIG.text,
+                         'value': IstioConfigValidationType.WARNING.text},
+                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
+                         'value': 'reviews-dr2-svc'}
+                        ],
+                       namespace=BOOKINFO_1,
+                       kind='DestinationRule',
+                       api_version='networking.istio.io/v1alpha3',
+                       service_name=DETAILS,
+                       error_messages=[KIA0202],
+                       check_service_details=False)
+
+
+@pytest.mark.p_crud_resource
 @pytest.mark.p_crud_group2
 def test_virtual_service(kiali_client, openshift_client, browser):
     gateway = get_yaml(istio_objects_path.strpath, GATEWAY)
@@ -208,6 +238,35 @@ def test_virtual_service_svc_warning(kiali_client, openshift_client, browser):
                                kind='VirtualService',
                                api_version='networking.istio.io/v1alpha3',
                                error_messages=[KIA1006])
+    _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group2
+def test_virtual_service_subset_warning(kiali_client, openshift_client, browser):
+    gateway = get_yaml(istio_objects_path.strpath, GATEWAY)
+    gateway_dict = get_dict(istio_objects_path.strpath, GATEWAY)
+    _istio_config_create(openshift_client, gateway_dict, gateway,
+                         'Gateway',
+                         'networking.istio.io/v1alpha3',
+                         namespace=BOOKINFO_1)
+    virtual_service = get_yaml(istio_objects_path.strpath, VIRTUAL_SERVICE_SUBSET)
+    virtual_service_dict = get_dict(istio_objects_path.strpath, VIRTUAL_SERVICE_SUBSET)
+    _istio_config_create(openshift_client, virtual_service_dict, virtual_service,
+                         'VirtualService',
+                         'networking.istio.io/v1alpha3',
+                         namespace=BOOKINFO_1)
+    _create_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
+
+    _istio_config_details_test(kiali_client,
+                               openshift_client,
+                               browser,
+                               virtual_service_dict,
+                               virtual_service,
+                               namespace=BOOKINFO_1,
+                               kind='VirtualService',
+                               api_version='networking.istio.io/v1alpha3',
+                               error_messages=[KIA1005])
     _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
 
@@ -434,7 +493,7 @@ def test_auth_policy(kiali_client, openshift_client, browser):
                        api_version='security.istio.io/v1beta1',
                        service_name=DETAILS,
                        check_service_details=False,
-                       error_messages=[KIA0101, KIA0102])
+                       error_messages=[KIA0101, KIA0102, KIA0103, KIA0001])
 
 
 @pytest.mark.p_crud_resource
