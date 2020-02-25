@@ -10,6 +10,19 @@ from kiali_qe.components.enums import (
     IstioConfigPageFilter,
     IstioConfigValidationType
 )
+from kiali_qe.components.error_codes import (
+    KIA0202,
+    KIA0203,
+    KIA0201,
+    KIA1006,
+    KIA1007,
+    KIA0101,
+    KIA0102,
+    KIA0902,
+    KIA0901,
+    KIA0903,
+    KIA1001
+)
 
 '''
 Tests are divided into groups using different services and namespaces. This way the group of tests
@@ -90,9 +103,7 @@ def test_destination_rule_broken(kiali_client, openshift_client, browser):
                        kind='DestinationRule',
                        api_version='networking.istio.io/v1alpha3',
                        service_name=DETAILS,
-                       error_messages=['This host has no matching entry in the '
-                                       'service registry (service, workload or service entries)',
-                                       'This subset\'s labels are not found in any matching host'],
+                       error_messages=[KIA0202, KIA0203],
                        check_service_details=True)
 
 
@@ -118,8 +129,7 @@ def test_destination_rule_svc_warning(kiali_client, openshift_client, browser):
                        kind='DestinationRule',
                        api_version='networking.istio.io/v1alpha3',
                        service_name=DETAILS,
-                       error_messages=[
-                           'More than one DestinationRules for the same host subset combination'],
+                       error_messages=[KIA0201],
                        check_service_details=False)
     _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
@@ -188,8 +198,7 @@ def test_virtual_service_svc_warning(kiali_client, openshift_client, browser):
                                namespace=BOOKINFO_1,
                                kind='VirtualService',
                                api_version='networking.istio.io/v1alpha3',
-                               error_messages=[
-                                   'More than one Virtual Service for same host'])
+                               error_messages=[KIA1006])
     _istio_config_details_test(kiali_client,
                                openshift_client,
                                browser,
@@ -198,8 +207,7 @@ def test_virtual_service_svc_warning(kiali_client, openshift_client, browser):
                                namespace=BOOKINFO_1,
                                kind='VirtualService',
                                api_version='networking.istio.io/v1alpha3',
-                               error_messages=[
-                                   'More than one Virtual Service for same host'])
+                               error_messages=[KIA1006])
     _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
 
@@ -225,10 +233,7 @@ def test_virtual_service_broken(kiali_client, openshift_client, browser):
                        kind='VirtualService',
                        api_version='networking.istio.io/v1alpha3',
                        service_name=REVIEWS,
-                       error_messages=[
-                           "DestinationWeight on route doesn't have a "
-                           "valid service (host not found)",
-                            'Subset not found'],
+                       error_messages=[KIA1001, KIA1007],
                        check_service_details=True)
     _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
@@ -429,9 +434,7 @@ def test_auth_policy(kiali_client, openshift_client, browser):
                        api_version='security.istio.io/v1beta1',
                        service_name=DETAILS,
                        check_service_details=False,
-                       error_messages=[
-                           'Namespace not found for this rule',
-                            'Only HTTP methods and fully-qualified gRPC names are allowed'])
+                       error_messages=[KIA0101, KIA0102])
 
 
 @pytest.mark.p_crud_resource
@@ -475,8 +478,7 @@ def test_service_role_broken(kiali_client, openshift_client, browser):
                        kind='ServiceRole',
                        api_version='rbac.istio.io/v1alpha1',
                        service_name=DETAILS,
-                       error_messages=['ServiceRole can only point to current namespace',
-                                       'Unable to find all the defined services'],
+                       error_messages=[KIA0902, KIA0901],
                        check_service_details=False)
 
 
@@ -540,7 +542,7 @@ def test_service_role_binding_broken(kiali_client, openshift_client, browser):
                            kind='ServiceRoleBinding',
                            api_version='rbac.istio.io/v1alpha1',
                            service_name=DETAILS,
-                           error_messages=['ServiceRole does not exists in this namespace'],
+                           error_messages=[KIA0903],
                            check_service_details=False)
     finally:
         _istio_config_delete(openshift_client, _role_dict,
