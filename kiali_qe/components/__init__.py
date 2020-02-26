@@ -1405,10 +1405,12 @@ class Login(Widget):
 
 
 class ViewAbstract(Widget):
+    ROOT = '//div[contains(@class, "pf-c-tabs")]'
     POPOVER = './/*[contains(@class, "tippy-popper")]'
     MISSING_SIDECAR_TEXT = 'Missing Sidecar'
     MISSING_TEXT_SIDECAR = './/span[normalize-space(text())="{}"]'.format(MISSING_SIDECAR_TEXT)
     MISSING_ICON_SIDECAR = './/span//svg'
+    INFO_TAB = '//button[@id="pf-tab-0-basic-tabs"]'
 
     def back_to_service_info(self, parent):
         # TODO find a better way after KIALI-2251
@@ -1416,6 +1418,15 @@ class ViewAbstract(Widget):
             self.browser.click('.//a[contains(@href, "/services/")]', parent)
         except NoSuchElementException:
             self.browser.execute_script("history.back();")
+
+    def back_to_info(self):
+        tab = self.browser.element(locator=self.INFO_TAB,
+                                   parent=self.ROOT)
+        try:
+            self.browser.click(tab)
+        finally:
+            self.browser.click(tab)
+        wait_to_spinner_disappear(self.browser)
 
     def _get_date_tooltip(self, element):
         date_text = ''
@@ -1681,7 +1692,21 @@ class ListViewAbstract(ViewAbstract):
         result = self._get_deployment_statuses(statuses, name)
         if len(result) > 0:
             return result[0]
-        return None
+        else:
+            return self._get_deployment_pod_status(statuses, name)
+
+    def _get_deployment_pod_status(self, statuses, name):
+        desired_pods = 0
+        available_pods = 0
+        for _status in statuses:
+            if 'desired pod' in _status:
+                desired_pods = int(re.search(r'\d+', _status).group())
+            if 'available pod' in _status:
+                available_pods = int(re.search(r'\d+', _status).group())
+        return DeploymentStatus(
+            name=name,
+            replicas=desired_pods,
+            available=available_pods)
 
     def _get_deployment_statuses(self, statuses, name=None):
         result = []
@@ -1693,6 +1718,7 @@ class ListViewAbstract(ViewAbstract):
                         name=(name if name else _label),
                         replicas=int(_replicas),
                         available=int(_available)))
+
         return result
 
     def _get_apprequests(self, statuses):
@@ -2020,6 +2046,7 @@ class ListViewWorkloads(ListViewAbstract):
     def get_details(self, load_only=False):
         if load_only:
             return BreadCrumb(self.parent)
+        self.back_to_info()
         _name = self.browser.text(
             locator=self.HEADER,
             parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '')\
@@ -2900,8 +2927,6 @@ class TabViewAbstract(ViewAbstract):
         Abstract base class for all Tabs besides the Info tab.
         After opening the tab and reading the data, it it can back to Info tab.
     """
-    ROOT = '//div[contains(@class, "pf-c-tabs")]'
-    INFO_TAB = '//button[@id="pf-tab-0-basic-tabs"]'
 
     def __init__(self, parent, tab_name=None, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -2913,15 +2938,6 @@ class TabViewAbstract(ViewAbstract):
 
     def __locator__(self):
         return self.locator
-
-    def back_to_info(self):
-        tab = self.browser.element(locator=self.INFO_TAB,
-                                   parent=self.ROOT)
-        try:
-            self.browser.click(tab)
-        finally:
-            self.browser.click(tab)
-        wait_to_spinner_disappear(self.browser)
 
     def _get_item_health(self, element):
         _healthy = len(self.browser.elements(
