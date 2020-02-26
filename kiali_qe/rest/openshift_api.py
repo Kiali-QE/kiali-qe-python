@@ -503,7 +503,8 @@ class OpenshiftExtendedClient(object):
                 _response.metadata.creationTimestamp),
             resource_version=_response.metadata.resourceVersion,
             istio_sidecar=None,
-            labels=dict(_response.metadata.labels),
+            labels=dict(_response.metadata.labels if _response.metadata.labels
+                        else _response.spec.selector.matchLabels),
             # TODO health
             health=None)
 
