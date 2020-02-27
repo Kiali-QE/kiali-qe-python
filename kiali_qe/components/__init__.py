@@ -15,7 +15,8 @@ from kiali_qe.components.enums import (
     TrafficType,
     GraphPageLayout,
     OverviewLinks,
-    TLSMutualValues
+    TLSMutualValues,
+    ItemIconType
 )
 from kiali_qe.entities import (
     TrafficItem,
@@ -1408,7 +1409,9 @@ class ViewAbstract(Widget):
     ROOT = '//div[contains(@class, "pf-c-tabs")]'
     POPOVER = './/*[contains(@class, "tippy-popper")]'
     MISSING_SIDECAR_TEXT = 'Missing Sidecar'
+    NO_SIDECAR_TEXT = 'No Istio sidecar'
     MISSING_TEXT_SIDECAR = './/span[normalize-space(text())="{}"]'.format(MISSING_SIDECAR_TEXT)
+    NO_SIDECAR_HEALTH = './/div[contains(text(), "{}")]'.format(NO_SIDECAR_TEXT)
     MISSING_ICON_SIDECAR = './/span//svg'
     INFO_TAB = '//button[@id="pf-tab-0-basic-tabs"]'
 
@@ -1460,9 +1463,12 @@ class ViewAbstract(Widget):
                 parent=element, locator=self.MISSING_TEXT_SIDECAR)) > 0
 
     def _details_sidecar_text(self):
-        return not len(self.browser.elements(
+        return not (len(self.browser.elements(
             parent=self.DETAILS_ROOT,
-            locator=self.MISSING_TEXT_SIDECAR)) > 0
+            locator=self.MISSING_TEXT_SIDECAR)) > 0 or
+                len(self.browser.elements(
+                    parent=self.DETAILS_ROOT,
+                    locator=self.NO_SIDECAR_HEALTH)) > 0)
 
     def _item_sidecar_icon(self, element):
         return not len(self.browser.elements(
@@ -1618,6 +1624,16 @@ class ListViewAbstract(ViewAbstract):
         except (NoSuchElementException):
             return None
 
+    def _get_item_details_icon(self, element):
+        _api = len(self.browser.elements(
+            parent=element,
+            locator='.//img[contains(@title, "{}")]'.format(
+                ItemIconType.API_DOCUMENTATION.text))) > 0
+        _details = None
+        if _api:
+            _details = ItemIconType.API_DOCUMENTATION
+        return _details
+
     def _get_workload_health(self, name, element):
         statuses = self._get_health_tooltip(element)
         if len(statuses) > 0:
@@ -1657,6 +1673,16 @@ class ListViewAbstract(ViewAbstract):
             sleep(0.5)
             return statuses
 
+    def _get_additional_details_icon(self):
+        _api = len(self.browser.elements(
+            parent=self.locator,
+            locator='.//h3[text()="{}"]'.format(
+                ItemIconType.API_DOCUMENTATION.text))) > 0
+        _details = None
+        if _api:
+            _details = ItemIconType.API_DOCUMENTATION
+        return _details
+
     def _get_application_details_health(self):
         statuses = self._get_request_statuses()
         if len(statuses) > 0:
@@ -1684,7 +1710,7 @@ class ListViewAbstract(ViewAbstract):
 
     def _get_request_statuses(self):
         return self.browser.element(
-            locator=('.//*[contains(text(), "Pods Status") or ' +
+            locator=('.//*[contains(text(), "Pod Status") or ' +
                      'contains(text(), "Error Rate")]/../..'),
             parent=self.locator).text.split('\n')
 
@@ -2084,6 +2110,7 @@ class ListViewWorkloads(ListViewAbstract):
                                istio_sidecar=self._details_sidecar_text(),
                                health=self._get_details_health(),
                                workload_status=self._get_workload_details_health(_name),
+                               icon=self._get_additional_details_icon(),
                                pods_number=_table_view_pods.number,
                                services_number=_table_view_services.number,
                                pods=_table_view_pods.all_items,
@@ -2114,6 +2141,7 @@ class ListViewWorkloads(ListViewAbstract):
                 app_label='app' in _label_keys,
                 version_label='version' in _label_keys,
                 health=self._get_item_health(element=el),
+                icon=self._get_item_details_icon(element=el),
                 workload_status=(self._get_workload_health(name=_name, element=columns[3])
                                  if self._is_tooltip_visible(index=index,
                                                              number=len(_elements)) else None))
@@ -2206,6 +2234,7 @@ class ListViewServices(ListViewAbstract):
                 service_status=(self._get_service_health(element=columns[2])
                                 if self._is_tooltip_visible(index=index,
                                                             number=len(_elements)) else None),
+                icon=self._get_item_details_icon(element=el),
                 config_status=self._get_item_config_status(columns[4]))
             # append this item to the final list
             _items.append(_service)
