@@ -1053,7 +1053,8 @@ class KialiExtendedClient(KialiClient):
         return response['validation'] if 'validation' in response else None
 
     def get_pod_status(self, istioSidecar, pod_data):
-        if not istioSidecar or not pod_data['versionLabel'] or not pod_data['appLabel']:
+        if not istioSidecar or not pod_data['versionLabel'] or not pod_data['appLabel'] \
+                or pod_data['status'] == 'Pending':
             return IstioConfigValidation.WARNING
         else:
             return IstioConfigValidation.VALID

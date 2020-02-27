@@ -241,7 +241,7 @@ class WorkloadHealth(EntityBase):
     def is_equal(self, other):
         if not isinstance(other, WorkloadHealth):
             return False
-        if not self.workload_status.is_equal(other.workload_status):
+        if self.workload_status and not self.workload_status.is_equal(other.workload_status):
             return False
         if not self.requests.is_equal(other.requests):
             return False

@@ -6,7 +6,7 @@ metadata:
 spec:
  selector:
    matchLabels:
-     app: httpbin
+     app: wrong-label
      version: v1
  rules:
  - from:
@@ -16,10 +16,11 @@ spec:
        namespaces: ["test", "bookinfo"]
    to:
    - operation:
+       hosts: ["details", "wrong", "details.bookinfo", "wrong.wrong", "prometheus.istio-system"]
        methods: ["GET", "WRONG"]
        paths: ["/info*"]
    - operation:
-       methods: ["POST"]
+       methods: ["POST", "WRONG"]
        paths: ["/data"]
    when:
    - key: request.auth.claims[iss]
