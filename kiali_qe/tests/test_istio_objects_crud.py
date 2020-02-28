@@ -305,26 +305,15 @@ def test_virtual_service_broken_weight(kiali_client, openshift_client, browser):
     virtual_service_broken_dict = get_dict(istio_objects_path.strpath,
                                            VIRTUAL_SERVICE_BROKEN_WEIGHT)
     try:
-        _create_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
-
-        _istio_config_test(kiali_client, openshift_client, browser,
-                           virtual_service_broken_dict,
-                           virtual_service_broken,
-                           [
-                            {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
-                             'value': IstioConfigObjectType.VIRTUAL_SERVICE.text},
-                            {'name': IstioConfigPageFilter.CONFIG.text,
-                             'value': IstioConfigValidationType.WARNING.text},
-                            {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                             'value': virtual_service_broken_dict.metadata.name}
-                            ],
-                           namespace=BOOKINFO_1,
-                           kind='VirtualService',
-                           api_version='networking.istio.io/v1alpha3',
-                           service_name=REVIEWS,
-                           error_messages=['Weight sum should be 100'],
-                           check_service_details=False)
-        _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
+        _istio_config_create(
+            openshift_client,
+            virtual_service_broken_dict,
+            virtual_service_broken,
+            namespace=BOOKINFO_1,
+            kind='VirtualService',
+            api_version='networking.istio.io/v1alpha3')
+        assert False, "'Weight sum should be 100' "\
+            "error should be thrown, or Galley is not configured"
     except (ApiException, InternalServerError):
         pass
 

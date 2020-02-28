@@ -1,7 +1,11 @@
 import pytest
 import os
 
-from kiali_qe.components.enums import ApplicationVersionEnum, HelpMenuEnum
+from kiali_qe.components.enums import (
+    ApplicationVersionEnum,
+    HelpMenuEnum,
+    ApplicationVersionUpstreamEnum
+)
 from kiali_qe.pages import RootPage
 from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
@@ -20,7 +24,12 @@ def test_about(browser, kiali_client):
     _response = kiali_client.get_response('getStatus')
     _products = _response['externalServices']
 
-    versions_defined = [item.text for item in ApplicationVersionEnum]
+    if (any(d['name'] == ApplicationVersionEnum.ISTIO.text for d in _products)):
+        version_enum = ApplicationVersionEnum
+    else:
+        version_enum = ApplicationVersionUpstreamEnum
+
+    versions_defined = [item.text for item in version_enum]
 
     logger.debug('Versions information in UI:{}'.format(versions_ui))
     logger.debug('Application version keys: defined:{}, available:{}'.format(
@@ -35,7 +44,7 @@ def test_about(browser, kiali_client):
         _response['status']['Kiali core version'], _response['status']['Kiali core commit hash'])
     # skip in case of code coverage run where the version is not set correctly during the build
     if "ENABLE_CODE_COVERAGE" not in os.environ or os.environ["ENABLE_CODE_COVERAGE"] != "true":
-            assert versions_ui[ApplicationVersionEnum.KIALI_CORE.text] == _core_rest
+            assert versions_ui[version_enum.KIALI_CORE.text] == _core_rest
 
     # versions mismatch between console on UI
     # TODO: check with manual test team and enable this
@@ -45,14 +54,14 @@ def test_about(browser, kiali_client):
 
     # test other product versions
 
-    assert versions_ui[ApplicationVersionEnum.ISTIO.text] == _get_version(
+    assert versions_ui[version_enum.ISTIO.text] == _get_version(
         _products,
-        ApplicationVersionEnum.ISTIO.text)
+        version_enum.ISTIO.text)
     # check Prometheus version
-    assert versions_ui[ApplicationVersionEnum.PROMETHEUS.text] == _get_version(
+    assert versions_ui[version_enum.PROMETHEUS.text] == _get_version(
         _products, 'Prometheus')
     # check Kubernetes version
-    assert versions_ui[ApplicationVersionEnum.KUBERNETES.text] == _get_version(
+    assert versions_ui[version_enum.KUBERNETES.text] == _get_version(
         _products, 'Kubernetes')
 
 
