@@ -44,6 +44,17 @@ class ApplicationVersionEnum(StringEnum):
     JAEGER = ("Jaeger URL")
 
 
+class ApplicationVersionUpstreamEnum(StringEnum):
+    KIALI_UI = ("Kiali UI")
+    KIALI_CORE = ("Kiali Server")
+    KIALI_CONTAINER = ("Kiali Container")
+    ISTIO = ("Istio")
+    PROMETHEUS = ("Prometheus")
+    KUBERNETES = ("Kubernetes")
+    GRAFANA = ("Grafana URL")
+    JAEGER = ("Jaeger URL")
+
+
 class TimeIntervalUIText(StringEnum):
     LAST_MINUTE = ('1m Traffic')
     LAST_5_MINUTES = ('5m Traffic')
