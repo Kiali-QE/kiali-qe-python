@@ -38,7 +38,8 @@ from kiali_qe.components.enums import (
     OverviewGraphTypeLink,
     TailLines,
     TLSMutualValues,
-    ThreeScaleConfigPageSort
+    ThreeScaleConfigPageSort,
+    IstioConfigObjectType
 )
 from kiali_qe.components.error_codes import (
     KIA0201,
@@ -1557,6 +1558,28 @@ class IstioConfigPageTest(AbstractListPageTest):
                 if not found:
                     assert found, '{} {} not found in OC'.format(ui_key, config_ui)
         logger.debug('Done asserting details for: {}, in namespace: {}'.format(name, namespace))
+
+    def test_gateway_create(self, name, hosts, namespaces):
+        logger.debug('Creating Gateway: {}, from namespaces: {}'.format(name, namespaces))
+        # load the page first
+        self.page.load(force_load=True)
+        # apply namespace
+        self.apply_namespaces(namespaces=namespaces)
+        wait_to_spinner_disappear(self.browser)
+        self.page.actions.create_istio_config_gateway(name, hosts)
+        for namespace in namespaces:
+            self.assert_details(name, IstioConfigObjectType.GATEWAY.text, namespace)
+
+    def test_sidecar_create(self, name, egress_host, labels, namespaces):
+        logger.debug('Creating Sidecar: {}, from namespaces: {}'.format(name, namespaces))
+        # load the page first
+        self.page.load(force_load=True)
+        # apply namespace
+        self.apply_namespaces(namespaces=namespaces)
+        wait_to_spinner_disappear(self.browser)
+        self.page.actions.create_istio_config_sidecar(name, egress_host, labels)
+        for namespace in namespaces:
+            self.assert_details(name, IstioConfigObjectType.SIDECAR.text, namespace)
 
     def delete_istio_config(self, name, namespace=None):
         logger.debug('Deleting istio config: {}, from namespace: {}'.format(name, namespace))
