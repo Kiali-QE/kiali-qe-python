@@ -20,6 +20,7 @@ from kiali_qe.components import (
     CheckBoxFilter,
     NamespaceFilter,
     Actions,
+    ConfigActions,
     Traces,
     GraphLayout)
 from kiali_qe.components import wait_displayed, wait_to_spinner_disappear
@@ -183,7 +184,7 @@ class IstioConfigPage(RootPage):
     namespace = NamespaceFilter()
     filter = Filter()
     sort = SortBar()
-    actions = Actions()
+    actions = ConfigActions()
     refresh = Button(locator=REFRESH_BUTTON)
     content = ListViewIstioConfig()
 

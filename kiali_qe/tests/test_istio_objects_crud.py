@@ -419,6 +419,37 @@ def test_gateway(kiali_client, openshift_client, browser, pick_namespace):
 
 
 @pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group3
+def test_gateway_create(kiali_client, openshift_client, browser, pick_namespace):
+    namespace = pick_namespace(BOOKINFO_2)
+    gateway_name = 'gatewaytocreate'
+    namespaces = [BOOKINFO_1, namespace]
+    try:
+        _delete_gateways(openshift_client, gateway_name, namespaces)
+        tests = IstioConfigPageTest(
+            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+        tests.test_gateway_create(gateway_name, 'www.google.com', namespaces=namespaces)
+    finally:
+        _delete_gateways(openshift_client, gateway_name, namespaces)
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group3
+def test_sidecar_create(kiali_client, openshift_client, browser, pick_namespace):
+    namespace = pick_namespace(BOOKINFO_2)
+    sidecar_name = 'sidecartocreate'
+    namespaces = [BOOKINFO_1, namespace]
+    try:
+        _delete_sidecars(openshift_client, sidecar_name, namespaces)
+        tests = IstioConfigPageTest(
+            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+        tests.test_sidecar_create(name=sidecar_name, egress_host='bookinfo/details',
+                                  labels='<name>=<value>', namespaces=namespaces)
+    finally:
+        _delete_sidecars(openshift_client, sidecar_name, namespaces)
+
+
+@pytest.mark.p_crud_resource
 @pytest.mark.p_crud_group1
 def test_service_entry(kiali_client, openshift_client, browser):
     yaml = get_yaml(istio_objects_path.strpath, SERVICE_ENTRY)
@@ -558,7 +589,7 @@ def test_service_role_binding(kiali_client, openshift_client, browser):
                            service_name=DETAILS,
                            check_service_details=False)
     finally:
-        _istio_config_delete(openshift_client, _role_dict,
+        _istio_config_delete(openshift_client, _role_dict.metadata.name,
                              namespace='istio-system',
                              kind='ServiceRole',
                              api_version='rbac.istio.io/v1alpha1')
@@ -593,7 +624,7 @@ def test_service_role_binding_broken(kiali_client, openshift_client, browser):
                            error_messages=[KIA0903],
                            check_service_details=False)
     finally:
-        _istio_config_delete(openshift_client, _role_dict,
+        _istio_config_delete(openshift_client, _role_dict.metadata.name,
                              namespace='istio-system',
                              kind='ServiceRole',
                              api_version='rbac.istio.io/v1alpha1')
@@ -612,8 +643,8 @@ def _istio_config_create(openshift_client, config_dict, config_yaml, kind, api_v
                                          api_version=api_version)
 
 
-def _istio_config_delete(openshift_client, config_dict, kind, api_version, namespace=BOOKINFO_1):
-    openshift_client.delete_istio_config(name=config_dict.metadata.name,
+def _istio_config_delete(openshift_client, name, kind, api_version, namespace=BOOKINFO_1):
+    openshift_client.delete_istio_config(name=name,
                                          namespace=namespace,
                                          kind=kind,
                                          api_version=api_version)
@@ -623,8 +654,8 @@ def _istio_config_list(kiali_client, name, namespace=BOOKINFO_1):
     return kiali_client.istio_config_list(namespaces=[namespace], config_names=[name])
 
 
-def _ui_istio_config_delete(tests, config_dict, namespace=BOOKINFO_1):
-    tests.delete_istio_config(name=config_dict.metadata.name,
+def _ui_istio_config_delete(tests, name, namespace=BOOKINFO_1):
+    tests.delete_istio_config(name=name,
                               namespace=namespace)
 
 
@@ -639,7 +670,7 @@ def _create_dest_rule_vs(openshift_client, destination_rule_conf, namespace=BOOK
 
 def _delete_dest_rule_vs(openshift_client, destination_rule_conf, namespace=BOOKINFO_1):
     destination_rule_dict = get_dict(istio_objects_path.strpath, destination_rule_conf)
-    _istio_config_delete(openshift_client, destination_rule_dict,
+    _istio_config_delete(openshift_client, destination_rule_dict.metadata.name,
                          'DestinationRule',
                          'networking.istio.io/v1alpha3',
                          namespace)
@@ -656,10 +687,22 @@ def _create_gateway_vs(openshift_client, gateway_conf, namespace=BOOKINFO_1):
 
 def _delete_gateway_vs(openshift_client, gateway_conf, namespace=BOOKINFO_1):
     gateway_dict = get_dict(istio_objects_path.strpath, gateway_conf)
-    _istio_config_delete(openshift_client, gateway_dict,
+    _istio_config_delete(openshift_client, gateway_dict.metadata.name,
                          'Gateway',
                          'networking.istio.io/v1alpha3',
                          namespace)
+
+
+def _delete_gateways(openshift_client, name, namespaces):
+    for namespace in namespaces:
+        _istio_config_delete(openshift_client, name=name, kind='Gateway',
+                             api_version='networking.istio.io/v1alpha3', namespace=namespace)
+
+
+def _delete_sidecars(openshift_client, name, namespaces):
+    for namespace in namespaces:
+        _istio_config_delete(openshift_client, name=name, kind='Sidecar',
+                             api_version='networking.istio.io/v1alpha3', namespace=namespace)
 
 
 def _istio_config_test(kiali_client, openshift_client, browser, config_dict,
@@ -701,11 +744,12 @@ def _istio_config_test(kiali_client, openshift_client, browser, config_dict,
                                   namespace)
 
         if delete_istio_config:
-            _ui_istio_config_delete(tests, config_dict, namespace)
+            _ui_istio_config_delete(tests, config_dict.metadata.name, namespace)
             assert len(_istio_config_list(kiali_client, config_dict.metadata.name, namespace)) == 0
     finally:
         if delete_istio_config:
-            _istio_config_delete(openshift_client, config_dict, kind, api_version, namespace)
+            _istio_config_delete(openshift_client, config_dict.metadata.name,
+                                 kind, api_version, namespace)
 
 
 def _istio_config_details_test(kiali_client, openshift_client, browser, config_dict,
