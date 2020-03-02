@@ -977,6 +977,70 @@ class Actions(Widget):
             pass
 
 
+class ConfigActions(Actions):
+    ISTIO_RESOURCE = '//div[contains(@class, "pf-c-form__group")]//select[@id="istio-resource"]'
+    CONFIG_CREATE_ROOT = '//*[contains(@class, "pf-c-form")]'
+    CREATE_ISTIO_CONFIG = 'Create New Istio Config'
+    ADD_SERVER_BUTTON = './/button[text()="Add Server"]'
+    ADD_EGRESS_HOST_BUTTON = './/button[text()="Add Egress Host"]'
+
+    def __init__(self, parent, locator=None, logger=None):
+        Actions.__init__(self, parent, logger=logger)
+        if locator:
+            self.locator = locator
+        else:
+            self.locator = self.ROOT
+        self._istio_resource = SelectDropDown(
+            parent=self, locator=self.ISTIO_RESOURCE, select_button='')
+        self._name = TextInput(parent=self,
+                               locator='//input[@id="name"]')
+        self._hosts = TextInput(parent=self, locator='//input[@id="addHosts"]')
+        self._egress_host = TextInput(parent=self, locator='//input[@id="addEgressHost"]')
+        self._workloadselector_switch = ButtonSwitch(parent=self, label="Add Workload Selector")
+        self._labels = TextInput(parent=self, locator='//input[@id="gwHosts"]')
+
+    def create_istio_config_gateway(self, name, hosts):
+        self.select(self.CREATE_ISTIO_CONFIG)
+        self._istio_resource.select(IstioConfigObjectType.GATEWAY.text)
+        self._name.fill(name)
+        self._hosts.fill(hosts)
+        add_server_button = self.browser.element(
+            parent=self.CONFIG_CREATE_ROOT,
+            locator=(self.ADD_SERVER_BUTTON))
+        wait_displayed(add_server_button)
+        self.browser.click(add_server_button)
+        create_button = self.browser.element(
+            parent=self.CONFIG_CREATE_ROOT,
+            locator=(self.CREATE_BUTTON))
+        wait_displayed(create_button)
+        self.browser.click(create_button)
+        # wait to Spinner disappear
+        wait_to_spinner_disappear(self.browser)
+        return True
+
+    def create_istio_config_sidecar(self, name, egress_host, labels=None):
+        self.select(self.CREATE_ISTIO_CONFIG)
+        self._istio_resource.select(IstioConfigObjectType.SIDECAR.text)
+        self._name.fill(name)
+        self._egress_host.fill(egress_host)
+        if labels:
+            self._workloadselector_switch.on()
+            self._labels.fill(labels)
+        add_egress_button = self.browser.element(
+            parent=self.CONFIG_CREATE_ROOT,
+            locator=(self.ADD_EGRESS_HOST_BUTTON))
+        wait_displayed(add_egress_button)
+        self.browser.click(add_egress_button)
+        create_button = self.browser.element(
+            parent=self.CONFIG_CREATE_ROOT,
+            locator=(self.CREATE_BUTTON))
+        wait_displayed(create_button)
+        self.browser.click(create_button)
+        # wait to Spinner disappear
+        wait_to_spinner_disappear(self.browser)
+        return True
+
+
 class Traces(Widget):
     ROOT = '//section[contains(@class, "pf-c-page__main-section")]'
     SEARCH_TRACES_BUTTON = './/button[contains(@aria-label, "SearchTraces")]'
