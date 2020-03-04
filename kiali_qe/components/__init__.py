@@ -2026,7 +2026,7 @@ class ListViewOverview(ListViewAbstract):
                 locator=self.OVERVIEW_TYPE).text
         for el in self.browser.elements(self.ITEMS, parent=self):
             _namespace = self.browser.element(
-                locator=self.ITEM_TITLE, parent=el).text
+                locator=self.ITEM_TITLE, parent=el).text.replace('N/A', '')
             _item_numbers = int(re.search(r'\d+', self.browser.element(
                 locator=self.ITEM_TEXT, parent=el).text).group())
             _unhealthy = 0
@@ -2051,7 +2051,8 @@ class ListViewOverview(ListViewAbstract):
                 namespace=_namespace,
                 items=_item_numbers,
                 config_status=self._get_item_config_status(
-                    self.browser.element(locator='.//p[@data-pf-content="true"]', parent=el)),
+                    self.browser.element(
+                        locator='.//div[contains(@class, "pf-c-card__header")]', parent=el)),
                 healthy=_healthy,
                 unhealthy=_unhealthy,
                 degraded=_degraded,
