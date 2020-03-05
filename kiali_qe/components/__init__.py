@@ -2083,6 +2083,7 @@ class ListViewApplications(ListViewAbstract):
     def get_details(self, load_only=False):
         if load_only:
             return BreadCrumb(self.parent)
+        self.back_to_info()
         _name = self.browser.text(
             locator=self.HEADER,
             parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '')\
@@ -2220,6 +2221,7 @@ class ListViewServices(ListViewAbstract):
     def get_details(self, load_only=False):
         if load_only:
             return BreadCrumb(self.parent)
+        self.back_to_info()
         _name = self.browser.text(
             locator=self.HEADER,
             parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '')\
