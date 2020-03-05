@@ -277,24 +277,26 @@ def test_virtual_service_broken(kiali_client, openshift_client, browser):
     virtual_service_broken_dict = get_dict(istio_objects_path.strpath, VIRTUAL_SERVICE_BROKEN)
     _create_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
-    _istio_config_test(kiali_client, openshift_client, browser,
-                       virtual_service_broken_dict,
-                       virtual_service_broken,
-                       [
-                           {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
-                            'value': IstioConfigObjectType.VIRTUAL_SERVICE.text},
-                           {'name': IstioConfigPageFilter.CONFIG.text,
-                            'value': IstioConfigValidationType.NOT_VALID.text},
-                           {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                            'value': virtual_service_broken_dict.metadata.name}
-                        ],
-                       namespace=BOOKINFO_2,
-                       kind='VirtualService',
-                       api_version='networking.istio.io/v1alpha3',
-                       service_name=REVIEWS,
-                       error_messages=[KIA1001, KIA1007],
-                       check_service_details=True)
-    _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
+    try:
+        _istio_config_test(kiali_client, openshift_client, browser,
+                           virtual_service_broken_dict,
+                           virtual_service_broken,
+                           [
+                               {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
+                                'value': IstioConfigObjectType.VIRTUAL_SERVICE.text},
+                               {'name': IstioConfigPageFilter.CONFIG.text,
+                                'value': IstioConfigValidationType.NOT_VALID.text},
+                               {'name': IstioConfigPageFilter.ISTIO_NAME.text,
+                                'value': virtual_service_broken_dict.metadata.name}
+                            ],
+                           namespace=BOOKINFO_2,
+                           kind='VirtualService',
+                           api_version='networking.istio.io/v1alpha3',
+                           service_name=REVIEWS,
+                           error_messages=[KIA1001, KIA1007],
+                           check_service_details=True)
+    finally:
+        _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
 
 @pytest.mark.p_crud_resource

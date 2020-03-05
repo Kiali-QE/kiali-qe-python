@@ -180,11 +180,12 @@ class ServiceDetails(EntityBase):
     def __str__(self):
         return 'name:{}, created_at: {}, service_type: {}, resource_version: {}, \
         ip: {}, endpoints: {}, ports: {}, \
-        istio_sidecar:{}, health:{}, labels:{}, selectors:{}'.format(
+        istio_sidecar:{}, health:{}, labels:{}, selectors:{}, service_status: {}'.format(
             self.name, self.created_at,
             self.service_type, self.resource_version,
             self.ip, self.endpoints, self.ports,
-            self.istio_sidecar, self.health, self.labels, self.selectors)
+            self.istio_sidecar, self.health, self.labels, self.selectors,
+            self.service_status)
 
     def __repr__(self):
         return "{}({}, {}, {}, {}, {})".format(
