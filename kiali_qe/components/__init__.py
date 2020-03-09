@@ -2244,7 +2244,7 @@ class ListViewServices(ListViewAbstract):
             parent=self.DETAILS_ROOT).replace(self.PORTS, '').strip()
 
         _3scale_api_handler = self.browser.text_or_default(
-            locator=self.ISTIO_PROPERTIES.format(self.RULE_3SCALE_HANDLER),
+            locator=self.NETWORK_PROPERTIES.format(self.RULE_3SCALE_HANDLER),
             parent=self.DETAILS_ROOT,
             default='').replace(self.RULE_3SCALE_HANDLER, '').strip()
 
@@ -2364,9 +2364,9 @@ class ListViewIstioConfig(ListViewAbstract):
 
 
 class TableViewAbstract(ViewAbstract):
-    SERVICE_DETAILS_ROOT = './/div[contains(@class, "f1cshr0l")]'
+    SERVICE_DETAILS_ROOT = './/section[contains(@class, "pf-c-page__main-section")]/div'
     OVERVIEW_DETAILS_ROOT = './/div[contains(@class, "row-cards-pf")]'
-    OVERVIEW_HEADER = './/div[contains(@class, "f1cshr0l")]//h1[@data-pf-content="true"]'
+    OVERVIEW_HEADER = SERVICE_DETAILS_ROOT + '//h2[contains(@class, "pf-c-title")]'
     OVERVIEW_PROPERTIES = ('.//div[contains(@class, "pf-c-card__body")]//'
                            'h3[@data-pf-content="true" and contains(text(), "{}")]/..')
     HOSTS_PROPERTIES = './/div/h6[contains(text(), "{}")]/..//li'
