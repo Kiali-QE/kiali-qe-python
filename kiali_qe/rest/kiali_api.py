@@ -392,7 +392,9 @@ class KialiExtendedClient(KialiClient):
                         name=_policy['metadata']['name'],
                         namespace=_namespace,
                         object_type=OBJECT_TYPE.SIDECAR.text,
-                        validation=IstioConfigValidation.NA))
+                        validation=self.get_istio_config_validation(_namespace,
+                                                                    'sidecars',
+                                                                    _policy['metadata']['name'])))
 
             # update authorizationPolicies
             if len(_data['authorizationPolicies']) > 0:
