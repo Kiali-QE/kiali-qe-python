@@ -22,7 +22,7 @@ from kiali_qe.components.error_codes import (
     KIA0901,
     KIA0903,
     KIA1101,
-    KIA1001,
+    KIA0103,
     KIA0001,
     KIA1105
 )
@@ -515,7 +515,7 @@ def test_auth_policy(kiali_client, openshift_client, browser):
                        api_version='security.istio.io/v1beta1',
                        service_name=DETAILS,
                        check_service_details=False,
-                       error_messages=[KIA0101, KIA0102, KIA1001, KIA0001])
+                       error_messages=[KIA0101, KIA0102, KIA0103, KIA0001])
 
 
 @pytest.mark.p_crud_resource

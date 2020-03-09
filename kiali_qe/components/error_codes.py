@@ -66,6 +66,9 @@ KIA0601 = 'KIA0601 Port name must follow <protocol>[-suffix] form'
 KIA1104 = 'KIA1104 The weight is assumed to be '\
     '100 because there is only one route destination'
 
+KIA0103 = 'KIA0103 No matching workload found for '\
+    'authorization policy selector in this namespace'
+
 KIA1001 = 'KIA1001 No matching workload found for '\
     'authorization policy selector in this namespace'
 
