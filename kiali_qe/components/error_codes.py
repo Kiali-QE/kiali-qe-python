@@ -10,12 +10,12 @@ KIA0203 = 'KIA0203 This subset\'s labels are not found in any matching host'
 KIA0201 = 'KIA0201 More than one DestinationRules '\
     'for the same host subset combination'
 
-KIA1006 = 'KIA1006 More than one Virtual Service for same host'
+KIA1106 = 'KIA1106 More than one Virtual Service for same host'
 
-KIA1001 = "KIA1001 DestinationWeight on route doesn't have a "\
+KIA1101 = "KIA1101 DestinationWeight on route doesn't have a "\
     "valid service (host not found)"
 
-KIA1007 = 'KIA1007 Subset not found'
+KIA1107 = 'KIA1107 Subset not found'
 
 KIA0101 = 'KIA0101 Namespace not found for this rule'
 
@@ -53,7 +53,9 @@ KIA0203 = 'KIA0203 This subset\'s labels are not found in any matching host'
 
 KIA0204 = 'KIA0204 mTLS settings of a non-local Destination Rule are overridden'
 
-KIA1002 = 'KIA1002 VirtualService is pointing to a non-existent gateway'
+KIA1002 = 'KIA1002 More than one selector-less Sidecar in the same namespace'
+
+KIA1102 = 'KIA1102 VirtualService is pointing to a non-existent gateway'
 
 KIA1003 = 'KIA1003 VirtualService doesn\'t define any valid route protocol'
 
@@ -61,12 +63,15 @@ KIA0701 = 'KIA0701 Deployment exposing same port as Service not found'
 
 KIA0601 = 'KIA0601 Port name must follow <protocol>[-suffix] form'
 
-KIA1004 = 'KIA1004 The weight is assumed to be '\
+KIA1104 = 'KIA1104 The weight is assumed to be '\
     '100 because there is only one route destination'
 
 KIA0103 = 'KIA0103 No matching workload found for '\
     'authorization policy selector in this namespace'
 
-KIA1005 = 'KIA1005 This subset is already referenced in another route destination'
+KIA1001 = 'KIA1001 No matching workload found for '\
+    'authorization policy selector in this namespace'
+
+KIA1105 = 'KIA1105 This subset is already referenced in another route destination'
 
 KIA1008 = 'KIA1008 Destination field is mandatory'

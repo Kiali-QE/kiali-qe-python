@@ -11,10 +11,10 @@ from kiali_qe.components.error_codes import (
     KIA0201,
     KIA0202,
     KIA0203,
-    KIA1002,
+    KIA1102,
     KIA0701,
     KIA0601,
-    KIA1004,
+    KIA1104,
     KIA0204,
     KIA1003
 )
@@ -256,7 +256,7 @@ def test_vs_to_non_existing_gateway(kiali_client):
                 object_type='VirtualService',
                 object_name='details-vs-non-existing-gateway-auto',
                 namespace=BOOKINFO,
-                error_messages=[KIA1002])
+                error_messages=[KIA1102])
         ])
 
 
@@ -365,5 +365,5 @@ def test_vs_less_than_100_weight(kiali_client):
                 object_type='VirtualService',
                 object_name='virtual-service-less-100-weight-auto',
                 namespace=BOOKINFO,
-                error_messages=[KIA1004])
+                error_messages=[KIA1104])
         ])

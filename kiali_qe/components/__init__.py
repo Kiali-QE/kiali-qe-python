@@ -1548,11 +1548,11 @@ class ListViewAbstract(ViewAbstract):
     ITEM_TEXT = './/*[contains(@class, "virtualitem_definition_link")]'
     DETAILS_ROOT = ('.//section[@id="pf-tab-section-0-basic-tabs"]'
                     '/div[contains(@class, "pf-l-grid")]')
-    HEADER = './/div[contains(@class, "f1ujuer8")]//h2'
+    HEADER = './/div//h2'
     ISTIO_PROPERTIES = ('.//*[contains(@class, "pf-l-stack__item")]'
-                        '//h3[normalize-space(text())="{}"]/..')
+                        '//h6[normalize-space(text())="{}"]/..')
     NETWORK_PROPERTIES = ('.//*[contains(@class, "pf-l-stack__item")]'
-                          '//h3[text()="{}"]/..')
+                          '//h6[text()="{}"]/..')
     PROPERTY_SECTIONS = ('.//*[contains(@class, "pf-l-stack__item")]'
                          '//span[text()="{}"]/../..')
     PODS = 'Pods'
@@ -1624,7 +1624,7 @@ class ListViewAbstract(ViewAbstract):
         return result
 
     def _get_details_health(self):
-        _health_sublocator = '/../..//h3[normalize-space(text())="Overall Health"]'
+        _health_sublocator = '/../..//*[normalize-space(text())="Overall Health"]'
         _healthy = len(self.browser.elements(
             parent=self.DETAILS_ROOT,
             locator='.//*[contains(@class, "icon-healthy")]' + _health_sublocator)) > 0
@@ -1740,7 +1740,7 @@ class ListViewAbstract(ViewAbstract):
     def _get_additional_details_icon(self):
         _api = len(self.browser.elements(
             parent=self.locator,
-            locator='.//h3[text()="{}"]'.format(
+            locator='.//h6[text()="{}"]'.format(
                 ItemIconType.API_DOCUMENTATION.text))) > 0
         _details = None
         if _api:
@@ -1938,7 +1938,7 @@ class ListViewAbstract(ViewAbstract):
             pass
         _selectors = self.browser.elements(
             parent=self.DETAILS_ROOT,
-            locator=('//h3[contains(text(), "Selectors")]'
+            locator=('//h6[contains(text(), "Selectors")]'
                      '/../../div[@id="selectors"]//*[contains(@class, "label-pair")]'))
         if _selectors:
             for _selector in _selectors:
@@ -2083,6 +2083,7 @@ class ListViewApplications(ListViewAbstract):
     def get_details(self, load_only=False):
         if load_only:
             return BreadCrumb(self.parent)
+        self.back_to_info()
         _name = self.browser.text(
             locator=self.HEADER,
             parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '')\
@@ -2220,29 +2221,30 @@ class ListViewServices(ListViewAbstract):
     def get_details(self, load_only=False):
         if load_only:
             return BreadCrumb(self.parent)
+        self.back_to_info()
         _name = self.browser.text(
             locator=self.HEADER,
             parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '')\
             .replace(self.SHOW_ON_GRAPH_TEXT, '').strip()
-        _type = self.browser.text(locator=self.ISTIO_PROPERTIES.format(self.TYPE),
+        _type = self.browser.text(locator=self.NETWORK_PROPERTIES.format(self.TYPE),
                                   parent=self.DETAILS_ROOT).replace(self.TYPE, '').strip()
         _ip = self.browser.text(locator=self.NETWORK_PROPERTIES.format(self.SERVICE_IP),
                                 parent=self.DETAILS_ROOT).replace(self.SERVICE_IP, '').strip()
         _created_at_ui = self.browser.text(
-            locator=self.ISTIO_PROPERTIES.format(self.CREATED_AT),
+            locator=self.NETWORK_PROPERTIES.format(self.CREATED_AT),
             parent=self.DETAILS_ROOT).replace(self.CREATED_AT, '').strip()
         _created_at = self._get_date_tooltip(self.browser.element(
-            locator=self.ISTIO_PROPERTIES.format(self.CREATED_AT),
+            locator=self.NETWORK_PROPERTIES.format(self.CREATED_AT),
             parent=self.DETAILS_ROOT))
         _resource_version = self.browser.text(
-            locator=self.ISTIO_PROPERTIES.format(self.RESOURCE_VERSION),
+            locator=self.NETWORK_PROPERTIES.format(self.RESOURCE_VERSION),
             parent=self.DETAILS_ROOT).replace(self.RESOURCE_VERSION, '').strip()
         _ports = self.browser.text(
             locator=self.PROPERTY_SECTIONS.format(self.PORTS),
             parent=self.DETAILS_ROOT).replace(self.PORTS, '').strip()
 
         _3scale_api_handler = self.browser.text_or_default(
-            locator=self.ISTIO_PROPERTIES.format(self.RULE_3SCALE_HANDLER),
+            locator=self.NETWORK_PROPERTIES.format(self.RULE_3SCALE_HANDLER),
             parent=self.DETAILS_ROOT,
             default='').replace(self.RULE_3SCALE_HANDLER, '').strip()
 
@@ -2362,12 +2364,12 @@ class ListViewIstioConfig(ListViewAbstract):
 
 
 class TableViewAbstract(ViewAbstract):
-    SERVICE_DETAILS_ROOT = './/div[contains(@class, "f1cshr0l")]'
+    SERVICE_DETAILS_ROOT = './/section[contains(@class, "pf-c-page__main-section")]/div'
     OVERVIEW_DETAILS_ROOT = './/div[contains(@class, "row-cards-pf")]'
-    OVERVIEW_HEADER = './/div[contains(@class, "f1cshr0l")]//h1[@data-pf-content="true"]'
+    OVERVIEW_HEADER = SERVICE_DETAILS_ROOT + '//h2[contains(@class, "pf-c-title")]'
     OVERVIEW_PROPERTIES = ('.//div[contains(@class, "pf-c-card__body")]//'
                            'h3[@data-pf-content="true" and contains(text(), "{}")]/..')
-    HOSTS_PROPERTIES = './/div/h3[contains(text(), "{}")]/..//li'
+    HOSTS_PROPERTIES = './/div/h6[contains(text(), "{}")]/..//li'
     SERVICES_TAB = '//*[contains(@class, "pf-c-tabs__item")]//button[contains(text(), "{}")]'
     ROOT = '//[contains(@class, "tab-pane") and contains(@class, "active") and \
         contains(@class, "in")]'

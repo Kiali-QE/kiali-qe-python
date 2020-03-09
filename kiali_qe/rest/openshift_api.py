@@ -43,7 +43,6 @@ class OpenshiftExtendedClient(object):
         'QuotaSpec': '_quotaspec',
         'QuotaSpecBinding': '_quotaspecbinding',
         'Policy': '_policy',
-        'MeshPolicy': '_meshpolicy',
         'RbacConfig': '_rbacconfig',
         'AuthorizationPolicy': '_authorizationpolicy',
         'Sidecar': '_sidecar',
