@@ -38,15 +38,16 @@ class OpenshiftExtendedClient(object):
         'Rule': '_rule',
         'Adapter': '_handler',
         'Adapter: adapter': '_adapter',
-        'Template: kubernetes': '_kubernetes',
-        'Template: metric': '_metric',
         'Template: template': '_template',
+        'Template: instance': '_instance',
         'QuotaSpec': '_quotaspec',
         'QuotaSpecBinding': '_quotaspecbinding',
         'Policy': '_policy',
         'ServiceMeshPolicy': '_servicemeshpolicy',
         'ServiceMeshRbacConfig': '_servicemeshrbacconfig',
         'RbacConfig': '_rbacconfig',
+        'AuthorizationPolicy': '_authorizationpolicy',
+        'Sidecar': '_sidecar',
         'ServiceRole': '_servicerole',
         'ServiceRoleBinding': '_servicerolebinding'
     }
@@ -146,6 +147,10 @@ class OpenshiftExtendedClient(object):
         return self._istio_config(kind='template', api_version='v1alpha2')
 
     @property
+    def _instance(self):
+        return self._istio_config(kind='instance', api_version='v1alpha2')
+
+    @property
     def _handler(self):
         return self._istio_config(kind='handler', api_version='v1alpha2')
 
@@ -176,6 +181,14 @@ class OpenshiftExtendedClient(object):
     @property
     def _rbacconfig(self):
         return self._istio_config(kind='RbacConfig', api_version='v1alpha1')
+
+    @property
+    def _authorizationpolicy(self):
+        return self._istio_config(kind='AuthorizationPolicy', api_version='v1beta1')
+
+    @property
+    def _sidecar(self):
+        return self._istio_config(kind='Sidecar', api_version='v1alpha3')
 
     @property
     def _servicerole(self):

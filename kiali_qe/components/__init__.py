@@ -77,7 +77,7 @@ def wait_not_displayed(obj, timeout='10s'):
 
 def wait_to_spinner_disappear(browser, timeout='10s', very_quiet=True, silent_failure=False):
     def _is_disappeared(browser):
-        count = len(browser.elements(locator='//*[@id="loading_kiali_spinner"]'))
+        count = len(browser.elements(locator='//*[@id="loading_kiali_spinner"]', parent='/'))
         logger.debug("Count of spinner elements: {}".format(count))
         return count == 0
     wait_for(
@@ -2203,7 +2203,8 @@ class ListViewIstioConfig(ListViewAbstract):
             if str(_object_type) == IstioConfigObjectType.RULE.text or \
                     '{}: '.format(IstioConfigObjectType.ADAPTER.text) in str(_object_type) or \
                     '{}: '.format(IstioConfigObjectType.TEMPLATE.text) in str(_object_type):
-                _rule = Rule(name=_name, namespace=_namespace, object_type=_object_type)
+                _rule = Rule(name=_name, namespace=_namespace, object_type=_object_type,
+                             validation=IstioConfigValidation.NA)
                 # append this item to the final list
                 _items.append(_rule)
             else:
