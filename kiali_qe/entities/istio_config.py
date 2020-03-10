@@ -106,11 +106,10 @@ class Action(EntityBase):
 
 class Rule(EntityBase):
 
-    def __init__(self, name, namespace, object_type, validation=None):
+    def __init__(self, name, namespace, object_type):
         self.name = name
         self.namespace = namespace
         self.object_type = object_type
-        self.validation = validation
 
     def __str__(self):
         return 'name:{}, namespace:{}, object_type:{}'.format(

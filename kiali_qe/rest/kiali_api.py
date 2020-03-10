@@ -47,11 +47,9 @@ ISTIO_CONFIG_TYPES = {'DestinationRule': 'destinationrules',
                       'QuotaSpecBinding': 'quotaspecbindings',
                       'QuotaSpec': 'quotaspecs',
                       'Policy': 'policies',
-                      'MeshPolicy': 'meshpolicies',
+                      'ServiceMeshPolicy': 'servicemeshpolicies',
                       'ServiceMeshRbacConfig': 'servicemeshrbacconfigs',
                       'RbacConfig': 'rbacconfigs',
-                      'AuthorizationPolicy': 'authorizationpolicies',
-                      'Sidecar': 'sidecars',
                       'ServiceRole': 'serviceroles',
                       'ServiceRoleBinding': 'servicerolebindings'}
 
@@ -259,8 +257,7 @@ class KialiExtendedClient(KialiClient):
                     items.append(Rule(
                         name=_policy['metadata']['name'],
                         namespace=_namespace,
-                        object_type=OBJECT_TYPE.RULE.text,
-                        validation=IstioConfigValidation.NA))
+                        object_type=OBJECT_TYPE.RULE.text))
 
             # update Rule with Adapter
             if len(_data['adapters']) > 0:
@@ -268,8 +265,7 @@ class KialiExtendedClient(KialiClient):
                     items.append(Rule(
                         name=_policy['metadata']['name'],
                         namespace=_namespace,
-                        object_type='{}: {}'.format(OBJECT_TYPE.ADAPTER.text, _policy['adapter']),
-                        validation=IstioConfigValidation.NA))
+                        object_type='{}: {}'.format(OBJECT_TYPE.ADAPTER.text, _policy['adapter'])))
 
             # update Rule with Template
             if len(_data['templates']) > 0:
@@ -278,8 +274,7 @@ class KialiExtendedClient(KialiClient):
                         name=_policy['metadata']['name'],
                         namespace=_namespace,
                         object_type='{}: {}'.format(
-                            OBJECT_TYPE.TEMPLATE.text, _policy['template']),
-                        validation=IstioConfigValidation.NA))
+                            OBJECT_TYPE.TEMPLATE.text, _policy['template'])))
 
             # update VirtualService
             if len(_data['virtualServices']) > 0 and len(_data['virtualServices']['items']) > 0:
@@ -325,15 +320,15 @@ class KialiExtendedClient(KialiClient):
                                                                     'policies',
                                                                     _policy['metadata']['name'])))
 
-            # update MeshPolicy
-            if len(_data['meshPolicies']) > 0:
-                for _policy in _data['meshPolicies']:
+            # update ServiceMeshPolicy
+            if len(_data['serviceMeshPolicies']) > 0:
+                for _policy in _data['serviceMeshPolicies']:
                     items.append(IstioConfig(
                         name=_policy['metadata']['name'],
                         namespace=_namespace,
-                        object_type=OBJECT_TYPE.MESH_POLICY.text,
+                        object_type=OBJECT_TYPE.SERVICE_MESH_POLICY.text,
                         validation=self.get_istio_config_validation(_namespace,
-                                                                    'meshpolicies',
+                                                                    'servicemeshpolicies',
                                                                     _policy['metadata']['name'])))
 
             # update Gateway
@@ -378,26 +373,6 @@ class KialiExtendedClient(KialiClient):
                         object_type=OBJECT_TYPE.RBAC_CONFIG.text,
                         validation=self.get_istio_config_validation(_namespace,
                                                                     'rbacconfigs',
-                                                                    _policy['metadata']['name'])))
-
-            # update sidecars
-            if len(_data['sidecars']) > 0:
-                for _policy in _data['sidecars']:
-                    items.append(IstioConfig(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.SIDECAR.text,
-                        validation=IstioConfigValidation.NA))
-
-            # update authorizationPolicies
-            if len(_data['authorizationPolicies']) > 0:
-                for _policy in _data['authorizationPolicies']:
-                    items.append(IstioConfig(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.AUTHORIZATION_POLICY.text,
-                        validation=self.get_istio_config_validation(_namespace,
-                                                                    'authorizationpolicies',
                                                                     _policy['metadata']['name'])))
 
             # update serviceRoles
@@ -495,9 +470,9 @@ class KialiExtendedClient(KialiClient):
             if _data['policy']:
                 config_data = _data['policy']
 
-            # get meshPolicy
-            if _data['meshPolicy']:
-                config_data = _data['meshPolicy']
+            # get serviceMeshPolicy
+            if _data['serviceMeshPolicy']:
+                config_data = _data['serviceMeshPolicy']
 
             # get serviceMeshRbacConfig
             if _data['serviceMeshRbacConfig']:
@@ -506,14 +481,6 @@ class KialiExtendedClient(KialiClient):
             # get rbacConfig
             if _data['rbacConfig']:
                 config_data = _data['rbacConfig']
-
-            # get sidecar
-            if _data['sidecar']:
-                config_data = _data['sidecar']
-
-            # get authorizationPolicy
-            if _data['authorizationPolicy']:
-                config_data = _data['authorizationPolicy']
 
             # get serviceRole
             if _data['serviceRole']:

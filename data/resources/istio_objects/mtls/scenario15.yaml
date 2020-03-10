@@ -1,4 +1,4 @@
-# Valid: MeshPolicy in STRICT mode + DestinationRule enabling mTLS mesh-wide (classic scenario)
+# Valid: ServiceMeshPolicy in STRICT mode + DestinationRule enabling mTLS mesh-wide (classic scenario)
 #        Policy ns-level in PERMISSIVE mode + DR disabling mTLS ns-wide.
 apiVersion: "networking.istio.io/v1alpha3"
 kind: "DestinationRule"
@@ -21,8 +21,8 @@ spec:
   - mtls:
       mode: PERMISSIVE
 ---
-apiVersion: "authentication.istio.io/v1alpha1"
-kind: "MeshPolicy"
+apiVersion: "authentication.maistra.io/v1"
+kind: "ServiceMeshPolicy"
 metadata:
   name: "default"
   namespace: "istio-system"

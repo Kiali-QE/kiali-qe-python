@@ -1,4 +1,4 @@
-# Invalid: MeshPolicy explicitly ask for mTLS connections
+# Invalid: ServiceMeshPolicy explicitly ask for mTLS connections
 apiVersion: "networking.istio.io/v1alpha3"
 kind: "DestinationRule"
 metadata:
@@ -10,8 +10,8 @@ spec:
     tls:
       mode: DISABLE
 ---
-apiVersion: "authentication.istio.io/v1alpha1"
-kind: "MeshPolicy"
+apiVersion: "authentication.maistra.io/v1"
+kind: "ServiceMeshPolicy"
 metadata:
   name: "default"
   namespace: "istio-system"

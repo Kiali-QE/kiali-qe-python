@@ -149,7 +149,7 @@ def test_subset_label_not_found(kiali_client):
 def test_mesh_policy_not_found(kiali_client):
     """ MeshPolicy enabling mTLS is missing
     """
-    error_message = 'MeshPolicy enabling mTLS is missing'
+    error_message = 'ServiceMeshPolicy enabling mTLS is missing'
     tests = ValidationsTest(
         kiali_client=kiali_client,
         objects_path=istio_objects_validation_path.strpath)
@@ -169,7 +169,7 @@ def test_mtls_settings_overridden(kiali_client):
     """ mTLS settings of a non-local Destination Rule are overridden
     """
     error_message = 'mTLS settings of a non-local Destination Rule are overridden'
-    error_message2 = 'MeshPolicy enabling mTLS is missing'
+    error_message2 = 'ServiceMeshPolicy enabling mTLS is missing'
     tests = ValidationsTest(
         kiali_client=kiali_client,
         objects_path=istio_objects_validation_path.strpath)
@@ -206,7 +206,7 @@ def test_meshpolicy_permissive_ok(kiali_client):
                 namespace=BOOKINFO,
                 error_messages=[]),
             ConfigValidationObject(
-                object_type='MeshPolicy',
+                object_type='ServiceMeshPolicy',
                 object_name='default',
                 namespace=ISTIO_SYSTEM,
                 error_messages=[])
@@ -230,7 +230,7 @@ def test_meshpolicy_mtls_enable_ok(kiali_client):
                 namespace=BOOKINFO,
                 error_messages=[]),
             ConfigValidationObject(
-                object_type='MeshPolicy',
+                object_type='ServiceMeshPolicy',
                 object_name='default',
                 namespace=ISTIO_SYSTEM,
                 error_messages=['Mesh-wide Destination Rule enabling mTLS is missing'])
@@ -260,7 +260,7 @@ def test_vs_to_non_existing_gateway(kiali_client):
 def test_vs_not_defined_protocol(kiali_client):
     """ VirtualService doesn’t define any route protocol
     """
-    error_message = 'VirtualService doesn\'t define any valid route protocol'
+    error_message = 'VirtualService doesn\'t define any route protocol'
     try:
         tests = ValidationsTest(
             kiali_client=kiali_client,

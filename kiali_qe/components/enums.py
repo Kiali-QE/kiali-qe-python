@@ -260,8 +260,6 @@ class IstioConfigObjectType(StringEnum):
     SERVICE_MESH_POLICY = ('ServiceMeshPolicy')
     SERVICE_MESH_RBAC_CONFIG = ('ServiceMeshRbacConfig')
     RBAC_CONFIG = ('RbacConfig')
-    SIDECAR = ('Sidecar')
-    AUTHORIZATION_POLICY = ('AuthorizationPolicy')
     SERVICE_ROLE = ('ServiceRole')
     SERVICE_ROLE_BINDING = ('ServiceRoleBinding')
 
