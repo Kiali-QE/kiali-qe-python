@@ -1529,7 +1529,7 @@ class ListViewAbstract(Widget):
         return result
 
     def _get_details_health(self):
-        _health_sublocator = '/../..//h3[normalize-space(text())="Overall Health"]'
+        _health_sublocator = '/../..//h3[normalize-space(text())="Health"]'
         _healthy = len(self.browser.elements(
             parent=self.DETAILS_ROOT,
             locator='.//*[contains(@class, "icon-healthy")]' + _health_sublocator)) > 0
