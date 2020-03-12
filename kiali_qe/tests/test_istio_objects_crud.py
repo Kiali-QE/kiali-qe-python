@@ -1,5 +1,6 @@
 import pytest
 from openshift.dynamic.exceptions import InternalServerError
+from kubernetes.client.rest import ApiException
 from kiali_qe.tests import IstioConfigPageTest, ServicesPageTest
 
 from kiali_qe.utils import get_yaml, get_dict
@@ -259,7 +260,7 @@ def test_virtual_service_broken_weight(kiali_client, openshift_client, browser):
                            error_messages=['Weight sum should be 100'],
                            check_service_details=False)
         _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
-    except InternalServerError:
+    except (ApiException, InternalServerError):
         pass
 
 
@@ -292,7 +293,7 @@ def test_virtual_service_broken_weight_text(kiali_client, openshift_client, brow
                                            'Weight sum should be 100'],
                            check_service_details=False)
         _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_RATINGS)
-    except InternalServerError:
+    except (ApiException, InternalServerError):
         pass
 
 

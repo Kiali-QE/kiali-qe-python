@@ -38,16 +38,16 @@ class OpenshiftExtendedClient(object):
         'Rule': '_rule',
         'Adapter': '_handler',
         'Adapter: adapter': '_adapter',
-        'Template: logentry': '_logentry',
-        'Template: kubernetes': '_kubernetes',
-        'Template: metric': '_metric',
         'Template: template': '_template',
+        'Template: instance': '_instance',
         'QuotaSpec': '_quotaspec',
         'QuotaSpecBinding': '_quotaspecbinding',
         'Policy': '_policy',
         'ServiceMeshPolicy': '_servicemeshpolicy',
         'ServiceMeshRbacConfig': '_servicemeshrbacconfig',
         'RbacConfig': '_rbacconfig',
+        'AuthorizationPolicy': '_authorizationpolicy',
+        'Sidecar': '_sidecar',
         'ServiceRole': '_servicerole',
         'ServiceRoleBinding': '_servicerolebinding'
     }
@@ -135,10 +135,6 @@ class OpenshiftExtendedClient(object):
         return self._istio_config(kind='rule', api_version='v1alpha2')
 
     @property
-    def _logentry(self):
-        return self._istio_config(kind='logentry', api_version='v1alpha2')
-
-    @property
     def _kubernetes(self):
         return self._istio_config(kind='kubernetes', api_version='v1alpha2')
 
@@ -149,6 +145,10 @@ class OpenshiftExtendedClient(object):
     @property
     def _template(self):
         return self._istio_config(kind='template', api_version='v1alpha2')
+
+    @property
+    def _instance(self):
+        return self._istio_config(kind='instance', api_version='v1alpha2')
 
     @property
     def _handler(self):
@@ -181,6 +181,14 @@ class OpenshiftExtendedClient(object):
     @property
     def _rbacconfig(self):
         return self._istio_config(kind='RbacConfig', api_version='v1alpha1')
+
+    @property
+    def _authorizationpolicy(self):
+        return self._istio_config(kind='AuthorizationPolicy', api_version='v1beta1')
+
+    @property
+    def _sidecar(self):
+        return self._istio_config(kind='Sidecar', api_version='v1alpha3')
 
     @property
     def _servicerole(self):
@@ -463,7 +471,7 @@ class OpenshiftExtendedClient(object):
             ip=_response.spec.clusterIP,
             # TODO endpoints from Deployments
             ports=_ports.strip(),
-            labels=dict(_response.metadata.labels),
+            labels=dict(_response.metadata.labels if _response.metadata.labels else {}),
             selectors=dict(_response.spec.selector if _response.spec.selector else {}),
             # TODO health
             health=None)
@@ -488,7 +496,8 @@ class OpenshiftExtendedClient(object):
                 _response.metadata.creationTimestamp),
             resource_version=_response.metadata.resourceVersion,
             istio_sidecar=None,
-            labels=dict(_response.metadata.labels),
+            labels=dict(_response.metadata.labels if _response.metadata.labels
+                        else _response.spec.selector.matchLabels),
             # TODO health
             health=None)
 
