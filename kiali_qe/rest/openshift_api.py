@@ -471,7 +471,7 @@ class OpenshiftExtendedClient(object):
             ip=_response.spec.clusterIP,
             # TODO endpoints from Deployments
             ports=_ports.strip(),
-            labels=dict(_response.metadata.labels),
+            labels=dict(_response.metadata.labels if _response.metadata.labels else {}),
             selectors=dict(_response.spec.selector if _response.spec.selector else {}),
             # TODO health
             health=None)
@@ -496,7 +496,7 @@ class OpenshiftExtendedClient(object):
                 _response.metadata.creationTimestamp),
             resource_version=_response.metadata.resourceVersion,
             istio_sidecar=None,
-            labels=dict(_response.metadata.labels),
+            labels=dict(_response.metadata.labels if _response.metadata.labels else {}),
             # TODO health
             health=None)
 

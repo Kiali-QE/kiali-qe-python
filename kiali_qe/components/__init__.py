@@ -1701,7 +1701,7 @@ class ListViewAbstract(Widget):
         _no_istio_sidecar = 'No Istio sidecar'
         _inbound_text = _no_requests
         for _request in statuses:
-            if 'Inbound' in _request:
+            if 'Error Rate' in _request:
                 _inbound_text = _request.split(':')[1].replace('%', '').strip()
         return Requests(
                 errorRatio=float(_inbound_text.replace(_no_requests, '-1').
