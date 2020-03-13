@@ -20,6 +20,7 @@ from kiali_qe.components.error_codes import (
     KIA1001,
     KIA1002,
     KIA1003,
+    KIA1103,
     KIA1004
 )
 
@@ -50,6 +51,7 @@ SCENARIO_15 = "port_name_suffix_missing.yaml"
 SCENARIO_16 = "virtual-service-less-than-100-weight.yaml"
 SCENARIO_17 = "wrong-host-label-sidecar.yaml"
 SCENARIO_18 = "duplicate-no-workload-sidecar.yaml"
+SCENARIO_19 = "duplicate-workload-sidecar.yaml"
 
 
 @pytest.mark.p_group_last
@@ -281,7 +283,7 @@ def test_vs_not_defined_protocol(kiali_client):
                     object_type='VirtualService',
                     object_name='details-not-defined-protocol',
                     namespace=BOOKINFO,
-                    error_messages=[KIA1003])
+                    error_messages=[KIA1103])
             ])
     except NoSuchElementException:
         # because vs should have protocol defined
@@ -415,4 +417,27 @@ def test_duplicate_sidecar_errors(kiali_client):
                 object_name='dupliacate-sidecar2-auto',
                 namespace=BOOKINFO,
                 error_messages=[KIA1002])
+        ])
+
+
+@pytest.mark.p_group_last
+def test_duplicate_workload_sidecar_errors(kiali_client):
+    """ More than one selector-less Sidecar in the same namespace
+    """
+    tests = ValidationsTest(
+        kiali_client=kiali_client,
+        objects_path=istio_objects_validation_path.strpath)
+    tests.test_istio_objects(
+        scenario=SCENARIO_19, namespace=BOOKINFO,
+        config_validation_objects=[
+            ConfigValidationObject(
+                object_type='Sidecar',
+                object_name='dupliacate-workload-sidecar1-auto',
+                namespace=BOOKINFO,
+                error_messages=[KIA1003]),
+            ConfigValidationObject(
+                object_type='Sidecar',
+                object_name='dupliacate-workload-sidecar2-auto',
+                namespace=BOOKINFO,
+                error_messages=[KIA1003])
         ])
