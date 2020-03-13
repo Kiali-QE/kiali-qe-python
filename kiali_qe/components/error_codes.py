@@ -59,6 +59,8 @@ KIA1102 = 'KIA1102 VirtualService is pointing to a non-existent gateway'
 
 KIA1003 = 'KIA1003 VirtualService doesn\'t define any valid route protocol'
 
+KIA1004 = 'KIA1004 This host has no matching entry in the service registry'
+
 KIA0701 = 'KIA0701 Deployment exposing same port as Service not found'
 
 KIA0601 = 'KIA0601 Port name must follow <protocol>[-suffix] form'

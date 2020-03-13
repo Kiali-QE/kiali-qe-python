@@ -16,7 +16,11 @@ from kiali_qe.components.error_codes import (
     KIA0601,
     KIA1104,
     KIA0204,
-    KIA1003
+    KIA0001,
+    KIA1001,
+    KIA1002,
+    KIA1003,
+    KIA1004
 )
 
 
@@ -44,6 +48,8 @@ SCENARIO_13 = "destination_rule_wrong_fqdn.yaml"
 SCENARIO_14 = "ratings_java_svc.yaml"
 SCENARIO_15 = "port_name_suffix_missing.yaml"
 SCENARIO_16 = "virtual-service-less-than-100-weight.yaml"
+SCENARIO_17 = "wrong-host-label-sidecar.yaml"
+SCENARIO_18 = "duplicate-no-workload-sidecar.yaml"
 
 
 @pytest.mark.p_group_last
@@ -366,4 +372,47 @@ def test_vs_less_than_100_weight(kiali_client):
                 object_name='virtual-service-less-100-weight-auto',
                 namespace=BOOKINFO,
                 error_messages=[KIA1104])
+        ])
+
+
+@pytest.mark.p_group_last
+def test_sidecar_errors(kiali_client):
+    """ Multiple errors
+    """
+    tests = ValidationsTest(
+        kiali_client=kiali_client,
+        objects_path=istio_objects_validation_path.strpath)
+    tests.test_istio_objects(
+        scenario=SCENARIO_17, namespace=BOOKINFO,
+        config_validation_objects=[
+            ConfigValidationObject(
+                object_type='Sidecar',
+                object_name='wrong-host-sidecar-auto',
+                namespace=BOOKINFO,
+                error_messages=[KIA1001,
+                                KIA0001,
+                                KIA1004])
+        ])
+
+
+@pytest.mark.p_group_last
+def test_duplicate_sidecar_errors(kiali_client):
+    """ More than one selector-less Sidecar in the same namespace
+    """
+    tests = ValidationsTest(
+        kiali_client=kiali_client,
+        objects_path=istio_objects_validation_path.strpath)
+    tests.test_istio_objects(
+        scenario=SCENARIO_18, namespace=BOOKINFO,
+        config_validation_objects=[
+            ConfigValidationObject(
+                object_type='Sidecar',
+                object_name='dupliacate-sidecar1-auto',
+                namespace=BOOKINFO,
+                error_messages=[KIA1002]),
+            ConfigValidationObject(
+                object_type='Sidecar',
+                object_name='dupliacate-sidecar2-auto',
+                namespace=BOOKINFO,
+                error_messages=[KIA1002])
         ])
