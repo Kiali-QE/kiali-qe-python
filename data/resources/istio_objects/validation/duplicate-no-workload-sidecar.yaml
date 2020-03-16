@@ -1,0 +1,29 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: dupliacate-sidecar1-auto
+  namespace: bookinfo
+spec:
+  egress:
+    # If this config is applied, sidecars will only be able to talk to
+    # other services in the same namespace, in addition to istio-telemetry
+    # and istio-policy
+  - hosts:
+    - "./*"
+    - "istio-system/istio-telemetry.istio-system.svc.cluster.local"
+    - "istio-system/istio-policy.istio-system.svc.cluster.local"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: dupliacate-sidecar2-auto
+  namespace: bookinfo
+spec:
+  egress:
+    # If this config is applied, sidecars will only be able to talk to
+    # other services in the same namespace, in addition to istio-telemetry
+    # and istio-policy
+  - hosts:
+    - "./*"
+    - "istio-system/istio-telemetry.istio-system.svc.cluster.local"
+    - "istio-system/istio-policy.istio-system.svc.cluster.local"

@@ -1,0 +1,20 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: wrong-host-sidecar-auto
+  namespace: bookinfo
+spec:
+  workloadSelector:
+    labels:
+      app: WRONGLABEL
+  egress:
+    # If this config is applied, sidecars will only be able to talk to
+    # other services in the same namespace, in addition to istio-telemetry
+    # and istio-policy
+  - hosts:
+    - "./*"
+    - "istio-system/istio-telemetry.istio-system.svc.cluster.local"
+    - "istio-system/istio-policy.istio-system.svc.cluster.local"
+    - "default/*.other.svc.cluster.local"
+    - "bookinfo/www.google.com"
+ 
