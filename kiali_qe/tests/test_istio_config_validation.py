@@ -337,7 +337,7 @@ def test_deployment_port_not_found(kiali_client):
         kiali_client=kiali_client,
         objects_path=istio_objects_validation_path.strpath)
     tests.test_service_validation(
-        scenario=SCENARIO_14, service_name='ratings-java-svc',
+        scenario=SCENARIO_14, service_name='ratings-java',
         namespace='bookinfo',
         service_validation_objects=[
             ServiceValidationObject(
