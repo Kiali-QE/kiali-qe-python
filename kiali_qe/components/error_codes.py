@@ -78,4 +78,6 @@ KIA1001 = 'KIA1001 No matching workload found for '\
 
 KIA1105 = 'KIA1105 This subset is already referenced in another route destination'
 
+KIA1006 = 'KIA1006 Global default sidecar should not have workloadSelector'
+
 KIA1008 = 'KIA1008 Destination field is mandatory'
