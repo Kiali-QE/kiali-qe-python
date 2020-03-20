@@ -315,6 +315,7 @@ class InboundMetricsFilter(StringEnum):
     REMOTE_APP = ('Remote app')
     REMOTE_VERSION = ('Remote version')
     RESPONSE_CODE = ('Response code')
+    GRPC_STATUS = ('GRPC status')
     RESPONSE_FLAGS = ('Response flags')
 
 
@@ -324,6 +325,7 @@ class OutboundMetricsFilter(StringEnum):
     REMOTE_APP = ('Remote app')
     REMOTE_VERSION = ('Remote version')
     RESPONSE_CODE = ('Response code')
+    GRPC_STATUS = ('GRPC status')
     RESPONSE_FLAGS = ('Response flags')
 
 
