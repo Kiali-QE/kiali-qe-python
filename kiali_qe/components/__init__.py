@@ -1405,6 +1405,7 @@ class BreadCrumb(Widget):
 class MainMenu(Widget):
     ROOT = ('//*[contains(@class, "pf-c-page__sidebar")]')
     MENU_ITEMS = './/*[contains(@class, "pf-c-nav__link")]/..'
+    MENU_ITEM_LINK = './/*[contains(@class, "pf-c-nav__link") and text()="{}"]'
     MENU_ITEM = './/*[contains(@class, "pf-c-nav__link") and text()="{}"]/..'
     MENU_ITEM_ACTIVE = ('.//*[contains(@class, "pf-m-current")'
                         ' and contains(@class, "pf-c-nav__link")]/..')
@@ -1418,6 +1419,9 @@ class MainMenu(Widget):
     def select(self, menu):
         logger.debug('Selecting menu: {}'.format(menu))
         self.browser.click(self.browser.element(self.MENU_ITEM.format(menu), parent=self))
+
+    def get_link(self, menu):
+        return self.browser.element(self.MENU_ITEM_LINK.format(menu), parent=self)
 
     @property
     def selected(self):
