@@ -48,12 +48,21 @@ def test_refresh_interval(browser):
 def test_type(browser):
     # get page instance
     page = GraphPage(browser)
+    namespace = ISTIO_SYSTEM
+    page.namespace.check(namespace)
     # test options
     options_defined = [item.text for item in GraphType]
     p_type = page.type
+    side_panel = page.side_panel
     options_listed = p_type.options
     assert is_equal(options_defined, options_listed), \
         ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
+    for option in options_defined:
+        p_type.select(option)
+        assert namespace == side_panel.get_namespace()
+        assert not side_panel.get_workload()
+        assert not side_panel.get_service()
+        assert not side_panel.get_application()
 
 
 @pytest.mark.skip(reason="https://issues.jboss.org/browse/OSSM-109")
