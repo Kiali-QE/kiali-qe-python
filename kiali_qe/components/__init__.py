@@ -1244,6 +1244,56 @@ class GraphLayout(Widget):
         return active_items
 
 
+class GraphSidePanel(Widget):
+    ROOT = ('.//div[@id="graph-side-panel"]')
+
+    def __init__(self, parent, locator=None, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        if locator:
+            self.locator = locator
+        else:
+            self.locator = self.ROOT
+
+    def __locator__(self):
+        return self.locator
+
+    def get_namespace(self):
+        namespace = self.browser.text_or_default(
+            locator='//span[contains(@class, "pf-c-badge") and text()="NS"]/..',
+            parent=self.ROOT,
+            default=None)
+        if namespace:
+            namespace = namespace.replace('NS', '')
+        return namespace
+
+    def get_workload(self):
+        workload = self.browser.text_or_default(
+            locator='//span[contains(@class, "pf-c-badge") and text()="W"]/..',
+            parent=self.ROOT,
+            default=None)
+        if workload:
+            workload = workload.replace('W', '')
+        return workload
+
+    def get_service(self):
+        service = self.browser.text_or_default(
+            locator='//span[contains(@class, "pf-c-badge") and text()="S"]/..',
+            parent=self.ROOT,
+            default=None)
+        if service:
+            service = service.replace('S', '')
+        return service
+
+    def get_application(self):
+        application = self.browser.text_or_default(
+            locator='//span[contains(@class, "pf-c-badge") and text()="A"]/..',
+            parent=self.ROOT,
+            default=None)
+        if application:
+            application = application.replace('A', '')
+        return application
+
+
 class NamespaceFilter(CheckBoxFilter):
     ROOT = ('//*[contains(@class, "pf-c-dropdown__menu")]')
     CB_ITEMS = './/input[@type="checkbox"]/../span'

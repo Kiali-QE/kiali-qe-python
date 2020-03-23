@@ -22,7 +22,8 @@ from kiali_qe.components import (
     Actions,
     ConfigActions,
     Traces,
-    GraphLayout)
+    GraphLayout,
+    GraphSidePanel)
 from kiali_qe.components import wait_displayed, wait_to_spinner_disappear
 
 from kiali_qe.components.enums import (
@@ -131,6 +132,7 @@ class GraphPage(RootPage):
     layout = GraphLayout()
     filter = CheckBoxFilter("Display")
     refresh = Button(locator=REFRESH_BUTTON)
+    side_panel = GraphSidePanel()
     # TODO: implement graph control code
 
 
