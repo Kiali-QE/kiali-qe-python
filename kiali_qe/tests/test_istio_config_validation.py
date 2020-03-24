@@ -21,7 +21,8 @@ from kiali_qe.components.error_codes import (
     KIA1002,
     KIA1003,
     KIA1103,
-    KIA1004
+    KIA1004,
+    KIA1006
 )
 
 
@@ -52,6 +53,7 @@ SCENARIO_16 = "virtual-service-less-than-100-weight.yaml"
 SCENARIO_17 = "wrong-host-label-sidecar.yaml"
 SCENARIO_18 = "duplicate-no-workload-sidecar.yaml"
 SCENARIO_19 = "duplicate-workload-sidecar.yaml"
+SCENARIO_20 = "default-sidecar-with-workload.yaml"
 
 
 @pytest.mark.p_group_last
@@ -440,4 +442,22 @@ def test_duplicate_workload_sidecar_errors(kiali_client):
                 object_name='dupliacate-workload-sidecar2-auto',
                 namespace=BOOKINFO,
                 error_messages=[KIA1003])
+        ])
+
+
+@pytest.mark.p_group_last
+def test_default_workload_sidecar(kiali_client):
+    """ Global default sidecar should not have workloadSelector
+    """
+    tests = ValidationsTest(
+        kiali_client=kiali_client,
+        objects_path=istio_objects_validation_path.strpath)
+    tests.test_istio_objects(
+        scenario=SCENARIO_20, namespace=ISTIO_SYSTEM,
+        config_validation_objects=[
+            ConfigValidationObject(
+                object_type='Sidecar',
+                object_name='default-sidecar-workload-auto',
+                namespace=ISTIO_SYSTEM,
+                error_messages=[KIA1006, KIA1001])
         ])

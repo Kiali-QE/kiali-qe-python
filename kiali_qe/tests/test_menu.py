@@ -24,7 +24,8 @@ def test_menu(browser, kiali_client):
     # navigate to menus
     for _menu in options_listed:
         if str(_menu) == MainMenuEnum.DISTRIBUTED_TRACING.text:
-            assert _get_jaeger_url(_products) in page.main_menu.get_link(_menu).get_attribute('href')
+            assert _get_jaeger_url(_products) \
+                in page.main_menu.get_link(_menu).get_attribute('href')
             assert '_blank' == page.main_menu.get_link(_menu).get_attribute('target')
             continue
         logger.debug('Testing menu: {}'.format(_menu))
