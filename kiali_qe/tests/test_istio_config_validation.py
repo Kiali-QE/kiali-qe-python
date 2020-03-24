@@ -19,7 +19,7 @@ from kiali_qe.components.error_codes import (
     KIA0001,
     KIA1001,
     KIA1002,
-    KIA1003,
+    KIA1005,
     KIA1103,
     KIA1004,
     KIA1006
@@ -436,12 +436,12 @@ def test_duplicate_workload_sidecar_errors(kiali_client):
                 object_type='Sidecar',
                 object_name='dupliacate-workload-sidecar1-auto',
                 namespace=BOOKINFO,
-                error_messages=[KIA1003]),
+                error_messages=[KIA1005]),
             ConfigValidationObject(
                 object_type='Sidecar',
                 object_name='dupliacate-workload-sidecar2-auto',
                 namespace=BOOKINFO,
-                error_messages=[KIA1003])
+                error_messages=[KIA1005])
         ])
 
 

@@ -146,6 +146,7 @@ class ApplicationsPageFilter(StringEnum):
     APP_NAME = ('App Name')
     ISTIO_SIDECAR = ('Istio Sidecar')
     HEALTH = ('Health')
+    LABEL = ('Label')
 
 
 class ApplicationsPageSort(StringEnum):
@@ -159,6 +160,7 @@ class OverviewPageFilter(StringEnum):
     NAME = ('Name')
     HEALTH = ('Health')
     MTLS_STATUS = ('mTLS status')
+    LABEL = ('Label')
 
 
 class OverviewPageSort(StringEnum):
@@ -195,6 +197,7 @@ class WorkloadsPageFilter(StringEnum):
     HEALTH = ('Health')
     APP_LABEL = ('App Label')
     VERSION_LABEL = ('Version Label')
+    LABEL = ('Label')
 
 
 class WorkloadsPageSort(StringEnum):
@@ -237,6 +240,7 @@ class ServicesPageFilter(StringEnum):
     SERVICE_NAME = ('Service Name')
     ISTIO_SIDECAR = ('Istio Sidecar')
     HEALTH = ('Health')
+    LABEL = ('Label')
 
 
 class ServicesPageSort(StringEnum):

@@ -57,9 +57,9 @@ KIA1002 = 'KIA1002 More than one selector-less Sidecar in the same namespace'
 
 KIA1102 = 'KIA1102 VirtualService is pointing to a non-existent gateway'
 
-KIA1103 = 'KIA1003 VirtualService doesn\'t define any valid route protocol'
+KIA1103 = 'KIA1103 VirtualService doesn\'t define any valid route protocol'
 
-KIA1003 = 'KIA1003 More than one Sidecar applied to the same workload'
+KIA1005 = 'KIA1005 More than one Sidecar applied to the same workload'
 
 KIA1004 = 'KIA1004 This host has no matching entry in the service registry'
 
