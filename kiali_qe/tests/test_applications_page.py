@@ -50,6 +50,15 @@ def test_all_applications_namespace(kiali_client, openshift_client, browser):
                            sort_options=[ApplicationsPageSort.HEALTH, True])
 
 
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group5
+def test_application_graph_overview(kiali_client, openshift_client, browser, pick_namespace):
+    tests = ApplicationsPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    namespace = pick_namespace(BOOKINFO_2)
+    tests.assert_graph_overview(name='details', namespace=namespace)
+
+
 # putting to p_ro_top group although right now there are no tests changing health of app so
 # it could be in p_ro_top_safe
 @pytest.mark.p_ro_top

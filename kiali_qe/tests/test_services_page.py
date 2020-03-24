@@ -68,6 +68,16 @@ def test_service_details_kiali(kiali_client, openshift_client, browser, pick_nam
 
 
 @pytest.mark.p_ro_namespace
+@pytest.mark.p_ro_group7
+def test_service_graph_overview(kiali_client, openshift_client, browser, pick_namespace):
+    tests = ServicesPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    # use only bookinfo2 namespace where colliding tests are in the same p_group
+    namespace = pick_namespace(BOOKINFO_2)
+    tests.assert_graph_overview(name='details', namespace=namespace)
+
+
+@pytest.mark.p_ro_namespace
 @pytest.mark.p_ro_group9
 def test_service_details_random(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
