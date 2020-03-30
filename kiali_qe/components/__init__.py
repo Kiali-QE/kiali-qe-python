@@ -1630,6 +1630,8 @@ class ListViewAbstract(ViewAbstract):
     CONFIG_TAB_OVERVIEW = './/button[@id="pf-tab-0-basic-tabs"]'
     ACTIVE_TAB_YAML = './/li[contains(@class, "pf-m-current")]//button[@id="pf-tab-1-basic-tabs"]'
     CONFIG_TAB_YAML = './/button[@id="pf-tab-1-basic-tabs"]'
+    GRAPH_OVERVIEW_MENU = '//div[contains(@class, "pf-c-card__head")]//'\
+        'h3[text()="Graph Overview"]/../..//button'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -1637,6 +1639,11 @@ class ListViewAbstract(ViewAbstract):
             self.locator = locator
         else:
             self.locator = self.ROOT
+        self.graph_menu = ActionsDropDown(parent=self,
+                                          locator=self.GRAPH_OVERVIEW_MENU,
+                                          select_button='',
+                                          logger=logger,
+                                          force_open=True)
 
     def __locator__(self):
         return self.locator

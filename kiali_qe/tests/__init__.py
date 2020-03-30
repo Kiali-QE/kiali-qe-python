@@ -17,6 +17,7 @@ from kiali_qe.components.enums import (
     OverviewPageFilter,
     IstioConfigObjectType as OBJECT_TYPE,
     IstioConfigValidation,
+    MainMenuEnum as MENU,
     MetricsSource,
     MetricsHistograms,
     InboundMetricsFilter,
@@ -57,7 +58,8 @@ from kiali_qe.pages import (
     ApplicationsPage,
     OverviewPage,
     DistributedTracingPage,
-    ThreeScaleConfigPage
+    ThreeScaleConfigPage,
+    GraphPage
 )
 
 
@@ -430,6 +432,29 @@ class AbstractListPageTest(object):
                                                                     outbound_traffic)
                 # check only the first item
                 break
+
+    def assert_graph_overview(self, name, namespace):
+        logger.debug('Asserting Graph Overview for: {}, in namespace: {}'.format(
+            name, namespace))
+        self.load_details_page(name, namespace, force_refresh=False, load_only=True)
+        self.page.content.graph_menu.select('Show full graph')
+        graph_page = GraphPage(self.browser)
+        side_panel = graph_page.side_panel
+        assert not side_panel.get_namespace()
+        if self.page.PAGE_MENU == MENU.APPLICATIONS.text:
+            assert not side_panel.get_workload()
+            assert side_panel.get_service()
+            assert name == side_panel.get_application()
+        elif self.page.PAGE_MENU == MENU.WORKLOADS.text:
+            assert name == side_panel.get_workload()
+            assert side_panel.get_service()
+            assert not side_panel.get_application()
+        elif self.page.PAGE_MENU == MENU.SERVICES.text:
+            assert not side_panel.get_workload()
+            assert name == side_panel.get_service()
+            assert not side_panel.get_application()
+        else:
+            assert False, "Graph Overview Page is not recognised"
 
 
 class OverviewPageTest(AbstractListPageTest):

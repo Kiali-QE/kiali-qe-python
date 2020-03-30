@@ -62,6 +62,15 @@ def test_workload_details_kiali(kiali_client, openshift_client, browser):
                          workload_type=WorkloadType.DEPLOYMENT.text)
 
 
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group9
+def test_workload_graph_overview(kiali_client, openshift_client, browser, pick_namespace):
+    tests = WorkloadsPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    namespace = pick_namespace(BOOKINFO_2)
+    tests.assert_graph_overview(name='details-v1', namespace=namespace)
+
+
 # putting to p_ro_top group although right now there are no tests changing health of app so
 # it could be in p_ro_top_safe
 @pytest.mark.p_ro_top
