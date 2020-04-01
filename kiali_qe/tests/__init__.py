@@ -351,6 +351,14 @@ class AbstractListPageTest(object):
         assert metrics_page.view_in_grafana
         assert get_url(_products, 'Grafana') in metrics_page.view_in_grafana
 
+    def is_host_link(self, link_name):
+        self.browser.click(self.browser.element(locator=self.page.content.CONFIG_TAB_OVERVIEW,
+                                                parent=self.page.content.CONFIG_TABS_PARENT))
+        return len(self.browser.elements(
+            './/div[@id="hosts"]//a[contains(text(), "{}")]'.format(
+                link_name),
+            parent=self.page.content.locator)) > 0
+
     def assert_breadcrumb_menu(self, name, namespace):
         breadcrumb = self.load_details_page(name, namespace, force_refresh=False, load_only=True)
         menu_location = breadcrumb.locations[0]
@@ -1563,6 +1571,13 @@ class IstioConfigPageTest(AbstractListPageTest):
         self.browser.click(self.browser.element(
             parent=ListViewAbstract.DIALOG_ROOT,
             locator=('.//button[text()="Delete"]')))
+
+    def assert_host_link(self, config_name, namespace, host_name, is_link_expected=True):
+        logger.debug('Asserting host link for: {}, in namespace: {}'.format(config_name, namespace))
+
+        # load config details page
+        self.load_details_page(config_name, namespace, force_refresh=False, load_only=True)
+        assert not is_link_expected ^ self.is_host_link(host_name)
 
     def click_on_gateway(self, name, namespace):
         self.browser.click(self.browser.element(locator=self.page.content.CONFIG_TAB_OVERVIEW,
