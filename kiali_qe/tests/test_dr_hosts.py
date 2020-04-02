@@ -21,7 +21,7 @@ DEST_RULE_9 = 'dest-rules9.yaml'
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group1
+@pytest.mark.p_crud_group4
 def test_destination_rule_host_1(kiali_client, openshift_client, browser):
     destination_rule = get_yaml(dr_hosts_path.strpath, DEST_RULE_1)
     destination_rule_dict = get_dict(dr_hosts_path.strpath, DEST_RULE_1)
@@ -36,7 +36,7 @@ def test_destination_rule_host_1(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group1
+@pytest.mark.p_crud_group4
 def test_destination_rule_host_2(kiali_client, openshift_client, browser):
     destination_rule = get_yaml(dr_hosts_path.strpath, DEST_RULE_2)
     destination_rule_dict = get_dict(dr_hosts_path.strpath, DEST_RULE_2)
@@ -51,7 +51,7 @@ def test_destination_rule_host_2(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group1
+@pytest.mark.p_crud_group4
 def test_destination_rule_host_3(kiali_client, openshift_client, browser):
     destination_rule = get_yaml(dr_hosts_path.strpath, DEST_RULE_3)
     destination_rule_dict = get_dict(dr_hosts_path.strpath, DEST_RULE_3)
@@ -66,7 +66,7 @@ def test_destination_rule_host_3(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group1
+@pytest.mark.p_crud_group4
 def test_destination_rule_host_4(kiali_client, openshift_client, browser):
     destination_rule = get_yaml(dr_hosts_path.strpath, DEST_RULE_4)
     destination_rule_dict = get_dict(dr_hosts_path.strpath, DEST_RULE_4)
@@ -81,7 +81,7 @@ def test_destination_rule_host_4(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group1
+@pytest.mark.p_crud_group4
 def test_destination_rule_host_5(kiali_client, openshift_client, browser):
     destination_rule = get_yaml(dr_hosts_path.strpath, DEST_RULE_5)
     destination_rule_dict = get_dict(dr_hosts_path.strpath, DEST_RULE_5)
@@ -96,7 +96,7 @@ def test_destination_rule_host_5(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group1
+@pytest.mark.p_crud_group4
 def test_destination_rule_host_6(kiali_client, openshift_client, browser):
     destination_rule = get_yaml(dr_hosts_path.strpath, DEST_RULE_6)
     destination_rule_dict = get_dict(dr_hosts_path.strpath, DEST_RULE_6)
@@ -111,7 +111,7 @@ def test_destination_rule_host_6(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group1
+@pytest.mark.p_crud_group4
 def test_destination_rule_host_7(kiali_client, openshift_client, browser):
     destination_rule = get_yaml(dr_hosts_path.strpath, DEST_RULE_7)
     destination_rule_dict = get_dict(dr_hosts_path.strpath, DEST_RULE_7)
@@ -126,7 +126,7 @@ def test_destination_rule_host_7(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group1
+@pytest.mark.p_crud_group4
 def test_destination_rule_host_8(kiali_client, openshift_client, browser):
     destination_rule = get_yaml(dr_hosts_path.strpath, DEST_RULE_8)
     destination_rule_dict = get_dict(dr_hosts_path.strpath, DEST_RULE_8)
@@ -141,7 +141,7 @@ def test_destination_rule_host_8(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group1
+@pytest.mark.p_crud_group4
 def test_destination_rule_host_9(kiali_client, openshift_client, browser):
     destination_rule = get_yaml(dr_hosts_path.strpath, DEST_RULE_9)
     destination_rule_dict = get_dict(dr_hosts_path.strpath, DEST_RULE_9)
