@@ -9,7 +9,8 @@ class Overview(EntityBase):
                  graph_link=None, apps_link=None, workloads_link=None,
                  services_link=None, configs_link=None,
                  healthy=0, unhealthy=0, degraded=0, na=0,
-                 tls_type=MeshWideTLSType.DISABLED):
+                 tls_type=MeshWideTLSType.DISABLED,
+                 labels={}):
         self.overview_type = overview_type
         self.namespace = namespace
         self.items = items
@@ -24,6 +25,7 @@ class Overview(EntityBase):
         self.degraded = degraded
         self.na = na
         self.tls_type = tls_type
+        self.labels = labels
 
     def __str__(self):
         return 'overview_type:{}, namespace:{}, items:{}, \
@@ -60,5 +62,7 @@ class Overview(EntityBase):
             if self.degraded != other.degraded:
                 return False
             if self.na != other.na:
+                return False
+            if self.labels != other.labels:
                 return False
         return True

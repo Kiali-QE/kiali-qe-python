@@ -70,6 +70,16 @@ class KialiExtendedClient(KialiClient):
                 entities.append(entity_j['name'])
         return entities
 
+    def namespace_labels(self, namespace):
+        """ Returns list of namespaces """
+        labels = []
+        entities_j = self.get_response('namespaceList')
+        if entities_j:
+            for entity_j in entities_j:
+                if entity_j['name'] == namespace:
+                    labels = self.get_labels(entity_j)
+        return labels
+
     def namespace_exists(self, namespace):
         """ Returns True if given namespace exists. False otherwise. """
         return namespace in self.namespace_list()
@@ -151,7 +161,8 @@ class KialiExtendedClient(KialiClient):
                 healthy=_healthy,
                 unhealthy=_unhealthy,
                 degraded=_degraded,
-                na=_na)
+                na=_na,
+                labels=self.namespace_labels(_namespace))
             overviews.append(_overview)
         return overviews
 

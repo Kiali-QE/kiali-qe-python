@@ -15,6 +15,7 @@ from kiali_qe.components.enums import (
     WorkloadsPageFilter,
     ApplicationsPageFilter,
     OverviewPageFilter,
+    OverviewViewType,
     IstioConfigObjectType as OBJECT_TYPE,
     IstioConfigValidation,
     MainMenuEnum as MENU,
@@ -469,6 +470,7 @@ class OverviewPageTest(AbstractListPageTest):
     FILTER_ENUM = OverviewPageFilter
     TYPE_ENUM = OverviewPageType
     SORT_ENUM = OverviewPageSort
+    VIEW_ENUM = OverviewViewType
     GRAPH_LINK_TYPES = {TYPE_ENUM.APPS: OverviewGraphTypeLink.APP,
                         TYPE_ENUM.SERVICES: OverviewGraphTypeLink.SERVICE,
                         TYPE_ENUM.WORKLOADS: OverviewGraphTypeLink.WORKLOAD}
@@ -491,7 +493,9 @@ class OverviewPageTest(AbstractListPageTest):
 
     def assert_all_items(self, filters=[],
                          overview_type=TYPE_ENUM.APPS, force_clear_all=True,
+                         list_type=VIEW_ENUM.COMPACT,
                          force_refresh=False):
+
         # apply overview type
         self.page.type.select(overview_type.text)
 
@@ -501,7 +505,12 @@ class OverviewPageTest(AbstractListPageTest):
         if force_refresh:
             self.page.page_refresh()
         # get overviews from ui
-        overviews_ui = self.page.content.all_items
+        if list_type == self.VIEW_ENUM.LIST:
+            overviews_ui = self.page.content.list_items
+        elif list_type == self.VIEW_ENUM.EXPAND:
+            overviews_ui = self.page.content.expand_items
+        else:
+            overviews_ui = self.page.content.compact_items
         # get overviews from rest api
         _ns = self.FILTER_ENUM.NAME.text
         _namespaces = [_f['value'] for _f in filters if _f['name'] == _ns]
@@ -522,7 +531,7 @@ class OverviewPageTest(AbstractListPageTest):
         for overview_ui in overviews_ui:
             found = False
             for overview_rest in overviews_rest:
-                if overview_ui.is_equal(overview_rest, advanced_check=False):
+                if overview_ui.is_equal(overview_rest, advanced_check=True):
                     found = True
                     break
             assert found, '{} not found in REST {}'.format(overview_ui, overviews_rest)
@@ -546,6 +555,8 @@ class OverviewPageTest(AbstractListPageTest):
                 OverviewLinks.ISTIO_CONFIG.text, overview_ui.configs_link,
                 overview_ui.namespace)
             self._assert_overview_config_status(overview_ui.namespace, overview_ui.config_status)
+            assert overview_ui.labels == self.openshift_client.namespace_labels(
+                overview_ui.namespace)
 
     def _prepare_graph_link(self, namespace, graph_type):
         return "/console/graph/namespaces?namespaces={}&graphType={}".format(namespace, graph_type)
