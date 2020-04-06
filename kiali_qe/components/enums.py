@@ -56,23 +56,23 @@ class ApplicationVersionUpstreamEnum(StringEnum):
 
 
 class TimeIntervalUIText(StringEnum):
-    LAST_MINUTE = ('1m Traffic')
-    LAST_5_MINUTES = ('5m Traffic')
-    LAST_10_MINUTES = ('10m Traffic')
-    LAST_30_MINUTES = ('30m Traffic')
-    LAST_HOUR = ('1h Traffic')
-    LAST_3_HOURS = ('3h Traffic')
-    LAST_6_HOURS = ('6h Traffic')
+    LAST_MINUTE = ('Last 1m')
+    LAST_5_MINUTES = ('Last 5m')
+    LAST_10_MINUTES = ('Last 10m')
+    LAST_30_MINUTES = ('Last 30m')
+    LAST_HOUR = ('Last 1h')
+    LAST_3_HOURS = ('Last 3h')
+    LAST_6_HOURS = ('Last 6h')
 
 
 class MetricsTimeInterval(StringEnum):
-    LAST_MINUTE = ('1m Traffic')
-    LAST_5_MINUTES = ('5m Traffic')
-    LAST_10_MINUTES = ('10m Traffic')
-    LAST_30_MINUTES = ('30m Traffic')
-    LAST_HOUR = ('1h Traffic')
-    LAST_3_HOURS = ('3h Traffic')
-    LAST_6_HOURS = ('6h Traffic')
+    LAST_MINUTE = ('Last 1m')
+    LAST_5_MINUTES = ('Last 5m')
+    LAST_10_MINUTES = ('Last 10m')
+    LAST_30_MINUTES = ('Last 30m')
+    LAST_HOUR = ('Last 1h')
+    LAST_3_HOURS = ('Last 3h')
+    LAST_6_HOURS = ('Last 6h')
     CUSTOM = ('Custom')
 
 
@@ -87,13 +87,13 @@ class TimeIntervalRestParam(StringEnum):
 
 
 class TailLines(StringEnum):
-    LINES_10 = ('10 lines')
-    LINES_50 = ('50 lines')
-    LINES_100 = ('100 lines')
-    LINES_300 = ('300 lines')
-    LINES_500 = ('500 lines')
-    LINES_1000 = ('1000 lines')
-    LINES_5000 = ('5000 lines')
+    LINES_10 = ('Last 10 lines')
+    LINES_50 = ('Last 50 lines')
+    LINES_100 = ('Last 100 lines')
+    LINES_300 = ('Last 300 lines')
+    LINES_500 = ('Last 500 lines')
+    LINES_1000 = ('Last 1000 lines')
+    LINES_5000 = ('Last 5000 lines')
     LINES_ALL = ('All lines')
 
 
