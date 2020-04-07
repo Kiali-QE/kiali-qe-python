@@ -1575,6 +1575,22 @@ class ViewAbstract(Widget):
         except NoSuchElementException:
             pass
 
+    def _get_labels(self, el):
+        _label_dict = {}
+        _labels = self.browser.elements(
+            parent=el,
+            locator='.//*[contains(@class, "label-pair")]')
+        if _labels:
+            for _label in _labels:
+                _label_key = self.browser.element(
+                    parent=_label,
+                    locator='.//*[contains(@class, "label-key")]').text
+                _label_value = self.browser.element(
+                    parent=_label,
+                    locator='.//*[contains(@class, "label-value")]').text
+                _label_dict[_label_key] = _label_value
+        return _label_dict
+
     def _item_sidecar_text(self, element):
         # TODO sidecar is not shown yet
         return not len(self.browser.elements(
@@ -1967,6 +1983,17 @@ class ListViewAbstract(ViewAbstract):
                 _label_keys.append(_label.text)
         return _label_keys
 
+    def _get_item_labels(self, element):
+        _label_dict = {}
+        _labels = self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@class, "pf-c-badge")]')
+        if _labels:
+            for _label in _labels:
+                _label_key, _label_value = _label.text.split(':')
+                _label_dict[_label_key] = _label_value.strip()
+        return _label_dict
+
     def _get_details_labels(self):
         _label_dict = {}
         try:
@@ -1988,6 +2015,27 @@ class ListViewAbstract(ViewAbstract):
                     locator='.//*[contains(@class, "label-value")]').text
                 _label_dict[_label_key] = _label_value
         return _label_dict
+
+    def _get_labels_tooltip(self, element):
+        _label_dict = {}
+        try:
+            self.browser.move_to_element(
+                locator='.//div[contains(@class, "pf-c-card__body")]/div', parent=element)
+            sleep(1.5)
+            labels_text = self.browser.element(
+                locator=(self.POPOVER),
+                parent='/').text
+            if labels_text:
+                for _label in labels_text.split('\n'):
+                    _label_key, _label_value = _label.split(':')
+                    _label_dict[_label_key] = _label_value.strip()
+        except (NoSuchElementException, StaleElementReferenceException):
+            # skip errors caused by browser delays, this labels will be ignored
+            pass
+        finally:
+            self.browser.send_keys_to_focused_element(Keys.ESCAPE)
+            sleep(0.5)
+            return _label_dict
 
     def _get_details_selectors(self):
         _selector_dict = {}
@@ -2063,8 +2111,10 @@ class ListViewAbstract(ViewAbstract):
 
 
 class ListViewOverview(ListViewAbstract):
-    ROOT = './/*[contains(@class, "pf-l-grid")]'
+    ROOT = '//section[contains(@class, "pf-c-page__main-section")]'
     ITEMS = './/*[contains(@class, "pf-l-grid__item")]/article[contains(@class, "pf-c-card")]'
+    LIST_ITEMS = './/tr[contains(@role, "row")]'
+    ITEM_COL = './/td'
     ITEM_TITLE = './/*[contains(@class, "pf-c-title")]'
     ITEM_TEXT = './/*[contains(@class, "pf-c-card__body")]//a'
     UNHEALTHY_TEXT = './/*[contains(@class, "icon-failure")]/..'
@@ -2073,16 +2123,24 @@ class ListViewOverview(ListViewAbstract):
     OVERVIEW_TYPE = '//*[contains(@aria-labelledby, "overview-type")]'
 
     @property
-    def all_items(self):
+    def expand_items(self):
+        self.browser.click(self.browser.element(
+            parent=self.ROOT,
+            locator=('//button//*[contains(@d, "M296")]')))
+        wait_to_spinner_disappear(self.browser)
+        return self.items
+
+    @property
+    def compact_items(self):
+        self.browser.click(self.browser.element(
+            parent=self.ROOT,
+            locator=('//button//*[contains(@d, "M149")]')))
+        wait_to_spinner_disappear(self.browser)
         return self.items
 
     @property
     def items(self):
         _items = []
-        self.browser.click(self.browser.element(
-            parent=self.ROOT,
-            locator=('//button[text()="Compact"]')))
-        wait_to_spinner_disappear(self.browser)
         _overview_type = self.browser.element(
                 locator=self.OVERVIEW_TYPE).text
         for el in self.browser.elements(self.ITEMS, parent=self):
@@ -2119,11 +2177,63 @@ class ListViewOverview(ListViewAbstract):
                 degraded=_degraded,
                 na=(_item_numbers - (_healthy + _unhealthy + _degraded)),
                 tls_type=self.get_namespace_wide_tls(el),
+                labels=self._get_labels_tooltip(element=el),
                 graph_link=self._get_link(OverviewLinks.GRAPH.text, el),
                 apps_link=self._get_link(OverviewLinks.APPLICATIONS.text, el),
                 workloads_link=self._get_link(OverviewLinks.WORKLOADS.text, el),
                 services_link=self._get_link(OverviewLinks.SERVICES.text, el),
                 configs_link=self._get_link(OverviewLinks.ISTIO_CONFIG.text, el))
+            # append this item to the final list
+            _items.append(_overview)
+        return _items
+
+    @property
+    def list_items(self):
+        _items = []
+        self.browser.click(self.browser.element(
+            parent=self.ROOT,
+            locator=('//button//*[contains(@d, "M80")]')))
+        wait_to_spinner_disappear(self.browser)
+        _overview_type = self.browser.element(
+                locator=self.OVERVIEW_TYPE).text
+        for el in self.browser.elements(self.LIST_ITEMS, parent=self):
+            columns = self.browser.elements(self.ITEM_COL, parent=el)
+            _namespace = self._item_namespace(columns[1])
+            _item_numbers = int(re.search(r'\d+', self.browser.element(
+                locator='.//a', parent=columns[4]).text).group())
+            _unhealthy = 0
+            _healthy = 0
+            _degraded = 0
+            # update health
+            if len(self.browser.elements(
+                    parent=columns[4], locator=self.UNHEALTHY_TEXT)) > 0:
+                _unhealthy = int(self.browser.element(
+                    locator=self.UNHEALTHY_TEXT, parent=columns[4]).text)
+            if len(self.browser.elements(
+                    parent=columns[4], locator=self.DEGRADED_TEXT)) > 0:
+                _degraded = int(self.browser.element(
+                    locator=self.DEGRADED_TEXT, parent=columns[4]).text)
+            if len(self.browser.elements(
+                    parent=columns[4], locator=self.HEALTHY_TEXT)) > 0:
+                _healthy = int(self.browser.element(
+                    locator=self.HEALTHY_TEXT, parent=columns[4]).text)
+            # overview object creation
+            _overview = Overview(
+                overview_type=_overview_type,
+                namespace=_namespace,
+                items=_item_numbers,
+                config_status=self._get_item_config_status(columns[2]),
+                healthy=_healthy,
+                unhealthy=_unhealthy,
+                degraded=_degraded,
+                na=(_item_numbers - (_healthy + _unhealthy + _degraded)),
+                tls_type=self.get_namespace_wide_tls(el),
+                labels=self._get_item_labels(columns[3]),
+                graph_link=self._get_link(OverviewLinks.GRAPH.text, columns[5]),
+                apps_link=self._get_link(OverviewLinks.APPLICATIONS.text, columns[5]),
+                workloads_link=self._get_link(OverviewLinks.WORKLOADS.text, columns[5]),
+                services_link=self._get_link(OverviewLinks.SERVICES.text, columns[5]),
+                configs_link=self._get_link(OverviewLinks.ISTIO_CONFIG.text, columns[5]))
             # append this item to the final list
             _items.append(_overview)
         return _items
@@ -2487,22 +2597,6 @@ class TableViewAbstract(ViewAbstract):
             parent=element,
             locator='.//*[contains(@style, "warning")]')) > 0
         return get_validation(_valid, _not_valid, _warning)
-
-    def _get_labels(self, el):
-        _label_dict = {}
-        _labels = self.browser.elements(
-            parent=el,
-            locator='.//*[contains(@class, "label-pair")]')
-        if _labels:
-            for _label in _labels:
-                _label_key = self.browser.element(
-                    parent=_label,
-                    locator='.//*[contains(@class, "label-key")]').text
-                _label_value = self.browser.element(
-                    parent=_label,
-                    locator='.//*[contains(@class, "label-value")]').text
-                _label_dict[_label_key] = _label_value
-        return _label_dict
 
     @property
     def all_items(self):

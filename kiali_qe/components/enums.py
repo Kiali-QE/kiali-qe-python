@@ -176,6 +176,12 @@ class OverviewPageType(StringEnum):
     SERVICES = ('Services')
 
 
+class OverviewViewType(StringEnum):
+    EXPAND = ('Expand view')
+    COMPACT = ('Compact view')
+    LIST = ('List view')
+
+
 class OverviewLinks(StringEnum):
     GRAPH = ('graph')
     APPLICATIONS = ('applications')

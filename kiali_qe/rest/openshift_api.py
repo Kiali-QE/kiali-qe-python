@@ -208,6 +208,12 @@ class OpenshiftExtendedClient(object):
             namespaces.append(_item.metadata.name)
         return namespaces
 
+    def namespace_labels(self, namespace):
+        try:
+            return dict(self._namespace.get(name=namespace).metadata.labels)
+        except NotFoundError:
+            return {}
+
     def namespace_exists(self, namespace):
         """ Returns True if given namespace exists. False otherwise. """
         try:
