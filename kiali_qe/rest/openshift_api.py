@@ -12,6 +12,7 @@ from kiali_qe.entities.applications import (
     ApplicationDetails,
     AppWorkload
 )
+from kiali_qe.utils import dict_begins_with
 from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
 from kiali_qe.utils.log import logger
 
@@ -222,27 +223,42 @@ class OpenshiftExtendedClient(object):
         except NotFoundError:
             return False
 
-    def application_list(self, namespaces=[], application_names=[]):
+    def application_list(self, namespaces=[], application_names=[], application_labels=[]):
         """ Returns list of applications """
-        result = {}
+        result_dict = {}
         workloads = []
         workloads.extend(self.workload_list(namespaces=namespaces))
 
         for workload in workloads:
             # TODO: health needs to be added
-            name = self._get_app_name(workload)
-            result[name+workload.namespace] = Application(name,
-                                                          workload.namespace,
-                                                          istio_sidecar=workload.istio_sidecar)
+            _name = self._get_app_name(workload)
+            if _name+workload.namespace in result_dict:
+                _labels = self._concat_labels(
+                    result_dict[_name+workload.namespace].labels, workload.labels)
+            else:
+                _labels = workload.labels
+            result_dict[_name+workload.namespace] = Application(
+                _name,
+                workload.namespace,
+                istio_sidecar=workload.istio_sidecar,
+                labels=_labels)
+        result = result_dict.values()
         # filter by service name
         if len(application_names) > 0:
             filtered_list = []
             for _name in application_names:
-                filtered_list.extend([_i for _i in result.values() if _name in _i.name])
-            return set(filtered_list)
-        return result.values()
+                filtered_list.extend([_i for _i in result if _name in _i.name])
+            result = set(filtered_list)
 
-    def service_list(self, namespaces=[], service_names=[]):
+        # filter by labels
+        if len(application_labels) > 0:
+            filtered_list = []
+            filtered_list.extend(
+                [_i for _i in result if dict_begins_with(_i.labels, application_labels)])
+            result = set(filtered_list)
+        return result
+
+    def service_list(self, namespaces=[], service_names=[], service_labels=[]):
         """ Returns list of services
         Args:
             namespace: Namespace of the service, optional
@@ -264,8 +280,7 @@ class OpenshiftExtendedClient(object):
                 namespace=_item.metadata.namespace,
                 name=_item.metadata.name,
                 istio_sidecar=self._contains_sidecar(_item),
-                app_label=self._get_label(_item, 'app'),
-                version_label=self._get_label(_item, 'version'),
+                labels=self._get_labels(_item),
                 health=None)
             items.append(_service)
         # filter by service name
@@ -273,10 +288,16 @@ class OpenshiftExtendedClient(object):
             filtered_list = []
             for _name in service_names:
                 filtered_list.extend([_i for _i in items if _name in _i.name])
-            return set(filtered_list)
+            items = set(filtered_list)
+        # filter by labels
+        if len(service_labels) > 0:
+            filtered_list = []
+            filtered_list.extend(
+                [_i for _i in items if dict_begins_with(_i.labels, service_labels)])
+            items = set(filtered_list)
         return items
 
-    def workload_list(self, namespaces=[], workload_names=[]):
+    def workload_list(self, namespaces=[], workload_names=[], workload_labels=[]):
         """ Returns list of workloads """
         result = []
         for _key, _value in self.WORKLOAD_TYPES.items():
@@ -284,12 +305,13 @@ class OpenshiftExtendedClient(object):
             # TODO apply Pod filters
             result.extend(self._workload_list(_value, _key,
                                               namespaces=namespaces,
-                                              workload_names=workload_names))
+                                              workload_names=workload_names,
+                                              workload_labels=workload_labels))
 
         return result
 
     def _workload_list(self, attribute_name, workload_type,
-                       namespaces=[], workload_names=[]):
+                       namespaces=[], workload_names=[], workload_labels=[]):
         """ Returns list of workload
         Args:
             attribute_name: the attribute of class for getting workload
@@ -316,15 +338,20 @@ class OpenshiftExtendedClient(object):
                 namespace=_item.metadata.namespace,
                 workload_type=workload_type,
                 istio_sidecar=self._contains_sidecar(_item),
-                app_label=self._get_label(_item, 'app'),
-                version_label=self._get_label(_item, 'version'))
+                labels=self._get_labels(_item))
             items.append(_workload)
         # filter by workload name
         if len(workload_names) > 0:
             filtered_list = []
             for _name in workload_names:
                 filtered_list.extend([_i for _i in items if _name in _i.name])
-            return set(filtered_list)
+            items = set(filtered_list)
+        # filter by labels
+        if len(workload_labels) > 0:
+            filtered_list = []
+            filtered_list.extend(
+                [_i for _i in items if dict_begins_with(_i.labels, workload_labels)])
+            items = set(filtered_list)
         return items
 
     def _contains_sidecar(self, item):
@@ -338,14 +365,28 @@ class OpenshiftExtendedClient(object):
         except (KeyError, AttributeError, TypeError):
             return False
 
-    def _get_label(self, item, label):
+    def _get_labels(self, item):
         try:
-            return item.metadata.labels[label]
+            labels = item.metadata.labels if item.metadata.labels \
+                else item.spec.selector.matchLabels if item.spec.selector.matchLabels \
+                else {}
         except (KeyError, AttributeError, TypeError):
-            return None
+            labels = {}
+        return dict(labels)
+
+    def _concat_labels(self, dict1, dict2):
+        result = dict1
+        for _key, _value in dict2.items():
+            if _key in result:
+                values = result[_key].split(',')
+                values.extend(_value.split(','))
+                result[_key] = ','.join(sorted(set(values)))
+            else:
+                result[_key] = _value
+        return result
 
     def _get_app_name(self, workload):
-        return workload.app_label if workload.app_label else re.sub(
+        return workload.labels['app'] if 'app' in workload.labels else re.sub(
             self.APP_NAME_REGEX,
             '',
             workload.name)

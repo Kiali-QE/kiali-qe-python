@@ -4,7 +4,7 @@ metadata:
   name: ratings-java-svc-suffix
   namespace: bookinfo
   labels:
-    app: ratings
+    app: ratings-java
     service: ratings-svc
 spec:
   ports:

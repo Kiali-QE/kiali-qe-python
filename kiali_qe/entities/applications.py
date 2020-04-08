@@ -77,21 +77,22 @@ class ApplicationHealth(EntityBase):
 class Application(EntityBase):
 
     def __init__(self, name, namespace, istio_sidecar=None, health=None,
-                 application_status=None):
+                 application_status=None, labels={}):
         self.name = name
         self.namespace = namespace
         self.istio_sidecar = istio_sidecar
         self.health = health
         self.application_status = application_status
+        self.labels = labels
 
     def __str__(self):
-        return 'name:{}, namespace:{}, sidecar:{}, health:{}'.format(
-            self.name, self.namespace, self.istio_sidecar, self.health)
+        return 'name:{}, namespace:{}, sidecar:{}, health:{}, labels:{}'.format(
+            self.name, self.namespace, self.istio_sidecar, self.health, self.labels)
 
     def __repr__(self):
-        return "{}({}, {}, {}, {})".format(
+        return "{}({}, {}, {}, {}, {})".format(
             type(self).__name__, repr(self.name), repr(self.namespace),
-            repr(self.istio_sidecar), repr(self.health))
+            repr(self.istio_sidecar), repr(self.health), repr(self.labels))
 
     def __hash__(self):
         return (hash(self.name) ^ hash(self.namespace) ^ hash(self.istio_sidecar))
@@ -112,6 +113,8 @@ class Application(EntityBase):
         # advanced check
         if advanced_check:
             if self.health != other.health:
+                return False
+            if self.labels != other.labels:
                 return False
             # TODO in case of unstable env pods can recreate
             # if self.application_status and other.application_status and \

@@ -730,15 +730,18 @@ class ApplicationsPageTest(AbstractListPageTest):
         _sn = self.FILTER_ENUM.APP_NAME.text
         _application_names = [_f['value'] for _f in filters if _f['name'] == _sn]
 
+        _al = self.FILTER_ENUM.LABEL.text
+        _labels = [_f['value'] for _f in filters if _f['name'] == _al]
+
         logger.debug('Namespaces:{}, Application names:{}'.format(namespaces, _application_names))
         # get applications from ui
         applications_ui = self.page.content.all_items
         # get from REST
         applications_rest = self.kiali_client.application_list(
-            namespaces=namespaces, application_names=_application_names)
+            namespaces=namespaces, application_names=_application_names, application_labels=_labels)
         # get from OC
         applications_oc = self.openshift_client.application_list(
-            namespaces=namespaces, application_names=_application_names)
+            namespaces=namespaces, application_names=_application_names, application_labels=_labels)
 
         # compare all results
         logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _application_names))
@@ -751,7 +754,10 @@ class ApplicationsPageTest(AbstractListPageTest):
         assert len(applications_ui) == len(applications_rest), \
             "UI {} and REST {} applications number not equal".format(applications_ui,
                                                                      applications_ui)
-        assert len(applications_rest) <= len(applications_oc)
+        if len(_labels) > 0 or len(_application_names) > 0:
+            assert len(applications_rest) == len(applications_oc)
+        else:
+            assert len(applications_rest) <= len(applications_oc)
 
         for application_ui in applications_ui:
             found = False
@@ -773,6 +779,8 @@ class ApplicationsPageTest(AbstractListPageTest):
             for application_oc in applications_oc:
                 logger.debug('{} {}'.format(application_oc.name, application_oc.namespace))
                 if application_ui.is_equal(application_oc, advanced_check=False):
+                    # in OC it contains more labels
+                    assert application_ui.labels.items() <= application_oc.labels.items()
                     found = True
                     break
             if not found:
@@ -919,11 +927,16 @@ class WorkloadsPageTest(AbstractListPageTest):
         _sn = self.FILTER_ENUM.WORKLOAD_NAME.text
         _workload_names = [_f['value'] for _f in filters if _f['name'] == _sn]
         logger.debug('Namespaces:{}, Workload names:{}'.format(namespaces, _workload_names))
+        _wl = self.FILTER_ENUM.LABEL.text
+        _labels = [_f['value'] for _f in filters if _f['name'] == _wl]
+
         workloads_rest = self.kiali_client.workload_list(
-            namespaces=namespaces, workload_names=_workload_names)
+            namespaces=namespaces, workload_names=_workload_names,
+            workload_labels=_labels)
         # get workloads from OC client
         workloads_oc = self.openshift_client.workload_list(
-            namespaces=namespaces, workload_names=_workload_names)
+            namespaces=namespaces, workload_names=_workload_names,
+            workload_labels=_labels)
 
         # compare all results
         logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _workload_names))
@@ -954,6 +967,10 @@ class WorkloadsPageTest(AbstractListPageTest):
             found = False
             for workload_oc in workloads_oc:
                 if workload_ui.is_equal(workload_oc, advanced_check=False):
+                    # @TODO
+                    # in OC it contains more labels, also more workloads are listed
+                    if len(_labels) > 0:
+                        assert workload_ui.labels.items() <= workload_oc.labels.items()
                     found = True
                     break
             if not found:
@@ -1126,11 +1143,17 @@ class ServicesPageTest(AbstractListPageTest):
         _sn = self.FILTER_ENUM.SERVICE_NAME.text
         _service_names = [_f['value'] for _f in filters if _f['name'] == _sn]
         logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _service_names))
+
+        _sl = self.FILTER_ENUM.LABEL.text
+        _labels = [_f['value'] for _f in filters if _f['name'] == _sl]
+
         services_rest = self.kiali_client.service_list(
-            namespaces=namespaces, service_names=_service_names)
+            namespaces=namespaces, service_names=_service_names,
+            service_labels=_labels)
         # get services from OC client
         services_oc = self.openshift_client.service_list(
-            namespaces=namespaces, service_names=_service_names)
+            namespaces=namespaces, service_names=_service_names,
+            service_labels=_labels)
 
         # compare all results
         logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _service_names))
@@ -1142,7 +1165,11 @@ class ServicesPageTest(AbstractListPageTest):
 
         assert len(services_ui) == len(services_rest), \
             "UI {} and REST {} services number not equal".format(services_ui, services_rest)
-        assert len(services_rest) <= len(services_oc)
+
+        if len(_labels) > 0:
+            assert len(services_rest) == len(services_oc)
+        else:
+            assert len(services_rest) <= len(services_oc)
 
         for service_ui in services_ui:
             found = False
@@ -1160,6 +1187,7 @@ class ServicesPageTest(AbstractListPageTest):
             found = False
             for service_oc in services_oc:
                 if service_ui.is_equal(service_oc, advanced_check=False):
+                    assert service_ui.labels.items() == service_oc.labels.items()
                     found = True
                     break
             if not found:

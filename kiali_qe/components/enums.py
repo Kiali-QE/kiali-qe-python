@@ -212,7 +212,6 @@ class WorkloadsPageSort(StringEnum):
     WORKLOAD_TYPE = ('Type')
     HEALTH = ('Health')
     DETAILS = ('Details')
-    LABEL_VALIDATION = ('Label Validation')
 
 
 class WorkloadType(StringEnum):
