@@ -559,8 +559,12 @@ class FilterList(Widget):
         if not self.is_displayed:
             return _filters
         for el in self.browser.elements(parent=self, locator=self.ITEMS, force_check_safe=True):
-            _name, _value = el.text.split('\n')
-            _filters.append({'name': _name.strip(), 'value': _value.strip()})
+            _values = el.text.split('\n')
+            # in the case of multiple values per key
+            i = 1
+            while i < len(_values):
+                _filters.append({'name': _values[0].strip(), 'value': _values[i].strip()})
+                i += 1
         return _filters
 
 
