@@ -1,6 +1,6 @@
 import pytest
 from kiali_qe.tests import IstioConfigPageTest
-from kiali_qe.components.enums import IstioConfigPageSort
+from kiali_qe.components.enums import IstioConfigPageSort, IstioConfigPageFilter
 
 BOOKINFO_2 = 'bookinfo2'
 ISTIO_SYSTEM = 'istio-system'
@@ -44,6 +44,16 @@ def test_all_configs(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group4
+def test_configs_filter_2_names(kiali_client, openshift_client, browser):
+    tests = IstioConfigPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.apply_filters(filters=[
+        {"name": IstioConfigPageFilter.ISTIO_NAME.text, "value": "ratings"},
+        {"name": IstioConfigPageFilter.ISTIO_NAME.text, "value": "reviews"}])
 
 
 @pytest.mark.p_ro_top
