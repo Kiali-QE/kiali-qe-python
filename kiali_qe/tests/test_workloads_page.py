@@ -1,7 +1,7 @@
 import pytest
 
 from kiali_qe.tests import WorkloadsPageTest
-from kiali_qe.components.enums import WorkloadsPageSort
+from kiali_qe.components.enums import WorkloadsPageSort, WorkloadsPageFilter
 
 BOOKINFO_2 = 'bookinfo2'
 ISTIO_SYSTEM = 'istio-system'
@@ -39,6 +39,16 @@ def test_all_workloads(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group8
+def test_workloads_filter_2_names(kiali_client, openshift_client, browser):
+    tests = WorkloadsPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.apply_filters(filters=[
+        {"name": WorkloadsPageFilter.WORKLOAD_NAME.text, "value": "ratings-v1"},
+        {"name": WorkloadsPageFilter.WORKLOAD_NAME.text, "value": "reviews-v1"}])
 
 
 @pytest.mark.p_ro_top
