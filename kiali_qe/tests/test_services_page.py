@@ -1,7 +1,7 @@
 import pytest
 
 from kiali_qe.tests import ServicesPageTest
-from kiali_qe.components.enums import ServicesPageSort
+from kiali_qe.components.enums import ServicesPageSort, ServicesPageFilter
 
 BOOKINFO_2 = 'bookinfo2'
 ISTIO_SYSTEM = 'istio-system'
@@ -59,6 +59,16 @@ def test_all_services(kiali_client, openshift_client, browser):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group7
+def test_services_filter_2_names(kiali_client, openshift_client, browser):
+    tests = ServicesPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.apply_filters(filters=[
+        {"name": ServicesPageFilter.SERVICE_NAME.text, "value": "ratings"},
+        {"name": ServicesPageFilter.SERVICE_NAME.text, "value": "reviews"}])
 
 
 @pytest.mark.p_ro_top
