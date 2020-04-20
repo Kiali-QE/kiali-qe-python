@@ -89,6 +89,9 @@ def wait_to_spinner_disappear(browser, timeout='10s', very_quiet=True, silent_fa
         delay=0.2, very_quiet=very_quiet, silent_failure=silent_failure)
 
 
+POPOVER = './/*[contains(@class, "tippy-popper")]'
+
+
 class Button(Widget):
     ROOT = '//button'
 
@@ -1389,6 +1392,7 @@ class NavBar(Widget):
                    '//*[contains(@class, "pf-c-dropdown")]//'
                    'span[contains(@class, "pf-c-dropdown__toggle-text")]/../..')
     USER_SELECT_BUTTON = '//*[contains(@class, "pf-c-dropdown__toggle-text")]/..'
+    NAVBAR_MASTHEAD = './/*[contains(@class, "pf-l-toolbar__item")]//*[contains(@d, "M512")]'
 
     def __init__(self, parent, logger=None):
         logger.debug('Loading navbar')
@@ -1411,6 +1415,32 @@ class NavBar(Widget):
     def toggle(self):
         logger.debug('Clicking navigation toggle')
         self.browser.click(self.browser.element(self.TOGGLE_NAVIGATION, parent=self))
+
+    def get_masthead_tooltip(self):
+        """
+        Returns a Dictionary of broken istio components shown in Masthead tooltip,
+        where the key is the component name,
+        the value is the status shown in Masthead tooltip.
+
+        If tooltip does not exist, returns empty dict.
+        """
+        statuses = {}
+        try:
+            self.browser.move_to_element(locator=self.NAVBAR_MASTHEAD, parent=self.ROOT)
+            sleep(0.5)
+            masthead_items = self.browser.elements(
+                locator=POPOVER + '//ul//div[contains(@class, "pf-m-gutter")]',
+                parent='/')
+            for _masthead_status in masthead_items:
+                _item_key, _item_status = _masthead_status.text.split('\n')
+                statuses[_item_key] = _item_status
+        except (NoSuchElementException, StaleElementReferenceException):
+            # skip errors caused by browser delays, this health will be ignored
+            pass
+        finally:
+            self.browser.send_keys_to_focused_element(Keys.ESCAPE)
+            sleep(0.5)
+            return statuses
 
 
 class BreadCrumb(Widget):
@@ -1529,7 +1559,6 @@ class Login(Widget):
 
 class ViewAbstract(Widget):
     ROOT = '//div[contains(@class, "pf-c-tabs")]'
-    POPOVER = './/*[contains(@class, "tippy-popper")]'
     MISSING_SIDECAR_TEXT = 'Missing Sidecar'
     NO_SIDECAR_TEXT = 'No Istio sidecar'
     MISSING_TEXT_SIDECAR = './/span[normalize-space(text())="{}"]'.format(MISSING_SIDECAR_TEXT)
@@ -1559,7 +1588,7 @@ class ViewAbstract(Widget):
             self.browser.move_to_element(locator='.//span', parent=element)
             sleep(1.5)
             date_text = self.browser.element(
-                locator=(self.POPOVER),
+                locator=(POPOVER),
                 parent='/').text
         except (NoSuchElementException, StaleElementReferenceException):
             # skip errors caused by browser delays, this health will be ignored
@@ -2027,7 +2056,7 @@ class ListViewAbstract(ViewAbstract):
                 locator='.//div[contains(@class, "pf-c-card__body")]/div', parent=element)
             sleep(1.5)
             labels_text = self.browser.element(
-                locator=(self.POPOVER),
+                locator=(POPOVER),
                 parent='/').text
             if labels_text:
                 for _label in labels_text.split('\n'):

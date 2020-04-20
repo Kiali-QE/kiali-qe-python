@@ -10,6 +10,8 @@ from kiali_qe.pages import RootPage
 from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
 
+ISTIO_SYSTEM = 'istio-system'
+
 
 @pytest.mark.p_atomic
 @pytest.mark.p_ro_group6
@@ -82,3 +84,13 @@ def test_help_menu(browser):
     logger.debug('help menus[defined:{}, listed:{}]'.format(options_defined, options_listed))
     assert is_equal(options_defined, options_listed), \
         ('Help menus mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
+
+
+@pytest.mark.p_atomic
+@pytest.mark.p_ro_group6
+def test_masthead_status(openshift_client, browser):
+    # load root page
+    page = RootPage(browser)
+    oc_apps = openshift_client.get_failing_applications(ISTIO_SYSTEM)
+    ui_statuses = page.navbar.get_masthead_tooltip()
+    assert is_equal(oc_apps, list(ui_statuses.keys()))
