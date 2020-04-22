@@ -1004,6 +1004,7 @@ class ConfigActions(Actions):
         self._labels = TextInput(parent=self, locator='//input[@id="gwHosts"]')
 
     def create_istio_config_gateway(self, name, hosts):
+        wait_to_spinner_disappear(self.browser)
         self.select(self.CREATE_ISTIO_CONFIG)
         self._istio_resource.select(IstioConfigObjectType.GATEWAY.text)
         self._name.fill(name)
@@ -1327,7 +1328,7 @@ class NamespaceFilter(CheckBoxFilter):
         self.open()
         self.browser.click(Button(
             parent=self.parent,
-            locator=('//button[normalize-space(text())="Clear all"]')))
+            locator=('//button/span[normalize-space(text())="Clear all"]')))
         wait_to_spinner_disappear(self.browser)
         self.close()
 
@@ -1624,7 +1625,7 @@ class ListViewAbstract(ViewAbstract):
                     '/div[contains(@class, "pf-l-grid")]')
     HEADER = './/div//h2'
     ISTIO_PROPERTIES = ('.//*[contains(@class, "pf-l-stack__item")]'
-                        '//h6[normalize-space(text())="{}"]/..')
+                        '/h6[text()="{}"]/..')
     NETWORK_PROPERTIES = ('.//*[contains(@class, "pf-l-stack__item")]'
                           '//h6[text()="{}"]/..')
     PROPERTY_SECTIONS = ('.//*[contains(@class, "pf-l-stack__item")]'
@@ -1705,7 +1706,7 @@ class ListViewAbstract(ViewAbstract):
         return result
 
     def _get_details_health(self):
-        _health_sublocator = '/../..//*[normalize-space(text())="Overall Health"]'
+        _health_sublocator = '/../..//div[@id="health"]'
         _healthy = len(self.browser.elements(
             parent=self.DETAILS_ROOT,
             locator='.//*[contains(@class, "icon-healthy")]' + _health_sublocator)) > 0
@@ -2300,9 +2301,10 @@ class ListViewApplications(ListViewAbstract):
                 name=_name, namespace=_namespace,
                 istio_sidecar=self._item_sidecar_text(el),
                 health=self._get_item_health(element=el),
-                application_status=(self._get_application_health(element=columns[2])
+                application_status=(self._get_application_health(element=columns[3])
                                     if self._is_tooltip_visible(index=index,
-                                                                number=len(_elements)) else None))
+                                                                number=len(_elements)) else None),
+                labels=self._get_item_labels(element=columns[2]))
             # append this item to the final list
             _items.append(_application)
         return _items
@@ -2374,13 +2376,11 @@ class ListViewWorkloads(ListViewAbstract):
             _namespace = self._item_namespace(columns[1])
             _type = columns[2].text.strip()
 
-            _label_keys = self._get_item_label_keys(columns[5])
             # workload object creation
             _workload = Workload(
                 name=_name, namespace=_namespace, workload_type=_type,
                 istio_sidecar=self._item_sidecar_text(el),
-                app_label='app' in _label_keys,
-                version_label='version' in _label_keys,
+                labels=self._get_item_labels(columns[3]),
                 health=self._get_item_health(element=el),
                 icon=self._get_item_details_icon(element=el),
                 workload_status=(self._get_workload_health(name=_name, element=columns[3])
@@ -2473,11 +2473,12 @@ class ListViewServices(ListViewAbstract):
                 namespace=_namespace,
                 istio_sidecar=self._item_sidecar_text(el),
                 health=self._get_item_health(element=el),
-                service_status=(self._get_service_health(element=columns[2])
+                service_status=(self._get_service_health(element=columns[3])
                                 if self._is_tooltip_visible(index=index,
                                                             number=len(_elements)) else None),
                 icon=self._get_item_details_icon(element=el),
-                config_status=self._get_item_config_status(columns[4]))
+                config_status=self._get_item_config_status(columns[4]),
+                labels=self._get_item_labels(element=columns[2]))
             # append this item to the final list
             _items.append(_service)
         return _items

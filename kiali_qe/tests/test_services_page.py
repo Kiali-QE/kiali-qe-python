@@ -63,6 +63,15 @@ def test_services_filter_2_names(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group7
+def test_filter_service_by_label(kiali_client, openshift_client, browser):
+    tests = ServicesPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.assert_all_items(filters=[
+        {"name": ServicesPageFilter.LABEL.text, "value": "app:reviews"}])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group7
 def test_all_services_namespace(kiali_client, openshift_client, browser):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)

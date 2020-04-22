@@ -38,7 +38,7 @@ from kiali_qe.entities.applications import (
 )
 from kiali_qe.entities.three_scale_config import ThreeScaleHandler
 from kiali_qe.entities.overview import Overview
-from kiali_qe.utils import to_linear_string
+from kiali_qe.utils import to_linear_string, dict_begins_with
 from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
 from kiali_qe.utils.log import logger
 
@@ -84,7 +84,7 @@ class KialiExtendedClient(KialiClient):
         """ Returns True if given namespace exists. False otherwise. """
         return namespace in self.namespace_list()
 
-    def service_list(self, namespaces=[], service_names=[]):
+    def service_list(self, namespaces=[], service_names=[], service_labels=[]):
         """Returns list of services.
         Args:
             namespaces: can be zero or any number of namespaces
@@ -111,14 +111,21 @@ class KialiExtendedClient(KialiClient):
                     istio_sidecar=_service_rest['istioSidecar'],
                     health=_service_health.is_healthy() if _service_health else None,
                     service_status=_service_health,
-                    icon=self.get_icon_type(_service_rest))
+                    icon=self.get_icon_type(_service_rest),
+                    labels=self.get_labels(_service_rest))
                 items.append(_service)
         # filter by service name
         if len(service_names) > 0:
             filtered_list = []
             for _name in service_names:
                 filtered_list.extend([_i for _i in items if _name in _i.name])
-            return set(filtered_list)
+            items = set(filtered_list)
+        # filter by labels
+        if len(service_labels) > 0:
+            filtered_list = []
+            filtered_list.extend(
+                [_i for _i in items if dict_begins_with(_i.labels, service_labels)])
+            items = set(filtered_list)
         return items
 
     def overview_list(self, namespaces=[], overview_type=OverviewPageType.APPS):
@@ -166,7 +173,7 @@ class KialiExtendedClient(KialiClient):
             overviews.append(_overview)
         return overviews
 
-    def application_list(self, namespaces=[], application_names=[]):
+    def application_list(self, namespaces=[], application_names=[], application_labels=[]):
         """Returns list of applications.
         Args:
             namespaces: can be zero or any number of namespaces
@@ -192,17 +199,24 @@ class KialiExtendedClient(KialiClient):
                         name=_application_rest['name'],
                         istio_sidecar=_application_rest['istioSidecar'],
                         health=_app_health.is_healthy() if _app_health else None,
-                        application_status=_app_health)
+                        application_status=_app_health,
+                        labels=self.get_labels(_application_rest))
                     items.append(_application)
         # filter by application name
         if len(application_names) > 0:
             filtered_list = []
             for _name in application_names:
                 filtered_list.extend([_i for _i in items if _name in _i.name])
-            return set(filtered_list)
+            items = set(filtered_list)
+        # filter by labels
+        if len(application_labels) > 0:
+            filtered_list = []
+            filtered_list.extend(
+                [_i for _i in items if dict_begins_with(_i.labels, application_labels)])
+            items = set(filtered_list)
         return items
 
-    def workload_list(self, namespaces=[], workload_names=[]):
+    def workload_list(self, namespaces=[], workload_names=[], workload_labels=[]):
         """Returns list of workloads.
         Args:
             namespaces: can be zero or any number of namespaces
@@ -223,14 +237,12 @@ class KialiExtendedClient(KialiClient):
                     _workload_health = self.get_workload_health(
                         namespace=_namespace,
                         workload_name=_workload_rest['name'])
-                    _labels = self.get_labels(_workload_rest)
                     _workload = Workload(
                         namespace=_namespace,
                         name=_workload_rest['name'],
                         workload_type=_workload_rest['type'],
                         istio_sidecar=_workload_rest['istioSidecar'],
-                        app_label='app' in _labels.keys(),
-                        version_label='version' in _labels.keys(),
+                        labels=self.get_labels(_workload_rest),
                         health=_workload_health.is_healthy() if _workload_health else None,
                         icon=self.get_icon_type(_workload_rest),
                         workload_status=_workload_health)
@@ -240,7 +252,13 @@ class KialiExtendedClient(KialiClient):
             filtered_list = []
             for _name in workload_names:
                 filtered_list.extend([_i for _i in items if _name in _i.name])
-            return set(filtered_list)
+            items = set(filtered_list)
+        # filter by labels
+        if len(workload_labels) > 0:
+            filtered_list = []
+            filtered_list.extend(
+                [_i for _i in items if dict_begins_with(_i.labels, workload_labels)])
+            items = set(filtered_list)
         return items
 
     def istio_config_list(self, namespaces=[], config_names=[]):
@@ -1030,7 +1048,7 @@ class KialiExtendedClient(KialiClient):
 
     def get_labels(self, object_rest):
         _labels = {}
-        if 'labels' in object_rest:
+        if 'labels' in object_rest and object_rest['labels']:
             _labels = object_rest['labels']
         return _labels
 

@@ -67,6 +67,32 @@ def is_sublist(list_a, list_b):
     return set(list_a).issubset(set(list_b))
 
 
+def dict_begins_with(original_dict={}, given_list=[]):
+    """
+    Checks if any of given list items is contained in the dictionary.
+    Returns True if any dictionary key begin and value contains with the list item.
+    Used for filtering of list items.
+
+    Args:
+        original_dict: Dictionary of original values
+        given_list: list of given items in a format "key" or "key:value".
+
+        In the case of "key" format, only the key is checked in dict.
+    """
+    for given_item in given_list:
+        given_pair = given_item.split(':')
+        if len(given_pair) == 2:
+            given_key = given_pair[0].strip()
+            given_value = given_pair[1].strip()
+        else:
+            given_key = given_item
+            given_value = ''
+        for dict_key, dict_value in original_dict.items():
+            if dict_key.startswith(given_key) and given_value in dict_value:
+                return True
+    return False
+
+
 def get_validation(_valid, _not_valid, _warning):
     if _valid:
         return IstioConfigValidation.VALID

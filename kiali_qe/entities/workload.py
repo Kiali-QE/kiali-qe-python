@@ -5,30 +5,28 @@ from kiali_qe.components.enums import HealthType
 class Workload(EntityBase):
 
     def __init__(self, name, namespace, workload_type,
-                 istio_sidecar=None, app_label=None, version_label=None, health=None,
+                 istio_sidecar=None, labels={}, health=None,
                  icon=None,
                  workload_status=None):
         self.name = name
         self.namespace = namespace
         self.workload_type = workload_type
         self.istio_sidecar = istio_sidecar
-        self.app_label = app_label
-        self.version_label = version_label
+        self.labels = labels
         self.health = health
         self.icon = icon
         self.workload_status = workload_status
 
     def __str__(self):
-        return 'name:{}, namespace:{}, type:{}, sidecar:{}, app:{}, version:{}, health:{}'.format(
+        return 'name:{}, namespace:{}, type:{}, sidecar:{}, labels:{}, health:{}'.format(
             self.name, self.namespace, self.workload_type,
-            self.istio_sidecar, self.app_label, self.version_label, self.health)
+            self.istio_sidecar, self.labels, self.health)
 
     def __repr__(self):
-        return "{}({}, {}, {}, {}, {}, {}, {})".format(
+        return "{}({}, {}, {}, {}, {}, {})".format(
             type(self).__name__, repr(self.name),
             repr(self.namespace), repr(self.workload_type),
-            repr(self.istio_sidecar), repr(self.app_label),
-            repr(self.version_label), repr(self.health))
+            repr(self.istio_sidecar), repr(self.labels), repr(self.health))
 
     def __eq__(self, other):
         return self.is_equal(other, advanced_check=True)
@@ -54,9 +52,7 @@ class Workload(EntityBase):
                 return False
             if self.icon != other.icon:
                 return False
-            if self.app_label != other.app_label:
-                return False
-            if self.version_label != other.version_label:
+            if self.labels != other.labels:
                 return False
             # TODO in case of unstable env pods can recreate
             # if self.workload_status and other.workload_status and \
