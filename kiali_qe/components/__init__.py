@@ -3310,11 +3310,11 @@ class LogsView(TabViewAbstract):
     DROP_DOWN = '//*[contains(@class, "pf-c-select")]/*[contains(@aria-labelledby, "{}")]/..'
 
     pods = DropDown(locator=DROP_DOWN.format('wpl_pods'))
-    containers = DropDown(locator=DROP_DOWN.format('wpl_containers'))
     tail_lines = DropDown(locator=DROP_DOWN.format('wpl_tailLines'))
     interval = DropDown(locator=DROP_DOWN.format('metrics_filter_interval_duration'))
     refresh = Button(locator='//button[@id="refresh_button"]')
-    textarea = Text(locator='//textarea')
+    pod_textarea = Text(locator='//textarea[contains(@aria-label, "Pod logs text")]')
+    proxy_textarea = Text(locator='//textarea[contains(@aria-label, "Container logs text")]')
 
     def open(self):
         tab = self.browser.element(locator=self.LOGS_TAB,
