@@ -504,13 +504,7 @@ class OverviewPageTest(AbstractListPageTest):
 
         if force_refresh:
             self.page.page_refresh()
-        # get overviews from ui
-        if list_type == self.VIEW_ENUM.LIST:
-            overviews_ui = self.page.content.list_items
-        elif list_type == self.VIEW_ENUM.EXPAND:
-            overviews_ui = self.page.content.expand_items
-        else:
-            overviews_ui = self.page.content.compact_items
+
         # get overviews from rest api
         _ns = self.FILTER_ENUM.NAME.text
         _namespaces = [_f['value'] for _f in filters if _f['name'] == _ns]
@@ -518,6 +512,14 @@ class OverviewPageTest(AbstractListPageTest):
         overviews_rest = self.kiali_client.overview_list(
             namespaces=_namespaces,
             overview_type=overview_type)
+
+        # get overviews from ui
+        if list_type == self.VIEW_ENUM.LIST:
+            overviews_ui = self.page.content.list_items
+        elif list_type == self.VIEW_ENUM.EXPAND:
+            overviews_ui = self.page.content.expand_items
+        else:
+            overviews_ui = self.page.content.compact_items
 
         # compare all results
         logger.debug('Namespaces:{}'.format(_namespaces))
@@ -1469,14 +1471,14 @@ class IstioConfigPageTest(AbstractListPageTest):
         _sn = self.FILTER_ENUM.ISTIO_NAME.text
         _istio_names = [_f['value'] for _f in filters if _f['name'] == _sn]
 
-        # get rules from ui
-        config_list_ui = self.page.content.all_items
-        logger.debug('Istio config list UI:{}]'.format(config_list_ui))
-
         # get rules from rest api
         config_list_rest = self.kiali_client.istio_config_list(
             namespaces=namespaces, config_names=_istio_names)
         logger.debug('Istio config list REST:{}]'.format(config_list_rest))
+
+        # get rules from ui
+        config_list_ui = self.page.content.all_items
+        logger.debug('Istio config list UI:{}]'.format(config_list_ui))
 
         # get configs from OC api
         config_list_oc = self.openshift_client.istio_config_list(

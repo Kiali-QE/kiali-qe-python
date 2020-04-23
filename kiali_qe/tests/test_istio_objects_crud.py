@@ -130,7 +130,7 @@ def test_destination_rule_svc_warning(kiali_client, openshift_client, browser):
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
                          'value': 'reviews-dr2-svc'}
                         ],
-                       namespace=BOOKINFO_1,
+                       namespace=BOOKINFO_2,
                        kind='DestinationRule',
                        api_version='networking.istio.io/v1alpha3',
                        service_name=DETAILS,
@@ -165,14 +165,14 @@ def test_destination_rule_host_warning(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group2
+@pytest.mark.p_crud_group5
 def test_virtual_service(kiali_client, openshift_client, browser):
     gateway = get_yaml(istio_objects_path.strpath, GATEWAY)
     gateway_dict = get_dict(istio_objects_path.strpath, GATEWAY)
     _istio_config_create(openshift_client, gateway_dict, gateway,
                          'Gateway',
                          'networking.istio.io/v1alpha3',
-                         namespace=BOOKINFO_1)
+                         namespace=BOOKINFO_2)
     virtual_service = get_yaml(istio_objects_path.strpath, VIRTUAL_SERVICE)
     virtual_service_dict = get_dict(istio_objects_path.strpath, VIRTUAL_SERVICE)
     _create_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
@@ -188,7 +188,7 @@ def test_virtual_service(kiali_client, openshift_client, browser):
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
                          'value': virtual_service_dict.metadata.name}
                         ],
-                       namespace=BOOKINFO_1,
+                       namespace=BOOKINFO_2,
                        kind='VirtualService',
                        api_version='networking.istio.io/v1alpha3',
                        service_name=REVIEWS,
@@ -198,7 +198,7 @@ def test_virtual_service(kiali_client, openshift_client, browser):
     _vs_gateway_link_test(kiali_client, openshift_client, browser, gateway_dict,
                           kind='Gateway',
                           vs_name=virtual_service_dict.metadata.name,
-                          namespace=BOOKINFO_1)
+                          namespace=BOOKINFO_2)
     _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
     _delete_gateway_vs(openshift_client, GATEWAY)
 
@@ -452,7 +452,7 @@ def test_sidecar_create(kiali_client, openshift_client, browser, pick_namespace)
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group1
+@pytest.mark.p_crud_group3
 def test_service_entry(kiali_client, openshift_client, browser):
     yaml = get_yaml(istio_objects_path.strpath, SERVICE_ENTRY)
     _dict = get_dict(istio_objects_path.strpath, SERVICE_ENTRY)
@@ -510,7 +510,7 @@ def test_auth_policy(kiali_client, openshift_client, browser):
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
                          'value': _dict.metadata.name}
                         ],
-                       namespace=BOOKINFO_1,
+                       namespace=BOOKINFO_2,
                        kind='AuthorizationPolicy',
                        api_version='security.istio.io/v1beta1',
                        service_name=DETAILS,

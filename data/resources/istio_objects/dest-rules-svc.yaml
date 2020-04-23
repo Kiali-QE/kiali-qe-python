@@ -2,9 +2,9 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: auto-reviews-dr-svc
-  namespace: bookinfo
+  namespace: bookinfo2
 spec:
-  host: reviews.bookinfo
+  host: reviews.bookinfo2
   trafficPolicy:
     loadBalancer:
       simple: RANDOM
