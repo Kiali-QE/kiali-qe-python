@@ -1001,6 +1001,8 @@ class Actions(Widget):
 
 class ConfigActions(Actions):
     ISTIO_RESOURCE = '//div[contains(@class, "pf-c-form__group")]//select[@id="istio-resource"]'
+    POLICY = '//div[contains(@class, "pf-c-form__group")]//select[@id="rules-form"]'
+    POLICY_ACTION = '//div[contains(@class, "pf-c-form__group")]//select[@id="action-form"]'
     CONFIG_CREATE_ROOT = '//*[contains(@class, "pf-c-form")]'
     CREATE_ISTIO_CONFIG = 'Create New Istio Config'
     ADD_SERVER_BUTTON = './/button[text()="Add Server"]'
@@ -1020,6 +1022,9 @@ class ConfigActions(Actions):
         self._egress_host = TextInput(parent=self, locator='//input[@id="addEgressHost"]')
         self._workloadselector_switch = ButtonSwitch(parent=self, label="Add Workload Selector")
         self._labels = TextInput(parent=self, locator='//input[@id="gwHosts"]')
+        self._policy = SelectDropDown(parent=self, locator=self.POLICY, select_button='')
+        self._policy_action = SelectDropDown(parent=self,
+                                             locator=self.POLICY_ACTION, select_button='')
 
     def create_istio_config_gateway(self, name, hosts):
         wait_to_spinner_disappear(self.browser)
@@ -1058,6 +1063,25 @@ class ConfigActions(Actions):
             parent=self.CONFIG_CREATE_ROOT,
             locator=(self.CREATE_BUTTON))
         wait_displayed(create_button)
+        self.browser.click(create_button)
+        # wait to Spinner disappear
+        wait_to_spinner_disappear(self.browser)
+        return True
+
+    def create_istio_config_authpolicy(self, name, policy, policy_action=None):
+        self.select(self.CREATE_ISTIO_CONFIG)
+        wait_displayed(self._istio_resource)
+        self._istio_resource.select(IstioConfigObjectType.AUTHORIZATION_POLICY.text)
+        self._name.fill(name)
+        self._policy.select(policy)
+        if policy_action:
+            self._policy_action.select(policy_action)
+        create_button = self.browser.element(
+            parent=self.CONFIG_CREATE_ROOT,
+            locator=(self.CREATE_BUTTON))
+        wait_displayed(create_button)
+        if create_button.get_attribute("disabled"):
+            return False
         self.browser.click(create_button)
         # wait to Spinner disappear
         wait_to_spinner_disappear(self.browser)

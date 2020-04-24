@@ -407,3 +407,14 @@ class TrafficType(StringEnum):
 
 class ItemIconType(StringEnum):
     API_DOCUMENTATION = ('API Documentation')
+
+
+class AuthPolicyType(StringEnum):
+    DENY_ALL = ('DENY_ALL')
+    ALLOW_ALL = ('ALLOW_ALL')
+    RULES = ('RULES')
+
+
+class AuthPolicyActionType(StringEnum):
+    DENY = ('DENY')
+    ALLOW = ('ALLOW')

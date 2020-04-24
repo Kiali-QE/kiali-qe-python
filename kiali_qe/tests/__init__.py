@@ -41,7 +41,9 @@ from kiali_qe.components.enums import (
     TailLines,
     TLSMutualValues,
     ThreeScaleConfigPageSort,
-    IstioConfigObjectType
+    IstioConfigObjectType,
+    AuthPolicyType,
+    AuthPolicyActionType
 )
 from kiali_qe.components.error_codes import (
     KIA0201,
@@ -1684,6 +1686,32 @@ class IstioConfigPageTest(AbstractListPageTest):
         self.page.actions.create_istio_config_sidecar(name, egress_host, labels)
         for namespace in namespaces:
             self.assert_details(name, IstioConfigObjectType.SIDECAR.text, namespace)
+
+    def test_authpolicy_create(self, name, policy, namespaces, policy_action=None):
+        logger.debug('Creating AuthorizationPolicy: {}, from namespaces: {}'.format(name,
+                                                                                    namespaces))
+        # load the page first
+        self.page.load(force_load=True)
+        # apply namespace
+        self.apply_namespaces(namespaces=namespaces)
+        wait_to_spinner_disappear(self.browser)
+        is_created = self.page.actions.create_istio_config_authpolicy(name, policy, policy_action)
+        if policy_action == AuthPolicyActionType.DENY.text:
+            # in a case of DENY action the Create button is disabled
+            assert not is_created, "Should not create but in fact created AuthPolicy"
+        else:
+            assert is_created
+        if is_created:
+            for namespace in namespaces:
+                self.assert_details(name, IstioConfigObjectType.AUTHORIZATION_POLICY.text,
+                                    namespace)
+                config_details_rest = self.kiali_client.istio_config_details(
+                    namespace=namespace,
+                    object_type=IstioConfigObjectType.AUTHORIZATION_POLICY.text,
+                    object_name=name)
+                if policy == AuthPolicyType.ALLOW_ALL.text or \
+                        policy_action == AuthPolicyActionType.ALLOW.text:
+                    assert '\"action\": \"ALLOW\"' in config_details_rest.text
 
     def delete_istio_config(self, name, namespace=None):
         logger.debug('Deleting istio config: {}, from namespace: {}'.format(name, namespace))
