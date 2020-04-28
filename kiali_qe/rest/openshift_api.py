@@ -354,6 +354,19 @@ class OpenshiftExtendedClient(object):
             items = set(filtered_list)
         return items
 
+    def get_failing_applications(self, namespace):
+        """ Returns list of applications from given namespace which are not ready """
+        result = []
+        _raw_items = []
+        _response = getattr(self, '_deployment').get(namespace=namespace)
+        if hasattr(_response, 'items'):
+            _raw_items.extend(_response.items)
+
+        for _raw_item in _raw_items:
+            if _raw_item.status.readyReplicas < _raw_item.status.replicas:
+                result.append(_raw_item.metadata.name)
+        return result
+
     def _contains_sidecar(self, item):
         try:
             return (item.spec.template.metadata.annotations['sidecar.istio.io/inject']
