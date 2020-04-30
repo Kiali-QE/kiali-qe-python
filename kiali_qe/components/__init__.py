@@ -1652,7 +1652,6 @@ class ListViewAbstract(ViewAbstract):
     ITEM_TEXT = './/*[contains(@class, "virtualitem_definition_link")]'
     DETAILS_ROOT = ('.//section[@id="pf-tab-section-0-basic-tabs"]'
                     '/div[contains(@class, "pf-l-grid")]')
-    HEADER = './/div//h2'
     ISTIO_PROPERTIES = ('.//*[contains(@class, "pf-l-stack__item")]'
                         '/h6[text()="{}"]/..')
     NETWORK_PROPERTIES = ('.//*[contains(@class, "pf-l-stack__item")]'
@@ -2287,13 +2286,10 @@ class ListViewOverview(ListViewAbstract):
 class ListViewApplications(ListViewAbstract):
 
     def get_details(self, load_only=False):
+        _breadcrumb = BreadCrumb(self.parent)
         if load_only:
-            return BreadCrumb(self.parent)
+            return _breadcrumb
         self.back_to_info()
-        _name = self.browser.text(
-            locator=self.HEADER,
-            parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '')\
-            .replace(self.SHOW_ON_GRAPH_TEXT, '').strip()
 
         _table_view_workloads = TableViewAppWorkloads(self.parent, self.locator, self.logger)
 
@@ -2306,7 +2302,7 @@ class ListViewApplications(ListViewAbstract):
         _outbound_metrics = MetricsView(self.parent,
                                         self.OUTBOUND_METRICS)
 
-        return ApplicationDetails(name=str(_name),
+        return ApplicationDetails(name=str(_breadcrumb.active_location),
                                   istio_sidecar=self._details_sidecar_text(),
                                   health=self._get_details_health(),
                                   application_status=self._get_application_details_health(),
