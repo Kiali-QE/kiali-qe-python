@@ -2719,7 +2719,7 @@ class TableView3ScaleConfig(TableViewAbstract):
 
 
 class TableViewAppWorkloads(TableViewAbstract):
-    ROWS = ('//div[contains(@class, "resourceList")]'
+    ROWS = ('//div[contains(@class, "pf-c-data-list__item-content")]'
             '//h3[contains(text(), "Workloads")]/..'
             '/ul[contains(@class, "pf-c-list")]/li')
     COLUMN = './/a'
@@ -2742,7 +2742,7 @@ class TableViewAppWorkloads(TableViewAbstract):
 
 
 class TableViewAppServices(TableViewAbstract):
-    ROWS = ('//div[contains(@class, "resourceList")]'
+    ROWS = ('//div[contains(@class, "pf-c-data-list__item-content")]'
             '//h3[contains(text(), "Services")]/..'
             '/ul[contains(@class, "pf-c-list")]/li/a')
 
