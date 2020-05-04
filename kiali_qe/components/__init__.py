@@ -2570,8 +2570,9 @@ class ListViewIstioConfig(ListViewAbstract):
 
 class TableViewAbstract(ViewAbstract):
     SERVICE_DETAILS_ROOT = './/section[contains(@class, "pf-c-page__main-section")]/div'
-    OVERVIEW_DETAILS_ROOT = './/div[contains(@class, "row-cards-pf")]'
-    OVERVIEW_HEADER = SERVICE_DETAILS_ROOT + '//h2[contains(@class, "pf-c-title")]'
+    OVERVIEW_DETAILS_ROOT = './/div[contains(@class, "pf-l-grid")]'
+    OVERVIEW_HEADER = SERVICE_DETAILS_ROOT + \
+        '//h6[contains(@class, "pf-c-title") and contains(text(), "{}")]/..'
     OVERVIEW_PROPERTIES = ('.//div[contains(@class, "pf-c-card__body")]//'
                            'h3[@data-pf-content="true" and contains(text(), "{}")]/..')
     HOSTS_PROPERTIES = './/div/h6[contains(text(), "{}")]/..//li'
@@ -2878,20 +2879,19 @@ class TableViewVirtualServices(TableViewAbstract):
         _columns = list(self.browser.elements(locator=self.COLUMN, parent=_row))
 
         self.browser.click('.//a', parent=_columns[1])
-        self.browser.wait_for_element(locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
-                                      parent=self.OVERVIEW_DETAILS_ROOT)
+        wait_to_spinner_disappear(self.browser)
 
         _name = self.browser.text(
-            locator=self.OVERVIEW_HEADER,
-            parent=self.OVERVIEW_DETAILS_ROOT).strip()
-        _created_at_ui = self.browser.text(locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
+            locator=self.OVERVIEW_HEADER.format(self.NAME),
+            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.NAME, '').strip()
+        _created_at_ui = self.browser.text(locator=self.OVERVIEW_HEADER.format(self.CREATED_AT),
                                            parent=self.OVERVIEW_DETAILS_ROOT).replace(
                                             self.CREATED_AT, '').strip()
         _created_at = self._get_date_tooltip(self.browser.element(
-            locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
+            locator=self.OVERVIEW_HEADER.format(self.CREATED_AT),
             parent=self.OVERVIEW_DETAILS_ROOT))
         _resource_version = self.browser.text(
-            locator=self.OVERVIEW_PROPERTIES.format(self.RESOURCE_VERSION),
+            locator=self.OVERVIEW_HEADER.format(self.RESOURCE_VERSION),
             parent=self.OVERVIEW_DETAILS_ROOT).replace(self.RESOURCE_VERSION, '').strip()
         _hosts = get_texts_of_elements(self.browser.elements(
             locator=self.HOSTS_PROPERTIES.format(self.HOSTS),
@@ -3010,12 +3010,11 @@ class TableViewDestinationRules(TableViewAbstract):
         _columns = list(self.browser.elements(locator=self.COLUMN, parent=_row))
 
         self.browser.click('.//a', parent=_columns[1])
-        self.browser.wait_for_element(locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
-                                      parent=self.OVERVIEW_DETAILS_ROOT)
+        wait_to_spinner_disappear(self.browser)
 
         _name = self.browser.text(
-            locator=self.OVERVIEW_HEADER.format('DestinationRule'),
-            parent=self.OVERVIEW_DETAILS_ROOT).replace('DestinationRule:', '').strip()
+            locator=self.OVERVIEW_HEADER.format(self.NAME),
+            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.NAME, '').strip()
         _created_at_ui = self.browser.text(locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
                                            parent=self.OVERVIEW_DETAILS_ROOT).replace(
                                             self.CREATED_AT, '').strip()
