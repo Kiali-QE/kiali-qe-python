@@ -1652,13 +1652,13 @@ class ListViewAbstract(ViewAbstract):
     ITEM_TEXT = './/*[contains(@class, "virtualitem_definition_link")]'
     DETAILS_ROOT = ('.//section[@id="pf-tab-section-0-basic-tabs"]'
                     '/div[contains(@class, "pf-l-grid")]')
-    HEADER = './/div//h2'
     ISTIO_PROPERTIES = ('.//*[contains(@class, "pf-l-stack__item")]'
                         '/h6[text()="{}"]/..')
     NETWORK_PROPERTIES = ('.//*[contains(@class, "pf-l-stack__item")]'
                           '//h6[text()="{}"]/..')
     PROPERTY_SECTIONS = ('.//*[contains(@class, "pf-l-stack__item")]'
                          '//span[text()="{}"]/../..')
+    NAME = 'Name'
     PODS = 'Pods'
     SERVICES = 'Services'
     TYPE = 'Type'
@@ -2286,13 +2286,10 @@ class ListViewOverview(ListViewAbstract):
 class ListViewApplications(ListViewAbstract):
 
     def get_details(self, load_only=False):
+        _breadcrumb = BreadCrumb(self.parent)
         if load_only:
-            return BreadCrumb(self.parent)
+            return _breadcrumb
         self.back_to_info()
-        _name = self.browser.text(
-            locator=self.HEADER,
-            parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '')\
-            .replace(self.SHOW_ON_GRAPH_TEXT, '').strip()
 
         _table_view_workloads = TableViewAppWorkloads(self.parent, self.locator, self.logger)
 
@@ -2305,7 +2302,7 @@ class ListViewApplications(ListViewAbstract):
         _outbound_metrics = MetricsView(self.parent,
                                         self.OUTBOUND_METRICS)
 
-        return ApplicationDetails(name=str(_name),
+        return ApplicationDetails(name=str(_breadcrumb.active_location),
                                   istio_sidecar=self._details_sidecar_text(),
                                   health=self._get_details_health(),
                                   application_status=self._get_application_details_health(),
@@ -2346,9 +2343,8 @@ class ListViewWorkloads(ListViewAbstract):
             return BreadCrumb(self.parent)
         self.back_to_info()
         _name = self.browser.text(
-            locator=self.HEADER,
-            parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '')\
-            .replace(self.SHOW_ON_GRAPH_TEXT, '').strip()
+            locator=self.ISTIO_PROPERTIES.format(self.NAME),
+            parent=self.DETAILS_ROOT).replace(self.NAME, '').strip()
         _type = self.browser.text(locator=self.ISTIO_PROPERTIES.format(self.TYPE),
                                   parent=self.DETAILS_ROOT).replace(self.TYPE, '').strip()
         _created_at_ui = self.browser.text(locator=self.ISTIO_PROPERTIES.format(self.CREATED_AT),
@@ -2426,14 +2422,21 @@ class ListViewServices(ListViewAbstract):
         if load_only:
             return BreadCrumb(self.parent)
         self.back_to_info()
-        _name = self.browser.text(
-            locator=self.HEADER,
-            parent=self.DETAILS_ROOT).replace(self.MISSING_SIDECAR_TEXT, '')\
-            .replace(self.SHOW_ON_GRAPH_TEXT, '').strip()
+
+        self.browser.click('.//button[contains(text(), "Network")]', parent=self)
         _type = self.browser.text(locator=self.NETWORK_PROPERTIES.format(self.TYPE),
                                   parent=self.DETAILS_ROOT).replace(self.TYPE, '').strip()
         _ip = self.browser.text(locator=self.NETWORK_PROPERTIES.format(self.SERVICE_IP),
                                 parent=self.DETAILS_ROOT).replace(self.SERVICE_IP, '').strip()
+        _ports = self.browser.text(
+            locator=self.PROPERTY_SECTIONS.format(self.PORTS),
+            parent=self.DETAILS_ROOT).replace(self.PORTS, '').strip()
+        _endpoints = self._get_service_endpoints(self.DETAILS_ROOT)
+
+        self.browser.click('.//button[contains(text(), "Properties")]', parent=self)
+        _name = self.browser.text(
+            locator=self.NETWORK_PROPERTIES.format(self.NAME),
+            parent=self.DETAILS_ROOT).replace(self.NAME, '').strip()
         _created_at_ui = self.browser.text(
             locator=self.NETWORK_PROPERTIES.format(self.CREATED_AT),
             parent=self.DETAILS_ROOT).replace(self.CREATED_AT, '').strip()
@@ -2443,9 +2446,6 @@ class ListViewServices(ListViewAbstract):
         _resource_version = self.browser.text(
             locator=self.NETWORK_PROPERTIES.format(self.RESOURCE_VERSION),
             parent=self.DETAILS_ROOT).replace(self.RESOURCE_VERSION, '').strip()
-        _ports = self.browser.text(
-            locator=self.PROPERTY_SECTIONS.format(self.PORTS),
-            parent=self.DETAILS_ROOT).replace(self.PORTS, '').strip()
 
         _3scale_api_handler = self.browser.text_or_default(
             locator=self.NETWORK_PROPERTIES.format(self.RULE_3SCALE_HANDLER),
@@ -2469,7 +2469,7 @@ class ListViewServices(ListViewAbstract):
                               ports=str(_ports.replace('\n', ' ')),
                               rule_3scale_api_handler=_3scale_api_handler
                               if _3scale_api_handler != '' else None,
-                              endpoints=self._get_service_endpoints(self.DETAILS_ROOT),
+                              endpoints=_endpoints,
                               health=self._get_details_health(),
                               service_status=self._get_service_details_health(),
                               istio_sidecar=self._details_sidecar_text(),
@@ -2719,7 +2719,7 @@ class TableView3ScaleConfig(TableViewAbstract):
 
 
 class TableViewAppWorkloads(TableViewAbstract):
-    ROWS = ('//div[contains(@class, "resourceList")]'
+    ROWS = ('//div[contains(@class, "pf-c-data-list__item-content")]'
             '//h3[contains(text(), "Workloads")]/..'
             '/ul[contains(@class, "pf-c-list")]/li')
     COLUMN = './/a'
@@ -2742,7 +2742,7 @@ class TableViewAppWorkloads(TableViewAbstract):
 
 
 class TableViewAppServices(TableViewAbstract):
-    ROWS = ('//div[contains(@class, "resourceList")]'
+    ROWS = ('//div[contains(@class, "pf-c-data-list__item-content")]'
             '//h3[contains(text(), "Services")]/..'
             '/ul[contains(@class, "pf-c-list")]/li/a')
 
