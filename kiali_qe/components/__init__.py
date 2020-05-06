@@ -766,7 +766,8 @@ class Actions(Widget):
                                 load_balancer=False,
                                 load_balancer_type=None,
                                 gateway=False,
-                                include_mesh_gateway=False):
+                                include_mesh_gateway=False,
+                                skip_advanced=False):
         if self.is_create_weighted_disabled():
             return False
         else:
@@ -774,7 +775,8 @@ class Actions(Widget):
             self.advanced_options(tls=tls, load_balancer=load_balancer,
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
-                                  include_mesh_gateway=include_mesh_gateway)
+                                  include_mesh_gateway=include_mesh_gateway,
+                                  skip_advanced=skip_advanced)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.CREATE_BUTTON)))
@@ -787,13 +789,15 @@ class Actions(Widget):
                                 load_balancer=False,
                                 load_balancer_type=None,
                                 gateway=False,
-                                include_mesh_gateway=False):
+                                include_mesh_gateway=False,
+                                skip_advanced=False):
         if self.is_update_weighted_enabled():
             self.select(self.UPDATE_WEIGHTED_ROUTING)
             self.advanced_options(tls=tls, load_balancer=load_balancer,
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
-                                  include_mesh_gateway=include_mesh_gateway)
+                                  include_mesh_gateway=include_mesh_gateway,
+                                  skip_advanced=skip_advanced)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.UPDATE_BUTTON)))
@@ -808,7 +812,8 @@ class Actions(Widget):
                                 load_balancer=False,
                                 load_balancer_type=None,
                                 gateway=False,
-                                include_mesh_gateway=False):
+                                include_mesh_gateway=False,
+                                skip_advanced=False):
         if self.is_create_matching_disabled():
             return False
         else:
@@ -816,7 +821,8 @@ class Actions(Widget):
             self.advanced_options(tls=tls, load_balancer=load_balancer,
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
-                                  include_mesh_gateway=include_mesh_gateway)
+                                  include_mesh_gateway=include_mesh_gateway,
+                                  skip_advanced=skip_advanced)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.ADD_RULE_BUTTON)))
@@ -834,13 +840,15 @@ class Actions(Widget):
                                 load_balancer=False,
                                 load_balancer_type=None,
                                 gateway=False,
-                                include_mesh_gateway=False):
+                                include_mesh_gateway=False,
+                                skip_advanced=False):
         if self.is_update_matching_enabled():
             self.select(self.UPDATE_MATCHING_ROUTING)
             self.advanced_options(tls=tls, load_balancer=load_balancer,
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
-                                  include_mesh_gateway=include_mesh_gateway)
+                                  include_mesh_gateway=include_mesh_gateway,
+                                  skip_advanced=skip_advanced)
             self._rule_actions.select(self.REMOVE_RULE)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
@@ -860,7 +868,8 @@ class Actions(Widget):
     def suspend_traffic(self, tls=RoutingWizardTLS.DISABLE, load_balancer=False,
                         load_balancer_type=None,
                         gateway=False,
-                        include_mesh_gateway=False):
+                        include_mesh_gateway=False,
+                        skip_advanced=False):
         if self.is_suspend_disabled():
             return False
         else:
@@ -868,7 +877,8 @@ class Actions(Widget):
             self.advanced_options(tls=tls, load_balancer=load_balancer,
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
-                                  include_mesh_gateway=include_mesh_gateway)
+                                  include_mesh_gateway=include_mesh_gateway,
+                                  skip_advanced=skip_advanced)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.CREATE_BUTTON)))
@@ -881,13 +891,15 @@ class Actions(Widget):
                                  load_balancer=False,
                                  load_balancer_type=None,
                                  gateway=False,
-                                 include_mesh_gateway=False):
+                                 include_mesh_gateway=False,
+                                 skip_advanced=False):
         if self.is_update_suspended_enabled():
             self.select(self.UPDATE_SUSPENDED_TRAFFIC)
             self.advanced_options(tls=tls, load_balancer=load_balancer,
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
-                                  include_mesh_gateway=include_mesh_gateway)
+                                  include_mesh_gateway=include_mesh_gateway,
+                                  skip_advanced=skip_advanced)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.UPDATE_BUTTON)))
@@ -901,10 +913,13 @@ class Actions(Widget):
     def advanced_options(self, tls=RoutingWizardTLS.DISABLE, load_balancer=False,
                          load_balancer_type=None,
                          gateway=False,
-                         include_mesh_gateway=False):
+                         include_mesh_gateway=False,
+                         skip_advanced=False):
         """
         Adds Advanced Options to Wizard.
         """
+        if skip_advanced:
+            return
         self.browser.click(Button(parent=self.parent, locator=self.SHOW_ADVANCED_OPTIONS))
         wait_displayed(self._tls)
         if tls:
