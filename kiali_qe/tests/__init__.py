@@ -1149,7 +1149,8 @@ class ServicesPageTest(AbstractListPageTest):
     def test_routing_create(self, name, namespace, routing_type,
                             tls=RoutingWizardTLS.ISTIO_MUTUAL, load_balancer=True,
                             load_balancer_type=RoutingWizardLoadBalancer.ROUND_ROBIN,
-                            gateway=True, include_mesh_gateway=True):
+                            gateway=True, include_mesh_gateway=True,
+                            skip_advanced=False):
         logger.debug('Routing Wizard {} for Service: {}, {}'.format(routing_type, name, namespace))
         # load service details page
         self._prepare_load_details_page(name, namespace)
@@ -1159,7 +1160,8 @@ class ServicesPageTest(AbstractListPageTest):
             assert self.page.actions.create_weighted_routing(
                 tls=tls, load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
-                include_mesh_gateway=include_mesh_gateway)
+                include_mesh_gateway=include_mesh_gateway,
+                skip_advanced=skip_advanced)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_weighted_enabled()
             assert self.page.actions.is_create_matching_disabled()
@@ -1168,7 +1170,8 @@ class ServicesPageTest(AbstractListPageTest):
             assert self.page.actions.create_matching_routing(
                 tls=tls, load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
-                include_mesh_gateway=include_mesh_gateway)
+                include_mesh_gateway=include_mesh_gateway,
+                skip_advanced=skip_advanced)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_matching_enabled()
             assert self.page.actions.is_create_weighted_disabled()
@@ -1177,7 +1180,8 @@ class ServicesPageTest(AbstractListPageTest):
             assert self.page.actions.suspend_traffic(
                 tls=tls, load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
-                include_mesh_gateway=include_mesh_gateway)
+                include_mesh_gateway=include_mesh_gateway,
+                skip_advanced=skip_advanced)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_create_matching_disabled()
             assert self.page.actions.is_create_weighted_disabled()
@@ -1223,7 +1227,8 @@ class ServicesPageTest(AbstractListPageTest):
     def test_routing_update(self, name, namespace, routing_type,
                             tls=RoutingWizardTLS.ISTIO_MUTUAL, load_balancer=True,
                             load_balancer_type=RoutingWizardLoadBalancer.ROUND_ROBIN,
-                            gateway=True, include_mesh_gateway=True):
+                            gateway=True, include_mesh_gateway=True,
+                            skip_advanced=False):
         logger.debug('Routing Update Wizard {} for Service: {}, {}'.format(routing_type,
                                                                            name,
                                                                            namespace))
@@ -1234,7 +1239,8 @@ class ServicesPageTest(AbstractListPageTest):
             assert self.page.actions.update_weighted_routing(
                 tls=tls, load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
-                include_mesh_gateway=include_mesh_gateway)
+                include_mesh_gateway=include_mesh_gateway,
+                skip_advanced=skip_advanced)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_weighted_enabled()
             assert self.page.actions.is_create_matching_disabled()
@@ -1243,7 +1249,8 @@ class ServicesPageTest(AbstractListPageTest):
             assert self.page.actions.update_matching_routing(
                 tls=tls, load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
-                include_mesh_gateway=include_mesh_gateway)
+                include_mesh_gateway=include_mesh_gateway,
+                skip_advanced=skip_advanced)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_matching_enabled()
             assert self.page.actions.is_create_weighted_disabled()
@@ -1252,7 +1259,8 @@ class ServicesPageTest(AbstractListPageTest):
             assert self.page.actions.update_suspended_traffic(
                 tls=tls, load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
-                include_mesh_gateway=include_mesh_gateway)
+                include_mesh_gateway=include_mesh_gateway,
+                skip_advanced=skip_advanced)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_create_matching_disabled()
             assert self.page.actions.is_create_weighted_disabled()
