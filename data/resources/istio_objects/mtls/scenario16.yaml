@@ -1,12 +1,12 @@
-# Valid, classic: MeshPolicy explicitly ask for mTLS connections
-apiVersion: "authentication.istio.io/v1alpha1"
-kind: "MeshPolicy"
+# Valid, classic: PeerAuthentication explicitly ask for mTLS connections
+apiVersion: "security.istio.io/v1beta1"
+kind: "PeerAuthentication"
 metadata:
   name: "default"
   namespace: "istio-system"
 spec:
-  peers:
-  - mtls: {}
+  mtls:
+    mode: STRICT
 ---
 apiVersion: "networking.istio.io/v1alpha3"
 kind: "DestinationRule"

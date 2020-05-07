@@ -46,10 +46,12 @@ from kiali_qe.utils.log import logger
 ISTIO_CONFIG_TYPES = {'DestinationRule': 'destinationrules',
                       'VirtualService': 'virtualservices',
                       'ServiceEntry': 'serviceentries',
+                      'WorkloadEntry': 'workloadentries',
                       'Gateway': 'gateways',
                       'QuotaSpecBinding': 'quotaspecbindings',
                       'QuotaSpec': 'quotaspecs',
-                      'Policy': 'policies',
+                      'PeerAuthentication': 'peerauthentications',
+                      'RequestAuthentication': 'requestauthentications',
                       'MeshPolicy': 'meshpolicies',
                       'ServiceMeshRbacConfig': 'servicemeshrbacconfigs',
                       'RbacConfig': 'rbacconfigs',
@@ -349,14 +351,25 @@ class KialiExtendedClient(KialiClient):
                                                                     _policy['metadata']['name'])))
 
             # update Policy
-            if len(_data['policies']) > 0:
-                for _policy in _data['policies']:
+            if len(_data['peerAuthentications']) > 0:
+                for _policy in _data['peerAuthentications']:
                     items.append(IstioConfig(
                         name=_policy['metadata']['name'],
                         namespace=_namespace,
-                        object_type=OBJECT_TYPE.POLICY.text,
+                        object_type=OBJECT_TYPE.PEER_AUTHENTICATION.text,
                         validation=self.get_istio_config_validation(_namespace,
-                                                                    'policies',
+                                                                    'peerauthentications',
+                                                                    _policy['metadata']['name'])))
+
+            # update RequestAuthentication
+            if len(_data['requestAuthentications']) > 0:
+                for _policy in _data['requestAuthentications']:
+                    items.append(IstioConfig(
+                        name=_policy['metadata']['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.REQUEST_AUTHENTICATION.text,
+                        validation=self.get_istio_config_validation(_namespace,
+                                                                    'requestauthentications',
                                                                     _policy['metadata']['name'])))
 
             # update MeshPolicy
@@ -390,6 +403,17 @@ class KialiExtendedClient(KialiClient):
                         object_type=OBJECT_TYPE.SERVICE_ENTRY.text,
                         validation=self.get_istio_config_validation(_namespace,
                                                                     'serviceentries',
+                                                                    _policy['metadata']['name'])))
+
+            # update WorkloadEntries
+            if len(_data['workloadEntries']) > 0:
+                for _policy in _data['workloadEntries']:
+                    items.append(IstioConfig(
+                        name=_policy['metadata']['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.WORKLOAD_ENTRY.text,
+                        validation=self.get_istio_config_validation(_namespace,
+                                                                    'workloadentries',
                                                                     _policy['metadata']['name'])))
 
             # update serviceMeshRbacConfigs
@@ -551,9 +575,17 @@ class KialiExtendedClient(KialiClient):
             if _data['serviceEntry']:
                 config_data = _data['serviceEntry']
 
-            # get policy
-            if _data['policy']:
-                config_data = _data['policy']
+            # get workloadEntry
+            if _data['workloadEntry']:
+                config_data = _data['workloadEntry']
+
+            # get PeerAuthentication
+            if _data['peerAuthentication']:
+                config_data = _data['peerAuthentication']
+
+            # get RequestAuthentication
+            if _data['requestAuthentication']:
+                config_data = _data['requestAuthentication']
 
             # get meshPolicy
             if _data['meshPolicy']:

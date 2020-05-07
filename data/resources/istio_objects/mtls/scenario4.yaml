@@ -1,4 +1,4 @@
-# Valid: MeshPolicy allows non-mTLS connections in the service mesh
+# Valid: PeerAuthentication allows non-mTLS connections in the service mesh
 apiVersion: "networking.istio.io/v1alpha3"
 kind: "DestinationRule"
 metadata:
@@ -10,14 +10,13 @@ spec:
     tls:
       mode: DISABLE
 ---
-apiVersion: "authentication.istio.io/v1alpha1"
-kind: "MeshPolicy"
+apiVersion: "security.istio.io/v1beta1"
+kind: "PeerAuthentication"
 metadata:
   name: "default"
   namespace: "istio-system"
 spec:
-  peers:
-  - mtls:
+  mtls:
       mode: "PERMISSIVE"
 ---
 apiVersion: "networking.istio.io/v1alpha3"

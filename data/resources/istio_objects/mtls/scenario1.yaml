@@ -1,4 +1,4 @@
-# Valid: Policy is in permissive mode, it allows mTLS connections
+# Valid: PeerAuthentication is in permissive mode, it allows mTLS connections
 apiVersion: "networking.istio.io/v1alpha3"
 kind: "DestinationRule"
 metadata:
@@ -9,11 +9,10 @@ spec:
     tls:
       mode: DISABLE
 ---
-apiVersion: "authentication.istio.io/v1alpha1"
-kind: "Policy"
+apiVersion: "security.istio.io/v1beta1"
+kind: "PeerAuthentication"
 metadata:
   name: "default"
 spec:
-  peers:
-  - mtls:
-      mode: PERMISSIVE
+  mtls:
+    mode: PERMISSIVE
