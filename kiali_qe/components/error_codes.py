@@ -27,18 +27,18 @@ KIA0901 = 'KIA0901 Unable to find all the defined services'
 
 KIA0903 = 'KIA0903 ServiceRole does not exists in this namespace'
 
-KIA0207 = 'KIA0207 Policy with TLS strict mode found, it should be permissive'
+KIA0207 = 'KIA0207 PeerAuthentication with TLS strict mode found, it should be permissive'
 
 KIA0501 = 'KIA0501 Destination Rule enabling namespace-wide mTLS is missing'
 
-KIA0208 = 'KIA0208 MeshPolicy enabling mTLS found, '\
+KIA0208 = 'KIA0208 PeerAuthentication enabling mTLS found, '\
     'permissive policy is needed'
 
-KIA0205 = 'KIA0205 MeshPolicy enabling mTLS is missing'
+KIA0205 = 'KIA0205 PeerAuthentication enabling mTLS at mesh level is missing'
 
 KIA0401 = 'KIA0401 Mesh-wide Destination Rule enabling mTLS is missing'
 
-KIA0206 = 'KIA0206 Policy enabling namespace-wide mTLS is missing'
+KIA0206 = 'KIA0206 PeerAuthentication enabling namespace-wide mTLS is missing'
 
 KIA0301 = 'KIA0301 More than one Gateway for the same host port combination'
 

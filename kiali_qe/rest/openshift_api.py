@@ -36,6 +36,7 @@ class OpenshiftExtendedClient(object):
         'VirtualService': '_virtualservice',
         'DestinationRule': '_destinationrule',
         'ServiceEntry': '_serviceentry',
+        'WorkloadEntry': '_workloadentry',
         'Rule': '_rule',
         'Adapter': '_handler',
         'Adapter: adapter': '_adapter',
@@ -43,7 +44,8 @@ class OpenshiftExtendedClient(object):
         'Template: instance': '_instance',
         'QuotaSpec': '_quotaspec',
         'QuotaSpecBinding': '_quotaspecbinding',
-        'Policy': '_policy',
+        'PeerAuthentication': '_peerauthentication',
+        'RequestAuthentication': '_requestauthentication',
         'RbacConfig': '_rbacconfig',
         'AuthorizationPolicy': '_authorizationpolicy',
         'Sidecar': '_sidecar',
@@ -127,7 +129,11 @@ class OpenshiftExtendedClient(object):
 
     @property
     def _serviceentry(self):
-        return self._istio_config(kind='ServiceEntry', api_version='v1alpha3')
+        return self._istio_config(kind='ServiceEntry', api_version='v1beta1')
+
+    @property
+    def _workloadentry(self):
+        return self._istio_config(kind='WorkloadEntry', api_version='v1beta1')
 
     @property
     def _rule(self):
@@ -166,12 +172,12 @@ class OpenshiftExtendedClient(object):
         return self._istio_config(kind='QuotaSpecBinding', api_version='v1alpha2')
 
     @property
-    def _policy(self):
-        return self._istio_config(kind='Policy', api_version='v1alpha1')
+    def _peerauthentication(self):
+        return self._istio_config(kind='PeerAuthentication', api_version='v1beta1')
 
     @property
-    def _meshpolicy(self):
-        return self._istio_config(kind='Policy', api_version='v1alpha1')
+    def _requestauthentication(self):
+        return self._istio_config(kind='RequestAuthentication', api_version='v1beta1')
 
     @property
     def _servicemeshpolicy(self):

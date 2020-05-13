@@ -1,5 +1,5 @@
-# Valid: MeshPolicy in STRICT mode + DestinationRule enabling mTLS mesh-wide (classic scenario)
-#        Policy ns-level in PERMISSIVE mode + DR disabling mTLS ns-wide.
+# Valid: PeerAuthentication in STRICT mode + DestinationRule enabling mTLS mesh-wide (classic scenario)
+#        PeerAuthentication ns-level in PERMISSIVE mode + DR disabling mTLS ns-wide.
 apiVersion: "networking.istio.io/v1alpha3"
 kind: "DestinationRule"
 metadata:
@@ -11,25 +11,23 @@ spec:
     tls:
       mode: DISABLE
 ---
-apiVersion: "authentication.istio.io/v1alpha1"
-kind: "Policy"
+apiVersion: "security.istio.io/v1beta1"
+kind: "PeerAuthentication"
 metadata:
   name: "default"
   namespace: "bookinfo"
 spec:
-  peers:
-  - mtls:
-      mode: PERMISSIVE
+  mtls:
+    mode: PERMISSIVE
 ---
-apiVersion: "authentication.istio.io/v1alpha1"
-kind: "MeshPolicy"
+apiVersion: "security.istio.io/v1beta1"
+kind: "PeerAuthentication"
 metadata:
   name: "default"
   namespace: "istio-system"
 spec:
-  peers:
-  - mtls:
-      mode: "STRICT"
+  mtls:
+    mode: "STRICT"
 ---
 apiVersion: "networking.istio.io/v1alpha3"
 kind: "DestinationRule"

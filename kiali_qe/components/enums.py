@@ -160,7 +160,7 @@ class OverviewPageFilter(StringEnum):
     NAME = ('Namespace')
     HEALTH = ('Health')
     MTLS_STATUS = ('mTLS status')
-    LABEL = ('Label')
+    LABEL = ('Namespace Label')
 
 
 class OverviewPageSort(StringEnum):
@@ -284,9 +284,12 @@ class IstioConfigObjectType(StringEnum):
     VIRTUAL_SERVICE = ('VirtualService')
     GATEWAY = ('Gateway')
     SERVICE_ENTRY = ('ServiceEntry')
+    WORKLOAD_ENTRY = ('WorkloadEntry')
     QUOTA_SPEC = ('QuotaSpec')
     QUOTA_SPEC_BINDING = ('QuotaSpecBinding')
     POLICY = ('Policy')
+    PEER_AUTHENTICATION = ('PeerAuthentication')
+    REQUEST_AUTHENTICATION = ('RequestAuthentication')
     MESH_POLICY = ('MeshPolicy')
     CLUSTER_RBAC_CONFIG = ('ClusterRbacConfig')
     SERVICE_MESH_POLICY = ('ServiceMeshPolicy')

@@ -596,7 +596,7 @@ class OverviewPageTest(AbstractListPageTest):
                         expected_status = IstioConfigValidation.VALID
         assert expected_status == config_status.validation, \
             'Expected {} but got {} for {} as Config Status'.format(
-                config_status.validation, expected_status, namespace)
+                expected_status, config_status.validation, namespace)
         if config_status.validation != IstioConfigValidation.NA:
             assert '/console/istio?namespaces={}'.format(
                     namespace) in \

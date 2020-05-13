@@ -1,4 +1,4 @@
-# Valid: There aren't any Policy defining mTLS settings
+# Valid: There aren't any PeerAuthentication defining mTLS settings
 apiVersion: "networking.istio.io/v1alpha3"
 kind: "DestinationRule"
 metadata:

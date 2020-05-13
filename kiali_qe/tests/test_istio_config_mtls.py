@@ -38,7 +38,7 @@ SCENARIO_16 = "scenario16.yaml"
 
 @pytest.mark.p_group_last
 def test_scenario1(kiali_client, openshift_client, browser):
-    """ Policy is in permissive mode, it allows mTLS connections """
+    """ PeerAuthentication is in permissive mode, it allows mTLS connections """
 
     tests = ValidationsTest(
             kiali_client=kiali_client, openshift_client=openshift_client, browser=browser,
@@ -50,14 +50,14 @@ def test_scenario1(kiali_client, openshift_client, browser):
                                      'DestinationRule', 'disable-mtls', namespace=BOOKINFO,
                                      error_messages=[]),
                                  ConfigValidationObject(
-                                     'Policy', 'default', namespace=BOOKINFO,
+                                     'PeerAuthentication', 'default', namespace=BOOKINFO,
                                      error_messages=[])
                                  ])
 
 
 @pytest.mark.p_group_last
 def test_scenario2(kiali_client, openshift_client, browser):
-    """ Policy explicitly asks for mTLS connections
+    """ PeerAuthentication explicitly asks for mTLS connections
         but DestinationRule disables workload mtls connections
     """
 
@@ -72,7 +72,7 @@ def test_scenario2(kiali_client, openshift_client, browser):
                  namespace=BOOKINFO,
                  error_messages=[KIA0207]),
             ConfigValidationObject(
-                'Policy', 'default',
+                'PeerAuthentication', 'default',
                 namespace=BOOKINFO,
                 error_messages=[KIA0501])
              ])
@@ -80,7 +80,7 @@ def test_scenario2(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_group_last
 def test_scenario3(kiali_client, openshift_client, browser):
-    """ MeshPolicy explicitly ask for mTLS connections
+    """ PeerAuthentication explicitly ask for mTLS connections
     """
 
     tests = ValidationsTest(
@@ -94,7 +94,7 @@ def test_scenario3(kiali_client, openshift_client, browser):
                 namespace=BOOKINFO,
                 error_messages=[KIA0208]),
             ConfigValidationObject(
-                'MeshPolicy', 'default',
+                'PeerAuthentication', 'default',
                 namespace='istio-system', error_messages=[]),
             ConfigValidationObject(
                 'DestinationRule', 'default',
@@ -116,7 +116,7 @@ def test_scenario3(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_group_last
 def test_scenario4(kiali_client, openshift_client, browser):
-    """ MeshPolicy allows non-mTLS connections in the service mesh
+    """ PeerAuthentication allows non-mTLS connections in the service mesh
     """
 
     tests = ValidationsTest(
@@ -129,7 +129,7 @@ def test_scenario4(kiali_client, openshift_client, browser):
                 'DestinationRule', 'disable-mtls',
                 namespace=BOOKINFO, error_messages=[]),
             ConfigValidationObject(
-                'MeshPolicy', 'default',
+                'PeerAuthentication', 'default',
                 namespace='istio-system', error_messages=[]),
             ConfigValidationObject(
                 'DestinationRule', 'default',
@@ -152,7 +152,7 @@ def test_scenario4(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_group_last
 def test_scenario5(kiali_client, openshift_client, browser):
-    """ There aren't any Policy defining mTLS settings
+    """ There aren't any PeerAuthentication defining mTLS settings
     """
 
     tests = ValidationsTest(
@@ -195,7 +195,7 @@ def test_scenario6(kiali_client, openshift_client, browser):
                 'DestinationRule', 'reviews', namespace=BOOKINFO,
                 error_messages=[]),
             ConfigValidationObject(
-                'Policy', 'default',
+                'PeerAuthentication', 'default',
                 namespace=BOOKINFO,
                 error_messages=[KIA0501])
         ])
@@ -216,7 +216,7 @@ def test_scenario7(kiali_client, openshift_client, browser):
                 'DestinationRule',
                 'enable-mtls', namespace=BOOKINFO, error_messages=[]),
             ConfigValidationObject(
-                'Policy', 'default',
+                'PeerAuthentication', 'default',
                 namespace=BOOKINFO, error_messages=[])
         ],
         tls_type=MeshWideTLSType.DISABLED,
@@ -250,7 +250,7 @@ def test_scenario8(kiali_client, openshift_client, browser):
                 namespace=BOOKINFO,
                 error_messages=[KIA0205]),
             ConfigValidationObject(
-                'Policy', 'default', namespace=BOOKINFO,
+                'PeerAuthentication', 'default', namespace=BOOKINFO,
                 error_messages=[])
         ],
         tls_type=MeshWideTLSType.PARTLY_ENABLED)
@@ -269,7 +269,7 @@ def test_scenario9(kiali_client, openshift_client, browser):
         namespace=BOOKINFO,
         config_validation_objects=[
             ConfigValidationObject(
-                'Policy', 'default',
+                'PeerAuthentication', 'default',
                 namespace=BOOKINFO,
                 error_messages=[KIA0501])
         ])
@@ -290,7 +290,7 @@ def test_scenario10(kiali_client, openshift_client, browser):
                 'DestinationRule', 'enable-mtls',
                 namespace=BOOKINFO, error_messages=[]),
             ConfigValidationObject(
-                'Policy', 'default',
+                'PeerAuthentication', 'default',
                 namespace=BOOKINFO, error_messages=[])
         ])
 
@@ -310,7 +310,7 @@ def test_scenario11(kiali_client, openshift_client, browser):
                 'DestinationRule', 'enable-mtls',
                 namespace=BOOKINFO, error_messages=[]),
             ConfigValidationObject(
-                'Policy', 'default',
+                'PeerAuthentication', 'default',
                 namespace=BOOKINFO, error_messages=[])
         ])
 
@@ -330,7 +330,7 @@ def test_scenario12(kiali_client, openshift_client, browser):
                 'DestinationRule', 'enable-mtls',
                 namespace=BOOKINFO, error_messages=[]),
             ConfigValidationObject(
-                'MeshPolicy', 'default',
+                'PeerAuthentication', 'default',
                 namespace='istio-system', error_messages=[])
         ])
 
@@ -350,7 +350,7 @@ def test_scenario13(kiali_client, openshift_client, browser):
                 'DestinationRule', 'enable-mtls',
                 namespace=BOOKINFO, error_messages=[]),
             ConfigValidationObject(
-                'MeshPolicy', 'default',
+                'PeerAuthentication', 'default',
                 namespace='istio-system',
                 error_messages=[KIA0401])
         ],
@@ -377,8 +377,8 @@ def test_scenario14(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_group_last
 def test_scenario15(kiali_client, openshift_client, browser):
-    """ MeshPolicy in STRICT mode + DestinationRule enabling mTLS mesh-wide (classic scenario)
-        Policy ns-level in PERMISSIVE mode + DR disabling mTLS ns-wide.
+    """ PeerAuthentication in STRICT mode + DestinationRule enabling mTLS mesh-wide (classic scenario)
+        PeerAuthentication ns-level in PERMISSIVE mode + DR disabling mTLS ns-wide.
 
     """
 
@@ -393,7 +393,7 @@ def test_scenario15(kiali_client, openshift_client, browser):
                 namespace=BOOKINFO,
                 error_messages=[]),
             ConfigValidationObject(
-                'Policy', 'default',
+                'PeerAuthentication', 'default',
                 namespace=BOOKINFO,
                 error_messages=[])
         ])
@@ -401,7 +401,7 @@ def test_scenario15(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_group_last
 def test_scenario16(kiali_client, openshift_client, browser):
-    """ MeshPolicy OK
+    """ PeerAuthentication OK
     """
 
     tests = ValidationsTest(

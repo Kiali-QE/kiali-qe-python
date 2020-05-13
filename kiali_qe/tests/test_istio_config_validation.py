@@ -165,7 +165,7 @@ def test_subset_label_not_found(kiali_client):
 
 @pytest.mark.p_group_last
 def test_mesh_policy_not_found(kiali_client):
-    """ MeshPolicy enabling mTLS is missing
+    """ PeerAuthentication enabling mTLS is missing
     """
     tests = ValidationsTest(
         kiali_client=kiali_client,
@@ -206,8 +206,8 @@ def test_mtls_settings_overridden(kiali_client):
 
 @pytest.mark.p_group_last
 def test_meshpolicy_permissive_ok(kiali_client):
-    """ MeshPolicy enabling mTLS found, permissive policy is needed:
-        MeshPolicy to enable PERMISSIVE mode to all the workloads in the mesh
+    """ PeerAuthentication enabling mTLS found, permissive policy is needed:
+        PeerAuthentication to enable PERMISSIVE mode to all the workloads in the mesh
     """
     tests = ValidationsTest(
         kiali_client=kiali_client,
@@ -221,7 +221,7 @@ def test_meshpolicy_permissive_ok(kiali_client):
                 namespace=BOOKINFO,
                 error_messages=[]),
             ConfigValidationObject(
-                object_type='MeshPolicy',
+                object_type='PeerAuthentication',
                 object_name='default',
                 namespace=ISTIO_SYSTEM,
                 error_messages=[])
@@ -230,7 +230,7 @@ def test_meshpolicy_permissive_ok(kiali_client):
 
 @pytest.mark.p_group_last
 def test_meshpolicy_mtls_enable_ok(kiali_client):
-    """ MeshPolicy enabling mTLS found, permissive policy is needed:
+    """ PeerAuthentication enabling mTLS found, permissive policy is needed:
         DestinatonRule to enable mTLS instead of disabling it (change the mode to ISTIO_MUTUAL)
     """
     tests = ValidationsTest(
@@ -245,7 +245,7 @@ def test_meshpolicy_mtls_enable_ok(kiali_client):
                 namespace=BOOKINFO,
                 error_messages=[]),
             ConfigValidationObject(
-                object_type='MeshPolicy',
+                object_type='PeerAuthentication',
                 object_name='default',
                 namespace=ISTIO_SYSTEM,
                 error_messages=[KIA0401])
