@@ -45,10 +45,22 @@ from kiali_qe.components.enums import (
 )
 from kiali_qe.components.error_codes import (
     KIA0201,
-    KIA0301
+    KIA0301,
+    KIA0205,
+    KIA0501,
+    KIA0401,
+    KIA0204,
+    KIA0206
 )
 from kiali_qe.rest.kiali_api import ISTIO_CONFIG_TYPES
-from kiali_qe.utils import is_equal, is_sublist, word_in_text, get_url, get_yaml_path
+from kiali_qe.utils import (
+    is_equal,
+    is_sublist,
+    word_in_text,
+    get_url,
+    get_yaml_path,
+    remove_from_list
+)
 from kiali_qe.utils.log import logger
 from kiali_qe.utils.command_exec import oc_apply, oc_delete
 
@@ -1627,7 +1639,7 @@ class IstioConfigPageTest(AbstractListPageTest):
                     split(' ')
                 config_oc_list.append('kind:')
                 config_oc_list.append(config_details_oc._type)
-                if ui_key == 'apiVersion:':
+                if ui_key == 'apiVersion:' or ui_key == 'selfLink:':
                     continue
                 for config_oc in config_oc_list:
                     if config_oc.endswith(':'):
@@ -1732,7 +1744,7 @@ class DistributedTracingPageTest(AbstractListPageTest):
 
 class ValidationsTest(object):
 
-    def __init__(self, kiali_client, objects_path, openshift_client=None, browser=None):
+    def __init__(self, kiali_client, objects_path, openshift_client, browser=None):
         self.kiali_client = kiali_client
         self.openshift_client = openshift_client
         self.browser = browser
@@ -1814,14 +1826,16 @@ class ValidationsTest(object):
         rest_error_messages = config_details_rest.error_messages
 
         if ignore_common_errors:
-            try:
-                rest_error_messages.remove(KIA0201)
-            except ValueError:
-                pass
-            try:
-                rest_error_messages.remove(KIA0301)
-            except ValueError:
-                pass
+            remove_from_list(rest_error_messages, KIA0201)
+            remove_from_list(rest_error_messages, KIA0301)
+
+        if self.openshift_client.is_auto_mtls():
+            # remove errors which are ignored during auto mtls
+            remove_from_list(error_messages, KIA0501)
+            remove_from_list(error_messages, KIA0204)
+            remove_from_list(error_messages, KIA0205)
+            remove_from_list(error_messages, KIA0401)
+            remove_from_list(error_messages, KIA0206)
 
         assert len(error_messages) == len(rest_error_messages), \
             'Error messages are different Expected:{}, Got:{}'.\

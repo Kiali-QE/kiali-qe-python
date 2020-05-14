@@ -136,7 +136,8 @@ def test_scenario4(kiali_client, openshift_client, browser):
                 namespace='istio-system',
                 error_messages=[])
         ],
-        tls_type=MeshWideTLSType.PARTLY_ENABLED,
+        tls_type=(MeshWideTLSType.PARTLY_ENABLED if not openshift_client.is_auto_mtls()
+                  else MeshWideTLSType.DISABLED),
         namespace_tls_objects=[
             NamespaceTLSObject(
                 'bookinfo',
@@ -253,7 +254,8 @@ def test_scenario8(kiali_client, openshift_client, browser):
                 'PeerAuthentication', 'default', namespace=BOOKINFO,
                 error_messages=[])
         ],
-        tls_type=MeshWideTLSType.PARTLY_ENABLED)
+        tls_type=(MeshWideTLSType.PARTLY_ENABLED if not openshift_client.is_auto_mtls()
+                  else MeshWideTLSType.DISABLED))
 
 
 @pytest.mark.p_group_last
@@ -354,7 +356,8 @@ def test_scenario13(kiali_client, openshift_client, browser):
                 namespace='istio-system',
                 error_messages=[KIA0401])
         ],
-        tls_type=MeshWideTLSType.PARTLY_ENABLED)
+        tls_type=(MeshWideTLSType.PARTLY_ENABLED if not openshift_client.is_auto_mtls()
+                  else MeshWideTLSType.DISABLED))
 
 
 @pytest.mark.p_group_last

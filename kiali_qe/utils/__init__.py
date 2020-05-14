@@ -116,7 +116,7 @@ def to_linear_string(source):
             replace('{', '').\
             replace('}', '').\
             replace(':', '').\
-            replace('\'', '').lower()
+            replace('\'', '').lower().strip()
 
 
 def get_texts_of_elements(elements):
@@ -137,3 +137,10 @@ def get_url(products, key):
     for item in products:
         if item['name'] == key and 'url' in item:
             return item['url']
+
+
+def remove_from_list(items_list, item_to_remove):
+    try:
+        items_list.remove(item_to_remove)
+    except ValueError:
+        pass
