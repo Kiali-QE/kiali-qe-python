@@ -20,7 +20,7 @@ ACCESS_TOKEN2 = 'token2'
 
 
 @pytest.mark.p_ro_namespace
-@pytest.mark.p_crud_group6
+@pytest.mark.p_crud_group3
 def test_weighted_routing_single(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -47,7 +47,7 @@ def test_routing_keep_advanced_settings(kiali_client, openshift_client, browser,
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     # use only bookinfo2 namespace where colliding tests are in the same p_group
     namespace = pick_namespace(BOOKINFO_2)
-    name = 'details'
+    name = 'mysqldb'
     tests.test_routing_create(name=name, namespace=namespace,
                               routing_type=RoutingWizardType.CREATE_WEIGHTED_ROUTING,
                               tls=RoutingWizardTLS.ISTIO_MUTUAL, load_balancer=True,
@@ -118,7 +118,7 @@ def test_suspend_traffic_multi(kiali_client, openshift_client, browser, pick_nam
 
 
 @pytest.mark.p_ro_namespace
-@pytest.mark.p_crud_group6
+@pytest.mark.p_crud_group5
 def test_tls_mutual(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -139,7 +139,7 @@ def test_tls_mutual(kiali_client, openshift_client, browser, pick_namespace):
 
 
 @pytest.mark.p_ro_namespace
-@pytest.mark.p_crud_group6
+@pytest.mark.p_crud_group5
 def test_3scale_rule(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)

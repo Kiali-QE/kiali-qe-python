@@ -12,8 +12,8 @@ ACCESS_TOKEN1 = 'token1'
 ACCESS_TOKEN2 = 'token2'
 
 
-@pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group1
+@pytest.mark.p_atomic
+@pytest.mark.p_ro_group4
 def test_sort_options(kiali_client, openshift_client, browser):
     tests = ThreeScaleConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -21,7 +21,7 @@ def test_sort_options(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group1
+@pytest.mark.p_crud_group2
 def test_all_handlers(kiali_client, openshift_client, browser):
     _handler_create(kiali_client, NAME1, SERVICE_ID1, SYSTEM_URL1, ACCESS_TOKEN1)
     _handler_create(kiali_client, NAME2, SERVICE_ID2, SYSTEM_URL2, ACCESS_TOKEN2)
@@ -31,7 +31,7 @@ def test_all_handlers(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group1
+@pytest.mark.p_crud_group2
 def test_handler_details(kiali_client, openshift_client, browser):
     _handler_create(kiali_client, NAME1, SERVICE_ID1, SYSTEM_URL1, ACCESS_TOKEN1)
     tests = ThreeScaleConfigPageTest(
@@ -40,7 +40,7 @@ def test_handler_details(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group1
+@pytest.mark.p_crud_group2
 def test_handler_create(kiali_client, openshift_client, browser):
     _handler_delete(kiali_client, NAME1)
     tests = ThreeScaleConfigPageTest(
@@ -49,7 +49,7 @@ def test_handler_create(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group1
+@pytest.mark.p_crud_group2
 def test_handler_update(kiali_client, openshift_client, browser):
     _handler_create(kiali_client, NAME1, SERVICE_ID1, SYSTEM_URL1, ACCESS_TOKEN1)
     _handler_delete(kiali_client, NAME2)
@@ -59,7 +59,7 @@ def test_handler_update(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group1
+@pytest.mark.p_crud_group2
 def test_handler_delete(kiali_client, openshift_client, browser):
     _handler_create(kiali_client, NAME1, SERVICE_ID1, SYSTEM_URL1, ACCESS_TOKEN1)
     tests = ThreeScaleConfigPageTest(
