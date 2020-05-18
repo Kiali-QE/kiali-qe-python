@@ -57,11 +57,12 @@ SCENARIO_20 = "default-sidecar-with-workload.yaml"
 
 
 @pytest.mark.p_group_last
-def test_two_gateways_same_host(kiali_client):
+def test_two_gateways_same_host(kiali_client, openshift_client):
     """ More than one Gateway for the same host port combination
     """
     tests = ValidationsTest(
         kiali_client=kiali_client,
+        openshift_client=openshift_client,
         objects_path=istio_objects_validation_path.strpath)
     tests.test_istio_objects(
         scenario=SCENARIO_1, namespace=None,
@@ -81,11 +82,12 @@ def test_two_gateways_same_host(kiali_client):
 
 
 @pytest.mark.p_group_last
-def test_gateway_no_matching_workload(kiali_client):
+def test_gateway_no_matching_workload(kiali_client, openshift_client):
     """ No matching workload found for gateway selector in this namespace
     """
     tests = ValidationsTest(
         kiali_client=kiali_client,
+        openshift_client=openshift_client,
         objects_path=istio_objects_validation_path.strpath)
     tests.test_istio_objects(
         scenario=SCENARIO_2, namespace=None,
@@ -99,11 +101,12 @@ def test_gateway_no_matching_workload(kiali_client):
 
 
 @pytest.mark.p_group_last
-def test_more_drs_same_host_port(kiali_client):
+def test_more_drs_same_host_port(kiali_client, openshift_client):
     """ More than one DestinationRules for the same host subset combination
     """
     tests = ValidationsTest(
         kiali_client=kiali_client,
+        openshift_client=openshift_client,
         objects_path=istio_objects_validation_path.strpath)
     tests.test_istio_objects(
         scenario=SCENARIO_3, namespace=BOOKINFO,
@@ -123,12 +126,13 @@ def test_more_drs_same_host_port(kiali_client):
 
 
 @pytest.mark.p_group_last
-def test_no_matching_entry_dr(kiali_client):
+def test_no_matching_entry_dr(kiali_client, openshift_client):
     """ This host has no matching entry in the service registry
         (service, workload or service entries)
     """
     tests = ValidationsTest(
         kiali_client=kiali_client,
+        openshift_client=openshift_client,
         objects_path=istio_objects_validation_path.strpath)
     tests.test_istio_objects(
         scenario=SCENARIO_4, namespace=BOOKINFO,
@@ -145,11 +149,12 @@ def test_no_matching_entry_dr(kiali_client):
 
 
 @pytest.mark.p_group_last
-def test_subset_label_not_found(kiali_client):
+def test_subset_label_not_found(kiali_client, openshift_client):
     """ This subset’s labels are not found in any matching host
     """
     tests = ValidationsTest(
         kiali_client=kiali_client,
+        openshift_client=openshift_client,
         objects_path=istio_objects_validation_path.strpath)
     tests.test_istio_objects(
         scenario=SCENARIO_5, namespace=BOOKINFO,
@@ -164,11 +169,12 @@ def test_subset_label_not_found(kiali_client):
 
 
 @pytest.mark.p_group_last
-def test_mesh_policy_not_found(kiali_client):
+def test_mesh_policy_not_found(kiali_client, openshift_client):
     """ PeerAuthentication enabling mTLS is missing
     """
     tests = ValidationsTest(
         kiali_client=kiali_client,
+        openshift_client=openshift_client,
         objects_path=istio_objects_validation_path.strpath)
     tests.test_istio_objects(
         scenario=SCENARIO_6, namespace=ISTIO_SYSTEM,
@@ -182,11 +188,12 @@ def test_mesh_policy_not_found(kiali_client):
 
 
 @pytest.mark.p_group_last
-def test_mtls_settings_overridden(kiali_client):
+def test_mtls_settings_overridden(kiali_client, openshift_client):
     """ mTLS settings of a non-local Destination Rule are overridden
     """
     tests = ValidationsTest(
         kiali_client=kiali_client,
+        openshift_client=openshift_client,
         objects_path=istio_objects_validation_path.strpath)
     tests.test_istio_objects(
         scenario=SCENARIO_7, namespace=None,
@@ -205,12 +212,13 @@ def test_mtls_settings_overridden(kiali_client):
 
 
 @pytest.mark.p_group_last
-def test_meshpolicy_permissive_ok(kiali_client):
+def test_meshpolicy_permissive_ok(kiali_client, openshift_client):
     """ PeerAuthentication enabling mTLS found, permissive policy is needed:
         PeerAuthentication to enable PERMISSIVE mode to all the workloads in the mesh
     """
     tests = ValidationsTest(
         kiali_client=kiali_client,
+        openshift_client=openshift_client,
         objects_path=istio_objects_validation_path.strpath)
     tests.test_istio_objects(
         scenario=SCENARIO_8, namespace=None,
@@ -229,12 +237,13 @@ def test_meshpolicy_permissive_ok(kiali_client):
 
 
 @pytest.mark.p_group_last
-def test_meshpolicy_mtls_enable_ok(kiali_client):
+def test_meshpolicy_mtls_enable_ok(kiali_client, openshift_client):
     """ PeerAuthentication enabling mTLS found, permissive policy is needed:
         DestinatonRule to enable mTLS instead of disabling it (change the mode to ISTIO_MUTUAL)
     """
     tests = ValidationsTest(
         kiali_client=kiali_client,
+        openshift_client=openshift_client,
         objects_path=istio_objects_validation_path.strpath)
     tests.test_istio_objects(
         scenario=SCENARIO_9, namespace=None,
@@ -253,11 +262,12 @@ def test_meshpolicy_mtls_enable_ok(kiali_client):
 
 
 @pytest.mark.p_group_last
-def test_vs_to_non_existing_gateway(kiali_client):
+def test_vs_to_non_existing_gateway(kiali_client, openshift_client):
     """ VirtualService is pointing to a non-existent gateway
     """
     tests = ValidationsTest(
         kiali_client=kiali_client,
+        openshift_client=openshift_client,
         objects_path=istio_objects_validation_path.strpath)
     tests.test_istio_objects(
         scenario=SCENARIO_10, namespace=BOOKINFO,
@@ -271,12 +281,13 @@ def test_vs_to_non_existing_gateway(kiali_client):
 
 
 @pytest.mark.p_group_last
-def test_vs_not_defined_protocol(kiali_client):
+def test_vs_not_defined_protocol(kiali_client, openshift_client):
     """ VirtualService doesn’t define any route protocol
     """
     try:
         tests = ValidationsTest(
             kiali_client=kiali_client,
+            openshift_client=openshift_client,
             objects_path=istio_objects_validation_path.strpath)
         tests.test_istio_objects(
             scenario=SCENARIO_11, namespace=BOOKINFO,
@@ -293,11 +304,12 @@ def test_vs_not_defined_protocol(kiali_client):
 
 
 @pytest.mark.p_group_last
-def test_dr_fqdn_ok(kiali_client):
+def test_dr_fqdn_ok(kiali_client, openshift_client):
     """ Host in DR is given in FQDN
     """
     tests = ValidationsTest(
         kiali_client=kiali_client,
+        openshift_client=openshift_client,
         objects_path=istio_objects_validation_path.strpath)
     tests.test_istio_objects(
         scenario=SCENARIO_12, namespace=None,
@@ -311,11 +323,12 @@ def test_dr_fqdn_ok(kiali_client):
 
 
 @pytest.mark.p_group_last
-def test_dr_fqdn_not_exist(kiali_client):
+def test_dr_fqdn_not_exist(kiali_client, openshift_client):
     """ Host in DR is given in FQDN which does not exist
     """
     tests = ValidationsTest(
         kiali_client=kiali_client,
+        openshift_client=openshift_client,
         objects_path=istio_objects_validation_path.strpath)
     tests.test_istio_objects(
         scenario=SCENARIO_13, namespace=None,
@@ -332,11 +345,12 @@ def test_dr_fqdn_not_exist(kiali_client):
 
 
 @pytest.mark.p_group_last
-def test_deployment_port_not_found(kiali_client):
+def test_deployment_port_not_found(kiali_client, openshift_client):
     """ Deployment exposing same port as Service not found
     """
     tests = ValidationsTest(
         kiali_client=kiali_client,
+        openshift_client=openshift_client,
         objects_path=istio_objects_validation_path.strpath)
     tests.test_service_validation(
         scenario=SCENARIO_14, service_name='ratings-java',
@@ -347,11 +361,12 @@ def test_deployment_port_not_found(kiali_client):
 
 
 @pytest.mark.p_group_last
-def test_port_name_suffix(kiali_client):
+def test_port_name_suffix(kiali_client, openshift_client):
     """ Port name must follow <protocol>[-suffix] form
     """
     tests = ValidationsTest(
         kiali_client=kiali_client,
+        openshift_client=openshift_client,
         objects_path=istio_objects_validation_path.strpath)
     tests.test_service_validation(
         scenario=SCENARIO_15, service_name='ratings-java-svc-suffix',
@@ -362,11 +377,12 @@ def test_port_name_suffix(kiali_client):
 
 
 @pytest.mark.p_group_last
-def test_vs_less_than_100_weight(kiali_client):
+def test_vs_less_than_100_weight(kiali_client, openshift_client):
     """ VirtualService has only weight < 100
     """
     tests = ValidationsTest(
         kiali_client=kiali_client,
+        openshift_client=openshift_client,
         objects_path=istio_objects_validation_path.strpath)
     tests.test_istio_objects(
         scenario=SCENARIO_16, namespace=BOOKINFO,
@@ -380,11 +396,12 @@ def test_vs_less_than_100_weight(kiali_client):
 
 
 @pytest.mark.p_group_last
-def test_sidecar_errors(kiali_client):
+def test_sidecar_errors(kiali_client, openshift_client):
     """ Multiple errors
     """
     tests = ValidationsTest(
         kiali_client=kiali_client,
+        openshift_client=openshift_client,
         objects_path=istio_objects_validation_path.strpath)
     tests.test_istio_objects(
         scenario=SCENARIO_17, namespace=BOOKINFO,
@@ -400,11 +417,12 @@ def test_sidecar_errors(kiali_client):
 
 
 @pytest.mark.p_group_last
-def test_duplicate_sidecar_errors(kiali_client):
+def test_duplicate_sidecar_errors(kiali_client, openshift_client):
     """ More than one selector-less Sidecar in the same namespace
     """
     tests = ValidationsTest(
         kiali_client=kiali_client,
+        openshift_client=openshift_client,
         objects_path=istio_objects_validation_path.strpath)
     tests.test_istio_objects(
         scenario=SCENARIO_18, namespace=BOOKINFO,
@@ -423,11 +441,12 @@ def test_duplicate_sidecar_errors(kiali_client):
 
 
 @pytest.mark.p_group_last
-def test_duplicate_workload_sidecar_errors(kiali_client):
+def test_duplicate_workload_sidecar_errors(kiali_client, openshift_client):
     """ More than one selector-less Sidecar in the same namespace
     """
     tests = ValidationsTest(
         kiali_client=kiali_client,
+        openshift_client=openshift_client,
         objects_path=istio_objects_validation_path.strpath)
     tests.test_istio_objects(
         scenario=SCENARIO_19, namespace=BOOKINFO,
@@ -446,11 +465,12 @@ def test_duplicate_workload_sidecar_errors(kiali_client):
 
 
 @pytest.mark.p_group_last
-def test_default_workload_sidecar(kiali_client):
+def test_default_workload_sidecar(kiali_client, openshift_client):
     """ Global default sidecar should not have workloadSelector
     """
     tests = ValidationsTest(
         kiali_client=kiali_client,
+        openshift_client=openshift_client,
         objects_path=istio_objects_validation_path.strpath)
     tests.test_istio_objects(
         scenario=SCENARIO_20, namespace=ISTIO_SYSTEM,

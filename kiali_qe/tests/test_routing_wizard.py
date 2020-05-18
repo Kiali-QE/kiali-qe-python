@@ -8,6 +8,7 @@ from kiali_qe.components.enums import (
     IstioConfigObjectType
 )
 
+BOOKINFO = 'bookinfo'
 BOOKINFO_2 = 'bookinfo2'
 HANDLER_NAME1 = 'handlerrule1'
 HANDLER_NAME2 = 'handlerrule2'
@@ -81,7 +82,7 @@ def test_matching_routing_multi(kiali_client, openshift_client, browser, pick_na
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     # use only bookinfo2 namespace where colliding tests are in the same p_group
-    namespace = pick_namespace(BOOKINFO_2)
+    namespace = pick_namespace(BOOKINFO)
     name = 'reviews'
     tests.test_routing_create(name=name, namespace=namespace,
                               routing_type=RoutingWizardType.CREATE_MATCHING_ROUTING,

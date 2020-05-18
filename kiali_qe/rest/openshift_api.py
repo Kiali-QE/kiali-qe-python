@@ -57,6 +57,8 @@ class OpenshiftExtendedClient(object):
 
     WORKLOAD_NAME_REGEX = re.compile('(-(\\w{1,8}\\d+\\w{1,8}))(-(\\w{0,7}\\d+\\w{0,7})$)?')
 
+    ISTIO_SYSTEM = "istio-system"
+
     def __init__(self):
         self._k8s_client = config.new_client_from_config()
         self._dyn_client = DynamicClient(self._k8s_client)
@@ -133,7 +135,7 @@ class OpenshiftExtendedClient(object):
 
     @property
     def _workloadentry(self):
-        return self._istio_config(kind='WorkloadEntry', api_version='v1beta1')
+        return self._istio_config(kind='WorkloadEntry', api_version='v1alpha3')
 
     @property
     def _rule(self):
@@ -206,6 +208,10 @@ class OpenshiftExtendedClient(object):
     @property
     def _servicerolebinding(self):
         return self._istio_config(kind='ServiceRoleBinding', api_version='v1alpha1')
+
+    @property
+    def _configmap(self):
+        return self._resource(kind='ConfigMap')
 
     def namespace_list(self):
         """ Returns list of namespaces """
@@ -465,7 +471,7 @@ class OpenshiftExtendedClient(object):
             elif str(resource_type) == IstioConfigObjectType.SERVICE_MESH_POLICY.text or\
                     str(resource_type) == IstioConfigObjectType.SERVICE_MESH_RBAC_CONFIG.text:
                 _config = IstioConfig(name=_item.metadata.name,
-                                      namespace="istio-system",
+                                      namespace=self.ISTIO_SYSTEM,
                                       object_type=resource_type)
                 if _config not in items:
                     # append this item to the final list
@@ -607,3 +613,7 @@ class OpenshiftExtendedClient(object):
         resp = self._istio_config(kind=kind, api_version=api_version).create(body=body,
                                                                              namespace=namespace)
         return resp
+
+    def is_auto_mtls(self):
+        return 'enableAutoMtls: true' in self._configmap.get(name='istio',
+                                                             namespace=self.ISTIO_SYSTEM).data.mesh
