@@ -2110,7 +2110,7 @@ class ListViewAbstract(ViewAbstract):
         return _selector_dict
 
     def get_mesh_wide_tls(self):
-        self.browser.refresh()
+        self.browser.click(self.parent.refresh)
         wait_to_spinner_disappear(self.browser)
         wait_displayed(self)
         _partial = len(self.browser.elements(
