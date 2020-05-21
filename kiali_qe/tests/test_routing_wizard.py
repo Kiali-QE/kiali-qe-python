@@ -82,8 +82,8 @@ def test_matching_routing_multi(kiali_client, openshift_client, browser, pick_na
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     # use only bookinfo2 namespace where colliding tests are in the same p_group
-    namespace = pick_namespace(BOOKINFO)
-    name = 'reviews'
+    namespace = pick_namespace(BOOKINFO_2)
+    name = 'ratings'
     tests.test_routing_create(name=name, namespace=namespace,
                               routing_type=RoutingWizardType.CREATE_MATCHING_ROUTING,
                               tls=RoutingWizardTLS.SIMPLE, load_balancer=True,
@@ -125,7 +125,7 @@ def test_tls_mutual(kiali_client, openshift_client, browser, pick_namespace):
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     # use only bookinfo2 namespace where colliding tests are in the same p_group
     namespace = pick_namespace(BOOKINFO_2)
-    name = 'details'
+    name = 'mongodb'
     tests.test_routing_create(name=name, namespace=namespace,
                               routing_type=RoutingWizardType.CREATE_WEIGHTED_ROUTING,
                               tls=RoutingWizardTLS.MUTUAL, load_balancer=False,

@@ -211,13 +211,13 @@ def test_virtual_service_svc_warning(kiali_client, openshift_client, browser):
     _istio_config_create(openshift_client, virtual_service_dict, virtual_service,
                          'VirtualService',
                          'networking.istio.io/v1alpha3',
-                         namespace=BOOKINFO_1)
+                         namespace=BOOKINFO_2)
     virtual_service2 = get_yaml(istio_objects_path.strpath, VIRTUAL_SERVICE_SVC2)
     virtual_service_dict2 = get_dict(istio_objects_path.strpath, VIRTUAL_SERVICE_SVC2)
     _istio_config_create(openshift_client, virtual_service_dict2, virtual_service2,
                          'VirtualService',
                          'networking.istio.io/v1alpha3',
-                         namespace=BOOKINFO_1)
+                         namespace=BOOKINFO_2)
     _create_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
     _istio_config_details_test(kiali_client,
@@ -225,7 +225,7 @@ def test_virtual_service_svc_warning(kiali_client, openshift_client, browser):
                                browser,
                                virtual_service_dict,
                                virtual_service,
-                               namespace=BOOKINFO_1,
+                               namespace=BOOKINFO_2,
                                kind='VirtualService',
                                api_version='networking.istio.io/v1alpha3',
                                error_messages=[KIA1106])
@@ -234,7 +234,7 @@ def test_virtual_service_svc_warning(kiali_client, openshift_client, browser):
                                browser,
                                virtual_service_dict2,
                                virtual_service2,
-                               namespace=BOOKINFO_1,
+                               namespace=BOOKINFO_2,
                                kind='VirtualService',
                                api_version='networking.istio.io/v1alpha3',
                                error_messages=[KIA1106])
