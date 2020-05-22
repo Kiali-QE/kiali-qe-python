@@ -54,6 +54,7 @@ SCENARIO_17 = "wrong-host-label-sidecar.yaml"
 SCENARIO_18 = "duplicate-no-workload-sidecar.yaml"
 SCENARIO_19 = "duplicate-workload-sidecar.yaml"
 SCENARIO_20 = "default-sidecar-with-workload.yaml"
+SCENARIO_21 = "mesh_policy_disable.yaml"
 
 
 @pytest.mark.p_group_last
@@ -480,4 +481,29 @@ def test_default_workload_sidecar(kiali_client, openshift_client):
                 object_name='default-sidecar-workload-auto',
                 namespace=ISTIO_SYSTEM,
                 error_messages=[KIA1006, KIA1001])
+        ])
+
+
+@pytest.mark.p_group_last
+def test_meshpolicy_disabled_ok(kiali_client, openshift_client):
+    """ PeerAuthentication disabling mtls for the whole namespace (mode = DISABLE)
+        Destination Rule disabling mTLS for a whole namespace (mode = DISABLE)
+    """
+    tests = ValidationsTest(
+        kiali_client=kiali_client,
+        openshift_client=openshift_client,
+        objects_path=istio_objects_validation_path.strpath)
+    tests.test_istio_objects(
+        scenario=SCENARIO_21, namespace=None,
+        config_validation_objects=[
+            ConfigValidationObject(
+                object_type='DestinationRule',
+                object_name='disable-mtls',
+                namespace=BOOKINFO,
+                error_messages=[]),
+            ConfigValidationObject(
+                object_type='PeerAuthentication',
+                object_name='default',
+                namespace=BOOKINFO,
+                error_messages=[])
         ])

@@ -18,6 +18,7 @@ can be run in parallel.
 '''
 
 BOOKINFO = 'bookinfo'
+ISTIO_SYSTEM = 'istio-system'
 SCENARIO_1 = "scenario1.yaml"
 SCENARIO_2 = "scenario2.yaml"
 SCENARIO_3 = "scenario3.yaml"
@@ -34,6 +35,11 @@ SCENARIO_13 = "scenario13.yaml"
 SCENARIO_14 = "scenario14.yaml"
 SCENARIO_15 = "scenario15.yaml"
 SCENARIO_16 = "scenario16.yaml"
+SCENARIO_17 = "scenario17.yaml"
+SCENARIO_18 = "scenario18.yaml"
+SCENARIO_19 = "scenario19.yaml"
+SCENARIO_20 = "scenario20.yaml"
+SCENARIO_21 = "scenario21.yaml"
 
 
 @pytest.mark.p_group_last
@@ -52,7 +58,19 @@ def test_scenario1(kiali_client, openshift_client, browser):
                                  ConfigValidationObject(
                                      'PeerAuthentication', 'default', namespace=BOOKINFO,
                                      error_messages=[])
-                                 ])
+                                 ],
+                             tls_type=MeshWideTLSType.DISABLED,
+                             namespace_tls_objects=[
+                                NamespaceTLSObject(
+                                    'bookinfo',
+                                    MeshWideTLSType.PARTLY_ENABLED),
+                                NamespaceTLSObject(
+                                    'istio-system',
+                                    MeshWideTLSType.DISABLED),
+                                NamespaceTLSObject(
+                                    'default',
+                                    MeshWideTLSType.DISABLED)
+                             ])
 
 
 @pytest.mark.p_group_last
@@ -75,7 +93,19 @@ def test_scenario2(kiali_client, openshift_client, browser):
                 'PeerAuthentication', 'default',
                 namespace=BOOKINFO,
                 error_messages=[KIA0501])
-             ])
+             ],
+        tls_type=MeshWideTLSType.DISABLED,
+        namespace_tls_objects=[
+            NamespaceTLSObject(
+                'bookinfo',
+                MeshWideTLSType.PARTLY_ENABLED),
+            NamespaceTLSObject(
+                'istio-system',
+                MeshWideTLSType.DISABLED),
+            NamespaceTLSObject(
+                'default',
+                MeshWideTLSType.DISABLED)
+        ])
 
 
 @pytest.mark.p_group_last
@@ -199,6 +229,19 @@ def test_scenario6(kiali_client, openshift_client, browser):
                 'PeerAuthentication', 'default',
                 namespace=BOOKINFO,
                 error_messages=[KIA0501])
+        ],
+        tls_type=MeshWideTLSType.DISABLED,
+        namespace_tls_objects=[
+            NamespaceTLSObject(
+                'bookinfo',
+                (MeshWideTLSType.PARTLY_ENABLED if not openshift_client.is_auto_mtls()
+                 else MeshWideTLSType.ENABLED)),
+            NamespaceTLSObject(
+                'istio-system',
+                MeshWideTLSType.DISABLED),
+            NamespaceTLSObject(
+                'default',
+                MeshWideTLSType.DISABLED)
         ])
 
 
@@ -357,7 +400,7 @@ def test_scenario13(kiali_client, openshift_client, browser):
                 error_messages=[KIA0401])
         ],
         tls_type=(MeshWideTLSType.PARTLY_ENABLED if not openshift_client.is_auto_mtls()
-                  else MeshWideTLSType.DISABLED))
+                  else MeshWideTLSType.ENABLED))
 
 
 @pytest.mark.p_group_last
@@ -426,3 +469,181 @@ def test_scenario16(kiali_client, openshift_client, browser):
                 'default',
                 MeshWideTLSType.ENABLED)
         ])
+
+
+@pytest.mark.p_group_last
+def test_scenario17(kiali_client, openshift_client, browser):
+    """ Destination Rule valid: it doesn't define any mTLS setting
+        PeerAuth: STRICT
+    """
+
+    tests = ValidationsTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser,
+        objects_path=istio_objects_mtls_path.strpath)
+    tests.test_istio_objects(
+        SCENARIO_17,
+        namespace=BOOKINFO,
+        config_validation_objects=[
+            ConfigValidationObject(
+                'DestinationRule', 'reviews', namespace=BOOKINFO,
+                error_messages=[]),
+            ConfigValidationObject(
+                'PeerAuthentication', 'default',
+                namespace=BOOKINFO,
+                error_messages=[KIA0501])
+        ],
+        tls_type=MeshWideTLSType.DISABLED,
+        namespace_tls_objects=[
+            NamespaceTLSObject(
+                'bookinfo',
+                (MeshWideTLSType.PARTLY_ENABLED if not openshift_client.is_auto_mtls()
+                 else MeshWideTLSType.ENABLED)),
+            NamespaceTLSObject(
+                'istio-system',
+                MeshWideTLSType.DISABLED),
+            NamespaceTLSObject(
+                'default',
+                MeshWideTLSType.DISABLED)
+        ])
+
+
+@pytest.mark.p_group_last
+def test_scenario18(kiali_client, openshift_client, browser):
+    """ Destination Rule valid: ISTIO_MUTUAL
+        PeerAuth: PERMISSIVE
+    """
+
+    tests = ValidationsTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser,
+        objects_path=istio_objects_mtls_path.strpath)
+    tests.test_istio_objects(
+        SCENARIO_18,
+        namespace=BOOKINFO,
+        config_validation_objects=[
+            ConfigValidationObject(
+                'DestinationRule', 'enable-mtls',
+                namespace=BOOKINFO,
+                error_messages=[]),
+            ConfigValidationObject(
+                'PeerAuthentication', 'default',
+                namespace=BOOKINFO,
+                error_messages=[])
+        ],
+        tls_type=MeshWideTLSType.DISABLED,
+        namespace_tls_objects=[
+            NamespaceTLSObject(
+                'bookinfo',
+                MeshWideTLSType.PARTLY_ENABLED),
+            NamespaceTLSObject(
+                'istio-system',
+                MeshWideTLSType.DISABLED),
+            NamespaceTLSObject(
+                'default',
+                MeshWideTLSType.DISABLED)
+        ])
+
+
+@pytest.mark.p_group_last
+def test_scenario19(kiali_client, openshift_client, browser):
+    """ Destination Rule valid: Empty
+        PeerAuth: DISABLE
+    """
+
+    tests = ValidationsTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser,
+        objects_path=istio_objects_mtls_path.strpath)
+    tests.test_istio_objects(
+        SCENARIO_19,
+        namespace=BOOKINFO,
+        config_validation_objects=[
+            ConfigValidationObject(
+                'DestinationRule', 'reviews',
+                namespace=BOOKINFO,
+                error_messages=[]),
+            ConfigValidationObject(
+                'PeerAuthentication', 'default',
+                namespace=BOOKINFO,
+                error_messages=[])
+        ],
+        tls_type=MeshWideTLSType.DISABLED,
+        namespace_tls_objects=[
+            NamespaceTLSObject(
+                'bookinfo',
+                (MeshWideTLSType.PARTLY_ENABLED if not openshift_client.is_auto_mtls()
+                 else MeshWideTLSType.DISABLED)),
+            NamespaceTLSObject(
+                'istio-system',
+                MeshWideTLSType.DISABLED),
+            NamespaceTLSObject(
+                'default',
+                MeshWideTLSType.DISABLED)
+        ])
+
+
+@pytest.mark.p_group_last
+def test_scenario20(kiali_client, openshift_client, browser):
+    """ Destination Rule valid: ISTIO_MUTUAL
+        PeerAuth: DISABLE
+    """
+
+    tests = ValidationsTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser,
+        objects_path=istio_objects_mtls_path.strpath)
+    tests.test_istio_objects(
+        SCENARIO_20,
+        namespace=ISTIO_SYSTEM,
+        config_validation_objects=[
+            ConfigValidationObject(
+                'DestinationRule', 'default',
+                namespace=ISTIO_SYSTEM,
+                error_messages=[]),
+            ConfigValidationObject(
+                'PeerAuthentication', 'default',
+                namespace=ISTIO_SYSTEM,
+                error_messages=[])
+        ],
+        tls_type=MeshWideTLSType.DISABLED,
+        namespace_tls_objects=[
+            NamespaceTLSObject(
+                'bookinfo',
+                MeshWideTLSType.PARTLY_ENABLED),
+            NamespaceTLSObject(
+                'istio-system',
+                MeshWideTLSType.DISABLED),
+            NamespaceTLSObject(
+                'default',
+                MeshWideTLSType.DISABLED)
+        ])
+
+
+@pytest.mark.p_group_last
+def test_scenario21(kiali_client, openshift_client, browser):
+    """ PeerAuthentication is DISABLE
+        DestinationRule is DISABLE
+    """
+
+    tests = ValidationsTest(
+            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser,
+            objects_path=istio_objects_mtls_path.strpath)
+    tests.test_istio_objects(SCENARIO_21,
+                             namespace=BOOKINFO,
+                             config_validation_objects=[
+                                 ConfigValidationObject(
+                                     'DestinationRule', 'disable-mtls', namespace=BOOKINFO,
+                                     error_messages=[]),
+                                 ConfigValidationObject(
+                                     'PeerAuthentication', 'default', namespace=BOOKINFO,
+                                     error_messages=[])
+                                 ],
+                             tls_type=MeshWideTLSType.DISABLED,
+                             namespace_tls_objects=[
+                                NamespaceTLSObject(
+                                    'bookinfo',
+                                    MeshWideTLSType.DISABLED),
+                                NamespaceTLSObject(
+                                    'istio-system',
+                                    MeshWideTLSType.DISABLED),
+                                NamespaceTLSObject(
+                                    'default',
+                                    MeshWideTLSType.DISABLED)
+                             ])
