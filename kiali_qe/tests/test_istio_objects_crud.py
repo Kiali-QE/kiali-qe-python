@@ -8,7 +8,9 @@ from kiali_qe.utils.path import istio_objects_path
 from kiali_qe.components.enums import (
     IstioConfigObjectType,
     IstioConfigPageFilter,
-    IstioConfigValidationType
+    IstioConfigValidationType,
+    AuthPolicyType,
+    AuthPolicyActionType
 )
 from kiali_qe.components.error_codes import (
     KIA0202,
@@ -453,6 +455,72 @@ def test_sidecar_create(kiali_client, openshift_client, browser, pick_namespace)
 
 @pytest.mark.p_crud_resource
 @pytest.mark.p_crud_group3
+def test_authpolicy_deny_all_create(kiali_client, openshift_client, browser, pick_namespace):
+    namespace = pick_namespace(BOOKINFO_2)
+    authpolicy_name = 'authpolicydenyalltocreate'
+    namespaces = [BOOKINFO_1, namespace]
+    try:
+        _delete_authpolicies(openshift_client, authpolicy_name, namespaces)
+        tests = IstioConfigPageTest(
+            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+        tests.test_authpolicy_create(name=authpolicy_name,
+                                     policy=AuthPolicyType.DENY_ALL.text,
+                                     namespaces=namespaces)
+    finally:
+        _delete_authpolicies(openshift_client, authpolicy_name, namespaces)
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group3
+def test_authpolicy_allow_all_create(kiali_client, openshift_client, browser, pick_namespace):
+    namespace = pick_namespace(BOOKINFO_2)
+    authpolicy_name = 'authpolicyallowalltocreate'
+    namespaces = [BOOKINFO_1, namespace]
+    try:
+        _delete_authpolicies(openshift_client, authpolicy_name, namespaces)
+        tests = IstioConfigPageTest(
+            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+        tests.test_authpolicy_create(name=authpolicy_name,
+                                     policy=AuthPolicyType.ALLOW_ALL.text,
+                                     namespaces=namespaces)
+    finally:
+        _delete_authpolicies(openshift_client, authpolicy_name, namespaces)
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group3
+def test_authpolicy_rules_allow_create(kiali_client, openshift_client, browser, pick_namespace):
+    namespace = pick_namespace(BOOKINFO_2)
+    authpolicy_name = 'authpolicyrulesallowtocreate'
+    namespaces = [BOOKINFO_1, namespace]
+    try:
+        _delete_authpolicies(openshift_client, authpolicy_name, namespaces)
+        tests = IstioConfigPageTest(
+            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+        tests.test_authpolicy_create(name=authpolicy_name,
+                                     policy=AuthPolicyType.RULES.text,
+                                     namespaces=namespaces,
+                                     policy_action=AuthPolicyActionType.ALLOW.text)
+    finally:
+        _delete_authpolicies(openshift_client, authpolicy_name, namespaces)
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group3
+def test_authpolicy_rules_deny_disabled(kiali_client, openshift_client, browser, pick_namespace):
+    namespace = pick_namespace(BOOKINFO_2)
+    authpolicy_name = 'authpolicyrulesdenydisabled'
+    namespaces = [BOOKINFO_1, namespace]
+    tests = IstioConfigPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.test_authpolicy_create(name=authpolicy_name,
+                                 policy=AuthPolicyType.RULES.text,
+                                 namespaces=namespaces,
+                                 policy_action=AuthPolicyActionType.DENY.text)
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group1
 def test_service_entry(kiali_client, openshift_client, browser):
     yaml = get_yaml(istio_objects_path.strpath, SERVICE_ENTRY)
     _dict = get_dict(istio_objects_path.strpath, SERVICE_ENTRY)
@@ -705,6 +773,12 @@ def _delete_sidecars(openshift_client, name, namespaces):
     for namespace in namespaces:
         _istio_config_delete(openshift_client, name=name, kind='Sidecar',
                              api_version='networking.istio.io/v1alpha3', namespace=namespace)
+
+
+def _delete_authpolicies(openshift_client, name, namespaces):
+    for namespace in namespaces:
+        _istio_config_delete(openshift_client, name=name, kind='AuthorizationPolicy',
+                             api_version='security.istio.io/v1beta1', namespace=namespace)
 
 
 def _istio_config_test(kiali_client, openshift_client, browser, config_dict,
