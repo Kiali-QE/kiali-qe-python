@@ -1687,7 +1687,7 @@ class IstioConfigPageTest(AbstractListPageTest):
         for namespace in namespaces:
             self.assert_details(name, IstioConfigObjectType.SIDECAR.text, namespace)
 
-    def test_authpolicy_create(self, name, policy, namespaces, policy_action=None):
+    def test_authpolicy_create(self, name, policy, namespaces, labels=None, policy_action=None):
         logger.debug('Creating AuthorizationPolicy: {}, from namespaces: {}'.format(name,
                                                                                     namespaces))
         # load the page first
@@ -1695,7 +1695,10 @@ class IstioConfigPageTest(AbstractListPageTest):
         # apply namespace
         self.apply_namespaces(namespaces=namespaces)
         wait_to_spinner_disappear(self.browser)
-        is_created = self.page.actions.create_istio_config_authpolicy(name, policy, policy_action)
+        is_created = self.page.actions.create_istio_config_authpolicy(name=name,
+                                                                      policy=policy,
+                                                                      labels=labels,
+                                                                      policy_action=policy_action)
         if policy_action == AuthPolicyActionType.DENY.text:
             # in a case of DENY action the Create button is disabled
             assert not is_created, "Should not create but in fact created AuthPolicy"
@@ -1712,6 +1715,65 @@ class IstioConfigPageTest(AbstractListPageTest):
                 if policy == AuthPolicyType.ALLOW_ALL.text or \
                         policy_action == AuthPolicyActionType.ALLOW.text:
                     assert '\"action\": \"ALLOW\"' in config_details_rest.text
+
+    def test_peerauth_create(self, name, namespaces, expected_created=True,
+                             labels=None, mtls_mode=None, mtls_ports={}):
+        logger.debug('Creating PeerAuthentication: {}, from namespaces: {}'.format(name,
+                                                                                   namespaces))
+        # load the page first
+        self.page.load(force_load=True)
+        # apply namespace
+        self.apply_namespaces(namespaces=namespaces)
+        wait_to_spinner_disappear(self.browser)
+        is_created = self.page.actions.create_istio_config_peerauth(
+            name, labels, mtls_mode, mtls_ports)
+        assert not expected_created ^ is_created, \
+            "Created expected {} but should be {}".format(expected_created,
+                                                          is_created)
+        if is_created:
+            for namespace in namespaces:
+                self.assert_details(name, IstioConfigObjectType.PEER_AUTHENTICATION.text,
+                                    namespace)
+                config_details_rest = self.kiali_client.istio_config_details(
+                    namespace=namespace,
+                    object_type=IstioConfigObjectType.PEER_AUTHENTICATION.text,
+                    object_name=name)
+                if mtls_mode:
+                    assert '\"mode\": \"{}\"'.format(mtls_mode) in config_details_rest.text
+                if labels:
+                    assert labels.replace('=', '\": \"') in config_details_rest.text
+                if mtls_ports:
+                    for _key, _value in mtls_ports.items():
+                        assert '\"portLevelMtls\": \"{}\": \"mode\": \"{}\"'.format(_key, _value) \
+                            in config_details_rest.text.replace('{', '').replace('}', '')
+
+    def test_requestauth_create(self, name, namespaces, expected_created=True,
+                                labels=None, jwt_rules={}):
+        logger.debug('Creating RequestAuthentication: {}, from namespaces: {}'.format(
+            name,
+            namespaces))
+        # load the page first
+        self.page.load(force_load=True)
+        # apply namespace
+        self.apply_namespaces(namespaces=namespaces)
+        wait_to_spinner_disappear(self.browser)
+        is_created = self.page.actions.create_istio_config_requestauth(name, labels, jwt_rules)
+        assert not expected_created ^ is_created, \
+            "Created expected {} but should be {}".format(expected_created,
+                                                          is_created)
+        if is_created:
+            for namespace in namespaces:
+                self.assert_details(name, IstioConfigObjectType.REQUEST_AUTHENTICATION.text,
+                                    namespace)
+                config_details_rest = self.kiali_client.istio_config_details(
+                    namespace=namespace,
+                    object_type=IstioConfigObjectType.REQUEST_AUTHENTICATION.text,
+                    object_name=name)
+                if labels:
+                    assert labels.replace('=', '\": \"') in config_details_rest.text
+                if jwt_rules:
+                    for _key, _value in jwt_rules.items():
+                        assert '\"{}\": \"{}\"'.format(_key, _value) in config_details_rest.text
 
     def delete_istio_config(self, name, namespace=None):
         logger.debug('Deleting istio config: {}, from namespace: {}'.format(name, namespace))
