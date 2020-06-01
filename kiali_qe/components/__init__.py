@@ -16,7 +16,8 @@ from kiali_qe.components.enums import (
     GraphPageLayout,
     OverviewLinks,
     TLSMutualValues,
-    ItemIconType
+    ItemIconType,
+    MutualTLSMode
 )
 from kiali_qe.entities import (
     TrafficItem,
@@ -315,7 +316,7 @@ class DropDown(Widget):
     def select(self, option):
         self._open()
         try:
-            self.browser.element(self.OPTION.format(option), parent=self.locator).click()
+            self.browser.element(locator=self.locator+self.OPTION.format(option)).click()
         except NoSuchElementException:
             for element in self.browser.elements(self.OPTIONS_LIST, parent=self.locator):
                 try:
@@ -1003,9 +1004,20 @@ class ConfigActions(Actions):
     ISTIO_RESOURCE = '//div[contains(@class, "pf-c-form__group")]//select[@id="istio-resource"]'
     POLICY = '//div[contains(@class, "pf-c-form__group")]//select[@id="rules-form"]'
     POLICY_ACTION = '//div[contains(@class, "pf-c-form__group")]//select[@id="action-form"]'
+    MTLS_MODE = '//div[contains(@class, "pf-c-form__group")]//select[@id="mutualTls"]'
+    JWT_FIELD = '//div[contains(@class, "pf-c-form__group")]//select[@id="addNewJwtField"]'
+    PORT_MTLS_MODE = '//div[contains(@class, "pf-c-form__group")]' +\
+        '//table//select[@name="addPortMtlsMode"]'
+    ADD_VALUE = '//div[contains(@class, "pf-c-form__group")]//input[@id="addNewValues"]'
+    ADD_PORT = '//div[contains(@class, "pf-c-form__group")]//input[@id="addPortNumber"]'
+    ADD_VALUE_BUTTON = '//div[contains(@class, "pf-c-form__group")]' +\
+        '//table//button[contains(@class, "pf-m-link")]'
+    ADD_RULE_BUTTON = '//div[contains(@class, "pf-c-form__group")]' +\
+        '/div/button[contains(@class, "pf-m-link")]'
     CONFIG_CREATE_ROOT = '//*[contains(@class, "pf-c-form")]'
     CREATE_ISTIO_CONFIG = 'Create New Istio Config'
     ADD_SERVER_BUTTON = './/button[text()="Add Server"]'
+    ADD_PORT_MTLS_BUTTON = './/button[text()="Add Port MTLS"]'
     ADD_EGRESS_HOST_BUTTON = './/button[text()="Add Egress Host"]'
 
     def __init__(self, parent, locator=None, logger=None):
@@ -1021,10 +1033,19 @@ class ConfigActions(Actions):
         self._hosts = TextInput(parent=self, locator='//input[@id="addHosts"]')
         self._egress_host = TextInput(parent=self, locator='//input[@id="addEgressHost"]')
         self._workloadselector_switch = ButtonSwitch(parent=self, label="Add Workload Selector")
+        self._jwtrules_switch = ButtonSwitch(parent=self, label="Add JWT Rules")
+        self._portmtls_switch = ButtonSwitch(parent=self, label="Add Port MTLS")
         self._labels = TextInput(parent=self, locator='//input[@id="gwHosts"]')
         self._policy = SelectDropDown(parent=self, locator=self.POLICY, select_button='')
         self._policy_action = SelectDropDown(parent=self,
                                              locator=self.POLICY_ACTION, select_button='')
+        self._mtls_mode = SelectDropDown(parent=self, locator=self.MTLS_MODE, select_button='')
+        self._jwt_field = SelectDropDown(parent=self, locator=self.JWT_FIELD, select_button='')
+        self._port_mtls_mode = SelectDropDown(parent=self,
+                                              locator=self.PORT_MTLS_MODE,
+                                              select_button='')
+        self._add_value = TextInput(parent=self, locator=self.ADD_VALUE)
+        self._add_port = TextInput(parent=self, locator=self.ADD_PORT)
 
     def create_istio_config_gateway(self, name, hosts):
         wait_to_spinner_disappear(self.browser)
@@ -1051,9 +1072,7 @@ class ConfigActions(Actions):
         self._istio_resource.select(IstioConfigObjectType.SIDECAR.text)
         self._name.fill(name)
         self._egress_host.fill(egress_host)
-        if labels:
-            self._workloadselector_switch.on()
-            self._labels.fill(labels)
+        self._add_workload_selector(labels)
         add_egress_button = self.browser.element(
             parent=self.CONFIG_CREATE_ROOT,
             locator=(self.ADD_EGRESS_HOST_BUTTON))
@@ -1068,12 +1087,13 @@ class ConfigActions(Actions):
         wait_to_spinner_disappear(self.browser)
         return True
 
-    def create_istio_config_authpolicy(self, name, policy, policy_action=None):
+    def create_istio_config_authpolicy(self, name, policy, labels=None, policy_action=None):
         self.select(self.CREATE_ISTIO_CONFIG)
         wait_displayed(self._istio_resource)
         self._istio_resource.select(IstioConfigObjectType.AUTHORIZATION_POLICY.text)
         self._name.fill(name)
         self._policy.select(policy)
+        self._add_workload_selector(labels)
         if policy_action:
             self._policy_action.select(policy_action)
         create_button = self.browser.element(
@@ -1086,6 +1106,71 @@ class ConfigActions(Actions):
         # wait to Spinner disappear
         wait_to_spinner_disappear(self.browser)
         return True
+
+    def create_istio_config_peerauth(self, name, labels=None,
+                                     mtls_mode=MutualTLSMode.UNSET, mtls_ports={}):
+        self.select(self.CREATE_ISTIO_CONFIG)
+        wait_displayed(self._istio_resource)
+        self._istio_resource.select(IstioConfigObjectType.PEER_AUTHENTICATION.text)
+        self._name.fill(name)
+        self._mtls_mode.select(mtls_mode)
+        self._add_workload_selector(labels)
+        if mtls_ports:
+            self._portmtls_switch.on()
+            for _key, _value in mtls_ports.items():
+                self._add_port.fill(_key)
+                self._port_mtls_mode.select(_value)
+                add_value_button = self.browser.element(
+                    parent=self.CONFIG_CREATE_ROOT,
+                    locator=(self.ADD_PORT_MTLS_BUTTON))
+                self.browser.click(add_value_button)
+        create_button = self.browser.element(
+            parent=self.CONFIG_CREATE_ROOT,
+            locator=(self.CREATE_BUTTON))
+        wait_displayed(create_button)
+        if create_button.get_attribute("disabled"):
+            return False
+        self.browser.click(create_button)
+        # wait to Spinner disappear
+        wait_to_spinner_disappear(self.browser)
+        return True
+
+    def create_istio_config_requestauth(self, name, labels=None, jwt_rules={}):
+        self.select(self.CREATE_ISTIO_CONFIG)
+        wait_displayed(self._istio_resource)
+        self._istio_resource.select(IstioConfigObjectType.REQUEST_AUTHENTICATION.text)
+        self._name.fill(name)
+        self._add_workload_selector(labels)
+        if jwt_rules:
+            self._jwtrules_switch.on()
+            for _key, _value in jwt_rules.items():
+                self._jwt_field.select(_key)
+                self._add_value.fill(_value)
+                add_value_button = self.browser.element(
+                    parent=self.CONFIG_CREATE_ROOT,
+                    locator=(self.ADD_VALUE_BUTTON))
+                self.browser.click(add_value_button)
+            add_rule_button = self.browser.element(
+                parent=self.CONFIG_CREATE_ROOT,
+                locator=(self.ADD_RULE_BUTTON))
+            if add_rule_button.get_attribute("disabled"):
+                return False
+            self.browser.click(add_rule_button)
+        create_button = self.browser.element(
+            parent=self.CONFIG_CREATE_ROOT,
+            locator=(self.CREATE_BUTTON))
+        wait_displayed(create_button)
+        if create_button.get_attribute("disabled"):
+            return False
+        self.browser.click(create_button)
+        # wait to Spinner disappear
+        wait_to_spinner_disappear(self.browser)
+        return True
+
+    def _add_workload_selector(self, labels=None):
+        if labels:
+            self._workloadselector_switch.on()
+            self._labels.fill(labels)
 
 
 class Traces(Widget):

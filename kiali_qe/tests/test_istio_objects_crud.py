@@ -10,7 +10,8 @@ from kiali_qe.components.enums import (
     IstioConfigPageFilter,
     IstioConfigValidationType,
     AuthPolicyType,
-    AuthPolicyActionType
+    AuthPolicyActionType,
+    MutualTLSMode
 )
 from kiali_qe.components.error_codes import (
     KIA0202,
@@ -474,7 +475,7 @@ def test_authpolicy_deny_all_create(kiali_client, openshift_client, browser, pic
 @pytest.mark.p_crud_group3
 def test_authpolicy_allow_all_create(kiali_client, openshift_client, browser, pick_namespace):
     namespace = pick_namespace(BOOKINFO_2)
-    authpolicy_name = 'authpolicyallowalltocreate'
+    authpolicy_name = 'authpolicyallowallcreate'
     namespaces = [BOOKINFO_1, namespace]
     try:
         _delete_authpolicies(openshift_client, authpolicy_name, namespaces)
@@ -517,6 +518,73 @@ def test_authpolicy_rules_deny_disabled(kiali_client, openshift_client, browser,
                                  policy=AuthPolicyType.RULES.text,
                                  namespaces=namespaces,
                                  policy_action=AuthPolicyActionType.DENY.text)
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group3
+def test_peerauth_create(kiali_client, openshift_client, browser, pick_namespace):
+    namespace = pick_namespace(BOOKINFO_2)
+    name = 'peerauthtocreate'
+    namespaces = [BOOKINFO_1, namespace]
+    try:
+        _delete_peerauths(openshift_client, name, namespaces)
+        tests = IstioConfigPageTest(
+            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+        tests.test_peerauth_create(name=name, mtls_mode=MutualTLSMode.PERMISSIVE.text,
+                                   labels='app=value', namespaces=namespaces,
+                                   mtls_ports={'8080': MutualTLSMode.STRICT.text})
+    finally:
+        _delete_peerauths(openshift_client, name, namespaces)
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group3
+def test_peerauth_create_disabled(kiali_client, openshift_client, browser, pick_namespace):
+    """
+    MTLS Ports require Labels
+    """
+    namespace = pick_namespace(BOOKINFO_2)
+    name = 'peerauthtocreatedisabled'
+    namespaces = [BOOKINFO_1, namespace]
+    tests = IstioConfigPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.test_peerauth_create(name=name, mtls_mode=MutualTLSMode.PERMISSIVE.text,
+                               namespaces=namespaces,
+                               expected_created=False,
+                               mtls_ports={'8080': MutualTLSMode.STRICT.text})
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group3
+def test_requestauth_create(kiali_client, openshift_client, browser, pick_namespace):
+    namespace = pick_namespace(BOOKINFO_2)
+    name = 'requestauthtocreate'
+    namespaces = [BOOKINFO_1, namespace]
+    try:
+        _delete_requestauths(openshift_client, name, namespaces)
+        tests = IstioConfigPageTest(
+            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+        tests.test_requestauth_create(name=name,
+                                      labels='app=value',
+                                      namespaces=namespaces,
+                                      jwt_rules={'issuer': 'value1'})
+    finally:
+        _delete_requestauths(openshift_client, name, namespaces)
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group3
+def test_requestauth_create_disabled(kiali_client, openshift_client, browser, pick_namespace):
+    namespace = pick_namespace(BOOKINFO_2)
+    name = 'requestauthtocreatedisabled'
+    namespaces = [BOOKINFO_1, namespace]
+    tests = IstioConfigPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.test_requestauth_create(name=name,
+                                  labels='app=value',
+                                  namespaces=namespaces,
+                                  jwt_rules={'audiences': 'value1'},
+                                  expected_created=False)
 
 
 @pytest.mark.p_crud_resource
@@ -778,6 +846,18 @@ def _delete_sidecars(openshift_client, name, namespaces):
 def _delete_authpolicies(openshift_client, name, namespaces):
     for namespace in namespaces:
         _istio_config_delete(openshift_client, name=name, kind='AuthorizationPolicy',
+                             api_version='security.istio.io/v1beta1', namespace=namespace)
+
+
+def _delete_peerauths(openshift_client, name, namespaces):
+    for namespace in namespaces:
+        _istio_config_delete(openshift_client, name=name, kind='PeerAuthentication',
+                             api_version='security.istio.io/v1beta1', namespace=namespace)
+
+
+def _delete_requestauths(openshift_client, name, namespaces):
+    for namespace in namespaces:
+        _istio_config_delete(openshift_client, name=name, kind='RequestAuthentication',
                              api_version='security.istio.io/v1beta1', namespace=namespace)
 
 

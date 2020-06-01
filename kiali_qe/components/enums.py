@@ -418,3 +418,10 @@ class AuthPolicyType(StringEnum):
 class AuthPolicyActionType(StringEnum):
     DENY = ('DENY')
     ALLOW = ('ALLOW')
+
+
+class MutualTLSMode(StringEnum):
+    UNSET = ('UNSET')
+    DISABLE = ('DISABLE')
+    PERMISSIVE = ('PERMISSIVE')
+    STRICT = ('STRICT')
