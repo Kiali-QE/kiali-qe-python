@@ -31,8 +31,12 @@ KIA0207 = 'KIA0207 PeerAuthentication with TLS strict mode found, it should be p
 
 KIA0501 = 'KIA0501 Destination Rule enabling namespace-wide mTLS is missing'
 
+KIA0505 = 'KIA0505 Destination Rule disabling namespace-wide mTLS is missing'
+
+KIA0506 = 'KIA0506 Destination Rule disabling mesh-wide mTLS is missing'
+
 KIA0208 = 'KIA0208 PeerAuthentication enabling mTLS found, '\
-    'permissive policy is needed'
+    'permissive mode needed'
 
 KIA0205 = 'KIA0205 PeerAuthentication enabling mTLS at mesh level is missing'
 
