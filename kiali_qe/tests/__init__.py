@@ -415,8 +415,10 @@ class AbstractListPageTest(object):
                         logs_tab.tail_lines.options)
         assert is_equal([item.text for item in TimeIntervalUIText],
                         logs_tab.interval.options)
+        logs_tab.logs_switch.on()
         self.browser.click(logs_tab.refresh)
         wait_to_spinner_disappear(self.browser)
+        assert logs_tab.logs_switch.is_on
         assert logs_tab.pod_textarea.text
         assert logs_tab.proxy_textarea.text
 
@@ -1470,6 +1472,7 @@ class IstioConfigPageTest(AbstractListPageTest):
         logger.debug('Loading details page for istio config: {}'.format(name))
         if not self.is_in_details_page(name, namespace):
             self._prepare_load_details_page(name, namespace)
+            wait_to_spinner_disappear(self.browser)
             self.open(name, namespace, force_refresh)
             self.browser.wait_for_element(locator='//button[contains(., "YAML")]',
                                           parent='//*[contains(@class, "pf-c-page__main-section")]')
