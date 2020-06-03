@@ -1879,6 +1879,9 @@ class ListViewAbstract(ViewAbstract):
         _degraded = len(self.browser.elements(
             parent=self.DETAILS_ROOT,
             locator='.//*[contains(@class, "icon-degraded")]' + _health_sublocator)) > 0
+        _idle = len(self.browser.elements(
+            parent=self.DETAILS_ROOT,
+            locator='.//*[contains(@class, "icon-idle")]' + _health_sublocator)) > 0
         _not_available = len(self.browser.elements(
             parent=self.DETAILS_ROOT,
             locator='.//*[contains(@class, "icon-na")]' + _health_sublocator)) > 0
@@ -1889,6 +1892,8 @@ class ListViewAbstract(ViewAbstract):
             _health = HealthType.FAILURE
         elif _degraded:
             _health = HealthType.DEGRADED
+        elif _idle:
+            _health = HealthType.IDLE
         elif _not_available:
             _health = HealthType.NA
         return _health
@@ -1903,6 +1908,9 @@ class ListViewAbstract(ViewAbstract):
         _degraded = len(self.browser.elements(
             parent=element,
             locator='.//*[contains(@class, "icon-degraded")]')) > 0
+        _idle = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@class, "icon-idle")]')) > 0
         _not_available = len(self.browser.elements(
             parent=element,
             locator='.//*[contains(@class, "icon-na")]')) > 0
@@ -1913,6 +1921,8 @@ class ListViewAbstract(ViewAbstract):
             _health = HealthType.FAILURE
         elif _degraded:
             _health = HealthType.DEGRADED
+        elif _idle:
+            _health = HealthType.IDLE
         elif _not_available:
             _health = HealthType.NA
         return _health
@@ -2288,6 +2298,7 @@ class ListViewOverview(ListViewAbstract):
     UNHEALTHY_TEXT = './/*[contains(@class, "icon-failure")]/..'
     HEALTHY_TEXT = './/*[contains(@class, "icon-healthy")]/..'
     DEGRADED_TEXT = './/*[contains(@class, "icon-warning")]/..'
+    IDLE_TEXT = './/*[contains(@class, "icon-idle")]/..'
     OVERVIEW_TYPE = '//*[contains(@aria-labelledby, "overview-type")]'
 
     @property
@@ -2319,6 +2330,7 @@ class ListViewOverview(ListViewAbstract):
             _unhealthy = 0
             _healthy = 0
             _degraded = 0
+            _idle = 0
             # update health
             if len(self.browser.elements(
                     parent=el, locator=self.UNHEALTHY_TEXT)) > 0:
@@ -2332,6 +2344,10 @@ class ListViewOverview(ListViewAbstract):
                     parent=el, locator=self.HEALTHY_TEXT)) > 0:
                 _healthy = int(self.browser.element(
                     locator=self.HEALTHY_TEXT, parent=el).text)
+            if len(self.browser.elements(
+                    parent=el, locator=self.IDLE_TEXT)) > 0:
+                _idle = int(self.browser.element(
+                    locator=self.IDLE_TEXT, parent=el).text)
             # overview object creation
             _overview = Overview(
                 overview_type=_overview_type,
@@ -2343,7 +2359,8 @@ class ListViewOverview(ListViewAbstract):
                 healthy=_healthy,
                 unhealthy=_unhealthy,
                 degraded=_degraded,
-                na=(_item_numbers - (_healthy + _unhealthy + _degraded)),
+                idle=_idle,
+                na=(_item_numbers - (_healthy + _unhealthy + _degraded + _idle)),
                 tls_type=self.get_namespace_wide_tls(el),
                 labels=self._get_labels_tooltip(element=el),
                 graph_link=self._get_link(OverviewLinks.GRAPH.text, el),
@@ -2372,6 +2389,7 @@ class ListViewOverview(ListViewAbstract):
             _unhealthy = 0
             _healthy = 0
             _degraded = 0
+            _idle = 0
             # update health
             if len(self.browser.elements(
                     parent=columns[4], locator=self.UNHEALTHY_TEXT)) > 0:
@@ -2385,6 +2403,10 @@ class ListViewOverview(ListViewAbstract):
                     parent=columns[4], locator=self.HEALTHY_TEXT)) > 0:
                 _healthy = int(self.browser.element(
                     locator=self.HEALTHY_TEXT, parent=columns[4]).text)
+            if len(self.browser.elements(
+                    parent=columns[4], locator=self.IDLE_TEXT)) > 0:
+                _idle = int(self.browser.element(
+                    locator=self.IDLE_TEXT, parent=columns[4]).text)
             # overview object creation
             _overview = Overview(
                 overview_type=_overview_type,
@@ -2394,7 +2416,8 @@ class ListViewOverview(ListViewAbstract):
                 healthy=_healthy,
                 unhealthy=_unhealthy,
                 degraded=_degraded,
-                na=(_item_numbers - (_healthy + _unhealthy + _degraded)),
+                idle=_idle,
+                na=(_item_numbers - (_healthy + _unhealthy + _degraded + _idle)),
                 tls_type=self.get_namespace_wide_tls(el),
                 labels=self._get_item_labels(columns[3]),
                 graph_link=self._get_link(OverviewLinks.GRAPH.text, columns[5]),
@@ -2542,7 +2565,7 @@ class ListViewWorkloads(ListViewAbstract):
                 labels=self._get_item_labels(columns[3]),
                 health=self._get_item_health(element=el),
                 icon=self._get_item_details_icon(element=el),
-                workload_status=(self._get_workload_health(name=_name, element=columns[3])
+                workload_status=(self._get_workload_health(name=_name, element=columns[4])
                                  if self._is_tooltip_visible(index=index,
                                                              number=len(_elements)) else None))
             # append this item to the final list

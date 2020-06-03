@@ -230,7 +230,10 @@ class WorkloadHealth(EntityBase):
             repr(self.workload_status), repr(self.requests))
 
     def is_healthy(self):
-        if self.workload_status.is_healthy() == HealthType.NA \
+        if self.requests.is_healthy() == HealthType.IDLE \
+                and self.workload_status.is_healthy() == HealthType.NA:
+            return HealthType.IDLE
+        elif self.workload_status.is_healthy() == HealthType.NA \
                 and self.requests.is_healthy() == HealthType.NA:
             return HealthType.NA
         elif self.workload_status.is_healthy() == HealthType.FAILURE \

@@ -316,6 +316,7 @@ class HealthType(StringEnum):
     HEALTHY = ('Healthy')
     FAILURE = ('Failure')
     DEGRADED = ('Degraded')
+    IDLE = ('Idle')
 
 
 class IstioConfigValidation(StringEnum):

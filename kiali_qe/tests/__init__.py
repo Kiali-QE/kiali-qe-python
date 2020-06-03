@@ -998,9 +998,11 @@ class WorkloadsPageTest(AbstractListPageTest):
                     found = True
                     if workload_ui.workload_status:
                         assert workload_ui.workload_status.is_healthy() == workload_ui.health, \
-                                "Workload Tooltip Health {} is not equal to UI Health {}".format(
+                                "Workload Tooltip Health {} is not equal to UI Health {} for {}"\
+                                .format(
                                 workload_ui.workload_status.is_healthy(),
-                                workload_ui.health)
+                                workload_ui.health,
+                                workload_ui.name)
                     break
             if not found:
                 assert found, '{} not found in REST'.format(workload_ui)

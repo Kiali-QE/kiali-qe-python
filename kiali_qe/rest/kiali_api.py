@@ -161,6 +161,7 @@ class KialiExtendedClient(KialiClient):
             _unhealthy = 0
             _degraded = 0
             _na = 0
+            _idle = 0
             for _item in _items:
                 if _item.health == HEALTH_TYPE.HEALTHY:
                     _healthy += 1
@@ -170,6 +171,8 @@ class KialiExtendedClient(KialiClient):
                     _unhealthy += 1
                 if _item.health == HEALTH_TYPE.NA:
                     _na += 1
+                if _item.health == HEALTH_TYPE.IDLE:
+                    _idle += 1
             _overview = Overview(
                 overview_type=overview_type.text,
                 namespace=_namespace,
@@ -178,6 +181,7 @@ class KialiExtendedClient(KialiClient):
                 unhealthy=_unhealthy,
                 degraded=_degraded,
                 na=_na,
+                idle=_idle,
                 labels=self.namespace_labels(_namespace))
             overviews.append(_overview)
         return overviews
