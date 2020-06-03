@@ -118,7 +118,8 @@ class Button(Widget):
 
 
 class ButtonSwitch(Button):
-    DEFAULT = '//span[contains(@class, "pf-c-form__label-text")' + \
+    DEFAULT = '//span[(contains(@class, "pf-c-form__label-text") or ' + \
+        'contains(@class, "pf-c-switch__label"))' + \
         ' and normalize-space(text())="{}"]' + \
         '/../..//*[contains(@class, "pf-c-switch__input")]'
     TEXT = '/../..//*[contains(@class, "control-label")]'
@@ -315,17 +316,21 @@ class DropDown(Widget):
 
     def select(self, option):
         self._open()
+        # TODO better approach
         try:
             self.browser.element(locator=self.locator+self.OPTION.format(option)).click()
         except NoSuchElementException:
-            for element in self.browser.elements(self.OPTIONS_LIST, parent=self.locator):
-                try:
-                    if element.text == option:
-                        element.click()
-                # in some of dropdown, when we select options page reloads.
-                # reload leads this issue
-                except StaleElementReferenceException:
-                    pass
+            try:
+                self.browser.element(self.OPTION.format(option), parent=self.locator).click()
+            except NoSuchElementException:
+                for element in self.browser.elements(self.OPTIONS_LIST, parent=self.locator):
+                    try:
+                        if element.text == option:
+                            element.click()
+                    # in some of dropdown, when we select options page reloads.
+                    # reload leads this issue
+                    except StaleElementReferenceException:
+                        pass
 
     @property
     def selected(self):
@@ -2984,6 +2989,7 @@ class TableViewVirtualServices(TableViewAbstract):
         '//tbody//tr'
 
     def open(self):
+        wait_to_spinner_disappear(self.browser)
         tab = self.browser.element(locator=self.SERVICES_TAB.format(self.VS_TEXT),
                                    parent=self.SERVICE_DETAILS_ROOT)
         try:
@@ -3115,6 +3121,7 @@ class TableViewDestinationRules(TableViewAbstract):
     DR_TEXT = 'Destination Rules'
 
     def open(self):
+        wait_to_spinner_disappear(self.browser)
         tab = self.browser.element(locator=self.SERVICES_TAB.format(self.DR_TEXT),
                                    parent=self.SERVICE_DETAILS_ROOT)
         try:
@@ -3466,7 +3473,7 @@ class LogsView(TabViewAbstract):
     interval = DropDown(locator=DROP_DOWN.format('metrics_filter_interval_duration'))
     refresh = Button(locator='//button[@id="refresh_button"]')
     pod_textarea = Text(locator='//textarea[contains(@aria-label, "Pod logs text")]')
-    proxy_textarea = Text(locator='//textarea[contains(@aria-label, "Container logs text")]')
+    proxy_textarea = Text(locator='//textarea[contains(@aria-label, "Proxy logs text")]')
 
     def open(self):
         tab = self.browser.element(locator=self.LOGS_TAB,
@@ -3479,6 +3486,7 @@ class LogsView(TabViewAbstract):
             except StaleElementReferenceException:
                 pass
         wait_to_spinner_disappear(self.browser)
+        self.logs_switch = ButtonSwitch(parent=self, label="Side by Side")
 
 
 class MetricsView(TabViewAbstract):
