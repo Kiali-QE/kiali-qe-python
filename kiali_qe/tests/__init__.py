@@ -1968,8 +1968,10 @@ class ValidationsTest(object):
                 for overview_item in overview_items:
                     if overview_item.namespace == tls_object.namespace:
                         assert tls_object.tls_type == overview_item.tls_type, \
-                            'Namespace TLS type expected: {} got: {}'.format(tls_object.tls_type,
-                                                                             overview_item.tls_type)
+                            'Namespace TLS type expected: {} got: {} for {}'.format(
+                                tls_object.tls_type,
+                                overview_item.tls_type,
+                                overview_item.namespace)
 
 
 class ThreeScaleConfigPageTest(AbstractListPageTest):
