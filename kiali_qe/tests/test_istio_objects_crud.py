@@ -292,7 +292,7 @@ def test_virtual_service_broken(kiali_client, openshift_client, browser):
                                {'name': IstioConfigPageFilter.ISTIO_NAME.text,
                                 'value': virtual_service_broken_dict.metadata.name}
                             ],
-                           namespace=BOOKINFO_2,
+                           namespace=BOOKINFO_1,
                            kind='VirtualService',
                            api_version='networking.istio.io/v1alpha3',
                            service_name=REVIEWS,

@@ -37,6 +37,9 @@ class OpenshiftExtendedClient(object):
         'DestinationRule': '_destinationrule',
         'ServiceEntry': '_serviceentry',
         'WorkloadEntry': '_workloadentry',
+        'EnvoyFilter': '_envoyfilter',
+        'HTTPAPISpec': '_httpapispec',
+        'HTTPAPISpecBinding': '_httpapispecbinding',
         'Rule': '_rule',
         'Adapter': '_handler',
         'Adapter: adapter': '_adapter',
@@ -105,6 +108,18 @@ class OpenshiftExtendedClient(object):
     @property
     def _replicaset(self):
         return self._resource(kind='ReplicaSet')
+
+    @property
+    def _envoyfilter(self):
+        return self._resource(kind='EnvoyFilter', api_version='v1alpha3')
+
+    @property
+    def _httpapispec(self):
+        return self._resource(kind='HTTPAPISpec', api_version='v1alpha2')
+
+    @property
+    def _httpapispecbinding(self):
+        return self._resource(kind='HTTPAPISpecBinding', api_version='v1alpha2')
 
     @property
     def _replicationcontroller(self):
