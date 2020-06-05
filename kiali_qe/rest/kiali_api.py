@@ -48,6 +48,9 @@ ISTIO_CONFIG_TYPES = {'DestinationRule': 'destinationrules',
                       'ServiceEntry': 'serviceentries',
                       'WorkloadEntry': 'workloadentries',
                       'Gateway': 'gateways',
+                      'EnvoyFilter': 'envoyfilters',
+                      'HTTPAPISpec': 'httpapispecs',
+                      'HTTPAPISpecBinding': 'httpapispecbindings',
                       'QuotaSpecBinding': 'quotaspecbindings',
                       'QuotaSpec': 'quotaspecs',
                       'PeerAuthentication': 'peerauthentications',
@@ -394,6 +397,39 @@ class KialiExtendedClient(KialiClient):
                                                                     'gateways',
                                                                     _policy['metadata']['name'])))
 
+            # update EnvoyFilter
+            if len(_data['envoyFilters']) > 0 and len(_data['envoyFilters']) > 0:
+                for _policy in _data['envoyFilters']:
+                    items.append(IstioConfig(
+                        name=_policy['metadata']['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.ENVOY_FILTER.text,
+                        validation=self.get_istio_config_validation(_namespace,
+                                                                    'envoyfilters',
+                                                                    _policy['metadata']['name'])))
+
+            # update HTTPAPISpec
+            if len(_data['httpApiSpecs']) > 0 and len(_data['httpApiSpecs']) > 0:
+                for _policy in _data['httpApiSpecs']:
+                    items.append(IstioConfig(
+                        name=_policy['metadata']['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.HTTP_API_SPEC.text,
+                        validation=self.get_istio_config_validation(_namespace,
+                                                                    'httpApiSpecs',
+                                                                    _policy['metadata']['name'])))
+
+            # update HTTPAPISpecBinding
+            if len(_data['httpApiSpecBindings']) > 0 and len(_data['httpApiSpecBindings']) > 0:
+                for _policy in _data['httpApiSpecBindings']:
+                    items.append(IstioConfig(
+                        name=_policy['metadata']['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.HTTP_API_SPEC_BINDING.text,
+                        validation=self.get_istio_config_validation(_namespace,
+                                                                    'httpApiSpecBindings',
+                                                                    _policy['metadata']['name'])))
+
             # update serviceEntries
             if len(_data['serviceEntries']) > 0:
                 for _policy in _data['serviceEntries']:
@@ -558,6 +594,18 @@ class KialiExtendedClient(KialiClient):
             # get VirtualService
             if _data['virtualService']:
                 config_data = _data['virtualService']
+
+            # get EnvoyFilter
+            if _data['envoyFilter']:
+                config_data = _data['envoyFilter']
+
+            # get HTTPAPISpec
+            if _data['httpApiSpec']:
+                config_data = _data['httpApiSpec']
+
+            # get HTTPAPISpecBinding
+            if _data['httpApiSpecBinding']:
+                config_data = _data['httpApiSpecBinding']
 
             # get QuotaSpec
             if _data['quotaSpec']:
