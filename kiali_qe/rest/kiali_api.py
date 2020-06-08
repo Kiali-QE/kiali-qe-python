@@ -10,7 +10,8 @@ from kiali_qe.components.enums import (
     OverviewPageType,
     TimeIntervalRestParam,
     HealthType as HEALTH_TYPE,
-    ItemIconType
+    ItemIconType,
+    LabelOperation
 )
 from kiali_qe.entities import Requests
 from kiali_qe.entities.istio_config import IstioConfig, IstioConfigDetails, Rule
@@ -38,7 +39,7 @@ from kiali_qe.entities.applications import (
 )
 from kiali_qe.entities.three_scale_config import ThreeScaleHandler
 from kiali_qe.entities.overview import Overview
-from kiali_qe.utils import to_linear_string, dict_begins_with
+from kiali_qe.utils import to_linear_string, dict_contains
 from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
 from kiali_qe.utils.log import logger
 
@@ -89,7 +90,8 @@ class KialiExtendedClient(KialiClient):
         """ Returns True if given namespace exists. False otherwise. """
         return namespace in self.namespace_list()
 
-    def service_list(self, namespaces=[], service_names=[], service_labels=[]):
+    def service_list(self, namespaces=[], service_names=[], service_labels=[],
+                     label_operation=None):
         """Returns list of services.
         Args:
             namespaces: can be zero or any number of namespaces
@@ -129,7 +131,9 @@ class KialiExtendedClient(KialiClient):
         if len(service_labels) > 0:
             filtered_list = []
             filtered_list.extend(
-                [_i for _i in items if dict_begins_with(_i.labels, service_labels)])
+                [_i for _i in items if dict_contains(
+                    _i.labels, service_labels,
+                    (True if label_operation == LabelOperation.AND.text else False))])
             items = set(filtered_list)
         return items
 
@@ -178,7 +182,8 @@ class KialiExtendedClient(KialiClient):
             overviews.append(_overview)
         return overviews
 
-    def application_list(self, namespaces=[], application_names=[], application_labels=[]):
+    def application_list(self, namespaces=[], application_names=[], application_labels=[],
+                         label_operation=None):
         """Returns list of applications.
         Args:
             namespaces: can be zero or any number of namespaces
@@ -217,11 +222,14 @@ class KialiExtendedClient(KialiClient):
         if len(application_labels) > 0:
             filtered_list = []
             filtered_list.extend(
-                [_i for _i in items if dict_begins_with(_i.labels, application_labels)])
+                [_i for _i in items if dict_contains(
+                    _i.labels, application_labels,
+                    (True if label_operation == LabelOperation.AND.text else False))])
             items = set(filtered_list)
         return items
 
-    def workload_list(self, namespaces=[], workload_names=[], workload_labels=[]):
+    def workload_list(self, namespaces=[], workload_names=[], workload_labels=[],
+                      label_operation=None):
         """Returns list of workloads.
         Args:
             namespaces: can be zero or any number of namespaces
@@ -262,7 +270,9 @@ class KialiExtendedClient(KialiClient):
         if len(workload_labels) > 0:
             filtered_list = []
             filtered_list.extend(
-                [_i for _i in items if dict_begins_with(_i.labels, workload_labels)])
+                [_i for _i in items if dict_contains(
+                    _i.labels, workload_labels,
+                    (True if label_operation == LabelOperation.AND.text else False))])
             items = set(filtered_list)
         return items
 

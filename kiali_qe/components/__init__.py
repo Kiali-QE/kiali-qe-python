@@ -582,6 +582,8 @@ class Filter(Widget):
     FILTER_DROPDOWN = '//select[contains(@aria-label, "filter_select_type")]'
     VALUE_INPUT = './/input'
     VALUE_DROPDOWN = '//select[contains(@aria-label, "filter_select_value")]'
+    LABEL_OPERATION_DROPDOWN = '//div[contains(@class, "pf-u-mr-md")]' + \
+        '//select[contains(@aria-label, "filter_select_value")]'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -592,6 +594,9 @@ class Filter(Widget):
         self._filter = FilterDropDown(parent=self,
                                       locator=self.locator + self.FILTER_DROPDOWN)
         self._filter_list = FilterList(parent=self.parent)
+        self._label_operation = FilterDropDown(
+            parent=self,
+            locator=self.locator + self.LABEL_OPERATION_DROPDOWN)
 
     def __locator__(self):
         return self.locator

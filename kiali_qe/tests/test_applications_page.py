@@ -1,7 +1,7 @@
 import pytest
 
 from kiali_qe.tests import ApplicationsPageTest
-from kiali_qe.components.enums import ApplicationsPageSort, ApplicationsPageFilter
+from kiali_qe.components.enums import ApplicationsPageSort, ApplicationsPageFilter, LabelOperation
 
 BOOKINFO_2 = 'bookinfo2'
 ISTIO_SYSTEM = 'istio-system'
@@ -53,11 +53,24 @@ def test_apps_filter_2_names(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group5
-def test_filter_applications_by_label(kiali_client, openshift_client, browser):
+def test_filter_applications_by_or_label(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
-        {"name": ApplicationsPageFilter.LABEL.text, "value": "version:v2"}])
+        {"name": ApplicationsPageFilter.LABEL.text, "value": "version:v2"},
+        {"name": ApplicationsPageFilter.LABEL.text, "value": "version:v1"}],
+        label_operation=LabelOperation.OR.text)
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group5
+def test_filter_applications_by_and_label(kiali_client, openshift_client, browser):
+    tests = ApplicationsPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.assert_all_items(filters=[
+        {"name": ApplicationsPageFilter.LABEL.text, "value": "version:v2"},
+        {"name": ApplicationsPageFilter.LABEL.text, "value": "version:v1"}],
+        label_operation=LabelOperation.AND.text)
 
 
 @pytest.mark.p_ro_top

@@ -4,7 +4,8 @@ from kiali_qe.tests import WorkloadsPageTest
 from kiali_qe.components.enums import (
     WorkloadsPageSort,
     WorkloadType,
-    WorkloadsPageFilter
+    WorkloadsPageFilter,
+    LabelOperation
 )
 
 BOOKINFO_2 = 'bookinfo2'
@@ -57,11 +58,24 @@ def test_workloads_filter_2_names(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group8
-def test_filter_workloads_by_label(kiali_client, openshift_client, browser):
+def test_filter_workloads_by_or_label(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
-        {"name": WorkloadsPageFilter.LABEL.text, "value": "version:v2"}])
+        {"name": WorkloadsPageFilter.LABEL.text, "value": "version:v2"},
+        {"name": WorkloadsPageFilter.LABEL.text, "value": "app:ratings"}],
+        label_operation=LabelOperation.OR.text)
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group8
+def test_filter_workloads_by_and_label(kiali_client, openshift_client, browser):
+    tests = WorkloadsPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.assert_all_items(filters=[
+        {"name": WorkloadsPageFilter.LABEL.text, "value": "version:v2"},
+        {"name": WorkloadsPageFilter.LABEL.text, "value": "app:ratings"}],
+        label_operation=LabelOperation.AND.text)
 
 
 @pytest.mark.p_ro_top

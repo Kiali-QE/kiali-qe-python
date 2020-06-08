@@ -43,7 +43,8 @@ from kiali_qe.components.enums import (
     ThreeScaleConfigPageSort,
     IstioConfigObjectType,
     AuthPolicyType,
-    AuthPolicyActionType
+    AuthPolicyActionType,
+    LabelOperation
 )
 from kiali_qe.components.error_codes import (
     KIA0201,
@@ -95,7 +96,8 @@ class AbstractListPageTest(object):
     def get_mesh_wide_tls(self):
         return self.page.content.get_mesh_wide_tls()
 
-    def assert_all_items(self, namespaces=[], filters=[], force_clear_all=True):
+    def assert_all_items(self, namespaces=[], filters=[], force_clear_all=True,
+                         label_operation=LabelOperation.OR):
         """
         Apply supplied filter in to UI, REST, OC and assert content
 
@@ -214,6 +216,10 @@ class AbstractListPageTest(object):
             self.page.filter.remove(filter_name=_filter['name'], value=_filter['value'])
 
         self.assert_applied_filters(filters)
+
+    def apply_label_operation(self, label_operation):
+        assert self.page.filter._label_operation.is_displayed, 'Label Operation is not displayed'
+        self.page.filter._label_operation.select(label_operation)
 
     def assert_filter_options(self):
         # test available options
@@ -734,7 +740,8 @@ class ApplicationsPageTest(AbstractListPageTest):
         self.assert_traffic(name, application_details_ui.traffic_tab,
                             self_object_type=TrafficType.APP, traffic_object_type=TrafficType.APP)
 
-    def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True):
+    def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True,
+                         label_operation=LabelOperation.OR):
         # apply namespaces
         self.apply_namespaces(namespaces, force_clear_all=force_clear_all)
 
@@ -750,16 +757,20 @@ class ApplicationsPageTest(AbstractListPageTest):
 
         _al = self.FILTER_ENUM.LABEL.text
         _labels = [_f['value'] for _f in filters if _f['name'] == _al]
+        if _labels:
+            self.apply_label_operation(label_operation)
 
         logger.debug('Namespaces:{}, Application names:{}'.format(namespaces, _application_names))
         # get applications from ui
         applications_ui = self.page.content.all_items
         # get from REST
         applications_rest = self.kiali_client.application_list(
-            namespaces=namespaces, application_names=_application_names, application_labels=_labels)
+            namespaces=namespaces, application_names=_application_names, application_labels=_labels,
+            label_operation=label_operation)
         # get from OC
         applications_oc = self.openshift_client.application_list(
-            namespaces=namespaces, application_names=_application_names, application_labels=_labels)
+            namespaces=namespaces, application_names=_application_names, application_labels=_labels,
+            label_operation=label_operation)
 
         # compare all results
         logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _application_names))
@@ -935,7 +946,8 @@ class WorkloadsPageTest(AbstractListPageTest):
                             self_object_type=TrafficType.WORKLOAD,
                             traffic_object_type=TrafficType.SERVICE)
 
-    def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True):
+    def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True,
+                         label_operation=LabelOperation.OR):
         # apply namespaces
         self.apply_namespaces(namespaces, force_clear_all=force_clear_all)
 
@@ -945,22 +957,26 @@ class WorkloadsPageTest(AbstractListPageTest):
         # apply sorting
         self.sort(sort_options)
 
-        # get workloads from ui
-        workloads_ui = self.page.content.all_items
-        # get workloads from rest api
         _sn = self.FILTER_ENUM.WORKLOAD_NAME.text
         _workload_names = [_f['value'] for _f in filters if _f['name'] == _sn]
         logger.debug('Namespaces:{}, Workload names:{}'.format(namespaces, _workload_names))
         _wl = self.FILTER_ENUM.LABEL.text
         _labels = [_f['value'] for _f in filters if _f['name'] == _wl]
+        if _labels:
+            self.apply_label_operation(label_operation)
 
+        # get workloads from ui
+        workloads_ui = self.page.content.all_items
+        # get workloads from rest api
         workloads_rest = self.kiali_client.workload_list(
             namespaces=namespaces, workload_names=_workload_names,
-            workload_labels=_labels)
+            workload_labels=_labels,
+            label_operation=label_operation)
         # get workloads from OC client
         workloads_oc = self.openshift_client.workload_list(
             namespaces=namespaces, workload_names=_workload_names,
-            workload_labels=_labels)
+            workload_labels=_labels,
+            label_operation=label_operation)
 
         # compare all results
         logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _workload_names))
@@ -1151,7 +1167,8 @@ class ServicesPageTest(AbstractListPageTest):
                 workload_names.append(workload)
         return set(workload_names)
 
-    def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True):
+    def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True,
+                         label_operation=LabelOperation.OR):
         # apply namespaces
         self.apply_namespaces(namespaces, force_clear_all=force_clear_all)
 
@@ -1161,23 +1178,27 @@ class ServicesPageTest(AbstractListPageTest):
         # apply sorting
         self.sort(sort_options)
 
-        # get services from ui
-        services_ui = self.page.content.all_items
-        # get services from rest api
         _sn = self.FILTER_ENUM.SERVICE_NAME.text
         _service_names = [_f['value'] for _f in filters if _f['name'] == _sn]
         logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _service_names))
 
         _sl = self.FILTER_ENUM.LABEL.text
         _labels = [_f['value'] for _f in filters if _f['name'] == _sl]
+        if _labels:
+            self.apply_label_operation(label_operation)
 
+        # get services from ui
+        services_ui = self.page.content.all_items
+        # get services from rest api
         services_rest = self.kiali_client.service_list(
             namespaces=namespaces, service_names=_service_names,
-            service_labels=_labels)
+            service_labels=_labels,
+            label_operation=label_operation)
         # get services from OC client
         services_oc = self.openshift_client.service_list(
             namespaces=namespaces, service_names=_service_names,
-            service_labels=_labels)
+            service_labels=_labels,
+            label_operation=label_operation)
 
         # compare all results
         logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _service_names))
@@ -1190,10 +1211,7 @@ class ServicesPageTest(AbstractListPageTest):
         assert len(services_ui) == len(services_rest), \
             "UI {} and REST {} services number not equal".format(services_ui, services_rest)
 
-        if len(_labels) > 0:
-            assert len(services_rest) == len(services_oc)
-        else:
-            assert len(services_rest) <= len(services_oc)
+        assert len(services_rest) <= len(services_oc)
 
         for service_ui in services_ui:
             found = False

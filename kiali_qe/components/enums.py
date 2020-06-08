@@ -428,3 +428,8 @@ class MutualTLSMode(StringEnum):
     DISABLE = ('DISABLE')
     PERMISSIVE = ('PERMISSIVE')
     STRICT = ('STRICT')
+
+
+class LabelOperation(StringEnum):
+    OR = ('or')
+    AND = ('and')
