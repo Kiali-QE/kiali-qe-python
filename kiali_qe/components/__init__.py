@@ -3515,6 +3515,7 @@ class LogsView(TabViewAbstract):
                 pass
         wait_to_spinner_disappear(self.browser)
         self.logs_switch = ButtonSwitch(parent=self, label="Side by Side")
+        self.log_hide = TextInput(parent=self, locator='//input[@id="log_hide"]')
 
 
 class MetricsView(TabViewAbstract):
