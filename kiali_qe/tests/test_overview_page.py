@@ -84,6 +84,8 @@ def test_all_workloads_expand_overviews(kiali_client, openshift_client, browser)
                            list_type=OverviewViewType.EXPAND)
 
 
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group6
 def test_all_app_list_overviews(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)

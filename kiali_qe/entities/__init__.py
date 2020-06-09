@@ -63,6 +63,8 @@ class AppRequests(EntityBase):
             repr(self.outboundErrorRatio))
 
     def is_healthy(self):
+        if self.inboundErrorRatio == -0.01 and self.outboundErrorRatio == -0.01:
+            return HealthType.IDLE
         if self.inboundErrorRatio < 0 and self.outboundErrorRatio < 0:
             return HealthType.NA
         if self.inboundErrorRatio < 0.001 and self.outboundErrorRatio < 0.001:
