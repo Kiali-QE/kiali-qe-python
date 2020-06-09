@@ -9,9 +9,7 @@ from kiali_qe.components.error_codes import (
     KIA0208,
     KIA0205,
     KIA0401,
-    KIA0206,
-    KIA0505,
-    KIA0506
+    KIA0206
 )
 
 '''
@@ -42,9 +40,6 @@ SCENARIO_18 = "scenario18.yaml"
 SCENARIO_19 = "scenario19.yaml"
 SCENARIO_20 = "scenario20.yaml"
 SCENARIO_21 = "scenario21.yaml"
-SCENARIO_22 = "scenario22.yaml"
-SCENARIO_23 = "scenario23.yaml"
-SCENARIO_24 = "scenario24.yaml"
 
 
 @pytest.mark.p_group_last
@@ -651,113 +646,4 @@ def test_scenario21(kiali_client, openshift_client, browser):
                                 NamespaceTLSObject(
                                     'default',
                                     MeshWideTLSType.DISABLED)
-                             ])
-
-
-@pytest.mark.p_group_last
-def test_scenario22(kiali_client, openshift_client, browser):
-    """ PeerAuthentication is DISABLE in namespace level
-    """
-
-    tests = ValidationsTest(
-            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser,
-            objects_path=istio_objects_mtls_path.strpath)
-    tests.test_istio_objects(SCENARIO_22,
-                             config_validation_objects=[
-                                 ConfigValidationObject(
-                                     'DestinationRule', 'bookinfo-enable-mtls',
-                                     namespace=BOOKINFO,
-                                     error_messages=[KIA0206]),
-                                 ConfigValidationObject(
-                                     'PeerAuthentication', 'disable-mtls-bookinfo',
-                                     namespace=BOOKINFO,
-                                     error_messages=[KIA0505])
-                                 ],
-                             tls_type=MeshWideTLSType.DISABLED,
-                             namespace_tls_objects=[
-                                NamespaceTLSObject(
-                                    'bookinfo',
-                                    MeshWideTLSType.PARTLY_ENABLED),
-                                NamespaceTLSObject(
-                                    'istio-system',
-                                    MeshWideTLSType.DISABLED),
-                                NamespaceTLSObject(
-                                    'default',
-                                    MeshWideTLSType.DISABLED)
-                             ])
-
-
-@pytest.mark.p_group_last
-def test_scenario23(kiali_client, openshift_client, browser):
-    """ PeerAuthentication is DISABLE in mesh level
-    """
-
-    tests = ValidationsTest(
-            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser,
-            objects_path=istio_objects_mtls_path.strpath)
-    tests.test_istio_objects(SCENARIO_23,
-                             config_validation_objects=[
-                                 ConfigValidationObject(
-                                     'DestinationRule', 'enable-mesh-mtls',
-                                     namespace=BOOKINFO,
-                                     error_messages=[KIA0205]),
-                                 ConfigValidationObject(
-                                     'PeerAuthentication', 'disable-mesh-mtls',
-                                     namespace=ISTIO_SYSTEM,
-                                     error_messages=[KIA0506])
-                                 ],
-                             tls_type=(MeshWideTLSType.PARTLY_ENABLED if not
-                                       openshift_client.is_auto_mtls()
-                                       else MeshWideTLSType.DISABLED),
-                             namespace_tls_objects=[
-                                NamespaceTLSObject(
-                                    'bookinfo',
-                                    MeshWideTLSType.DISABLED),
-                                NamespaceTLSObject(
-                                    'istio-system',
-                                    MeshWideTLSType.DISABLED),
-                                NamespaceTLSObject(
-                                    'default',
-                                    MeshWideTLSType.DISABLED)
-                             ])
-
-
-@pytest.mark.p_group_last
-def test_scenario24(kiali_client, openshift_client, browser):
-    """ DestinationRule: DISABLED at mesh-level
-    """
-
-    tests = ValidationsTest(
-            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser,
-            objects_path=istio_objects_mtls_path.strpath)
-    tests.test_istio_objects(SCENARIO_24,
-                             config_validation_objects=[
-                                 ConfigValidationObject(
-                                     'DestinationRule', 'disable-mesh-mtls',
-                                     namespace=BOOKINFO,
-                                     error_messages=[KIA0208]),
-                                 ConfigValidationObject(
-                                     'PeerAuthentication', 'disable-mesh-mtls',
-                                     namespace=ISTIO_SYSTEM,
-                                     error_messages=[KIA0401])
-                                 ],
-                             tls_type=(MeshWideTLSType.PARTLY_ENABLED if not
-                                       openshift_client.is_auto_mtls()
-                                       else MeshWideTLSType.ENABLED),
-                             namespace_tls_objects=[
-                                NamespaceTLSObject(
-                                    'bookinfo',
-                                    (MeshWideTLSType.DISABLED if not
-                                     openshift_client.is_auto_mtls()
-                                     else MeshWideTLSType.ENABLED)),
-                                NamespaceTLSObject(
-                                    'istio-system',
-                                    (MeshWideTLSType.DISABLED if not
-                                     openshift_client.is_auto_mtls()
-                                     else MeshWideTLSType.ENABLED)),
-                                NamespaceTLSObject(
-                                    'default',
-                                    (MeshWideTLSType.DISABLED if not
-                                     openshift_client.is_auto_mtls()
-                                     else MeshWideTLSType.ENABLED))
                              ])
