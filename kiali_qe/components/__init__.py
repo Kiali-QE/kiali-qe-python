@@ -3473,7 +3473,7 @@ class LogsView(TabViewAbstract):
     interval = DropDown(locator=DROP_DOWN.format('metrics_filter_interval_duration'))
     refresh = Button(locator='//button[@id="refresh_button"]')
     pod_textarea = Text(locator='//textarea[contains(@aria-label, "Pod logs text")]')
-    proxy_textarea = Text(locator='//textarea[contains(@aria-label, "Proxy logs text")]')
+    proxy_textarea = Text(locator='//textarea[contains(@aria-label, "Container logs text")]')
 
     def open(self):
         tab = self.browser.element(locator=self.LOGS_TAB,
