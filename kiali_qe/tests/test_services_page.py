@@ -1,7 +1,7 @@
 import pytest
 
 from kiali_qe.tests import ServicesPageTest
-from kiali_qe.components.enums import ServicesPageSort, ServicesPageFilter
+from kiali_qe.components.enums import ServicesPageSort, ServicesPageFilter, LabelOperation
 
 BOOKINFO_2 = 'bookinfo2'
 ISTIO_SYSTEM = 'istio-system'
@@ -68,6 +68,28 @@ def test_filter_service_by_label(kiali_client, openshift_client, browser):
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
         {"name": ServicesPageFilter.LABEL.text, "value": "app:reviews"}])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group7
+def test_filter_service_by_or_label(kiali_client, openshift_client, browser):
+    tests = ServicesPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.assert_all_items(filters=[
+        {"name": ServicesPageFilter.LABEL.text, "value": "app:reviews"},
+        {"name": ServicesPageFilter.LABEL.text, "value": "service"}],
+        label_operation=LabelOperation.OR.text)
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group7
+def test_filter_service_by_and_label(kiali_client, openshift_client, browser):
+    tests = ServicesPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.assert_all_items(filters=[
+        {"name": ServicesPageFilter.LABEL.text, "value": "app"},
+        {"name": ServicesPageFilter.LABEL.text, "value": "service"}],
+        label_operation=LabelOperation.AND.text)
 
 
 @pytest.mark.p_ro_top

@@ -3,7 +3,7 @@ from kubernetes import config
 from openshift.dynamic import DynamicClient
 from openshift.dynamic.exceptions import NotFoundError
 
-from kiali_qe.components.enums import IstioConfigObjectType
+from kiali_qe.components.enums import IstioConfigObjectType, LabelOperation
 from kiali_qe.entities.istio_config import IstioConfig, Rule, IstioConfigDetails
 from kiali_qe.entities.service import Service, ServiceDetails
 from kiali_qe.entities.workload import Workload, WorkloadDetails
@@ -12,7 +12,7 @@ from kiali_qe.entities.applications import (
     ApplicationDetails,
     AppWorkload
 )
-from kiali_qe.utils import dict_begins_with
+from kiali_qe.utils import dict_contains
 from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
 from kiali_qe.utils.log import logger
 
@@ -250,7 +250,8 @@ class OpenshiftExtendedClient(object):
         except NotFoundError:
             return False
 
-    def application_list(self, namespaces=[], application_names=[], application_labels=[]):
+    def application_list(self, namespaces=[], application_names=[], application_labels=[],
+                         label_operation=None):
         """ Returns list of applications """
         result_dict = {}
         workloads = []
@@ -281,11 +282,14 @@ class OpenshiftExtendedClient(object):
         if len(application_labels) > 0:
             filtered_list = []
             filtered_list.extend(
-                [_i for _i in result if dict_begins_with(_i.labels, application_labels)])
+                [_i for _i in result if dict_contains(
+                    _i.labels, application_labels,
+                    (True if label_operation == LabelOperation.AND.text else False))])
             result = set(filtered_list)
         return result
 
-    def service_list(self, namespaces=[], service_names=[], service_labels=[]):
+    def service_list(self, namespaces=[], service_names=[], service_labels=[],
+                     label_operation=None):
         """ Returns list of services
         Args:
             namespace: Namespace of the service, optional
@@ -320,11 +324,14 @@ class OpenshiftExtendedClient(object):
         if len(service_labels) > 0:
             filtered_list = []
             filtered_list.extend(
-                [_i for _i in items if dict_begins_with(_i.labels, service_labels)])
+                [_i for _i in items if dict_contains(
+                    _i.labels, service_labels,
+                    (True if label_operation == LabelOperation.AND.text else False))])
             items = set(filtered_list)
         return items
 
-    def workload_list(self, namespaces=[], workload_names=[], workload_labels=[]):
+    def workload_list(self, namespaces=[], workload_names=[], workload_labels=[],
+                      label_operation=None):
         """ Returns list of workloads """
         result = []
         for _key, _value in self.WORKLOAD_TYPES.items():
@@ -333,12 +340,14 @@ class OpenshiftExtendedClient(object):
             result.extend(self._workload_list(_value, _key,
                                               namespaces=namespaces,
                                               workload_names=workload_names,
-                                              workload_labels=workload_labels))
+                                              workload_labels=workload_labels,
+                                              label_operation=label_operation))
 
         return result
 
     def _workload_list(self, attribute_name, workload_type,
-                       namespaces=[], workload_names=[], workload_labels=[]):
+                       namespaces=[], workload_names=[], workload_labels=[],
+                       label_operation=None):
         """ Returns list of workload
         Args:
             attribute_name: the attribute of class for getting workload
@@ -377,7 +386,9 @@ class OpenshiftExtendedClient(object):
         if len(workload_labels) > 0:
             filtered_list = []
             filtered_list.extend(
-                [_i for _i in items if dict_begins_with(_i.labels, workload_labels)])
+                [_i for _i in items if dict_contains(
+                    _i.labels, workload_labels,
+                    (True if label_operation == LabelOperation.AND.text else False))])
             items = set(filtered_list)
         return items
 
