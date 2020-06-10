@@ -415,6 +415,7 @@ class AbstractListPageTest(object):
             assert traces_tab.traces.has_results
 
     def assert_logs_tab(self, logs_tab, all_pods=[]):
+        _filter = "GET"
         logs_tab.open()
         assert is_equal(all_pods, logs_tab.pods.options)
         assert is_equal([item.text for item in TailLines],
@@ -422,11 +423,14 @@ class AbstractListPageTest(object):
         assert is_equal([item.text for item in TimeIntervalUIText],
                         logs_tab.interval.options)
         logs_tab.logs_switch.on()
+        logs_tab.log_hide.fill(_filter)
         self.browser.click(logs_tab.refresh)
         wait_to_spinner_disappear(self.browser)
         assert logs_tab.logs_switch.is_on
         assert logs_tab.pod_textarea.text
         assert logs_tab.proxy_textarea.text
+        assert _filter not in logs_tab.pod_textarea.text
+        assert _filter not in logs_tab.proxy_textarea.text
 
     def assert_traffic(self, name, traffic_tab, self_object_type, traffic_object_type):
         inbound_traffic = traffic_tab.inbound_items()
