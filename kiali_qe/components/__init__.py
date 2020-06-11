@@ -1184,7 +1184,7 @@ class ConfigActions(Actions):
 
 
 class Traces(Widget):
-    ROOT = '//section[contains(@class, "pf-c-page__main-section")]'
+    ROOT = '//section[contains(@class, "pf-tab-section-3-basic-tabs")]'
     SEARCH_TRACES_BUTTON = './/button[contains(@aria-label, "SearchTraces")]'
     SHOW_HIDE_OPTIONS = '//button[contains(@class, "pf-c-expandable__toggle")]/span[text()="{}"]/..'
 
@@ -1206,34 +1206,22 @@ class Traces(Widget):
 
     @property
     def is_oc_login_displayed(self):
-        try:
-            self.browser.switch_to_frame('//iframe')
-            return len(
-                self.browser.elements(
-                    locator='//button[text()="Log in with OpenShift"]', parent='iframe')) > 0
-        finally:
-            self.browser.switch_to_main_frame()
+        return len(
+            self.browser.elements(
+                locator='//button[text()="Log in with OpenShift"]', parent='iframe')) > 0
 
     @property
     def has_no_results(self):
-        try:
-            self.browser.switch_to_frame('//iframe')
-            return len(
-                self.browser.elements(
-                    locator='//div[contains(@data-test, "no-results")]', parent='iframe')) > 0
-        finally:
-            self.browser.switch_to_main_frame()
+        return len(
+            self.browser.elements(
+                locator='//div[contains(@class, "pf-c-empty-state")]', parent=self.ROOT)) > 0
 
     @property
     def has_results(self):
-        try:
-            self.browser.switch_to_frame('//iframe')
-            return len(
-                self.browser.elements(
-                    locator='//div[contains(@class, "TraceResultsScatterPlot")]',
-                    parent='iframe')) > 0
-        finally:
-            self.browser.switch_to_main_frame()
+        return len(
+            self.browser.elements(
+                locator='//div[contains(@class, "pf-c-chart")]',
+                parent=self.ROOT)) > 0
 
     def search_traces(self, service_name):
         self._service_drop_down.select(service_name)
