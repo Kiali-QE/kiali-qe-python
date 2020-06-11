@@ -284,6 +284,8 @@ class IstioConfigObjectType(StringEnum):
     HTTP_API_SPEC = ('HTTPAPISpec')
     HTTP_API_SPEC_BINDING = ('HTTPAPISpecBinding')
     TEMPLATE = ('Template')
+    HANDLER = ('Handler')
+    INSTANCE = ('Instance')
     VIRTUAL_SERVICE = ('VirtualService')
     GATEWAY = ('Gateway')
     SERVICE_ENTRY = ('ServiceEntry')

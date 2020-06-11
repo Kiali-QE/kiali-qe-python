@@ -321,7 +321,25 @@ class KialiExtendedClient(KialiClient):
                     items.append(Rule(
                         name=_policy['metadata']['name'],
                         namespace=_namespace,
-                        object_type='{}: {}'.format(OBJECT_TYPE.ADAPTER.text, _policy['adapter']),
+                        object_type=OBJECT_TYPE.ADAPTER.text,
+                        validation=IstioConfigValidation.NA))
+
+            # update Rule with Handler
+            if len(_data['handlers']) > 0:
+                for _policy in _data['handlers']:
+                    items.append(Rule(
+                        name=_policy['metadata']['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.HANDLER.text,
+                        validation=IstioConfigValidation.NA))
+
+            # update Rule with Instance
+            if len(_data['instances']) > 0:
+                for _policy in _data['instances']:
+                    items.append(Rule(
+                        name=_policy['metadata']['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.INSTANCE.text,
                         validation=IstioConfigValidation.NA))
 
             # update Rule with Template
@@ -330,8 +348,7 @@ class KialiExtendedClient(KialiClient):
                     items.append(Rule(
                         name=_policy['metadata']['name'],
                         namespace=_namespace,
-                        object_type='{}: {}'.format(
-                            OBJECT_TYPE.TEMPLATE.text, _policy['template']),
+                        object_type=OBJECT_TYPE.TEMPLATE.text,
                         validation=IstioConfigValidation.NA))
 
             # update VirtualService
