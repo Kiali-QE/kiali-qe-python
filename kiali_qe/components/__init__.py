@@ -2708,8 +2708,10 @@ class ListViewIstioConfig(ListViewAbstract):
             _object_type = columns[2].text.strip()
 
             if str(_object_type) == IstioConfigObjectType.RULE.text or \
-                    '{}: '.format(IstioConfigObjectType.ADAPTER.text) in str(_object_type) or \
-                    '{}: '.format(IstioConfigObjectType.TEMPLATE.text) in str(_object_type):
+                    str(_object_type) == IstioConfigObjectType.ADAPTER.text or \
+                    str(_object_type) == IstioConfigObjectType.HANDLER.text or \
+                    str(_object_type) == IstioConfigObjectType.INSTANCE.text or \
+                    str(_object_type) == IstioConfigObjectType.TEMPLATE.text:
                 _rule = Rule(name=_name, namespace=_namespace, object_type=_object_type,
                              validation=IstioConfigValidation.NA)
                 # append this item to the final list

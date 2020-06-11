@@ -41,10 +41,10 @@ class OpenshiftExtendedClient(object):
         'HTTPAPISpec': '_httpapispec',
         'HTTPAPISpecBinding': '_httpapispecbinding',
         'Rule': '_rule',
-        'Adapter': '_handler',
-        'Adapter: adapter': '_adapter',
-        'Template: template': '_template',
-        'Template: instance': '_instance',
+        'Handler': '_handler',
+        'Adapter': '_adapter',
+        'Template': '_template',
+        'Instance': '_instance',
         'QuotaSpec': '_quotaspec',
         'QuotaSpecBinding': '_quotaspecbinding',
         'PeerAuthentication': '_peerauthentication',
@@ -480,18 +480,14 @@ class OpenshiftExtendedClient(object):
             if hasattr(_response, 'items'):
                 _raw_items.extend(_response.items)
         for _item in _raw_items:
-            if str(resource_type) == IstioConfigObjectType.RULE.text:
-                _rule = Rule(name=_item.metadata.name,
-                             namespace=_item.metadata.namespace,
-                             object_type=resource_type)
-                # append this item to the final list
-                items.append(_rule)
-            elif str(resource_type) == IstioConfigObjectType.ADAPTER.text or\
+            if str(resource_type) == IstioConfigObjectType.RULE.text or\
+                    str(resource_type) == IstioConfigObjectType.ADAPTER.text or\
+                    str(resource_type) == IstioConfigObjectType.HANDLER.text or\
+                    str(resource_type) == IstioConfigObjectType.INSTANCE.text or\
                     str(resource_type) == IstioConfigObjectType.TEMPLATE.text:
                 _rule = Rule(name=_item.metadata.name,
                              namespace=_item.metadata.namespace,
-                             object_type='{}: {}'.format(
-                                 resource_type, _item.kind))
+                             object_type=resource_type)
                 # append this item to the final list
                 items.append(_rule)
             elif str(resource_type) == IstioConfigObjectType.SERVICE_MESH_POLICY.text or\
