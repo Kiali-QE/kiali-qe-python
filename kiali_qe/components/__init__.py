@@ -146,6 +146,45 @@ class ButtonSwitch(Button):
         return self.browser.text(parent=self, locator=self.locator + self.TEXT)
 
 
+class FilterInput(Widget):
+    ROOT = '//input[@type="text"]'
+    CLEAR_BUTTON = '/following-sibling::button[contains(@class, "pf-m-control")]'
+
+    def __init__(self, parent, locator=None, logger=None):
+        Widget.__init__(self, parent, logger=logger)
+        if locator:
+            self.locator = locator
+        else:
+            self.locator = self.ROOT
+        self._input = TextInput(parent=self, locator=self.locator)
+        self._clear_button = Button(parent=self, locator=self.locator + self.CLEAR_BUTTON)
+
+    def __locator__(self):
+        return self.locator
+
+    @property
+    def is_empty(self):
+        return self.text == ''
+
+    @property
+    def is_clear_displayed(self):
+        return self.browser.is_displayed(self._clear_button)
+
+    def clear(self):
+        if not self.is_empty:
+            self.browser.click(self._clear_button)
+            return True
+        return False
+
+    def fill(self, text):
+        self._input.fill(text)
+        self.browser.send_keys(Keys.ENTER, self._input)
+
+    @property
+    def text(self):
+        return self._input.value
+
+
 class Notifications(Widget):
     ROOT = '//*[contains(@class, "pf-c-form__helper-text")]'
 
@@ -331,6 +370,7 @@ class DropDown(Widget):
                     # reload leads this issue
                     except StaleElementReferenceException:
                         pass
+        wait_to_spinner_disappear(self.browser)
 
     @property
     def selected(self):
@@ -1422,6 +1462,13 @@ class GraphSidePanel(Widget):
         if application:
             application = application.replace('A', '')
         return application
+
+
+class GraphDisplayFilter(CheckBoxFilter):
+    ROOT = ('//*[contains(@class, "pf-c-dropdown__menu")]')
+    CB_ITEMS = './/label//input[@type="checkbox"]/..'
+    RB_ITEMS = './/label//input[@type="radio"]/..'
+    ITEM = './/label[normalize-space(text())="{}"]/../input'
 
 
 class NamespaceFilter(CheckBoxFilter):
@@ -3490,8 +3537,8 @@ class LogsView(TabViewAbstract):
     tail_lines = DropDown(locator=DROP_DOWN.format('wpl_tailLines'))
     interval = DropDown(locator=DROP_DOWN.format('metrics_filter_interval_duration'))
     refresh = Button(locator='//button[@id="refresh_button"]')
-    pod_textarea = Text(locator='//textarea[contains(@aria-label, "Pod logs text")]')
-    proxy_textarea = Text(locator='//textarea[contains(@aria-label, "Proxy logs text")]')
+    pod_textarea = Text(locator='//h5[not(contains(text(), "Istio proxy (sidecar)"))]/../textarea')
+    proxy_textarea = Text(locator='//h5[contains(text(), "Istio proxy (sidecar)")]/../textarea')
 
     def open(self):
         tab = self.browser.element(locator=self.LOGS_TAB,
@@ -3505,7 +3552,7 @@ class LogsView(TabViewAbstract):
                 pass
         wait_to_spinner_disappear(self.browser)
         self.logs_switch = ButtonSwitch(parent=self, label="Side by Side")
-        self.log_hide = TextInput(parent=self, locator='//input[@id="log_hide"]')
+        self.log_hide = FilterInput(parent=self, locator='//input[@id="log_hide"]')
 
 
 class MetricsView(TabViewAbstract):

@@ -17,13 +17,14 @@ from kiali_qe.components import (
     Notifications,
     SortDropDown,
     SortBar,
-    CheckBoxFilter,
+    GraphDisplayFilter,
     NamespaceFilter,
     Actions,
     ConfigActions,
     Traces,
     GraphLayout,
-    GraphSidePanel)
+    GraphSidePanel,
+    FilterInput)
 from kiali_qe.components import wait_displayed, wait_to_spinner_disappear
 
 from kiali_qe.components.enums import (
@@ -129,8 +130,10 @@ class GraphPage(RootPage):
     interval = ItemDropDown(locator=XP_DROP_DOWN.format('time_range_refresh'))
     edge_labels = DropDown(locator=XP_DROP_DOWN.format('graph_filter_edge_labels'))
     type = ItemDropDown(locator=XP_DROP_DOWN.format('graph_filter_view_type'))
+    graph_find = FilterInput(locator='//input[@id="graph_find"]')
+    graph_hide = FilterInput(locator='//input[@id="graph_hide"]')
     layout = GraphLayout()
-    filter = CheckBoxFilter("Display")
+    filter = GraphDisplayFilter("Display")
     refresh = Button(locator=REFRESH_BUTTON)
     side_panel = GraphSidePanel()
     # TODO: implement graph control code
