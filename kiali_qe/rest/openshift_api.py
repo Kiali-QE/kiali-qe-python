@@ -3,7 +3,7 @@ from kubernetes import config
 from openshift.dynamic import DynamicClient
 from openshift.dynamic.exceptions import NotFoundError
 
-from kiali_qe.components.enums import IstioConfigObjectType, LabelOperation
+from kiali_qe.components.enums import IstioConfigObjectType, LabelOperation, WorkloadType
 from kiali_qe.entities.istio_config import IstioConfig, Rule, IstioConfigDetails
 from kiali_qe.entities.service import Service, ServiceDetails
 from kiali_qe.entities.workload import Workload, WorkloadDetails
@@ -58,7 +58,7 @@ class OpenshiftExtendedClient(object):
 
     APP_NAME_REGEX = re.compile('(-v\\d+-.*)?(-v\\d+$)?(-(\\w{0,7}\\d+\\w{0,7})$)?')
 
-    WORKLOAD_NAME_REGEX = re.compile('(-(\\w{1,8}\\d+\\w{1,8}))(-(\\w{0,7}\\d+\\w{0,7})$)?')
+    WORKLOAD_NAME_REGEX = re.compile('(-(\\w{1,8}\\d+\\w{1,8}))?(-(\\w{0,4}\\d?\\w{0,4})$)?')
 
     ISTIO_SYSTEM = "istio-system"
 
@@ -332,18 +332,50 @@ class OpenshiftExtendedClient(object):
 
     def workload_list(self, namespaces=[], workload_names=[], workload_labels=[],
                       label_operation=None):
-        """ Returns list of workloads """
-        result = []
+        """ Returns list of workloads
+            Order of showing/hiding priority is: Deployments, ReplicaSets, Pods
+        """
+        full_list = []
+        filtered_list = []
         for _key, _value in self.WORKLOAD_TYPES.items():
-            # TODO apply Job filters
-            # TODO apply Pod filters
-            result.extend(self._workload_list(_value, _key,
-                                              namespaces=namespaces,
-                                              workload_names=workload_names,
-                                              workload_labels=workload_labels,
-                                              label_operation=label_operation))
+            full_list.extend(self._workload_list(_value, _key,
+                                                 namespaces=namespaces,
+                                                 workload_names=workload_names,
+                                                 workload_labels=workload_labels,
+                                                 label_operation=label_operation))
 
-        return result
+        deployment_names = [_item.name + _item.namespace for _item in full_list if
+                            _item.workload_type == WorkloadType.DEPLOYMENT.text]
+
+        replicaset_names = [_item.name + _item.namespace for _item in full_list if
+                            _item.workload_type == WorkloadType.REPLICA_SET.text]
+
+        for _item in full_list:
+            _workload_name = self._get_workload_name(_item)
+            if _item.workload_type == WorkloadType.REPLICA_SET.text:
+                if _workload_name + _item.namespace not in deployment_names:
+                    filtered_list.append(Workload(
+                                            name=_workload_name,
+                                            namespace=_item.namespace,
+                                            workload_type=_item.workload_type,
+                                            istio_sidecar=_item.istio_sidecar,
+                                            labels=_item.labels,
+                                            health=_item.health))
+            elif _item.workload_type in [WorkloadType.POD.text,
+                                         WorkloadType.JOB.text]:
+                if _workload_name + _item.namespace not in replicaset_names and\
+                        _workload_name + _item.namespace not in deployment_names:
+                    filtered_list.append(Workload(
+                                            name=_workload_name,
+                                            namespace=_item.namespace,
+                                            workload_type=_item.workload_type,
+                                            istio_sidecar=_item.istio_sidecar,
+                                            labels=_item.labels,
+                                            health=_item.health))
+            else:
+                filtered_list.append(_item)
+
+        return filtered_list
 
     def _workload_list(self, attribute_name, workload_type,
                        namespaces=[], workload_names=[], workload_labels=[],

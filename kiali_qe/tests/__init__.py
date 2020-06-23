@@ -969,8 +969,6 @@ class WorkloadsPageTest(AbstractListPageTest):
         if _labels:
             self.apply_label_operation(label_operation)
 
-        # get workloads from ui
-        workloads_ui = self.page.content.all_items
         # get workloads from rest api
         workloads_rest = self.kiali_client.workload_list(
             namespaces=namespaces, workload_names=_workload_names,
@@ -978,9 +976,12 @@ class WorkloadsPageTest(AbstractListPageTest):
             label_operation=label_operation)
         # get workloads from OC client
         workloads_oc = self.openshift_client.workload_list(
-            namespaces=namespaces, workload_names=_workload_names,
+            namespaces=(namespaces if namespaces else self.kiali_client.namespace_list()),
+            workload_names=_workload_names,
             workload_labels=_labels,
             label_operation=label_operation)
+        # get workloads from ui
+        workloads_ui = self.page.content.all_items
 
         # compare all results
         logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _workload_names))
@@ -992,8 +993,8 @@ class WorkloadsPageTest(AbstractListPageTest):
 
         assert len(workloads_ui) == len(workloads_rest), \
             "UI {} and REST {} workloads number not equal".format(workloads_ui, workloads_rest)
-        # TODO when workloads are filtered put == here
-        assert len(workloads_rest) <= len(workloads_oc)
+        assert len(workloads_rest) == len(workloads_oc), \
+            "REST {} and OC {} workloads number not equal".format(workloads_rest, workloads_oc)
 
         for workload_ui in workloads_ui:
             found = False
