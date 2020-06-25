@@ -14,7 +14,6 @@ from kiali_qe.components.enums import (
     RoutingWizardTLS,
     TrafficType,
     GraphPageLayout,
-    OverviewLinks,
     TLSMutualValues,
     ItemIconType,
     MutualTLSMode
@@ -2233,7 +2232,8 @@ class ListViewAbstract(ViewAbstract):
         _label_dict = {}
         try:
             self.browser.move_to_element(
-                locator='.//div[contains(@class, "pf-c-card__body")]/div', parent=element)
+                locator='.//div[contains(@class, "pf-c-card__body")]//div[@id="labels_info"]',
+                parent=element)
             sleep(1.5)
             labels_text = self.browser.element(
                 locator=(POPOVER),
@@ -2295,11 +2295,11 @@ class ListViewAbstract(ViewAbstract):
     def get_namespace_wide_tls(self, element):
         _partial = len(self.browser.elements(
             parent=element,
-            locator='.//*[contains(@class, "pf-c-title")]'
+            locator='.//*[contains(@class, "pf-c-card__body")]'
             '//img[contains(@src, "mtls-status-partial-dark")]')) > 0
         _full = len(self.browser.elements(
             parent=element,
-            locator='.//*[contains(@class, "pf-c-title")]'
+            locator='.//*[contains(@class, "pf-c-card__body")]'
             '//img[contains(@src, "mtls-status-full-dark")]')) > 0
         if _full:
             return MeshWideTLSType.ENABLED
@@ -2325,11 +2325,12 @@ class ListViewAbstract(ViewAbstract):
 
 class ListViewOverview(ListViewAbstract):
     ROOT = '//section[contains(@class, "pf-c-page__main-section")]'
+    LINK_ACTIONS = '//div[contains(@class, "pf-c-dropdown")]//button[@aria-label="Actions"]/..'
     ITEMS = './/*[contains(@class, "pf-l-grid__item")]/article[contains(@class, "pf-c-card")]'
     LIST_ITEMS = './/tr[contains(@role, "row")]'
     ITEM_COL = './/td'
     ITEM_TITLE = './/*[contains(@class, "pf-c-title")]'
-    ITEM_TEXT = './/*[contains(@class, "pf-c-card__body")]//a'
+    ITEM_TEXT = './/*[contains(@class, "pf-c-card__body")]//span/div[contains(text(), "{}")]'
     UNHEALTHY_TEXT = './/*[contains(@class, "icon-failure")]/..'
     HEALTHY_TEXT = './/*[contains(@class, "icon-healthy")]/..'
     DEGRADED_TEXT = './/*[contains(@class, "icon-warning")]/..'
@@ -2360,8 +2361,8 @@ class ListViewOverview(ListViewAbstract):
         for el in self.browser.elements(self.ITEMS, parent=self):
             _namespace = self.browser.element(
                 locator=self.ITEM_TITLE, parent=el).text.replace('N/A', '')
-            _item_numbers = int(re.search(r'\d+', self.browser.element(
-                locator=self.ITEM_TEXT, parent=el).text).group())
+            _item_numbers = int(re.search(r'\d+', self.browser.text(
+                locator=self.ITEM_TEXT.format(_overview_type[0:3]), parent=el)).group())
             _unhealthy = 0
             _healthy = 0
             _degraded = 0
@@ -2384,13 +2385,14 @@ class ListViewOverview(ListViewAbstract):
                 _idle = int(self.browser.element(
                     locator=self.IDLE_TEXT, parent=el).text)
             # overview object creation
+            # TODO links
             _overview = Overview(
                 overview_type=_overview_type,
                 namespace=_namespace,
                 items=_item_numbers,
                 config_status=self._get_item_config_status(
                     self.browser.element(
-                        locator='.//div[contains(@class, "pf-c-card__header")]', parent=el)),
+                        locator='.//div[contains(text(), "Istio Config")]/..', parent=el)),
                 healthy=_healthy,
                 unhealthy=_unhealthy,
                 degraded=_degraded,
@@ -2398,11 +2400,7 @@ class ListViewOverview(ListViewAbstract):
                 na=(_item_numbers - (_healthy + _unhealthy + _degraded + _idle)),
                 tls_type=self.get_namespace_wide_tls(el),
                 labels=self._get_labels_tooltip(element=el),
-                graph_link=self._get_link(OverviewLinks.GRAPH.text, el),
-                apps_link=self._get_link(OverviewLinks.APPLICATIONS.text, el),
-                workloads_link=self._get_link(OverviewLinks.WORKLOADS.text, el),
-                services_link=self._get_link(OverviewLinks.SERVICES.text, el),
-                configs_link=self._get_link(OverviewLinks.ISTIO_CONFIG.text, el))
+                links=[])
             # append this item to the final list
             _items.append(_overview)
         return _items
@@ -2419,8 +2417,9 @@ class ListViewOverview(ListViewAbstract):
         for el in self.browser.elements(self.LIST_ITEMS, parent=self):
             columns = self.browser.elements(self.ITEM_COL, parent=el)
             _namespace = self._item_namespace(columns[1])
-            _item_numbers = int(re.search(r'\d+', self.browser.element(
-                locator='.//a', parent=columns[4]).text).group())
+            _item_numbers = int(re.search(r'\d+', self.browser.text(
+                locator='.//div[contains(text(), "{}")]'.format(_overview_type[0:3]),
+                parent=columns[4])).group())
             _unhealthy = 0
             _healthy = 0
             _degraded = 0
@@ -2443,6 +2442,7 @@ class ListViewOverview(ListViewAbstract):
                 _idle = int(self.browser.element(
                     locator=self.IDLE_TEXT, parent=columns[4]).text)
             # overview object creation
+            # TODO links
             _overview = Overview(
                 overview_type=_overview_type,
                 namespace=_namespace,
@@ -2455,24 +2455,10 @@ class ListViewOverview(ListViewAbstract):
                 na=(_item_numbers - (_healthy + _unhealthy + _degraded + _idle)),
                 tls_type=self.get_namespace_wide_tls(el),
                 labels=self._get_item_labels(columns[3]),
-                graph_link=self._get_link(OverviewLinks.GRAPH.text, columns[5]),
-                apps_link=self._get_link(OverviewLinks.APPLICATIONS.text, columns[5]),
-                workloads_link=self._get_link(OverviewLinks.WORKLOADS.text, columns[5]),
-                services_link=self._get_link(OverviewLinks.SERVICES.text, columns[5]),
-                configs_link=self._get_link(OverviewLinks.ISTIO_CONFIG.text, columns[5]))
+                links=[])
             # append this item to the final list
             _items.append(_overview)
         return _items
-
-    def _get_link(self, link_type, element):
-        try:
-            return self.browser.get_attribute(
-                'href', self.browser.element(
-                    locator='.//a[contains(@href, "/{}") and normalize-space(text())=""]'.format(
-                        link_type),
-                    parent=element))
-        except (NoSuchElementException):
-            return None
 
 
 class ListViewApplications(ListViewAbstract):
