@@ -564,48 +564,14 @@ class OverviewPageTest(AbstractListPageTest):
                     break
             assert found, '{} not found in REST {}'.format(overview_ui, overviews_rest)
 
-            self._assert_graph_link(overview_ui.graph_link,
-                                    overview_ui.namespace,
-                                    self.GRAPH_LINK_TYPES[overview_type].text)
-            self._assert_overview_link(
-                OverviewLinks.APPLICATIONS.text, overview_ui.apps_link,
-                overview_ui.namespace,
-                contains=(True if overview_type != self.TYPE_ENUM.APPS else False))
-            self._assert_overview_link(
-                OverviewLinks.WORKLOADS.text, overview_ui.workloads_link,
-                overview_ui.namespace,
-                contains=(True if overview_type != self.TYPE_ENUM.WORKLOADS else False))
-            self._assert_overview_link(
-                OverviewLinks.SERVICES.text, overview_ui.services_link,
-                overview_ui.namespace,
-                contains=(True if overview_type != self.TYPE_ENUM.SERVICES else False))
-            self._assert_overview_link(
-                OverviewLinks.ISTIO_CONFIG.text, overview_ui.configs_link,
-                overview_ui.namespace)
+            # TODO links
+            # self._assert_overview_links(overview_ui.links)
             self._assert_overview_config_status(overview_ui.namespace, overview_ui.config_status)
             assert overview_ui.labels == self.openshift_client.namespace_labels(
                 overview_ui.namespace)
 
-    def _prepare_graph_link(self, namespace, graph_type):
-        return "/console/graph/namespaces?namespaces={}&graphType={}".format(namespace, graph_type)
-
-    def _assert_graph_link(self, ui_link, namespace, graph_type):
-        expected_link = self._prepare_graph_link(namespace, graph_type)
-        assert expected_link in ui_link, "Expected {} link in UI {} not found".format(
-            expected_link, ui_link)
-
-    def _prepare_overview_link(self, link_type, namespace):
-        return "/console/{}?namespaces={}".format(link_type, namespace)
-
-    def _assert_overview_link(self, link_type, ui_link, namespace, contains=True):
-        expected_link = self._prepare_overview_link(link_type, namespace)
-        if contains:
-            assert ui_link and (expected_link in ui_link), \
-                "Expected {} link in not found in UI {}".format(
-                expected_link, ui_link)
-        else:
-            assert not ui_link, "UI link {} should not exist".format(
-                ui_link)
+    def _assert_overview_links(self, links):
+        assert is_equal([item.text for item in OverviewLinks.items], links)
 
     def _assert_overview_config_status(self, namespace, config_status):
         expected_status = IstioConfigValidation.NA

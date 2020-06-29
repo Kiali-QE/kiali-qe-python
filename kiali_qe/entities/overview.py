@@ -6,8 +6,7 @@ class Overview(EntityBase):
 
     def __init__(self, overview_type, namespace, items,
                  config_status=None,
-                 graph_link=None, apps_link=None, workloads_link=None,
-                 services_link=None, configs_link=None,
+                 links=[],
                  healthy=0, unhealthy=0, degraded=0, na=0, idle=0,
                  tls_type=MeshWideTLSType.DISABLED,
                  labels={}):
@@ -15,11 +14,7 @@ class Overview(EntityBase):
         self.namespace = namespace
         self.items = items
         self.config_status = config_status
-        self.graph_link = graph_link
-        self.apps_link = apps_link
-        self.workloads_link = workloads_link
-        self.services_link = services_link
-        self.configs_link = configs_link
+        self.links = links
         self.unhealthy = unhealthy
         self.healthy = healthy
         self.degraded = degraded

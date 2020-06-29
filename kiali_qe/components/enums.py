@@ -183,11 +183,11 @@ class OverviewViewType(StringEnum):
 
 
 class OverviewLinks(StringEnum):
-    GRAPH = ('graph')
-    APPLICATIONS = ('applications')
-    WORKLOADS = ('workloads')
-    SERVICES = ('services')
-    ISTIO_CONFIG = ('istio')
+    GRAPH = ('Show Graph')
+    APPLICATIONS = ('Show Applications')
+    WORKLOADS = ('Show Workloads')
+    SERVICES = ('Show Services')
+    ISTIO_CONFIG = ('Show Istio Config')
 
 
 class OverviewGraphTypeLink(StringEnum):
