@@ -1,0 +1,48 @@
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+ name: authpolicymtls
+ namespace: bookinfo2
+spec:
+  selector:
+    matchLabels:
+      app: details
+      version: v1
+  rules:
+    - from:
+        - source:
+            principals:
+              - cluster.local/ns/default/sa/sleep
+        - source:
+            notPrincipals:
+              - cluster.global/ns/default/sa/sleep
+        - source:
+            namespaces:
+              - bookinfo2
+        - source:
+            notNamespaces:
+              - bookinfo
+      to:
+        - operation:
+            hosts:
+              - details.bookinfo2
+            methods:
+              - GET
+            paths:
+              - /info*
+        - operation:
+            methods:
+              - POST
+            paths:
+              - /data
+      when:
+        - key: source.namespace
+          values:
+            - bookinfo
+        - key: source.principal
+          values:
+            - cluster.local/ns/default/sa/sleep
+        - key: connection.sni
+          values:
+            - 'https://accounts.google.com'
+

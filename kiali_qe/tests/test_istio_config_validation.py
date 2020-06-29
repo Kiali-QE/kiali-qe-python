@@ -22,7 +22,8 @@ from kiali_qe.components.error_codes import (
     KIA1005,
     KIA1103,
     KIA1004,
-    KIA1006
+    KIA1006,
+    KIA0105
 )
 
 
@@ -55,6 +56,7 @@ SCENARIO_18 = "duplicate-no-workload-sidecar.yaml"
 SCENARIO_19 = "duplicate-workload-sidecar.yaml"
 SCENARIO_20 = "default-sidecar-with-workload.yaml"
 SCENARIO_21 = "mesh_policy_disable.yaml"
+SCENARIO_22 = "auth-policy-mtls.yaml"
 
 
 @pytest.mark.p_group_last
@@ -506,4 +508,26 @@ def test_meshpolicy_disabled_ok(kiali_client, openshift_client):
                 object_name='default',
                 namespace=BOOKINFO,
                 error_messages=[])
+        ])
+
+
+@pytest.mark.p_group_last
+def test_authpolicy_validations_mtls(kiali_client, openshift_client):
+    """ KIA0105 This field requires mTLS to be enabled
+        from.source.{namespaces | notNamespaces | principals | notPrincipals}
+        when.key = {source.principal | source.namespace | connection.sni }
+    """
+    tests = ValidationsTest(
+        kiali_client=kiali_client,
+        openshift_client=openshift_client,
+        objects_path=istio_objects_validation_path.strpath)
+    tests.test_istio_objects(
+        scenario=SCENARIO_22, namespace=BOOKINFO2,
+        config_validation_objects=[
+            ConfigValidationObject(
+                object_type='AuthorizationPolicy',
+                object_name='authpolicymtls',
+                namespace=BOOKINFO2,
+                error_messages=([KIA0105, KIA0105, KIA0105, KIA0105, KIA0105, KIA0105, KIA0105]
+                                if not openshift_client.is_auto_mtls() else []))
         ])
