@@ -23,7 +23,8 @@ from kiali_qe.components.error_codes import (
     KIA1103,
     KIA1004,
     KIA1006,
-    KIA0105
+    KIA0105,
+    KIA1107
 )
 
 
@@ -57,6 +58,8 @@ SCENARIO_19 = "duplicate-workload-sidecar.yaml"
 SCENARIO_20 = "default-sidecar-with-workload.yaml"
 SCENARIO_21 = "mesh_policy_disable.yaml"
 SCENARIO_22 = "auth-policy-mtls.yaml"
+SCENARIO_23 = "vs_subset_service_entry.yaml"
+SCENARIO_24 = "vs_wrong_subset_no_dr.yaml"
 
 
 @pytest.mark.p_group_last
@@ -530,4 +533,42 @@ def test_authpolicy_validations_mtls(kiali_client, openshift_client):
                 namespace=BOOKINFO2,
                 error_messages=([KIA0105, KIA0105, KIA0105, KIA0105, KIA0105, KIA0105, KIA0105]
                                 if not openshift_client.is_auto_mtls() else []))
+        ])
+
+
+@pytest.mark.p_group_last
+def test_vs_subset_validations_service_entry(kiali_client, openshift_client):
+    """ KIA1107 Subset found as ServiceEntry exists
+    """
+    tests = ValidationsTest(
+        kiali_client=kiali_client,
+        openshift_client=openshift_client,
+        objects_path=istio_objects_validation_path.strpath)
+    tests.test_istio_objects(
+        scenario=SCENARIO_23, namespace=BOOKINFO,
+        config_validation_objects=[
+            ConfigValidationObject(
+                object_type='VirtualService',
+                object_name='orahub-vs',
+                namespace=BOOKINFO,
+                error_messages=[])
+        ])
+
+
+@pytest.mark.p_group_last
+def test_vs_subset_validations_no_service_entry(kiali_client, openshift_client):
+    """ KIA1107 Subset not found as ServiceEntry missing
+    """
+    tests = ValidationsTest(
+        kiali_client=kiali_client,
+        openshift_client=openshift_client,
+        objects_path=istio_objects_validation_path.strpath)
+    tests.test_istio_objects(
+        scenario=SCENARIO_24, namespace=BOOKINFO,
+        config_validation_objects=[
+            ConfigValidationObject(
+                object_type='VirtualService',
+                object_name='orahub-vs-no-dr',
+                namespace=BOOKINFO,
+                error_messages=[KIA1107, KIA1107])
         ])
