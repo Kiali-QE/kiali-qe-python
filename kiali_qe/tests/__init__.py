@@ -231,6 +231,7 @@ class AbstractListPageTest(object):
 
     def assert_applied_filters(self, filters):
         # validate applied filters
+        wait_to_spinner_disappear(self.browser)
         _active_filters = self.page.filter.active_filters
         logger.debug('Filters[applied:{}, active:{}]'.format(filters, _active_filters))
         assert is_equal(filters, _active_filters), \
@@ -427,8 +428,6 @@ class AbstractListPageTest(object):
         self.browser.click(logs_tab.refresh)
         wait_to_spinner_disappear(self.browser)
         assert logs_tab.logs_switch.is_on
-        assert logs_tab.pod_textarea.text
-        assert logs_tab.proxy_textarea.text
         assert _filter not in logs_tab.pod_textarea.text
         assert _filter not in logs_tab.proxy_textarea.text
 

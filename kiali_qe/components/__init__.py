@@ -574,6 +574,8 @@ class SortBar(Widget):
 class FilterList(Widget):
     ROOT = './/*[contains(@class, "pf-l-toolbar")]'
     ITEMS = '//ul[contains(@class, "pf-c-chip-group") and contains(@class, "pf-m-toolbar")]/li'
+    ITEM_LABEL = './/*[contains(@class, "pf-c-chip-group__label")]'
+    ITEM_TEXT = './/*[contains(@class, "pf-c-chip__text")]'
     CLEAR = (ITEMS + '//*[contains(text(), "{}")]/..//*[contains(@aria-label, "close")]')
     CLEAR_ALL = '//a[text()="Clear All Filters"]'
 
@@ -607,12 +609,11 @@ class FilterList(Widget):
         if not self.is_displayed:
             return _filters
         for el in self.browser.elements(parent=self, locator=self.ITEMS, force_check_safe=True):
-            _values = el.text.split('\n')
+            _label = self.browser.element(parent=el, locator=self.ITEM_LABEL).text.strip()
+            _values = self.browser.elements(parent=el, locator=self.ITEM_TEXT)
             # in the case of multiple values per key
-            i = 1
-            while i < len(_values):
-                _filters.append({'name': _values[0].strip(), 'value': _values[i].strip()})
-                i += 1
+            for _value in _values:
+                _filters.append({'name': _label, 'value': _value.text.strip()})
         return _filters
 
 
