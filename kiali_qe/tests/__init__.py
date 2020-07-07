@@ -668,6 +668,7 @@ class ApplicationsPageTest(AbstractListPageTest):
                                                advanced_check=True), \
             'Application UI {} not equal to REST {}'\
             .format(application_details_ui, application_details_rest)
+
         if application_details_ui.application_status:
             assert application_details_ui.application_status.is_healthy() == \
                 application_details_ui.health, \
@@ -778,13 +779,12 @@ class ApplicationsPageTest(AbstractListPageTest):
                 logger.debug('{} {}'.format(application_oc.name, application_oc.namespace))
                 if application_ui.is_equal(application_oc, advanced_check=False):
                     # in OC it contains more labels, skip for jaeger
-                    # TODO need to get service name label
-                    '''if application_ui.name != 'jaeger':
-                        assert application_ui.labels.items() <= application_oc.labels.items(), \
+                    if application_ui.name != 'jaeger':
+                        assert application_ui.labels.items() == application_oc.labels.items(), \
                             'Expected {} but got {} labels for application {}'.format(
                                 application_oc.labels,
                                 application_ui.labels,
-                                application_ui.name)'''
+                                application_ui.name)
                     found = True
                     break
             if not found:
@@ -978,11 +978,8 @@ class WorkloadsPageTest(AbstractListPageTest):
                 assert found, '{} not found in REST'.format(workload_ui)
             found = False
             for workload_oc in workloads_oc:
-                if workload_ui.is_equal(workload_oc, advanced_check=False):
-                    # @TODO
-                    # in OC it contains more labels, also more workloads are listed
-                    if len(_labels) > 0:
-                        assert workload_ui.labels.items() <= workload_oc.labels.items()
+                if workload_ui.is_equal(workload_oc, advanced_check=False) and \
+                        workload_ui.labels.items() == workload_oc.labels.items():
                     found = True
                     break
             if not found:
