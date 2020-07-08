@@ -265,6 +265,14 @@ class OpenshiftExtendedClient(object):
                     result_dict[_name+workload.namespace].labels, workload.labels)
             else:
                 _labels = workload.labels
+
+            try:
+                _labels = self._concat_labels(
+                    self.service_details(workload.namespace,
+                                         self._get_app_name(workload)).labels,
+                    _labels)
+            except NotFoundError:
+                pass
             result_dict[_name+workload.namespace] = Application(
                 _name,
                 workload.namespace,
@@ -406,7 +414,7 @@ class OpenshiftExtendedClient(object):
                 namespace=_item.metadata.namespace,
                 workload_type=workload_type,
                 istio_sidecar=self._contains_sidecar(_item),
-                labels=self._get_labels(_item))
+                labels=self._get_workload_labels(_item))
             items.append(_workload)
         # filter by workload name
         if len(workload_names) > 0:
@@ -447,6 +455,16 @@ class OpenshiftExtendedClient(object):
                 is not None
         except (KeyError, AttributeError, TypeError):
             return False
+
+    def _get_workload_labels(self, item):
+        try:
+            labels = item.spec.template.metadata.labels if item.spec.template.metadata.labels \
+                else item.metadata.labels if item.metadata.labels \
+                else item.spec.selector.matchLabels if item.spec.selector.matchLabels \
+                else {}
+        except (KeyError, AttributeError, TypeError):
+            labels = {}
+        return dict(labels)
 
     def _get_labels(self, item):
         try:
@@ -559,7 +577,7 @@ class OpenshiftExtendedClient(object):
             if application_name == self._get_app_name(workload):
                 workload_name = self._get_workload_name(workload)
                 workloads[workload_name] = AppWorkload(
-                        name=workload_name,
+                        name=workload.name,
                         istio_sidecar=workload.istio_sidecar)
 
         for service in all_services:
@@ -601,7 +619,7 @@ class OpenshiftExtendedClient(object):
             ip=_response.spec.clusterIP,
             # TODO endpoints from Deployments
             ports=_ports.strip(),
-            labels=dict(_response.metadata.labels),
+            labels=dict(_response.metadata.labels if _response.metadata.labels else {}),
             selectors=dict(_response.spec.selector if _response.spec.selector else {}),
             # TODO health
             health=None)
