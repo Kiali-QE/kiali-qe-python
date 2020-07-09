@@ -16,7 +16,8 @@ from kiali_qe.components.enums import (
     GraphPageLayout,
     TLSMutualValues,
     ItemIconType,
-    MutualTLSMode
+    MutualTLSMode,
+    ThreeScaleConfigType
 )
 from kiali_qe.entities import (
     TrafficItem,
@@ -39,9 +40,6 @@ from kiali_qe.entities.istio_config import (
     IstioConfig,
     Rule,
     IstioConfigDetails
-)
-from kiali_qe.entities.three_scale_config import (
-    ThreeScaleHandler
 )
 from kiali_qe.entities.workload import (
     Workload,
@@ -696,6 +694,8 @@ class Actions(Widget):
     TLS_DROPDOWN = '//div[contains(@class, "pf-c-form__group")]//select[@id="advanced-tls"]'
     LOAD_BALANCER_TYPE_DROPDOWN = '//div[contains(@class, "pf-c-form__group")]'\
         '//select[@id="trafficPolicy-lb"]'
+    THREESCALE_CONFIG_DROPDOWN = '//div[contains(@class, "pf-c-form__group")]'\
+        '//select[@id="threescale-config"]'
     INCLUDE_MESH_GATEWAY = '//label[contains(text(), "Include")]/..//input[@type="checkbox"]'
     SHOW_ADVANCED_OPTIONS = '//span[text()="Show Advanced Options"]/..'
     SHOW_CREATE_HANDLER = '//span[text()="Show Create Handler"]/..'
@@ -712,9 +712,8 @@ class Actions(Widget):
     UPDATE_WEIGHTED_ROUTING = 'Update Weighted Routing'
     SUSPEND_TRAFFIC = 'Suspend Traffic'
     UPDATE_SUSPENDED_TRAFFIC = 'Update Suspended Traffic'
-    CREATE_3SCALE_RULE = 'Add 3scale API Management Rule'
-    DELETE_3SCALE_RULE = 'Delete 3Scale API Management Rule'
-    UPDATE_3SCALE_RULE = 'Update 3scale API Management Rule'
+    CREATE_3SCALE_LINK = 'Link 3scale Authorization'
+    DELETE_3SCALE_LINK = 'Unlink 3scale Authorization'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -734,6 +733,11 @@ class Actions(Widget):
         self._loadbalancer_switch = ButtonSwitch(parent=self, label="Add LoadBalancer")
         self._loadbalancer_type = SelectDropDown(
             parent=self, locator=self.LOAD_BALANCER_TYPE_DROPDOWN,
+            select_button='')
+        self._threescale_service_id = TextInput(parent=self,
+                                                locator='//input[@id="threescale-service-id"]')
+        self._threescale_config = SelectDropDown(
+            parent=self, locator=self.THREESCALE_CONFIG_DROPDOWN,
             select_button='')
         self._gateway_switch = ButtonSwitch(parent=self, label="Add Gateway")
         self._include_mesh_gateway = Checkbox(locator=self.INCLUDE_MESH_GATEWAY, parent=self)
@@ -760,20 +764,11 @@ class Actions(Widget):
     def is_delete_disabled(self):
         return self.DELETE_ALL_TRAFFIC_ROUTING in self.disabled_actions
 
-    def is_delete_3scale_disabled(self):
-        return self.DELETE_3SCALE_RULE in self.disabled_actions
+    def is_link_3scale_visible(self):
+        return self.CREATE_3SCALE_LINK in self.actions
 
-    def is_create_3scale_disabled(self):
-        return self.CREATE_3SCALE_RULE in self.disabled_actions
-
-    def is_create_3scale_enabled(self):
-        return self.CREATE_3SCALE_RULE in self.actions
-
-    def is_update_3scale_disabled(self):
-        return self.UPDATE_3SCALE_RULE in self.disabled_actions
-
-    def is_update_3scale_enabled(self):
-        return self.UPDATE_3SCALE_RULE in self.actions
+    def is_unlink_3scale_visible(self):
+        return self.DELETE_3SCALE_LINK in self.actions
 
     def is_create_weighted_disabled(self):
         return self.CREATE_WEIGHTED_ROUTING in self.disabled_actions
@@ -994,60 +989,32 @@ class Actions(Widget):
         else:
             self._gateway_switch.off()
 
-    def create_3scale_rule(self, handler_name):
-        if self.is_create_3scale_disabled():
+    def create_3scale_link(self, service_id, rule_name):
+        if not self.is_link_3scale_visible():
             return False
         else:
-            self.select(self.CREATE_3SCALE_RULE)
-            self.select_three_scale_handler(handler_name)
+            self.select(self.CREATE_3SCALE_LINK)
+            self._threescale_service_id.fill(service_id)
+            self._threescale_config.select(rule_name)
             create_button = self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.CREATE_BUTTON))
             wait_displayed(create_button)
+            if create_button.get_attribute("disabled"):
+                return False
             self.browser.click(create_button)
             wait_not_displayed(self)
             # wait to Spinner disappear
             wait_to_spinner_disappear(self.browser)
             return True
 
-    def update_3scale_rule(self, handler_name):
-        if self.is_update_3scale_enabled():
-            self.select(self.UPDATE_3SCALE_RULE)
-            self.select_three_scale_handler(handler_name)
-            update_button = self.browser.element(
-                parent=self.WIZARD_ROOT,
-                locator=(self.UPDATE_BUTTON))
-            wait_displayed(update_button)
-            self.browser.click(update_button)
-            wait_not_displayed(self)
-            # wait to Spinner disappear
-            wait_to_spinner_disappear(self.browser)
-            return True
-        else:
-            return False
-
-    def delete_3scale_rule(self):
-        if self.is_delete_3scale_disabled():
+    def delete_3scale_link(self):
+        if not self.is_unlink_3scale_visible():
             return False
         else:
-            self.select(self.DELETE_3SCALE_RULE)
-            self.browser.click(self.browser.element(
-                parent=self.DIALOG_ROOT,
-                locator=('.//button[text()="Delete"]')))
+            self.select(self.DELETE_3SCALE_LINK)
             wait_to_spinner_disappear(self.browser)
             return True
-
-    def select_three_scale_handler(self, handler_name):
-        try:
-            wait_to_spinner_disappear(self.browser)
-            self.browser.click(Button(
-                parent=self.parent,
-                locator='//li//*[contains(text(), "{}")]'
-                        '/../../..//button[contains(text(), "Select")]'.format(
-                                        handler_name)))
-        except (NoSuchElementException, StaleElementReferenceException):
-            # skip error if button does not exist
-            pass
 
 
 class ConfigActions(Actions):
@@ -1788,9 +1755,9 @@ class ViewAbstract(Widget):
                 _label_key = self.browser.element(
                     parent=_label,
                     locator='.//*[contains(@class, "label-key")]').text
-                _label_value = self.browser.element(
+                _label_value = self.browser.text_or_default(
                     parent=_label,
-                    locator='.//*[contains(@class, "label-value")]').text
+                    locator='.//*[contains(@class, "label-value")]', default='')
                 _label_dict[_label_key] = _label_value
         return _label_dict
 
@@ -1816,7 +1783,7 @@ class ListViewAbstract(ViewAbstract):
     ROOT = '//*[contains(@style, "overflow-y")]'
     BODY = '//*[contains(@class, "ReactVirtualized__VirtualGrid__innerScrollContainer")]'
     DIALOG_ROOT = '//*[@role="dialog"]'
-    ITEMS = './/tr[contains(@role, "row")]'
+    ITEMS = '//tr[contains(@role, "row")]'
     ITEM_COL = './/td'
     ITEM_TEXT = './/*[contains(@class, "virtualitem_definition_link")]'
     DETAILS_ROOT = ('.//section[@id="pf-tab-section-0-basic-tabs"]'
@@ -2223,9 +2190,9 @@ class ListViewAbstract(ViewAbstract):
                 _label_key = self.browser.element(
                     parent=_label,
                     locator='.//*[contains(@class, "label-key")]').text
-                _label_value = self.browser.element(
+                _label_value = self.browser.text_or_default(
                     parent=_label,
-                    locator='.//*[contains(@class, "label-value")]').text
+                    locator='.//*[contains(@class, "label-value")]', default='')
                 _label_dict[_label_key] = _label_value
         return _label_dict
 
@@ -2626,11 +2593,6 @@ class ListViewServices(ListViewAbstract):
             locator=self.NETWORK_PROPERTIES.format(self.RESOURCE_VERSION),
             parent=self.DETAILS_ROOT).replace(self.RESOURCE_VERSION, '').strip()
 
-        _3scale_api_handler = self.browser.text_or_default(
-            locator=self.NETWORK_PROPERTIES.format(self.RULE_3SCALE_HANDLER),
-            parent=self.DETAILS_ROOT,
-            default='').replace(self.RULE_3SCALE_HANDLER, '').strip()
-
         _table_view_wl = TableViewWorkloads(self.parent, self.locator, self.logger)
 
         _traffic_tab = TrafficView(parent=self.parent, locator=self.locator, logger=self.logger)
@@ -2646,8 +2608,6 @@ class ListViewServices(ListViewAbstract):
                               resource_version=_resource_version,
                               ip=_ip,
                               ports=str(_ports.replace('\n', ' ')),
-                              rule_3scale_api_handler=_3scale_api_handler
-                              if _3scale_api_handler != '' else None,
                               endpoints=_endpoints,
                               health=self._get_details_health(),
                               service_status=self._get_service_details_health(),
@@ -2706,6 +2666,72 @@ class ListViewIstioConfig(ListViewAbstract):
     CONFIG_HEADER = './/div[contains(@class, "row")]//h4'
     CONFIG_TEXT = './/div[contains(@class, "ace_content")]'
     CONFIG_DETAILS_ROOT = './/div[contains(@class, "container-fluid")]'
+    CREATE_3SCALE_HANDLER = 'Create New 3scale Config'
+    TABLE_ROOT = './/table[contains(@class, "pf-c-table")]'
+    CONFIG_TYPE_DROPDOWN = '//div[contains(@class, "pf-c-form__group")]'\
+        '//select[@id="threescale-config"]'
+    ACCOUNT_DROPDOWN = '//div[contains(@class, "pf-c-form__group")]'\
+        '//select[@id="theescale-handler"]'
+    CONFIG_INPUT = '//input[@id="{}"]'
+    CONFIG_DETAILS_ROOT = './/*[contains(@class, "pf-c-form")]'
+    CREATE_HANDLER_BUTTON = './/button[text()="Create"]'
+    UPDATE_HANDLER_BUTTON = './/button[text()="Save"]'
+
+    def __init__(self, parent, locator=None, logger=None):
+        TableViewAbstract.__init__(self, parent, locator=self.CONFIG_DETAILS_ROOT, logger=logger)
+        self._threescale_config = SelectDropDown(
+            parent=self, locator=self.CONFIG_TYPE_DROPDOWN,
+            select_button='')
+        self._handler_name = TextInput(parent=self,
+                                       locator=self.CONFIG_INPUT.format('name'))
+        self._system_url = TextInput(parent=self,
+                                     locator=self.CONFIG_INPUT.format('threescale-url'))
+        self._access_token = TextInput(parent=self,
+                                       locator=self.CONFIG_INPUT.format('threescale-token'))
+        self._threescale_account = SelectDropDown(
+            parent=self, locator=self.ACCOUNT_DROPDOWN,
+            select_button='')
+
+    def create_3scale_handler(self, name, system_url, access_token):
+        """
+        Creates 3scale Handler.
+        """
+        self.parent.actions.select(self.CREATE_3SCALE_HANDLER)
+        wait_to_spinner_disappear(self.browser)
+        self._threescale_config.select(ThreeScaleConfigType.HANDLER.text)
+        self._handler_name.fill(name)
+        self._system_url.fill(system_url)
+        self._access_token.fill(access_token)
+        wait_to_spinner_disappear(self.browser)
+        create_button = self.browser.element(
+                parent=self.CONFIG_DETAILS_ROOT,
+                locator=(self.CREATE_HANDLER_BUTTON))
+        wait_displayed(create_button)
+        if create_button.get_attribute("disabled"):
+            return False
+        self.browser.click(create_button)
+        wait_to_spinner_disappear(self.browser)
+        return True
+
+    def create_3scale_instance_rule(self, name, handler_name):
+        """
+        Creates 3scale Authorization (Handler + Rule).
+        """
+        self.parent.actions.select(self.CREATE_3SCALE_HANDLER)
+        wait_to_spinner_disappear(self.browser)
+        self._threescale_config.select(ThreeScaleConfigType.INSTANCE_RULE.text)
+        self._handler_name.fill(name)
+        self._threescale_account.select(handler_name)
+        wait_to_spinner_disappear(self.browser)
+        create_button = self.browser.element(
+                parent=self.CONFIG_DETAILS_ROOT,
+                locator=(self.CREATE_HANDLER_BUTTON))
+        wait_displayed(create_button)
+        if create_button.get_attribute("disabled"):
+            return False
+        self.browser.click(create_button)
+        wait_to_spinner_disappear(self.browser)
+        return True
 
     def get_details(self, name, load_only=False):
         if load_only:
@@ -2817,87 +2843,6 @@ class TableViewAbstract(ViewAbstract):
     @property
     def all_items(self):
         return self.items
-
-
-class TableView3ScaleConfig(TableViewAbstract):
-    CREATE_3SCALE_HANDLER = 'Create New 3scale Handler'
-    TABLE_ROOT = './/table[contains(@class, "pf-c-table")]'
-    CONFIG_INPUT = '//input[@id="{}"]'
-    CONFIG_DETAILS_ROOT = './/*[contains(@class, "pf-c-form")]'
-    CREATE_HANDLER_BUTTON = './/button[text()="Create"]'
-    UPDATE_HANDLER_BUTTON = './/button[text()="Save"]'
-
-    def __init__(self, parent, locator=None, logger=None):
-        TableViewAbstract.__init__(self, parent, locator=self.CONFIG_DETAILS_ROOT, logger=logger)
-        self._handler_name = TextInput(parent=self,
-                                       locator=self.CONFIG_INPUT.format('handlerName'))
-        self._service_id = TextInput(parent=self,
-                                     locator=self.CONFIG_INPUT.format('serviceId'))
-        self._system_url = TextInput(parent=self,
-                                     locator=self.CONFIG_INPUT.format('systemUrl'))
-        self._access_token = TextInput(parent=self,
-                                       locator=self.CONFIG_INPUT.format('accessToken'))
-
-    def get_details(self, load_only=False):
-        if load_only:
-            return BreadCrumb(self.parent)
-        _name = self._handler_name.value
-        _service_id = self._service_id.value
-        _system_url = self._system_url.value
-        _access_token = self._access_token.value
-        return ThreeScaleHandler(name=_name,
-                                 service_id=_service_id,
-                                 system_url=_system_url,
-                                 access_token=_access_token)
-
-    @property
-    def items(self):
-        self.browser.click(self.parent.refresh)
-        wait_to_spinner_disappear(self.browser)
-
-        _items = []
-        for el in self.browser.elements('//tbody//tr', parent=self.TABLE_ROOT):
-            # get rule name and namespace
-            _columns = self.browser.elements(self.COLUMN, parent=el)
-            _name = _columns[0].text.replace('3S', '').strip()
-            _service_id = _columns[1].text.replace('ID', '').strip()
-            _system_url = _columns[2].text.replace('URL', '').strip()
-
-            _config = ThreeScaleHandler(name=_name,
-                                        service_id=_service_id,
-                                        system_url=_system_url)
-            # append this item to the final list
-            _items.append(_config)
-        return _items
-
-    def create_3scale_handler(self, name, service_id, system_url, access_token):
-        """
-        Creates 3scale Handler.
-        """
-        self.parent.actions.select(self.CREATE_3SCALE_HANDLER)
-        wait_to_spinner_disappear(self.browser)
-        self._handler_name.fill(name)
-        self._service_id.fill(service_id)
-        self._system_url.fill(system_url)
-        self._access_token.fill(access_token)
-        create_button = self.browser.element(
-                parent=self.CONFIG_DETAILS_ROOT,
-                locator=(self.CREATE_HANDLER_BUTTON))
-        wait_displayed(create_button)
-        self.browser.click(create_button)
-
-    def update_3scale_handler(self, service_id, system_url, access_token):
-        """
-        Update 3scale Handler.
-        """
-        self._service_id.fill(service_id)
-        self._system_url.fill(system_url)
-        self._access_token.fill(access_token)
-        save_button = self.browser.element(
-                parent=self.CONFIG_DETAILS_ROOT,
-                locator=(self.UPDATE_HANDLER_BUTTON))
-        wait_displayed(save_button)
-        self.browser.click(save_button)
 
 
 class TableViewAppWorkloads(TableViewAbstract):

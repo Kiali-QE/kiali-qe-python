@@ -40,7 +40,6 @@ from kiali_qe.components.enums import (
     OverviewGraphTypeLink,
     TailLines,
     TLSMutualValues,
-    ThreeScaleConfigPageSort,
     IstioConfigObjectType,
     AuthPolicyType,
     AuthPolicyActionType,
@@ -74,7 +73,6 @@ from kiali_qe.pages import (
     ApplicationsPage,
     OverviewPage,
     DistributedTracingPage,
-    ThreeScaleConfigPage,
     GraphPage
 )
 
@@ -985,6 +983,62 @@ class WorkloadsPageTest(AbstractListPageTest):
             if not found:
                 assert found, '{} not found in OC'.format(workload_ui)
 
+    def test_3scale_link_create(self, name, namespace, service_id, rule_name):
+        logger.debug('3Scale Link Create for Workload: {}, {}'.format(name, namespace))
+        # load workload details page
+        self._prepare_load_details_page(name, namespace)
+        self.open(name, namespace)
+        self.page.actions.delete_3scale_link()
+        assert self.page.actions.create_3scale_link(service_id=service_id, rule_name=rule_name)
+        assert not self.page.actions.is_link_3scale_visible()
+        assert self.page.actions.is_unlink_3scale_visible()
+
+        workload_details_ui = self.page.content.get_details()
+        _rule_label = "service-mesh.3scale.net/credentials"
+        _service_label = "service-mesh.3scale.net/service-id"
+        assert _rule_label in workload_details_ui.labels
+        assert _service_label in workload_details_ui.labels
+        assert workload_details_ui.labels[_rule_label] == rule_name
+        assert workload_details_ui.labels[_service_label] == service_id
+        for _pod in workload_details_ui.pods:
+            assert _rule_label in _pod.labels
+            assert _service_label in _pod.labels
+            assert _pod.labels[_rule_label] == rule_name
+            assert _pod.labels[_service_label] == service_id
+
+    def test_3scale_link_delete(self, name, namespace):
+        logger.debug('3Scale Link Delete for Workload: {}, {}'.format(name, namespace))
+        # load workload details page
+        self._prepare_load_details_page(name, namespace)
+        self.open(name, namespace)
+        assert self.page.actions.delete_3scale_link()
+        assert self.page.actions.is_link_3scale_visible()
+        assert not self.page.actions.is_unlink_3scale_visible()
+
+        self.test_3scale_link(name, namespace, exists=False, skip_loading=True)
+
+    def test_3scale_link(self, name, namespace, exists=True, skip_loading=False):
+        if not skip_loading:
+            self._prepare_load_details_page(name, namespace)
+            self.open(name, namespace)
+
+        workload_details_ui = self.page.content.get_details()
+        _rule_label = "service-mesh.3scale.net/credentials"
+        _service_label = "service-mesh.3scale.net/service-id"
+        if exists:
+            assert _rule_label in workload_details_ui.labels
+            assert _service_label in workload_details_ui.labels
+        else:
+            assert _rule_label not in workload_details_ui.labels
+            assert _service_label not in workload_details_ui.labels
+        # TODO pods labels
+        '''wait_for(
+            lambda: len(workload_details_ui.pods) == 1, timeout='15s',
+            delay=0.2, very_quiet=True, silent_failure=False)
+        for _pod in workload_details_ui.pods:
+            assert _rule_label not in _pod.labels
+            assert _service_label not in _pod.labels'''
+
 
 class ServicesPageTest(AbstractListPageTest):
     FILTER_ENUM = ServicesPageFilter
@@ -1392,49 +1446,6 @@ class ServicesPageTest(AbstractListPageTest):
             service_name=name)
         assert len(service_details_rest.virtual_services) == 0, 'Service should have no VS'
         assert len(service_details_rest.destination_rules) == 0, 'Service should have no DR'
-
-    def test_3scale_rule_create(self, name, namespace, handler_name):
-        logger.debug('3Scale Rule Create for Service: {}, {}'.format(name, namespace))
-        # load service details page
-        self._prepare_load_details_page(name, namespace)
-        self.open(name, namespace)
-        self.page.actions.delete_3scale_rule()
-        assert self.page.actions.create_3scale_rule(handler_name=handler_name)
-        assert not self.page.actions.is_delete_3scale_disabled()
-        assert self.page.actions.is_update_3scale_enabled()
-
-        service_details_ui = self.page.content.get_details()
-        assert service_details_ui.rule_3scale_api_handler == handler_name, \
-            'Selected {} != proposed {}'.format(
-                service_details_ui.rule_3scale_api_handler,
-                handler_name)
-
-    def test_3scale_rule_update(self, name, namespace, handler_name):
-        logger.debug('3Scale Rule Update for Service: {}, {}'.format(name, namespace))
-        # load service details page
-        self._prepare_load_details_page(name, namespace)
-        self.open(name, namespace)
-        assert self.page.actions.update_3scale_rule(handler_name=handler_name)
-        assert not self.page.actions.is_delete_3scale_disabled()
-        assert self.page.actions.is_update_3scale_enabled()
-
-        service_details_ui = self.page.content.get_details()
-        assert service_details_ui.rule_3scale_api_handler == handler_name, \
-            'Selected {} != proposed {}'.format(
-                service_details_ui.rule_3scale_api_handler,
-                handler_name)
-
-    def test_3scale_rule_delete(self, name, namespace):
-        logger.debug('3Scale Rule Delete for Service: {}, {}'.format(name, namespace))
-        # load service details page
-        self._prepare_load_details_page(name, namespace)
-        self.open(name, namespace)
-        assert self.page.actions.delete_3scale_rule()
-        assert self.page.actions.is_delete_3scale_disabled()
-        assert not self.page.actions.is_update_3scale_enabled()
-
-        service_details_ui = self.page.content.get_details()
-        assert not service_details_ui.rule_3scale_api_handler
 
 
 class IstioConfigPageTest(AbstractListPageTest):
@@ -1963,34 +1974,50 @@ class ValidationsTest(object):
 
 
 class ThreeScaleConfigPageTest(AbstractListPageTest):
-    SORT_ENUM = ThreeScaleConfigPageSort
+    SORT_ENUM = IstioConfigPageSort
     SELECT_ITEM = './/tr//a[text()="{}"]'
 
     def __init__(self, kiali_client, openshift_client, browser):
         AbstractListPageTest.__init__(
             self, kiali_client=kiali_client,
-            openshift_client=openshift_client, page=ThreeScaleConfigPage(browser))
+            openshift_client=openshift_client, page=IstioConfigPage(browser))
         self.browser = browser
 
     def _prepare_load_details_page(self):
         # load the page first
         self.page.load(force_load=True)
 
-    def load_details_page(self, name, force_refresh):
+    def load_details_page(self, name, type, force_refresh):
         logger.debug('Loading details page for 3scale config handler: {}'.format(name))
         self._prepare_load_details_page()
+        self.apply_filters(filters=[{"name": IstioConfigPageFilter.ISTIO_TYPE.text,
+                                     "value": type}], force_clear_all=True)
         self.open(name=name, force_refresh=force_refresh)
-        return self.page.content.get_details()
+        return self.page.content.get_details(name=name)
 
-    def assert_all_items(self):
+    def assert_all_items(self, namespace):
         logger.debug('Asserting all 3scale handler items')
+
+        # apply namespaces
+        self.apply_namespaces([namespace])
+
+        # apply filters
+        self.apply_filters(filters=[
+            {"name": IstioConfigPageFilter.ISTIO_TYPE.text,
+             "value": IstioConfigObjectType.HANDLER.text},
+            {"name": IstioConfigPageFilter.ISTIO_TYPE.text,
+             "value": IstioConfigObjectType.RULE.text},
+            {"name": IstioConfigPageFilter.ISTIO_TYPE.text,
+             "value": IstioConfigObjectType.INSTANCE.text}])
+
+        wait_to_spinner_disappear(self.browser)
 
         # get handlers from ui
         handler_list_ui = self.page.content.all_items
         logger.debug('3Scale handler list UI:{}]'.format(handler_list_ui))
 
         # get handlers from rest api
-        handler_list_rest = self.kiali_client.three_scale_handler_list()
+        handler_list_rest = self.kiali_client.three_scale_handler_list(namespace=namespace)
         logger.debug('3Scale handler list REST:{}]'.format(handler_list_rest))
 
         assert len(handler_list_ui) == len(handler_list_rest), \
@@ -2006,39 +2033,61 @@ class ThreeScaleConfigPageTest(AbstractListPageTest):
 
         logger.debug('Done asserting all handler items')
 
-    def assert_details(self, name, service_id, system_url, access_token):
+    def assert_handler_details(self, name, system_url, access_token):
         logger.debug('Asserting details for: {}'.format(name))
 
         # load handler page
-        handler_details_ui = self.load_details_page(name, force_refresh=False)
+        handler_details_ui = self.load_details_page(name=name,
+                                                    type=IstioConfigObjectType.HANDLER.text,
+                                                    force_refresh=False)
         assert handler_details_ui
-        assert name == handler_details_ui.name
-        assert service_id == handler_details_ui.service_id
-        assert system_url == handler_details_ui.system_url
-        assert access_token == handler_details_ui.access_token
-        # get handler details from rest
-        handlers_rest = self.kiali_client.three_scale_handler_list(
-            handler_names=[name])
-        assert len(handlers_rest) == 1
-        assert handler_details_ui.is_equal(handlers_rest[0], advanced_check=True)
+        assert 'name: ' + name in handler_details_ui.text
+        assert 'system_url: \'{}\''.format(system_url) in handler_details_ui.text
+        assert 'access_token: ' + access_token in handler_details_ui.text
 
-    def assert_three_scale_handler_creation(self, name, service_id, system_url, access_token):
+    def assert_rule_details(self, name, handler_name):
+        logger.debug('Asserting details for Rule: {}'.format(name))
+
+        # load rule page
+        rule_details_ui = self.load_details_page(name=name,
+                                                 type=IstioConfigObjectType.RULE.text,
+                                                 force_refresh=False)
+        assert rule_details_ui
+        assert 'name: ' + name in rule_details_ui.text
+        assert 'handler: ' + handler_name in rule_details_ui.text
+        assert 'instances: - {}.instance.istio-system'.format(name) in rule_details_ui.text
+
+    def assert_instance_details(self, name):
+        logger.debug('Asserting details for Instance: {}'.format(name))
+
+        # load instance page
+        instance_details_ui = self.load_details_page(
+            name=name,
+            type=IstioConfigObjectType.INSTANCE.text,
+            force_refresh=False)
+        assert instance_details_ui
+        assert 'name: ' + name in instance_details_ui.text
+        assert 'kind: instance' in instance_details_ui.text
+
+    def assert_three_scale_handler_creation(self, name, system_url, access_token):
         logger.debug('Creating 3Scale handler: {}'.format(name))
 
-        self.page.content.create_3scale_handler(name, service_id, system_url, access_token)
-        self.assert_details(name, service_id, system_url, access_token)
+        assert self.page.content.create_3scale_handler(name, system_url, access_token)
+        self.assert_handler_details(name, system_url, access_token)
 
-    def assert_three_scale_handler_update(self, name, service_id, system_url, access_token):
-        logger.debug('Update 3Scale handler: {}'.format(name))
+    def assert_three_scale_instance_rule_creation(self, name, handler_name):
+        logger.debug('Creating 3Scale instance and rule: {}'.format(name))
 
-        self.load_details_page(name, force_refresh=False)
-        self.page.content.update_3scale_handler(service_id, system_url, access_token)
-        self.assert_details(name, service_id, system_url, access_token)
+        assert self.page.content.create_3scale_instance_rule(name, handler_name)
+        self.assert_rule_details(name, handler_name)
+        self.assert_instance_details(name)
 
     def assert_three_scale_handler_delete(self, name):
         logger.debug('Delete 3Scale handler: {}'.format(name))
 
-        self.load_details_page(name, force_refresh=False)
+        self.load_details_page(name=name,
+                               type=IstioConfigObjectType.HANDLER.text,
+                               force_refresh=False)
         self.page.actions.select('Delete')
         self.browser.click(self.browser.element(
             parent=ListViewAbstract.DIALOG_ROOT,

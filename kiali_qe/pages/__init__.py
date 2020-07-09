@@ -11,7 +11,6 @@ from kiali_qe.components import (
     ListViewWorkloads,
     ListViewApplications,
     ListViewOverview,
-    TableView3ScaleConfig,
     Login,
     MainMenu,
     Notifications,
@@ -168,6 +167,7 @@ class WorkloadsPage(RootPage):
     filter = Filter()
     sort = SortBar()
     refresh = Button(locator=REFRESH_BUTTON)
+    actions = Actions()
     content = ListViewWorkloads()
 
 
@@ -199,12 +199,3 @@ class DistributedTracingPage(RootPage):
 
     namespace = NamespaceFilter()
     traces = Traces()
-
-
-class ThreeScaleConfigPage(RootPage):
-    PAGE_MENU = MENU.THREESCALE_CONFIG.text
-
-    sort = SortBar()
-    actions = Actions()
-    refresh = Button(locator=REFRESH_BUTTON)
-    content = TableView3ScaleConfig()
