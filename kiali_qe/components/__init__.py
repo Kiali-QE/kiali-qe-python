@@ -3524,8 +3524,11 @@ class LogsView(TabViewAbstract):
     tail_lines = DropDown(locator=DROP_DOWN.format('wpl_tailLines'))
     interval = DropDown(locator=DROP_DOWN.format('metrics_filter_interval_duration'))
     refresh = Button(locator='//button[@id="refresh_button"]')
-    pod_textarea = Text(locator='//h5[not(contains(text(), "Istio proxy (sidecar)"))]/../textarea')
-    proxy_textarea = Text(locator='//h5[contains(text(), "Istio proxy (sidecar)")]/../textarea')
+    pod_textarea = Text(locator='//textarea/..//div[contains(@class, "pf-l-toolbar__item") '
+                        'and not(contains(normalize-space(text()), '
+                        '"Istio proxy (sidecar)"))]/../../textarea')
+    proxy_textarea = Text(locator='//div[contains(normalize-space(text()), '
+                          '"Istio proxy (sidecar)")]/../../textarea')
 
     def open(self):
         tab = self.browser.element(locator=self.LOGS_TAB,
