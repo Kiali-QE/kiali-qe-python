@@ -123,6 +123,7 @@ class GraphType(StringEnum):
 class GraphPageDisplayFilter(StringEnum):
     COMPRESS_HIDDEN = ('Compress Hidden')
     NODE_LABELS = ('Node Names')
+    OPERATION_NODES = ('Operation Nodes')
     SERVICE_NODES = ('Service Nodes')
     TRAFFIC_ANIMATION = ('Traffic Animation')
     UNUSED_NODES = ('Unused Nodes')
