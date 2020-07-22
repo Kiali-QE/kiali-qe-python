@@ -314,6 +314,11 @@ class IstioConfigValidationType(StringEnum):
     NOT_VALIDATED = ('Not Validated')
 
 
+class ThreeScaleConfigType(StringEnum):
+    HANDLER = ('3scale Account (Istio Handler)')
+    INSTANCE_RULE = ('3scale Authorization (Istio Instance+Rule)')
+
+
 class HealthType(StringEnum):
     NA = ('N/A')
     HEALTHY = ('Healthy')

@@ -37,7 +37,6 @@ from kiali_qe.entities.applications import (
     AppWorkload,
     ApplicationHealth
 )
-from kiali_qe.entities.three_scale_config import ThreeScaleHandler
 from kiali_qe.entities.overview import Overview
 from kiali_qe.utils import to_linear_string, dict_contains
 from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
@@ -49,6 +48,7 @@ ISTIO_CONFIG_TYPES = {'DestinationRule': 'destinationrules',
                       'ServiceEntry': 'serviceentries',
                       'WorkloadEntry': 'workloadentries',
                       'Gateway': 'gateways',
+                      'Handler': 'handler',
                       'EnvoyFilter': 'envoyfilters',
                       'HTTPAPISpec': 'httpapispecs',
                       'HTTPAPISpecBinding': 'httpapispecbindings',
@@ -574,21 +574,20 @@ class KialiExtendedClient(KialiClient):
             return set(name_filtered_list)
         return items
 
-    def three_scale_handler_list(self, handler_names=[]):
+    def three_scale_handler_list(self, namespace, handler_names=[]):
         """Returns list of 3scale handlers.
         Args:
             handler_names: filter by given names
         """
         items = []
         # update items
-        _data = self.get_response('getThreeScaleHandlers')
+        _data = self.istio_config_list(namespaces=[namespace], config_names=handler_names)
 
         for _handler in _data:
-            items.append(ThreeScaleHandler(
-                name=_handler['name'],
-                service_id=_handler['serviceId'],
-                system_url=_handler['systemUrl'],
-                access_token=_handler['accessToken']))
+            if _handler.object_type in [OBJECT_TYPE.HANDLER.text,
+                                        OBJECT_TYPE.RULE.text,
+                                        OBJECT_TYPE.INSTANCE.text]:
+                items.append(_handler)
 
         # apply filters
         if len(handler_names) > 0:
@@ -1123,31 +1122,6 @@ class KialiExtendedClient(KialiClient):
                                     namespace=namespace,
                                     object_type=ISTIO_CONFIG_TYPES[kind],
                                     object=name)
-
-    def create_three_scale_handler(self, name, service_id, system_url, access_token):
-        """Creates 3Scale Handler.
-        Args:
-            name: name
-            service_id: service Id
-            system_url: URL to the system
-            access_token: access token
-        """
-        logger.debug('Creating 3scale handler: {}'.format(name))
-        return self.post_response('postThreeScaleHandlers',
-                                  data={'name': name,
-                                        'serviceId': service_id,
-                                        'systemUrl': system_url,
-                                        'accessToken': access_token})
-
-    def delete_three_scale_handler(self, name):
-        """Deletes 3Scale Handler.
-        Args:
-            name: name
-        """
-
-        logger.debug('Deleting 3scale handler: {}'.format(name))
-        return self.delete_response('deleteThreeScaleHandler',
-                                    threescaleHandlerName=name)
 
     def get_icon_type(self, object_rest):
         _icon = None
