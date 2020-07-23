@@ -5,7 +5,8 @@ from kiali_qe.components.enums import (
     RoutingWizardType,
     RoutingWizardLoadBalancer,
     RoutingWizardTLS,
-    IstioConfigObjectType
+    IstioConfigObjectType,
+    PeerAuthMode
 )
 from kiali_qe.tests import test_3scale_config_page as THREESCALE_TEST
 
@@ -52,9 +53,17 @@ def test_routing_keep_advanced_settings(kiali_client, openshift_client, browser,
     name = 'mysqldb'
     tests.test_routing_create(name=name, namespace=namespace,
                               routing_type=RoutingWizardType.CREATE_WEIGHTED_ROUTING,
-                              tls=RoutingWizardTLS.ISTIO_MUTUAL, load_balancer=True,
+                              tls=RoutingWizardTLS.ISTIO_MUTUAL,
+                              peer_auth_mode=PeerAuthMode.PERMISSIVE,
+                              load_balancer=True,
                               load_balancer_type=RoutingWizardLoadBalancer.ROUND_ROBIN,
                               gateway=True, include_mesh_gateway=True)
+    peerauth_details = kiali_client.istio_config_details(
+        namespace=namespace,
+        object_type=IstioConfigObjectType.PEER_AUTHENTICATION.text,
+        object_name=name)
+    assert '\"mode\": \"{}\"'.format(
+        PeerAuthMode.PERMISSIVE.text) in peerauth_details.text
     tests.test_routing_update(name=name, namespace=namespace,
                               routing_type=RoutingWizardType.UPDATE_WEIGHTED_ROUTING,
                               skip_advanced=True)
@@ -74,7 +83,16 @@ def test_routing_keep_advanced_settings(kiali_client, openshift_client, browser,
         RoutingWizardLoadBalancer.ROUND_ROBIN.text) in dr_details.text
     assert '\"mode\": \"{}\"'.format(
         RoutingWizardTLS.ISTIO_MUTUAL.text) in dr_details.text
+    peerauth_details = kiali_client.istio_config_details(
+        namespace=namespace,
+        object_type=IstioConfigObjectType.PEER_AUTHENTICATION.text,
+        object_name=name)
+    assert '\"mode\": \"{}\"'.format(
+        PeerAuthMode.PERMISSIVE.text) in peerauth_details.text
     tests.test_routing_delete(name=name, namespace=namespace)
+    assert not kiali_client.istio_config_list(
+        namespaces=[namespace],
+        config_names=[name])
 
 
 @pytest.mark.p_ro_namespace
@@ -129,15 +147,22 @@ def test_tls_mutual(kiali_client, openshift_client, browser, pick_namespace):
     name = 'mongodb'
     tests.test_routing_create(name=name, namespace=namespace,
                               routing_type=RoutingWizardType.CREATE_WEIGHTED_ROUTING,
-                              tls=RoutingWizardTLS.MUTUAL, load_balancer=False,
+                              tls=RoutingWizardTLS.MUTUAL,
+                              peer_auth_mode=PeerAuthMode.PERMISSIVE,
+                              load_balancer=False,
                               load_balancer_type=RoutingWizardLoadBalancer.ROUND_ROBIN,
                               gateway=False, include_mesh_gateway=False)
     tests.test_routing_update(name=name, namespace=namespace,
                               routing_type=RoutingWizardType.UPDATE_WEIGHTED_ROUTING,
-                              tls=RoutingWizardTLS.MUTUAL, load_balancer=True,
+                              tls=RoutingWizardTLS.UNSET,
+                              peer_auth_mode=PeerAuthMode.UNSET,
+                              load_balancer=True,
                               load_balancer_type=RoutingWizardLoadBalancer.PASSTHROUGH,
                               gateway=True, include_mesh_gateway=True)
     tests.test_routing_delete(name=name, namespace=namespace)
+    assert not kiali_client.istio_config_list(
+        namespaces=[namespace],
+        config_names=[name])
 
 
 @pytest.mark.p_ro_namespace

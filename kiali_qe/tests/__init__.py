@@ -1285,6 +1285,7 @@ class ServicesPageTest(AbstractListPageTest):
         return []
 
     def test_routing_create(self, name, namespace, routing_type,
+                            peer_auth_mode=None,
                             tls=RoutingWizardTLS.ISTIO_MUTUAL, load_balancer=True,
                             load_balancer_type=RoutingWizardLoadBalancer.ROUND_ROBIN,
                             gateway=True, include_mesh_gateway=True,
@@ -1296,7 +1297,9 @@ class ServicesPageTest(AbstractListPageTest):
         self.page.actions.delete_all_routing()
         if routing_type == RoutingWizardType.CREATE_WEIGHTED_ROUTING:
             assert self.page.actions.create_weighted_routing(
-                tls=tls, load_balancer=load_balancer,
+                tls=tls,
+                peer_auth_mode=peer_auth_mode,
+                load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
                 include_mesh_gateway=include_mesh_gateway,
                 skip_advanced=skip_advanced)
@@ -1306,7 +1309,9 @@ class ServicesPageTest(AbstractListPageTest):
             assert self.page.actions.is_suspend_disabled()
         elif routing_type == RoutingWizardType.CREATE_MATCHING_ROUTING:
             assert self.page.actions.create_matching_routing(
-                tls=tls, load_balancer=load_balancer,
+                tls=tls,
+                peer_auth_mode=peer_auth_mode,
+                load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
                 include_mesh_gateway=include_mesh_gateway,
                 skip_advanced=skip_advanced)
@@ -1316,7 +1321,9 @@ class ServicesPageTest(AbstractListPageTest):
             assert self.page.actions.is_suspend_disabled()
         elif routing_type == RoutingWizardType.SUSPEND_TRAFFIC:
             assert self.page.actions.suspend_traffic(
-                tls=tls, load_balancer=load_balancer,
+                tls=tls,
+                peer_auth_mode=peer_auth_mode,
+                load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
                 include_mesh_gateway=include_mesh_gateway,
                 skip_advanced=skip_advanced)
@@ -1363,6 +1370,7 @@ class ServicesPageTest(AbstractListPageTest):
                             gateway and include_mesh_gateway)
 
     def test_routing_update(self, name, namespace, routing_type,
+                            peer_auth_mode=None,
                             tls=RoutingWizardTLS.ISTIO_MUTUAL, load_balancer=True,
                             load_balancer_type=RoutingWizardLoadBalancer.ROUND_ROBIN,
                             gateway=True, include_mesh_gateway=True,
@@ -1375,7 +1383,9 @@ class ServicesPageTest(AbstractListPageTest):
         self.open(name, namespace)
         if routing_type == RoutingWizardType.UPDATE_WEIGHTED_ROUTING:
             assert self.page.actions.update_weighted_routing(
-                tls=tls, load_balancer=load_balancer,
+                tls=tls,
+                peer_auth_mode=peer_auth_mode,
+                load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
                 include_mesh_gateway=include_mesh_gateway,
                 skip_advanced=skip_advanced)
@@ -1385,7 +1395,9 @@ class ServicesPageTest(AbstractListPageTest):
             assert self.page.actions.is_suspend_disabled()
         elif routing_type == RoutingWizardType.UPDATE_MATCHING_ROUTING:
             assert self.page.actions.update_matching_routing(
-                tls=tls, load_balancer=load_balancer,
+                tls=tls,
+                peer_auth_mode=peer_auth_mode,
+                load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
                 include_mesh_gateway=include_mesh_gateway,
                 skip_advanced=skip_advanced)
@@ -1395,7 +1407,9 @@ class ServicesPageTest(AbstractListPageTest):
             assert self.page.actions.is_suspend_disabled()
         elif routing_type == RoutingWizardType.UPDATE_SUSPENDED_TRAFFIC:
             assert self.page.actions.update_suspended_traffic(
-                tls=tls, load_balancer=load_balancer,
+                tls=tls,
+                peer_auth_mode=peer_auth_mode,
+                load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
                 include_mesh_gateway=include_mesh_gateway,
                 skip_advanced=skip_advanced)
@@ -1417,7 +1431,7 @@ class ServicesPageTest(AbstractListPageTest):
                                 service_details_rest.destination_rules[0].traffic_policy,
                                 load_balancer)
 
-        if tls:
+        if tls and tls.text != RoutingWizardTLS.UNSET.text:
             assert word_in_text(tls.text.lower(),
                                 service_details_rest.destination_rules[0].traffic_policy,
                                 tls)
