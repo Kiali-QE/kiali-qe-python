@@ -1,0 +1,156 @@
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: "default"
+  namespace: bookinfo
+spec:
+  mtls:
+    mode: PERMISSIVE
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: orahub
+  namespace: bookinfo
+spec:
+  hosts:
+    - orahub.oci.oraclecorp.com
+  ports:
+    - number: 80
+      name: http-0
+      protocol: HTTP
+    - number: 443
+      name: tls-0
+      protocol: TLS
+  resolution: DNS
+  location: MESH_EXTERNAL
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: my-egress-gw
+  namespace: bookinfo
+spec:
+  selector:
+    istio: egressgateway
+  servers:
+    - hosts:
+        - orahub.oci.oraclecorp.com
+      port:
+        number: 80
+        name: http-0
+        protocol: HTTP
+    - hosts:
+        - orahub.oci.oraclecorp.com
+      port:
+        number: 443
+        name: tls-0
+        protocol: TLS
+      tls:
+        mode: PASSTHROUGH
+        minProtocolVersion: TLSV1_2
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: egress-gw
+  namespace: bookinfo
+spec:
+  hosts:
+    - istio-egressgateway.istio-system.svc.cluster.local
+  ports:
+    - number: 80
+      name: http-0
+      protocol: HTTP
+    - number: 443
+      name: tls-0
+      protocol: TLS
+  resolution: DNS
+  location: MESH_INTERNAL
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: egressgateway-for-orahub
+  namespace: bookinfo
+spec:
+  host: istio-egressgateway.istio-system.svc.cluster.local
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: originate-tls-for-orahub
+  namespace: bookinfo
+spec:
+  host: orahub.oci.oraclecorp.com
+  subsets:
+    - name: tls-origination
+      trafficPolicy:
+        loadBalancer:
+          simple: ROUND_ROBIN
+        portLevelSettings:
+          - port:
+              number: 443
+            tls:
+              sni: orahub.oci.oraclecorp.com
+              mode: SIMPLE
+    - name: tls-passthrough
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: orahub-vs
+  namespace: bookinfo
+spec:
+  hosts:
+    - orahub.oci.oraclecorp.com
+  gateways:
+    - my-egress-gw
+    - mesh
+  http:
+    - match:
+        - gateways:
+            - mesh
+          port: 80
+      route:
+        - destination:
+            host: istio-egressgateway.istio-system.svc.cluster.local
+            port:
+              number: 80
+    - match:
+        - gateways:
+            - my-egress-gw
+          port: 80
+      route:
+        - destination:
+            subset: tls-origination
+            host: orahub.oci.oraclecorp.com
+            port:
+              number: 443
+  tls:
+    - match:
+        - gateways:
+            - mesh
+          port: 443
+          sniHosts:
+            - orahub.oci.oraclecorp.com
+      route:
+        - destination:
+            host: istio-egressgateway.istio-system.svc.cluster.local
+            port:
+              number: 443
+    - match:
+        - gateways:
+            - my-egress-gw
+          port: 443
+          sniHosts:
+          - orahub.oci.oraclecorp.com
+      route:
+        - destination:
+            subset: tls-passthrough
+            host: orahub.oci.oraclecorp.com
+            port:
+              number: 443

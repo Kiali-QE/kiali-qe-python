@@ -85,3 +85,5 @@ KIA1105 = 'KIA1105 This subset is already referenced in another route destinatio
 KIA1006 = 'KIA1006 Global default sidecar should not have workloadSelector'
 
 KIA1008 = 'KIA1008 Destination field is mandatory'
+
+KIA0105 = 'KIA0105 This field requires mTLS to be enabled'

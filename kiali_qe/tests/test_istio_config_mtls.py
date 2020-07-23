@@ -171,8 +171,7 @@ def test_scenario4(kiali_client, openshift_client, browser):
                 namespace='istio-system',
                 error_messages=[])
         ],
-        tls_type=(MeshWideTLSType.PARTLY_ENABLED if not openshift_client.is_auto_mtls()
-                  else MeshWideTLSType.DISABLED),
+        tls_type=MeshWideTLSType.PARTLY_ENABLED,
         namespace_tls_objects=[
             NamespaceTLSObject(
                 'bookinfo',
@@ -303,7 +302,7 @@ def test_scenario8(kiali_client, openshift_client, browser):
                 error_messages=[])
         ],
         tls_type=(MeshWideTLSType.PARTLY_ENABLED if not openshift_client.is_auto_mtls()
-                  else MeshWideTLSType.DISABLED))
+                  else MeshWideTLSType.ENABLED))
 
 
 @pytest.mark.p_group_last
@@ -607,7 +606,8 @@ def test_scenario20(kiali_client, openshift_client, browser):
                 namespace=ISTIO_SYSTEM,
                 error_messages=[])
         ],
-        tls_type=MeshWideTLSType.DISABLED,
+        tls_type=(MeshWideTLSType.PARTLY_ENABLED if not openshift_client.is_auto_mtls()
+                 else MeshWideTLSType.DISABLED),
         namespace_tls_objects=[
             NamespaceTLSObject(
                 'bookinfo',
@@ -706,9 +706,7 @@ def test_scenario23(kiali_client, openshift_client, browser):
                                      namespace=ISTIO_SYSTEM,
                                      error_messages=[KIA0506])
                                  ],
-                             tls_type=(MeshWideTLSType.PARTLY_ENABLED if not
-                                       openshift_client.is_auto_mtls()
-                                       else MeshWideTLSType.DISABLED),
+                             tls_type=MeshWideTLSType.PARTLY_ENABLED,
                              namespace_tls_objects=[
                                 NamespaceTLSObject(
                                     'bookinfo',
@@ -741,23 +739,15 @@ def test_scenario24(kiali_client, openshift_client, browser):
                                      namespace=ISTIO_SYSTEM,
                                      error_messages=[KIA0401])
                                  ],
-                             tls_type=(MeshWideTLSType.PARTLY_ENABLED if not
-                                       openshift_client.is_auto_mtls()
-                                       else MeshWideTLSType.ENABLED),
+                             tls_type=MeshWideTLSType.PARTLY_ENABLED,
                              namespace_tls_objects=[
                                 NamespaceTLSObject(
                                     'bookinfo',
-                                    (MeshWideTLSType.DISABLED if not
-                                     openshift_client.is_auto_mtls()
-                                     else MeshWideTLSType.ENABLED)),
+                                    MeshWideTLSType.DISABLED),
                                 NamespaceTLSObject(
                                     'istio-system',
-                                    (MeshWideTLSType.DISABLED if not
-                                     openshift_client.is_auto_mtls()
-                                     else MeshWideTLSType.ENABLED)),
+                                    MeshWideTLSType.DISABLED),
                                 NamespaceTLSObject(
                                     'default',
-                                    (MeshWideTLSType.DISABLED if not
-                                     openshift_client.is_auto_mtls()
-                                     else MeshWideTLSType.ENABLED))
+                                    MeshWideTLSType.DISABLED)
                              ])
