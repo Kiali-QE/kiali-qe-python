@@ -852,10 +852,14 @@ class KialiExtendedClient(KialiClient):
                                            object=object_name)
         if _health_data:
             if len(_health_data['checks']) > 0:
-                if 'error' in set(check['severity'] for check in _health_data['checks']):
+                _severities = set(check['severity'] for check in _health_data['checks'])
+                if 'error' in _severities:
                     return IstioConfigValidation.NOT_VALID
-                else:
+                elif 'warning' in _severities:
                     return IstioConfigValidation.WARNING
+                else:
+                    # unknown statuses are considered as valid
+                    return IstioConfigValidation.VALID
             else:
                 return IstioConfigValidation.VALID
         else:
