@@ -560,8 +560,7 @@ class OpenshiftExtendedClient(object):
 
         for workload in all_workloads:
             if application_name == self._get_app_name(workload):
-                workload_name = self._get_workload_name(workload)
-                workloads[workload_name] = AppWorkload(
+                workloads[workload.name] = AppWorkload(
                         name=workload.name,
                         istio_sidecar=workload.istio_sidecar)
 

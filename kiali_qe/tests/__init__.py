@@ -776,8 +776,8 @@ class ApplicationsPageTest(AbstractListPageTest):
             for application_oc in applications_oc:
                 logger.debug('{} {}'.format(application_oc.name, application_oc.namespace))
                 if application_ui.is_equal(application_oc, advanced_check=False):
-                    # in OC it contains more labels, skip for jaeger
-                    if application_ui.name != 'jaeger':
+                    # in OC it contains more labels, skip for jaeger and grafana
+                    if application_ui.name != 'jaeger' and application_ui.name != 'grafana':
                         assert application_ui.labels.items() == application_oc.labels.items(), \
                             'Expected {} but got {} labels for application {}'.format(
                                 application_oc.labels,
