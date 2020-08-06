@@ -17,9 +17,9 @@ from kiali_qe.components.error_codes import (
     KIA1104,
     KIA0204,
     KIA0001,
-    KIA1001,
-    KIA1002,
-    KIA1005,
+    KIA0004,
+    KIA0002,
+    KIA0003,
     KIA1103,
     KIA1004,
     KIA1006
@@ -411,7 +411,7 @@ def test_sidecar_errors(kiali_client, openshift_client):
                 object_type='Sidecar',
                 object_name='wrong-host-sidecar-auto',
                 namespace=BOOKINFO,
-                error_messages=[KIA1001,
+                error_messages=[KIA0004,
                                 KIA0001,
                                 KIA1004])
         ])
@@ -432,12 +432,12 @@ def test_duplicate_sidecar_errors(kiali_client, openshift_client):
                 object_type='Sidecar',
                 object_name='dupliacate-sidecar1-auto',
                 namespace=BOOKINFO,
-                error_messages=[KIA1002]),
+                error_messages=[KIA0002]),
             ConfigValidationObject(
                 object_type='Sidecar',
                 object_name='dupliacate-sidecar2-auto',
                 namespace=BOOKINFO,
-                error_messages=[KIA1002])
+                error_messages=[KIA0002])
         ])
 
 
@@ -456,12 +456,12 @@ def test_duplicate_workload_sidecar_errors(kiali_client, openshift_client):
                 object_type='Sidecar',
                 object_name='dupliacate-workload-sidecar1-auto',
                 namespace=BOOKINFO,
-                error_messages=[KIA1005]),
+                error_messages=[KIA0003]),
             ConfigValidationObject(
                 object_type='Sidecar',
                 object_name='dupliacate-workload-sidecar2-auto',
                 namespace=BOOKINFO,
-                error_messages=[KIA1005])
+                error_messages=[KIA0003])
         ])
 
 
@@ -480,7 +480,7 @@ def test_default_workload_sidecar(kiali_client, openshift_client):
                 object_type='Sidecar',
                 object_name='default-sidecar-workload-auto',
                 namespace=ISTIO_SYSTEM,
-                error_messages=[KIA1006, KIA1001])
+                error_messages=[KIA1006, KIA0004])
         ])
 
 
