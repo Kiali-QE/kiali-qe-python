@@ -51,6 +51,7 @@ def test_workloads_filter_2_names(kiali_client, openshift_client, browser):
         {"name": WorkloadsPageFilter.WORKLOAD_NAME.text, "value": "reviews-v1"}])
 
 
+@pytest.mark.p_smoke
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group9
 def test_all_workloads_namespace(kiali_client, openshift_client, browser):
