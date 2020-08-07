@@ -51,6 +51,7 @@ def test_apps_filter_2_names(kiali_client, openshift_client, browser):
         {"name": ApplicationsPageFilter.APP_NAME.text, "value": "reviews"}])
 
 
+@pytest.mark.p_smoke
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group1
 def test_all_applications_namespace(kiali_client, openshift_client, browser):

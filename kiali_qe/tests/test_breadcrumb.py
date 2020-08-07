@@ -31,6 +31,7 @@ def test_workload_breadcrumb_namespace(kiali_client, openshift_client, browser, 
     tests.assert_breadcrumb_namespace(name='details-v1', namespace=namespace)
 
 
+@pytest.mark.p_smoke
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group2
 def test_workload_breadcrumb_object(kiali_client, openshift_client, browser, pick_namespace):
@@ -42,6 +43,7 @@ def test_workload_breadcrumb_object(kiali_client, openshift_client, browser, pic
 
 # putting to p_ro_top group although right now there are no tests changing health of app so
 # it could be in p_ro_top_safe
+@pytest.mark.p_smoke
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group2
 def test_application_breadcrumb_menu(kiali_client, openshift_client, browser, pick_namespace):
@@ -80,6 +82,7 @@ def test_service_breadcrumb_menu(kiali_client, openshift_client, browser, pick_n
     tests.assert_breadcrumb_menu(name='details', namespace=namespace)
 
 
+@pytest.mark.p_smoke
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group2
 def test_service_breadcrumb_namespace(kiali_client, openshift_client, browser, pick_namespace):
