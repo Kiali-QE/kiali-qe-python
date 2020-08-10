@@ -57,13 +57,13 @@ KIA0203 = 'KIA0203 This subset\'s labels are not found in any matching host'
 
 KIA0204 = 'KIA0204 mTLS settings of a non-local Destination Rule are overridden'
 
-KIA1002 = 'KIA1002 More than one selector-less Sidecar in the same namespace'
+KIA0002 = 'KIA0002 More than one selector-less object in the same namespace'
 
 KIA1102 = 'KIA1102 VirtualService is pointing to a non-existent gateway'
 
 KIA1103 = 'KIA1103 VirtualService doesn\'t define any valid route protocol'
 
-KIA1005 = 'KIA1005 More than one Sidecar applied to the same workload'
+KIA0003 = 'KIA0003 More than one object applied to the same workload'
 
 KIA1004 = 'KIA1004 This host has no matching entry in the service registry'
 
@@ -77,8 +77,7 @@ KIA1104 = 'KIA1104 The weight is assumed to be '\
 KIA0103 = 'KIA0103 No matching workload found for '\
     'authorization policy selector in this namespace'
 
-KIA1001 = 'KIA1001 No matching workload found for '\
-    'authorization policy selector in this namespace'
+KIA0004 = 'KIA0004 No matching workload found for the selector in this namespace'
 
 KIA1105 = 'KIA1105 This subset is already referenced in another route destination'
 
