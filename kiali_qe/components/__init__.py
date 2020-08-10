@@ -692,6 +692,8 @@ class Actions(Widget):
     ACTIONS_DROPDOWN = '//div[contains(@class, "pf-c-dropdown")]//span[text()="Actions"]/../..'
     RULE_ACTIONS = '//div[contains(@class, "pf-c-dropdown")]//button[@aria-label="Actions"]'
     TLS_DROPDOWN = '//div[contains(@class, "pf-c-form__group")]//select[@id="advanced-tls"]'
+    PEER_AUTH_MODE_DROPDOWN = '//div[contains(@class, "pf-c-form__group")]'\
+        '//select[@id="trafficPolicy-pa-mode"]'
     LOAD_BALANCER_TYPE_DROPDOWN = '//div[contains(@class, "pf-c-form__group")]'\
         '//select[@id="trafficPolicy-lb"]'
     THREESCALE_CONFIG_DROPDOWN = '//div[contains(@class, "pf-c-form__group")]'\
@@ -730,6 +732,10 @@ class Actions(Widget):
                                              locator='//input[@id="clientCertificate"]')
         self._private_key = TextInput(parent=self, locator='//input[@id="privateKey"]')
         self._ca_certificate = TextInput(parent=self, locator='//input[@id="caCertificates"]')
+        self._peer_auth_switch = ButtonSwitch(parent=self, label="Add PeerAuthentication")
+        self._peer_auth_mode = SelectDropDown(
+            parent=self, locator=self.PEER_AUTH_MODE_DROPDOWN,
+            select_button='')
         self._loadbalancer_switch = ButtonSwitch(parent=self, label="Add LoadBalancer")
         self._loadbalancer_type = SelectDropDown(
             parent=self, locator=self.LOAD_BALANCER_TYPE_DROPDOWN,
@@ -809,6 +815,7 @@ class Actions(Widget):
             return True
 
     def create_weighted_routing(self, tls=RoutingWizardTLS.DISABLE,
+                                peer_auth_mode=None,
                                 load_balancer=False,
                                 load_balancer_type=None,
                                 gateway=False,
@@ -818,7 +825,9 @@ class Actions(Widget):
             return False
         else:
             self.select(self.CREATE_WEIGHTED_ROUTING)
-            self.advanced_options(tls=tls, load_balancer=load_balancer,
+            self.advanced_options(tls=tls,
+                                  peer_auth_mode=peer_auth_mode,
+                                  load_balancer=load_balancer,
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
                                   include_mesh_gateway=include_mesh_gateway,
@@ -831,7 +840,9 @@ class Actions(Widget):
             wait_to_spinner_disappear(self.browser)
             return True
 
-    def update_weighted_routing(self, tls=RoutingWizardTLS.DISABLE,
+    def update_weighted_routing(self,
+                                tls=RoutingWizardTLS.DISABLE,
+                                peer_auth_mode=None,
                                 load_balancer=False,
                                 load_balancer_type=None,
                                 gateway=False,
@@ -839,7 +850,9 @@ class Actions(Widget):
                                 skip_advanced=False):
         if self.is_update_weighted_enabled():
             self.select(self.UPDATE_WEIGHTED_ROUTING)
-            self.advanced_options(tls=tls, load_balancer=load_balancer,
+            self.advanced_options(tls=tls,
+                                  peer_auth_mode=peer_auth_mode,
+                                  load_balancer=load_balancer,
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
                                   include_mesh_gateway=include_mesh_gateway,
@@ -855,6 +868,7 @@ class Actions(Widget):
             return False
 
     def create_matching_routing(self, tls=RoutingWizardTLS.DISABLE,
+                                peer_auth_mode=None,
                                 load_balancer=False,
                                 load_balancer_type=None,
                                 gateway=False,
@@ -864,7 +878,9 @@ class Actions(Widget):
             return False
         else:
             self.select(self.CREATE_MATCHING_ROUTING)
-            self.advanced_options(tls=tls, load_balancer=load_balancer,
+            self.advanced_options(tls=tls,
+                                  peer_auth_mode=peer_auth_mode,
+                                  load_balancer=load_balancer,
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
                                   include_mesh_gateway=include_mesh_gateway,
@@ -883,6 +899,7 @@ class Actions(Widget):
             return True
 
     def update_matching_routing(self, tls=RoutingWizardTLS.DISABLE,
+                                peer_auth_mode=None,
                                 load_balancer=False,
                                 load_balancer_type=None,
                                 gateway=False,
@@ -890,7 +907,9 @@ class Actions(Widget):
                                 skip_advanced=False):
         if self.is_update_matching_enabled():
             self.select(self.UPDATE_MATCHING_ROUTING)
-            self.advanced_options(tls=tls, load_balancer=load_balancer,
+            self.advanced_options(tls=tls,
+                                  peer_auth_mode=peer_auth_mode,
+                                  load_balancer=load_balancer,
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
                                   include_mesh_gateway=include_mesh_gateway,
@@ -911,7 +930,9 @@ class Actions(Widget):
         else:
             return False
 
-    def suspend_traffic(self, tls=RoutingWizardTLS.DISABLE, load_balancer=False,
+    def suspend_traffic(self, tls=RoutingWizardTLS.DISABLE,
+                        peer_auth_mode=None,
+                        load_balancer=False,
                         load_balancer_type=None,
                         gateway=False,
                         include_mesh_gateway=False,
@@ -920,7 +941,9 @@ class Actions(Widget):
             return False
         else:
             self.select(self.SUSPEND_TRAFFIC)
-            self.advanced_options(tls=tls, load_balancer=load_balancer,
+            self.advanced_options(tls=tls,
+                                  peer_auth_mode=peer_auth_mode,
+                                  load_balancer=load_balancer,
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
                                   include_mesh_gateway=include_mesh_gateway,
@@ -934,6 +957,7 @@ class Actions(Widget):
             return True
 
     def update_suspended_traffic(self, tls=RoutingWizardTLS.DISABLE,
+                                 peer_auth_mode=None,
                                  load_balancer=False,
                                  load_balancer_type=None,
                                  gateway=False,
@@ -941,7 +965,9 @@ class Actions(Widget):
                                  skip_advanced=False):
         if self.is_update_suspended_enabled():
             self.select(self.UPDATE_SUSPENDED_TRAFFIC)
-            self.advanced_options(tls=tls, load_balancer=load_balancer,
+            self.advanced_options(tls=tls,
+                                  peer_auth_mode=peer_auth_mode,
+                                  load_balancer=load_balancer,
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
                                   include_mesh_gateway=include_mesh_gateway,
@@ -956,7 +982,9 @@ class Actions(Widget):
         else:
             return False
 
-    def advanced_options(self, tls=RoutingWizardTLS.DISABLE, load_balancer=False,
+    def advanced_options(self, tls=RoutingWizardTLS.DISABLE,
+                         peer_auth_mode=None,
+                         load_balancer=False,
                          load_balancer_type=None,
                          gateway=False,
                          include_mesh_gateway=False,
@@ -975,6 +1003,12 @@ class Actions(Widget):
                 self._client_certificate.fill(TLSMutualValues.CLIENT_CERT.text)
                 self._private_key.fill(TLSMutualValues.PRIVATE_KEY.text)
                 self._ca_certificate.fill(TLSMutualValues.CA_CERT.text)
+        if peer_auth_mode:
+            self._peer_auth_switch.on()
+            wait_displayed(self._peer_auth_mode)
+            self._peer_auth_mode.select(peer_auth_mode.text)
+        else:
+            self._peer_auth_switch.off()
         if load_balancer and load_balancer_type:
             self._loadbalancer_switch.on()
             if load_balancer_type:

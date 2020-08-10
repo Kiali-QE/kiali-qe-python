@@ -393,6 +393,7 @@ class RoutingWizardType(StringEnum):
 
 
 class RoutingWizardTLS(StringEnum):
+    UNSET = ('UNSET')
     DISABLE = ('DISABLE')
     ISTIO_MUTUAL = ('ISTIO_MUTUAL')
     SIMPLE = ('SIMPLE')
@@ -441,6 +442,13 @@ class AuthPolicyActionType(StringEnum):
 
 
 class MutualTLSMode(StringEnum):
+    UNSET = ('UNSET')
+    DISABLE = ('DISABLE')
+    PERMISSIVE = ('PERMISSIVE')
+    STRICT = ('STRICT')
+
+
+class PeerAuthMode(StringEnum):
     UNSET = ('UNSET')
     DISABLE = ('DISABLE')
     PERMISSIVE = ('PERMISSIVE')
