@@ -2448,6 +2448,8 @@ class ListViewApplications(ListViewAbstract):
         _outbound_metrics = MetricsView(self.parent,
                                         self.OUTBOUND_METRICS)
 
+        _traces_tab = TracesView(parent=self.parent, locator=self.locator, logger=self.logger)
+
         return ApplicationDetails(name=str(_breadcrumb.active_location),
                                   istio_sidecar=self._details_sidecar_text(),
                                   health=self._get_details_health(),
@@ -2456,7 +2458,8 @@ class ListViewApplications(ListViewAbstract):
                                   services=_table_view_services.all_items,
                                   traffic_tab=_traffic_tab,
                                   inbound_metrics=_inbound_metrics,
-                                  outbound_metrics=_outbound_metrics)
+                                  outbound_metrics=_outbound_metrics,
+                                  traces_tab=_traces_tab)
 
     @property
     def items(self):
@@ -2599,8 +2602,6 @@ class ListViewServices(ListViewAbstract):
 
         _inbound_metrics = MetricsView(parent=self.parent, tab_name=self.INBOUND_METRICS)
 
-        _traces_tab = TracesView(parent=self.parent, locator=self.locator, logger=self.logger)
-
         return ServiceDetails(name=_name,
                               created_at=parse_from_rest(_created_at),
                               created_at_ui=_created_at_ui,
@@ -2621,8 +2622,7 @@ class ListViewServices(ListViewAbstract):
                               virtual_services=self.table_view_vs.all_items,
                               destination_rules=self.table_view_dr.all_items,
                               traffic_tab=_traffic_tab,
-                              inbound_metrics=_inbound_metrics,
-                              traces_tab=_traces_tab)
+                              inbound_metrics=_inbound_metrics)
 
     @property
     def items(self):

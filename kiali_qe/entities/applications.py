@@ -152,6 +152,8 @@ class ApplicationDetails(EntityBase):
             if 'inbound_metrics' in kwargs else None
         self.outbound_metrics = kwargs['outbound_metrics']\
             if 'outbound_metrics' in kwargs else None
+        self.traces_tab = kwargs['traces_tab']\
+            if 'traces_tab' in kwargs else None
 
     def __str__(self):
         return 'name:{}, sidecar:{}, health:{}'.format(
