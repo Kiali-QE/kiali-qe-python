@@ -58,7 +58,7 @@ def test_filter_applications_by_or_label(kiali_client, openshift_client, browser
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
         {"name": ApplicationsPageFilter.LABEL.text, "value": "version:v2"},
-        {"name": ApplicationsPageFilter.LABEL.text, "value": "version:v1"}],
+        {"name": ApplicationsPageFilter.LABEL.text, "value": "version:v3"}],
         label_operation=LabelOperation.OR.text)
 
 
@@ -69,7 +69,7 @@ def test_filter_applications_by_and_label(kiali_client, openshift_client, browse
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
         {"name": ApplicationsPageFilter.LABEL.text, "value": "version:v2"},
-        {"name": ApplicationsPageFilter.LABEL.text, "value": "version:v1"}],
+        {"name": ApplicationsPageFilter.LABEL.text, "value": "version:v3"}],
         label_operation=LabelOperation.AND.text)
 
 

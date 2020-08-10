@@ -49,11 +49,8 @@ class OpenshiftExtendedClient(object):
         'QuotaSpecBinding': '_quotaspecbinding',
         'PeerAuthentication': '_peerauthentication',
         'RequestAuthentication': '_requestauthentication',
-        'RbacConfig': '_rbacconfig',
         'AuthorizationPolicy': '_authorizationpolicy',
         'Sidecar': '_sidecar',
-        'ServiceRole': '_servicerole',
-        'ServiceRoleBinding': '_servicerolebinding'
     }
 
     APP_NAME_REGEX = re.compile('(-v\\d+-.*)?(-v\\d+$)?(-(\\w{0,7}\\d+\\w{0,7})$)?')
@@ -205,24 +202,12 @@ class OpenshiftExtendedClient(object):
         return self._istio_config(kind='ServiceMeshRbacConfig', api_version='v1')
 
     @property
-    def _rbacconfig(self):
-        return self._istio_config(kind='RbacConfig', api_version='v1alpha1')
-
-    @property
     def _authorizationpolicy(self):
         return self._istio_config(kind='AuthorizationPolicy', api_version='v1beta1')
 
     @property
     def _sidecar(self):
         return self._istio_config(kind='Sidecar', api_version='v1alpha3')
-
-    @property
-    def _servicerole(self):
-        return self._istio_config(kind='ServiceRole', api_version='v1alpha1')
-
-    @property
-    def _servicerolebinding(self):
-        return self._istio_config(kind='ServiceRoleBinding', api_version='v1alpha1')
 
     @property
     def _configmap(self):
@@ -575,8 +560,7 @@ class OpenshiftExtendedClient(object):
 
         for workload in all_workloads:
             if application_name == self._get_app_name(workload):
-                workload_name = self._get_workload_name(workload)
-                workloads[workload_name] = AppWorkload(
+                workloads[workload.name] = AppWorkload(
                         name=workload.name,
                         istio_sidecar=workload.istio_sidecar)
 

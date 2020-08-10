@@ -3377,13 +3377,14 @@ class TabViewAbstract(ViewAbstract):
 
 
 class TrafficView(TabViewAbstract):
-    TRAFFIC_TAB = '//button[text()="Traffic"]'
+    TRAFFIC_TAB = '//button[contains(normalize-space(text()), "Traffic")]'
     TRAFFIC_ROOT = '//section[@id="pf-tab-section-1-basic-tabs"]'
     ROWS = ('//table[contains(@class, "pf-c-table")]'
             '//span[contains(text(), "{}")]/../../tbody/tr')
     COLUMN = './/td'
 
     def open(self):
+        self.browser.wait_for_element(locator=self.TRAFFIC_TAB, parent=self.ROOT)
         tab = self.browser.element(locator=self.TRAFFIC_TAB,
                                    parent=self.ROOT)
         try:

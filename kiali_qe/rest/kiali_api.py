@@ -494,17 +494,6 @@ class KialiExtendedClient(KialiClient):
                                                                     'servicemeshrbacconfigs',
                                                                     _policy['metadata']['name'])))
 
-            # update rbacConfigs
-            if len(_data['rbacConfigs']) > 0:
-                for _policy in _data['rbacConfigs']:
-                    items.append(IstioConfig(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.RBAC_CONFIG.text,
-                        validation=self.get_istio_config_validation(_namespace,
-                                                                    'rbacconfigs',
-                                                                    _policy['metadata']['name'])))
-
             # update sidecars
             if len(_data['sidecars']) > 0:
                 for _policy in _data['sidecars']:
@@ -525,28 +514,6 @@ class KialiExtendedClient(KialiClient):
                         object_type=OBJECT_TYPE.AUTHORIZATION_POLICY.text,
                         validation=self.get_istio_config_validation(_namespace,
                                                                     'authorizationpolicies',
-                                                                    _policy['metadata']['name'])))
-
-            # update serviceRoles
-            if len(_data['serviceRoles']) > 0:
-                for _policy in _data['serviceRoles']:
-                    items.append(IstioConfig(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.SERVICE_ROLE.text,
-                        validation=self.get_istio_config_validation(_namespace,
-                                                                    'serviceroles',
-                                                                    _policy['metadata']['name'])))
-
-            # update serviceRoleBindings
-            if len(_data['serviceRoleBindings']) > 0:
-                for _policy in _data['serviceRoleBindings']:
-                    items.append(IstioConfig(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.SERVICE_ROLE_BINDING.text,
-                        validation=self.get_istio_config_validation(_namespace,
-                                                                    'servicerolebindings',
                                                                     _policy['metadata']['name'])))
 
             # not required at this stage. These options not availabe in UI
@@ -673,10 +640,6 @@ class KialiExtendedClient(KialiClient):
             if _data['serviceMeshRbacConfig']:
                 config_data = _data['serviceMeshRbacConfig']
 
-            # get rbacConfig
-            if _data['rbacConfig']:
-                config_data = _data['rbacConfig']
-
             # get sidecar
             if _data['sidecar']:
                 config_data = _data['sidecar']
@@ -684,14 +647,6 @@ class KialiExtendedClient(KialiClient):
             # get authorizationPolicy
             if _data['authorizationPolicy']:
                 config_data = _data['authorizationPolicy']
-
-            # get serviceRole
-            if _data['serviceRole']:
-                config_data = _data['serviceRole']
-
-            # get serviceRoleBinding
-            if _data['serviceRoleBinding']:
-                config_data = _data['serviceRoleBinding']
 
             if config_data:
                 config = IstioConfigDetails(
