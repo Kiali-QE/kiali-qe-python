@@ -705,6 +705,9 @@ class ApplicationsPageTest(AbstractListPageTest):
             self.assert_metrics_options(application_details_ui.inbound_metrics)
 
             self.assert_metrics_options(application_details_ui.outbound_metrics)
+
+        self.assert_traces_tab(application_details_ui.traces_tab)
+
         self.assert_traffic(name, application_details_ui.traffic_tab,
                             self_object_type=TrafficType.APP, traffic_object_type=TrafficType.APP)
 
@@ -1176,8 +1179,6 @@ class ServicesPageTest(AbstractListPageTest):
 
         if check_metrics:
             self.assert_metrics_options(service_details_ui.inbound_metrics, check_grafana=True)
-
-        self.assert_traces_tab(service_details_ui.traces_tab)
 
         # service traffic is linked to workloads
         self.assert_traffic(name, service_details_ui.traffic_tab,
