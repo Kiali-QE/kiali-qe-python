@@ -2,6 +2,7 @@ import pytest
 
 from kiali_qe.tests import OverviewPageTest
 from kiali_qe.components.enums import OverviewPageType, OverviewViewType
+from kiali_qe.utils.command_exec import oc_idle
 
 
 @pytest.mark.p_atomic
@@ -33,6 +34,7 @@ def test_type_options(kiali_client, openshift_client, browser):
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
 def test_all_app_compact_overviews(kiali_client, openshift_client, browser):
+    _idle_bookinfo()
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[], overview_type=OverviewPageType.APPS,
@@ -51,6 +53,7 @@ def test_all_services_compact_overviews(kiali_client, openshift_client, browser)
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
 def test_all_workloads_compact_overviews(kiali_client, openshift_client, browser):
+    _idle_bookinfo()
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[], overview_type=OverviewPageType.WORKLOADS,
@@ -60,6 +63,7 @@ def test_all_workloads_compact_overviews(kiali_client, openshift_client, browser
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
 def test_all_app_expand_overviews(kiali_client, openshift_client, browser):
+    _idle_bookinfo()
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[], overview_type=OverviewPageType.APPS,
@@ -78,6 +82,7 @@ def test_all_services_expand_overviews(kiali_client, openshift_client, browser):
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
 def test_all_workloads_expand_overviews(kiali_client, openshift_client, browser):
+    _idle_bookinfo()
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[], overview_type=OverviewPageType.WORKLOADS,
@@ -87,6 +92,7 @@ def test_all_workloads_expand_overviews(kiali_client, openshift_client, browser)
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
 def test_all_app_list_overviews(kiali_client, openshift_client, browser):
+    _idle_bookinfo()
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[], overview_type=OverviewPageType.APPS,
@@ -105,7 +111,12 @@ def test_all_services_list_overviews(kiali_client, openshift_client, browser):
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
 def test_all_workloads_list_overviews(kiali_client, openshift_client, browser):
+    _idle_bookinfo()
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[], overview_type=OverviewPageType.WORKLOADS,
                            list_type=OverviewViewType.LIST)
+
+
+def _idle_bookinfo():
+    oc_idle('details', 'bookinfo')
