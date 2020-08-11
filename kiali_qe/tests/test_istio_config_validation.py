@@ -24,7 +24,9 @@ from kiali_qe.components.error_codes import (
     KIA1004,
     KIA1006,
     KIA0105,
-    KIA1107
+    KIA1106,
+    KIA1107,
+    KIA1101
 )
 
 
@@ -60,6 +62,9 @@ SCENARIO_21 = "mesh_policy_disable.yaml"
 SCENARIO_22 = "auth-policy-mtls.yaml"
 SCENARIO_23 = "vs_subset_service_entry.yaml"
 SCENARIO_24 = "vs_wrong_subset_no_dr.yaml"
+SCENARIO_25 = "duplicate-vs-gateway.yaml"
+SCENARIO_26 = "vs_destination_host_not_found.yaml"
+SCENARIO_27 = "request_auth_no_workload.yaml"
 
 
 @pytest.mark.p_group_last
@@ -571,4 +576,102 @@ def test_vs_subset_validations_no_service_entry(kiali_client, openshift_client):
                 object_name='orahub-vs-no-dr',
                 namespace=BOOKINFO,
                 error_messages=[KIA1107, KIA1107])
+        ])
+
+
+@pytest.mark.p_group_last
+def test_vs_duplicate_gateway(kiali_client, openshift_client):
+    """ KIA1106 More than one Virtual Service for same host
+    """
+    tests = ValidationsTest(
+        kiali_client=kiali_client,
+        openshift_client=openshift_client,
+        objects_path=istio_objects_validation_path.strpath)
+    tests.test_istio_objects(
+        scenario=SCENARIO_25, namespace=BOOKINFO,
+        config_validation_objects=[
+            ConfigValidationObject(
+                object_type='VirtualService',
+                object_name='admin-vs-2',
+                namespace=BOOKINFO,
+                error_messages=[KIA1106]),
+            ConfigValidationObject(
+                object_type='VirtualService',
+                object_name='admin-vs',
+                namespace=BOOKINFO,
+                error_messages=[KIA1106]),
+            ConfigValidationObject(
+                object_type='VirtualService',
+                object_name='user-vs-2',
+                namespace=BOOKINFO,
+                error_messages=[KIA1106]),
+            ConfigValidationObject(
+                object_type='VirtualService',
+                object_name='user-vs',
+                namespace=BOOKINFO,
+                error_messages=[KIA1106])
+        ])
+
+
+@pytest.mark.p_group_last
+def test_vs_destination_host_not_found(kiali_client, openshift_client):
+    """ KIA1101 DestinationWeight on route doesn't have a
+            valid service (host not found)
+    """
+    tests = ValidationsTest(
+        kiali_client=kiali_client,
+        openshift_client=openshift_client,
+        objects_path=istio_objects_validation_path.strpath)
+    tests.test_istio_objects(
+        scenario=SCENARIO_26, namespace=ISTIO_SYSTEM,
+        config_validation_objects=[
+            ConfigValidationObject(
+                object_type='VirtualService',
+                object_name='foo-dev',
+                namespace=ISTIO_SYSTEM,
+                error_messages=[KIA1101])
+        ])
+
+
+@pytest.mark.p_group_last
+def test_request_auth_workload_not_found(kiali_client, openshift_client):
+    """ KIA0003, KIA0004, KIA0002
+    """
+    tests = ValidationsTest(
+        kiali_client=kiali_client,
+        openshift_client=openshift_client,
+        objects_path=istio_objects_validation_path.strpath)
+    tests.test_istio_objects(
+        scenario=SCENARIO_27, namespace=BOOKINFO,
+        config_validation_objects=[
+            ConfigValidationObject(
+                object_type='RequestAuthentication',
+                object_name='httpbin-dup-1',
+                namespace=BOOKINFO,
+                error_messages=[KIA0003]),
+            ConfigValidationObject(
+                object_type='RequestAuthentication',
+                object_name='httpbin-dup-2',
+                namespace=BOOKINFO,
+                error_messages=[KIA0003]),
+            ConfigValidationObject(
+                object_type='RequestAuthentication',
+                object_name='httpbin-matching',
+                namespace=BOOKINFO,
+                error_messages=[]),
+            ConfigValidationObject(
+                object_type='RequestAuthentication',
+                object_name='httpbin-no-matching',
+                namespace=BOOKINFO,
+                error_messages=[KIA0004]),
+            ConfigValidationObject(
+                object_type='RequestAuthentication',
+                object_name='httpbin-ns-wise',
+                namespace=BOOKINFO,
+                error_messages=[KIA0002]),
+            ConfigValidationObject(
+                object_type='RequestAuthentication',
+                object_name='httpbin-ns-wise-1',
+                namespace=BOOKINFO,
+                error_messages=[KIA0002])
         ])

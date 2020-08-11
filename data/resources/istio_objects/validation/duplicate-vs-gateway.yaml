@@ -1,0 +1,135 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: admin-vs-2
+spec:
+  gateways:
+  - admin-gateway
+  hosts:
+  - admin.example.com
+  http:
+  - route:
+    - destination:
+        host: reviews
+        subset: admin
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: admin-vs
+spec:
+  gateways:
+  - admin-gateway
+  hosts:
+  - '*'
+  http:
+  - route:
+    - destination:
+        host: reviews
+        subset: admin
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: admin-dr
+spec:
+  host: reviews
+  subsets:
+  - labels:
+      version: v1
+    name: admin
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: user-vs-2
+spec:
+  gateways:
+  - user-gateway
+  hosts:
+  - users.example.com
+  http:
+  - route:
+    - destination:
+        host: reviews
+        subset: user
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: user-vs
+spec:
+  gateways:
+  - user-gateway
+  hosts:
+  - '*'
+  http:
+  - route:
+    - destination:
+        host: reviews
+        subset: user
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: user-dr
+spec:
+  host: reviews
+  subsets:
+  - labels:
+      version: v2
+    name: user
+---
+kind: VirtualService
+apiVersion: networking.istio.io/v1alpha3
+metadata:
+  name: reviews-2
+spec:
+  hosts:
+    - reviews
+  http:
+    - route:
+        - destination:
+            host: reviews
+---
+kind: VirtualService
+apiVersion: networking.istio.io/v1alpha3
+metadata:
+  name: reviews
+spec:
+  hosts:
+    - reviews
+  http:
+    - route:
+        - destination:
+            host: reviews
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: admin-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - hosts:
+    - '*'
+    port:
+      name: https-admin-gateway
+      number: 32301
+      protocol: HTTP
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: user-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - hosts:
+    - '*'
+    port:
+      name: https-user-gateway
+      number: 32302
+      protocol: HTTP
