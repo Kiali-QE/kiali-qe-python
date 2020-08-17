@@ -8,6 +8,8 @@ from kiali_qe.components.enums import (
 )
 from kiali_qe.utils.command_exec import oc_idle
 
+BOOKINFO_2 = 'bookinfo2'
+
 
 @pytest.mark.p_atomic
 @pytest.mark.p_ro_group6
@@ -131,6 +133,15 @@ def test_filter_overviews_by_label(kiali_client, openshift_client, browser):
         {"name": OverviewPageFilter.LABEL.text, "value": "istio-injection:enabled"},
         {"name": OverviewPageFilter.LABEL.text, "value": "kiali.io/member-of:istio-system"}],
         list_type=OverviewViewType.LIST)
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group6
+def test_overview_auto_injection(kiali_client, openshift_client, browser, pick_namespace):
+    tests = OverviewPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    namespace = pick_namespace(BOOKINFO_2)
+    tests.test_disable_enable_delete_auto_injection(namespace)
 
 
 def _idle_bookinfo():

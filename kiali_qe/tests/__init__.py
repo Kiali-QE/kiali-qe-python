@@ -37,6 +37,7 @@ from kiali_qe.components.enums import (
     RoutingWizardLoadBalancer,
     TrafficType,
     OverviewLinks,
+    OverviewInjectionLinks,
     OverviewGraphTypeLink,
     TailLines,
     TLSMutualValues,
@@ -561,14 +562,82 @@ class OverviewPageTest(AbstractListPageTest):
                     break
             assert found, '{} not found in REST {}'.format(overview_ui, overviews_rest)
 
-            # TODO links
-            # self._assert_overview_links(overview_ui.links)
             self._assert_overview_config_status(overview_ui.namespace, overview_ui.config_status)
             assert overview_ui.labels == self.openshift_client.namespace_labels(
                 overview_ui.namespace)
 
-    def _assert_overview_links(self, links):
-        assert is_equal([item.text for item in OverviewLinks.items], links)
+    def test_disable_enable_delete_auto_injection(self, namespace):
+        # load the page first
+        self.page.load(force_load=True)
+        self.apply_filters(filters=[{"name": OverviewPageFilter.NAME.text, "value": namespace}],
+                           force_clear_all=True)
+
+        self.kiali_client.update_namespace_auto_injection(namespace, 'enabled')
+        self.kiali_client.update_namespace_auto_injection(namespace, 'disabled')
+
+        self.page.page_refresh()
+        overviews_ui = self.page.content.list_items
+
+        for overview_ui in overviews_ui:
+            if overview_ui.namespace == namespace:
+                assert 'istio-injection' in overview_ui.labels and \
+                    overview_ui.labels['istio-injection'] == 'disabled'
+                self._assert_overview_options(
+                    options=self.page.content.overview_actions(namespace),
+                    enabled=False,
+                    deleted=False)
+
+        self.kiali_client.update_namespace_auto_injection(namespace, 'enabled')
+
+        self.page.page_refresh()
+        overviews_ui = self.page.content.list_items
+
+        for overview_ui in overviews_ui:
+            if overview_ui.namespace == namespace:
+                assert 'istio-injection' in overview_ui.labels and \
+                    overview_ui.labels['istio-injection'] == 'enabled'
+                self._assert_overview_options(
+                    options=self.page.content.overview_actions(namespace),
+                    enabled=True,
+                    deleted=False)
+
+        self.kiali_client.update_namespace_auto_injection(namespace, None)
+
+        self.page.page_refresh()
+        overviews_ui = self.page.content.list_items
+
+        for overview_ui in overviews_ui:
+            if overview_ui.namespace == namespace:
+                assert 'istio-injection' not in overview_ui.labels
+                self._assert_overview_options(
+                    options=self.page.content.overview_actions(namespace),
+                    enabled=False,
+                    deleted=True)
+
+        self.kiali_client.update_namespace_auto_injection(namespace, 'enabled')
+
+        self.page.page_refresh()
+        overviews_ui = self.page.content.list_items
+
+        for overview_ui in overviews_ui:
+            if overview_ui.namespace == namespace:
+                assert 'istio-injection' in overview_ui.labels and \
+                    overview_ui.labels['istio-injection'] == 'enabled'
+                self._assert_overview_options(
+                    options=self.page.content.overview_actions(namespace),
+                    enabled=True,
+                    deleted=False)
+
+    def _assert_overview_options(self, options, enabled=True, deleted=False):
+        expected_options = [item.text for item in OverviewLinks]
+        if not enabled:
+            expected_options.append(OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
+        if enabled:
+            expected_options.append(OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
+        if not deleted:
+            expected_options.append(OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text)
+        assert is_equal(expected_options, options), \
+            '{} not equal to {}'.format(expected_options, options)
 
     def _assert_overview_config_status(self, namespace, config_status):
         expected_status = IstioConfigValidation.NA

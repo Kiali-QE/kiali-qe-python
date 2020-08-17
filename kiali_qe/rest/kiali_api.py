@@ -1078,6 +1078,18 @@ class KialiExtendedClient(KialiClient):
                                     object_type=ISTIO_CONFIG_TYPES[kind],
                                     object=name)
 
+    def update_namespace_auto_injection(self, namespace, auto_injection=None):
+        """
+        Update auto injection of given namespace.
+        Args:
+            namespace: namespace
+            auto_injection: 'enabled','disabled' or None(deleted)
+        """
+        date_dict = {'metadata': {'labels': {'istio-injection': auto_injection}}}
+        return self.patch_response('namespaceUpdate',
+                                   namespace=namespace,
+                                   data=date_dict)
+
     def get_icon_type(self, object_rest):
         _icon = None
         if 'additionalDetailSample' in object_rest and object_rest['additionalDetailSample']:
@@ -1121,6 +1133,13 @@ class KialiExtendedClient(KialiClient):
             method_name=method_name,
             path=kwargs,
             http_method="POST",
+            data=json.dumps(data))
+
+    def patch_response(self, method_name, data, **kwargs):
+        return super(KialiExtendedClient, self).request(
+            method_name=method_name,
+            path=kwargs,
+            http_method="PATCH",
             data=json.dumps(data))
 
     def delete_response(self, method_name, **kwargs):
