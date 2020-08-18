@@ -1,7 +1,11 @@
 import pytest
 
 from kiali_qe.tests import OverviewPageTest
-from kiali_qe.components.enums import OverviewPageType, OverviewViewType
+from kiali_qe.components.enums import (
+    OverviewPageType,
+    OverviewViewType,
+    OverviewPageFilter
+)
 from kiali_qe.utils.command_exec import oc_idle
 
 
@@ -116,6 +120,17 @@ def test_all_workloads_list_overviews(kiali_client, openshift_client, browser):
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[], overview_type=OverviewPageType.WORKLOADS,
                            list_type=OverviewViewType.LIST)
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group6
+def test_filter_overviews_by_label(kiali_client, openshift_client, browser):
+    tests = OverviewPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.assert_all_items(filters=[
+        {"name": OverviewPageFilter.LABEL.text, "value": "istio-injection:enabled"},
+        {"name": OverviewPageFilter.LABEL.text, "value": "kiali.io/member-of:istio-system"}],
+        list_type=OverviewViewType.LIST)
 
 
 def _idle_bookinfo():
