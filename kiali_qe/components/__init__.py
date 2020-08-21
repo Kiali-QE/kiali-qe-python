@@ -289,8 +289,9 @@ class DropDown(Widget):
                              '//*[contains(@class, "disabled")]//*[contains(@role, "option")]')
     OPTION = ('//*[contains(@class, "pf-c-select__menu")]'
               '//*[contains(@role, "option") and text()="{}"]')
+    EXPANDED = '/../..//*[contains(@class, "pf-m-expanded")]'
 
-    def __init__(self, parent, force_open=True, locator=None, logger=None):
+    def __init__(self, parent, force_open=False, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
         self._force_open = force_open
         if locator:
@@ -301,31 +302,35 @@ class DropDown(Widget):
     def __locator__(self):
         return self.locator
 
+    def _is_expanded(self):
+        return len(self.browser.elements(
+            locator=self.locator + self.SELECT_BUTTON + self.EXPANDED, parent=self)) > 0
+
     def _close(self):
+        if not self._is_expanded():
+            return
         els = self.browser.elements(locator=self.locator + self.SELECT_BUTTON, parent=self)
-        # TODO check if opened in PF4
-        # if len(els) and els[0].get_attribute('aria-expanded') == 'true':
         self.browser.click(els[0])
 
     def _open(self):
+        if self._force_open:
+            self._close()
+        if self._is_expanded():
+            return
         el = self.browser.element(locator=self.locator + self.SELECT_BUTTON, parent=self)
-        # TODO check if opened in PF4
-        # if el.get_attribute('aria-expanded') == 'false':
         wait_displayed(el)
         self.browser.click(el)
 
     def _update_options(self, locator):
         options = []
-        if self._force_open:
-            self._open()
+        self._open()
         for el in self.browser.elements(locator=self.locator + locator, parent=self):
             # on filter drop down, title comes in to options list.
             # Here it will be removed
             if self.browser.get_attribute('title', el).startswith('Filter by'):
                 continue
             options.append(self.browser.text(el))
-        if self._force_open:
-            self._close()
+        self._close()
         return options
 
     @property
@@ -384,7 +389,7 @@ class MenuDropDown(DropDown):
     DISABLED_OPTIONS_LIST = ('/..//*[contains(@class, "pf-c-dropdown__menu")]//*'
                              '[contains(@role, "menuitem") and contains(@class, "pf-m-disabled")]')
 
-    def __init__(self, parent, force_open=True, locator=None, logger=None, select_button=None):
+    def __init__(self, parent, force_open=False, locator=None, logger=None, select_button=None):
         DropDown.__init__(self, parent=parent,
                           force_open=force_open,
                           locator=locator,
@@ -404,7 +409,7 @@ class ActionsDropDown(DropDown):
                              '[contains(@role, "menuitem")]'
                              '//button[contains(@class, "pf-m-disabled")]')
 
-    def __init__(self, parent, force_open=True, locator=None, logger=None, select_button=None):
+    def __init__(self, parent, force_open=False, locator=None, logger=None, select_button=None):
         DropDown.__init__(self, parent=parent,
                           force_open=force_open,
                           locator=locator,
@@ -419,7 +424,7 @@ class ItemDropDown(DropDown):
     OPTIONS_LIST = '/..//*[contains(@role, "option")]'
     OPTION = ('/..//*[contains(@role, "option") and text()="{}"]')
 
-    def __init__(self, parent, force_open=True, locator=None, logger=None, select_button=None):
+    def __init__(self, parent, force_open=False, locator=None, logger=None, select_button=None):
         DropDown.__init__(self, parent=parent,
                           force_open=force_open,
                           locator=locator,
@@ -434,7 +439,7 @@ class TypeDropDown(DropDown):
     OPTIONS_LIST = '/..//li/button[contains(@role, "option")]'
     OPTION = ('//li//button[contains(@role, "option") and contains(text(), "{}")]')
 
-    def __init__(self, parent, force_open=True, locator=None, logger=None, select_button=None):
+    def __init__(self, parent, force_open=False, locator=None, logger=None, select_button=None):
         DropDown.__init__(self, parent=parent,
                           force_open=force_open,
                           locator=locator,
@@ -448,7 +453,7 @@ class SelectDropDown(DropDown):
     OPTIONS_LIST = ('//option')
     OPTION = ('//*[text()="{}"]')
 
-    def __init__(self, parent, force_open=True, locator=None, logger=None, select_button=None):
+    def __init__(self, parent, force_open=False, locator=None, logger=None, select_button=None):
         DropDown.__init__(self, parent=parent,
                           force_open=force_open,
                           locator=locator,
@@ -462,7 +467,7 @@ class FilterDropDown(DropDown):
     OPTIONS_LIST = ('//option')
     OPTION = ('//*[text()="{}"]')
 
-    def __init__(self, parent, force_open=True, locator=None, logger=None):
+    def __init__(self, parent, force_open=False, locator=None, logger=None):
         DropDown.__init__(self, parent=parent,
                           force_open=force_open,
                           locator=locator,
@@ -724,9 +729,9 @@ class Actions(Widget):
         else:
             self.locator = self.ROOT
         self._actions = ActionsDropDown(parent=self, locator=self.locator + self.ACTIONS_DROPDOWN,
-                                        select_button='', force_open=True)
+                                        select_button='')
         self._rule_actions = MenuDropDown(parent=self, locator=self.RULE_ACTIONS,
-                                          select_button='', force_open=True)
+                                          select_button='')
         self._tls = SelectDropDown(parent=self, locator=self.TLS_DROPDOWN, select_button='')
         self._client_certificate = TextInput(parent=self,
                                              locator='//input[@id="clientCertificate"]')
@@ -1434,7 +1439,7 @@ class GraphSidePanel(Widget):
             parent=self.ROOT,
             default=None)
         if namespace:
-            namespace = namespace.replace('NS', '')
+            namespace = namespace.replace('NS', '').replace('N/A', '').strip()
         return namespace
 
     def get_workload(self):
@@ -1571,11 +1576,11 @@ class NavBar(Widget):
         logger.debug('Loading help menu')
         self.help_menu = MenuDropDown(
             parent=self, locator=self.NAVBAR_HELP,
-            logger=logger, force_open=True)
+            logger=logger)
         logger.debug('Loading user menu')
         self.user_menu = MenuDropDown(
             parent=self, locator=self.NAVBAR_USER,
-            logger=logger, force_open=True,
+            logger=logger,
             select_button=self.USER_SELECT_BUTTON)
 
     def about(self):
@@ -1862,8 +1867,7 @@ class ListViewAbstract(ViewAbstract):
         self.graph_menu = ActionsDropDown(parent=self,
                                           locator=self.GRAPH_OVERVIEW_MENU,
                                           select_button='',
-                                          logger=logger,
-                                          force_open=True)
+                                          logger=logger)
 
     def __locator__(self):
         return self.locator
@@ -1894,7 +1898,7 @@ class ListViewAbstract(ViewAbstract):
             self.browser.wait_for_element(locator=self.CONFIG_TEXT, parent=self.CONFIG_DETAILS_ROOT)
 
     def _item_namespace(self, cell):
-        return cell.text.strip().replace('NS', '')
+        return cell.text.replace('NS', '').strip()
 
     def _get_service_endpoints(self, element):
         result = []
