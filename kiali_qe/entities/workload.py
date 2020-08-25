@@ -64,12 +64,14 @@ class Workload(EntityBase):
 class WorkloadDetails(EntityBase):
 
     def __init__(self, name, workload_type, created_at, created_at_ui, resource_version,
-                 istio_sidecar=False, health=None, workload_status=None, icon=None, **kwargs):
+                 istio_sidecar=False, sidecar_injection=None,
+                 health=None, workload_status=None, icon=None, **kwargs):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
         self.workload_type = workload_type
         self.istio_sidecar = istio_sidecar
+        self.sidecar_injection = sidecar_injection
         self.health = health
         self.workload_status = workload_status
         self.icon = icon

@@ -114,3 +114,12 @@ def test_workload_details_random(kiali_client, openshift_client, browser, pick_n
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     namespace = pick_namespace(BOOKINFO_2)
     tests.assert_random_details(namespaces=[namespace])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group9
+def test_workload_auto_injection(kiali_client, openshift_client, browser, pick_namespace):
+    tests = WorkloadsPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    namespace = pick_namespace(BOOKINFO_2)
+    tests.test_disable_enable_delete_auto_injection(name='details-v1', namespace=namespace)

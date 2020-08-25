@@ -17,7 +17,8 @@ from kiali_qe.components.enums import (
     TLSMutualValues,
     ItemIconType,
     MutualTLSMode,
-    ThreeScaleConfigType
+    ThreeScaleConfigType,
+    OverviewInjectionLinks
 )
 from kiali_qe.entities import (
     TrafficItem,
@@ -807,6 +808,15 @@ class Actions(Widget):
 
     def is_update_suspended_enabled(self):
         return self.UPDATE_SUSPENDED_TRAFFIC in self.actions
+
+    def is_enable_auto_injection_visible(self):
+        return OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text in self.actions
+
+    def is_disable_auto_injection_visible(self):
+        return OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text in self.actions
+
+    def is_remove_auto_injection_visible(self):
+        return OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text in self.actions
 
     def delete_all_routing(self):
         if self.is_delete_disabled():
@@ -2565,6 +2575,18 @@ class ListViewApplications(ListViewAbstract):
 
 class ListViewWorkloads(ListViewAbstract):
 
+    SIDECAR_INJECTION_TEXT = 'Istio Sidecar Inject Annotation'
+
+    def _details_sidecar_injection_text(self):
+        """
+        Return the value Istio Sidecar Inject Annotation in workload details,
+        empty string if does not exist
+        """
+        return self.browser.text_or_default(
+            parent=self.DETAILS_ROOT,
+            locator=self.ISTIO_PROPERTIES.format(self.SIDECAR_INJECTION_TEXT),
+            default='').replace(self.SIDECAR_INJECTION_TEXT, '').strip()
+
     def get_details(self, load_only=False):
         if load_only:
             return BreadCrumb(self.parent)
@@ -2599,6 +2621,7 @@ class ListViewWorkloads(ListViewAbstract):
 
         return WorkloadDetails(name=str(_name),
                                workload_type=_type,
+                               sidecar_injection=self._details_sidecar_injection_text(),
                                created_at_ui=_created_at_ui,
                                created_at=parse_from_rest(_created_at),
                                resource_version=_resource_version,
