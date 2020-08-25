@@ -402,12 +402,12 @@ class ActionsDropDown(DropDown):
     ROOT = '//*[contains(@class, "pf-l-toolbar")]'
     SELECT_BUTTON = '//*[contains(@class, "pf-c-dropdown__toggle")]'
     OPTIONS_LIST = ('//*[contains(@class, "pf-c-dropdown__menu")]//*[contains(@role, "menuitem")]'
-                    '//button[not(contains(@class, "pf-m-disabled"))]')
+                    '//*[not(contains(@class, "pf-m-disabled"))]')
     OPTION = ('//*[contains(@class, "pf-c-dropdown__menu")]'
               '//*[contains(@role, "menuitem")]//*[text()="{}"]')
     DISABLED_OPTIONS_LIST = ('/..//*[contains(@class, "pf-c-dropdown__menu")]//*'
                              '[contains(@role, "menuitem")]'
-                             '//button[contains(@class, "pf-m-disabled")]')
+                             '//*[contains(@class, "pf-m-disabled")]')
 
     def __init__(self, parent, force_open=False, locator=None, logger=None, select_button=None):
         DropDown.__init__(self, parent=parent,
@@ -1227,6 +1227,25 @@ class ConfigActions(Actions):
         if labels:
             self._workloadselector_switch.on()
             self._labels.fill(labels)
+
+
+class OverviewActions(Actions):
+    LINK_ACTIONS = '//div[contains(@class, "pf-c-dropdown")]//button[@aria-label="Actions"]/..'
+
+    def __init__(self, parent, locator=None, logger=None):
+        Actions.__init__(self, parent, logger=logger)
+        if locator:
+            self.locator = locator
+        else:
+            self.locator = self.ROOT
+        self._actions = ActionsDropDown(
+            parent=self, locator=self.locator + self.LINK_ACTIONS, select_button='')
+
+    def __locator__(self):
+        return self.locator
+
+    def select(self, action):
+        self._actions.select(action)
 
 
 class Traces(Widget):
@@ -2331,9 +2350,10 @@ class ListViewAbstract(ViewAbstract):
 
 class ListViewOverview(ListViewAbstract):
     ROOT = '//section[contains(@class, "pf-c-page__main-section")]'
-    LINK_ACTIONS = '//div[contains(@class, "pf-c-dropdown")]//button[@aria-label="Actions"]/..'
     ITEMS = './/*[contains(@class, "pf-l-grid__item")]/article[contains(@class, "pf-c-card")]'
+    ITEM = '//span[normalize-space(text())="{}"]/../../..'
     LIST_ITEMS = './/tr[contains(@role, "row")]'
+    LIST_ITEM = '//td[normalize-space(text())="{}"]/..'
     ITEM_COL = './/td'
     ITEM_TITLE = './/*[contains(@class, "pf-c-title")]'
     ITEM_TEXT = './/*[contains(@class, "pf-c-card__body")]//span/div[contains(text(), "{}")]'
@@ -2353,11 +2373,14 @@ class ListViewOverview(ListViewAbstract):
 
     @property
     def compact_items(self):
+        self._do_compact()
+        return self.items
+
+    def _do_compact(self):
         self.browser.click(self.browser.element(
             parent=self.ROOT,
             locator=('//button//*[contains(@d, "M149")]')))
         wait_to_spinner_disappear(self.browser)
-        return self.items
 
     @property
     def items(self):
@@ -2391,7 +2414,6 @@ class ListViewOverview(ListViewAbstract):
                 _idle = int(self.browser.element(
                     locator=self.IDLE_TEXT, parent=el).text)
             # overview object creation
-            # TODO links
             _overview = Overview(
                 overview_type=_overview_type,
                 namespace=_namespace,
@@ -2405,8 +2427,7 @@ class ListViewOverview(ListViewAbstract):
                 idle=_idle,
                 na=(_item_numbers - (_healthy + _unhealthy + _degraded + _idle)),
                 tls_type=self.get_namespace_wide_tls(el),
-                labels=self._get_labels_tooltip(element=el),
-                links=[])
+                labels=self._get_labels_tooltip(element=el))
             # append this item to the final list
             _items.append(_overview)
         return _items
@@ -2448,7 +2469,6 @@ class ListViewOverview(ListViewAbstract):
                 _idle = int(self.browser.element(
                     locator=self.IDLE_TEXT, parent=columns[4]).text)
             # overview object creation
-            # TODO links
             _overview = Overview(
                 overview_type=_overview_type,
                 namespace=_namespace,
@@ -2460,11 +2480,31 @@ class ListViewOverview(ListViewAbstract):
                 idle=_idle,
                 na=(_item_numbers - (_healthy + _unhealthy + _degraded + _idle)),
                 tls_type=self.get_namespace_wide_tls(el),
-                labels=self._get_item_labels(columns[3]),
-                links=[])
+                labels=self._get_item_labels(columns[3]))
             # append this item to the final list
             _items.append(_overview)
         return _items
+
+    def overview_actions(self, namespace):
+        self._do_compact()
+        _elements = self.browser.elements(self.ITEMS, parent=self)
+        for el in _elements:
+            _namespace = self.browser.element(
+                locator=self.ITEM_TITLE, parent=el).text.replace('N/A', '')
+            if _namespace == namespace:
+                return OverviewActions(parent=self.parent,
+                                       locator=self.ITEM.format(_namespace),
+                                       logger=logger).actions
+        return None
+
+    def select_action(self, namespace, action):
+        _actions = self.overview_actions(namespace)
+        if action in _actions:
+            OverviewActions(parent=self.parent,
+                            locator=self.ITEM.format(namespace),
+                            logger=logger).select(action)
+            return True
+        return False
 
 
 class ListViewApplications(ListViewAbstract):

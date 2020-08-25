@@ -114,7 +114,7 @@ class Service(EntityBase):
         if self.health != other.health:
             return False
         if self.labels != other.labels:
-                return False
+            return False
         if self.service_status and other.service_status and \
                 not self.service_status.is_equal(other.service_status):
             return False

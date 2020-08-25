@@ -199,6 +199,12 @@ class OverviewLinks(StringEnum):
     ISTIO_CONFIG = ('Show Istio Config')
 
 
+class OverviewInjectionLinks(StringEnum):
+    DISABLE_AUTO_INJECTION = ('Disable Auto Injection')
+    ENABLE_AUTO_INJECTION = ('Enable Auto Injection')
+    REMOVE_AUTO_INJECTION = ('Remove Auto Injection')
+
+
 class OverviewGraphTypeLink(StringEnum):
     APP = ('app')
     WORKLOAD = ('workload')
