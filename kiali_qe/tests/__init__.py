@@ -1111,6 +1111,54 @@ class WorkloadsPageTest(AbstractListPageTest):
             assert _rule_label not in _pod.labels
             assert _service_label not in _pod.labels'''
 
+    def test_disable_enable_delete_auto_injection(self, name, namespace):
+        logger.debug('Auto Injection test for Workload: {}, {}'.format(name, namespace))
+        # load workload details page
+        self._prepare_load_details_page(name, namespace)
+        self.open(name, namespace)
+
+        self.kiali_client.update_workload_auto_injection(name, namespace, 'true')
+        self.kiali_client.update_workload_auto_injection(name, namespace, 'false')
+
+        self.page.page_refresh()
+        workload_details_ui = self.page.content.get_details()
+        assert 'false' == workload_details_ui.sidecar_injection
+        assert self.page.actions.is_enable_auto_injection_visible()
+        assert self.page.actions.is_remove_auto_injection_visible()
+        assert not self.page.actions.is_disable_auto_injection_visible()
+
+        self.page.actions.select(OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
+        self.page.page_refresh()
+        workload_details_ui = self.page.content.get_details()
+        assert 'true' == workload_details_ui.sidecar_injection
+        assert not self.page.actions.is_enable_auto_injection_visible()
+        assert self.page.actions.is_remove_auto_injection_visible()
+        assert self.page.actions.is_disable_auto_injection_visible()
+
+        self.page.actions.select(OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
+        self.page.page_refresh()
+        workload_details_ui = self.page.content.get_details()
+        assert 'false' == workload_details_ui.sidecar_injection
+        assert self.page.actions.is_enable_auto_injection_visible()
+        assert self.page.actions.is_remove_auto_injection_visible()
+        assert not self.page.actions.is_disable_auto_injection_visible()
+
+        self.page.actions.select(OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text)
+        self.page.page_refresh()
+        workload_details_ui = self.page.content.get_details()
+        assert not workload_details_ui.sidecar_injection
+        assert self.page.actions.is_enable_auto_injection_visible()
+        assert not self.page.actions.is_remove_auto_injection_visible()
+        assert not self.page.actions.is_disable_auto_injection_visible()
+
+        self.page.actions.select(OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
+        self.page.page_refresh()
+        workload_details_ui = self.page.content.get_details()
+        assert 'true' == workload_details_ui.sidecar_injection
+        assert not self.page.actions.is_enable_auto_injection_visible()
+        assert self.page.actions.is_remove_auto_injection_visible()
+        assert self.page.actions.is_disable_auto_injection_visible()
+
 
 class ServicesPageTest(AbstractListPageTest):
     FILTER_ENUM = ServicesPageFilter

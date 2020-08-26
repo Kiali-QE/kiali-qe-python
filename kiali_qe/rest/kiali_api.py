@@ -1090,6 +1090,20 @@ class KialiExtendedClient(KialiClient):
                                    namespace=namespace,
                                    data=date_dict)
 
+    def update_workload_auto_injection(self, workload_name, namespace, auto_injection=None):
+        """
+        Update auto injection of given workload.
+        Args:
+            workload_name: workload name
+            auto_injection: 'enabled','disabled' or None(deleted)
+        """
+        date_dict = {'spec': {'template': {'metadata': {'annotations': {
+            'sidecar.istio.io/inject': auto_injection}}}}}
+        return self.patch_response('workloadUpdate',
+                                   namespace=namespace,
+                                   workload=workload_name,
+                                   data=date_dict)
+
     def get_icon_type(self, object_rest):
         _icon = None
         if 'additionalDetailSample' in object_rest and object_rest['additionalDetailSample']:
