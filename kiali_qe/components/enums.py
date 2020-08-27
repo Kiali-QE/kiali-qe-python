@@ -20,7 +20,6 @@ class MainMenuEnum(StringEnum):
     SERVICES = ('Services')
     ISTIO_CONFIG = ('Istio Config')
     DISTRIBUTED_TRACING = ('Distributed Tracing')
-    THREESCALE_CONFIG = ('3scale Config')
 
 
 class HelpMenuEnum(StringEnum):
