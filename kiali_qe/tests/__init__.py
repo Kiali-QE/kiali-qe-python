@@ -339,11 +339,11 @@ class AbstractListPageTest(object):
         options_listed = metrics_page.filter.items
         logger.debug('Filter options[defined:{}, listed:{}]'
                      .format(options_defined, options_listed))
-        assert is_equal(options_defined, options_listed), \
+        assert is_sublist(options_defined, options_listed), \
             ('Filter Options mismatch: defined:{}, listed:{}'
              .format(options_defined, options_listed))
-        # enable disable each filter
-        for filter_name in options_listed:
+        # enable disable each filter, use defined options
+        for filter_name in options_defined:
             self._filter_test(metrics_page, filter_name)
 
     def _filter_test(self, page, filter_name, uncheck=True):
@@ -421,6 +421,8 @@ class AbstractListPageTest(object):
         assert is_equal([item.text for item in TailLines],
                         logs_tab.tail_lines.options)
         assert is_equal([item.text for item in TimeIntervalUIText],
+                        logs_tab.duration.options)
+        assert is_equal([item.text for item in GraphRefreshInterval],
                         logs_tab.interval.options)
         logs_tab.logs_switch.on()
         logs_tab.log_hide.fill(_filter)
