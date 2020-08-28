@@ -561,8 +561,19 @@ class OverviewPageTest(AbstractListPageTest):
             for overview_rest in overviews_rest:
                 if overview_ui.is_equal(overview_rest, advanced_check=True):
                     found = True
+                    assert (overview_ui.healthy +
+                            overview_ui.unhealthy +
+                            overview_ui.degraded +
+                            overview_ui.na +
+                            overview_ui.idle) == \
+                        (overview_rest.healthy +
+                         overview_rest.unhealthy +
+                         overview_rest.degraded +
+                         overview_rest.na +
+                         overview_rest.idle)
                     break
-            assert found, '{} not found in REST {}'.format(overview_ui, overviews_rest)
+            if not found:
+                assert found, '{} not found in REST {}'.format(overview_ui, overviews_rest)
 
             self._assert_overview_config_status(overview_ui.namespace, overview_ui.config_status)
             assert overview_ui.labels == self.openshift_client.namespace_labels(

@@ -50,7 +50,8 @@ class Overview(EntityBase):
             return False
         # advanced check
         if advanced_check:
-            if self.healthy != other.healthy:
+            # @TODO performance issue between UI and REST
+            '''if self.healthy != other.healthy:
                 return False
             if self.unhealthy != other.unhealthy:
                 return False
@@ -59,7 +60,7 @@ class Overview(EntityBase):
             if self.na != other.na:
                 return False
             if self.idle != other.idle:
-                return False
+                return False'''
             if self.labels != other.labels:
                 return False
         return True
