@@ -102,6 +102,10 @@ class WorkloadDetails(EntityBase):
             if 'inbound_metrics' in kwargs else None
         self.outbound_metrics = kwargs['outbound_metrics']\
             if 'outbound_metrics' in kwargs else None
+        self.istio_configs_number = kwargs['istio_configs_number']\
+            if 'istio_configs_number' in kwargs else None
+        self.istio_configs = kwargs['istio_configs']\
+            if 'istio_configs' in kwargs else None
 
     def __str__(self):
         return 'name:{}, type:{}, sidecar:{}, createdAt:{}, \

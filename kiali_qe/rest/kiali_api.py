@@ -38,7 +38,7 @@ from kiali_qe.entities.applications import (
     ApplicationHealth
 )
 from kiali_qe.entities.overview import Overview
-from kiali_qe.utils import to_linear_string, dict_contains
+from kiali_qe.utils import to_linear_string, dict_contains, dict_to_params
 from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
 from kiali_qe.utils.log import logger
 
@@ -280,7 +280,7 @@ class KialiExtendedClient(KialiClient):
             items = set(filtered_list)
         return items
 
-    def istio_config_list(self, namespaces=[], config_names=[]):
+    def istio_config_list(self, namespaces=[], config_names=[], params=None):
         """Returns list of istio config.
         Args:
             namespaces: can be zero or any number of namespaces
@@ -293,7 +293,8 @@ class KialiExtendedClient(KialiClient):
             namespace_list = self.namespace_list()
         # update items
         for _namespace in namespace_list:
-            _data = self.get_response('istioConfigList', path={'namespace': _namespace})
+            _data = self.get_response(
+                'istioConfigList', path={'namespace': _namespace}, params=params)
 
             # update DestinationRule
             if len(_data['destinationRules']) > 0 and len(_data['destinationRules']['items']) > 0:
@@ -695,6 +696,7 @@ class KialiExtendedClient(KialiClient):
                     source_workloads.append(SourceWorkload(
                         to=_wl_data,
                         workloads=_wl_names))
+            istio_configs = []
             virtual_services = []
             if _service_data['virtualServices'] \
                     and len(_service_data['virtualServices']['items']) > 0:
@@ -717,11 +719,12 @@ class KialiExtendedClient(KialiClient):
                             to_linear_string(_vs_data['spec']['http'][0]['match'])
                     else:
                         _http_route = ''
-                    virtual_services.append(VirtualService(
-                        status=self.get_istio_config_validation(
+                    _validation = self.get_istio_config_validation(
                             _vs_data['metadata']['namespace'],
                             'virtualservices',
-                            _vs_data['metadata']['name']),
+                            _vs_data['metadata']['name'])
+                    virtual_services.append(VirtualService(
+                        status=_validation,
                         name=_vs_data['metadata']['name'],
                         created_at=parse_from_rest(_vs_data['metadata']['creationTimestamp']),
                         created_at_ui=from_rest_to_ui(_vs_data['metadata']['creationTimestamp']),
@@ -729,6 +732,13 @@ class KialiExtendedClient(KialiClient):
                         http_route=_http_route,
                         hosts=_vs_data['spec']['hosts'],
                         weights=_weights))
+                    # It also requires IstioConfig type of objects in several testcases
+                    istio_configs.append(IstioConfig(
+                        name=_vs_data['metadata']['name'],
+                        namespace=_vs_data['metadata']['namespace'],
+                        object_type=OBJECT_TYPE.VIRTUAL_SERVICE.text,
+                        validation=_validation))
+
             destination_rules = []
             if _service_data['destinationRules'] \
                     and len(_service_data['destinationRules']['items']) > 0:
@@ -742,11 +752,12 @@ class KialiExtendedClient(KialiClient):
                             self.get_subset_labels(_dr_data['spec']['subsets']))
                     else:
                         _subsets = None
-                    destination_rules.append(DestinationRule(
-                        status=self.get_istio_config_validation(
+                    _validation = self.get_istio_config_validation(
                             _dr_data['metadata']['namespace'],
                             'destinationrules',
-                            _dr_data['metadata']['name']),
+                            _dr_data['metadata']['name'])
+                    destination_rules.append(DestinationRule(
+                        status=_validation,
                         name=_dr_data['metadata']['name'],
                         host=_dr_data['spec']['host'],
                         traffic_policy=_traffic_policy if _traffic_policy else '',
@@ -754,6 +765,14 @@ class KialiExtendedClient(KialiClient):
                         created_at=parse_from_rest(_dr_data['metadata']['creationTimestamp']),
                         created_at_ui=from_rest_to_ui(_dr_data['metadata']['creationTimestamp']),
                         resource_version=_dr_data['metadata']['resourceVersion']))
+
+                    # It also requires IstioConfig type of objects in several testcases
+                    istio_configs.append(IstioConfig(
+                        name=_dr_data['metadata']['name'],
+                        namespace=_dr_data['metadata']['namespace'],
+                        object_type=OBJECT_TYPE.DESTINATION_RULE.text,
+                        validation=_validation))
+
             _ports = ''
             for _port in _service_data['service']['ports']:
                 _ports += '{}{} ({}) '.format(_port['protocol'],
@@ -793,7 +812,9 @@ class KialiExtendedClient(KialiClient):
                     workloads=workloads,
                     traffic=source_workloads,
                     virtual_services=virtual_services,
-                    destination_rules=destination_rules)
+                    destination_rules=destination_rules,
+                    istio_configs=istio_configs,
+                    istio_configs_number=len(istio_configs))
         return _service
 
     def workload_details(self, namespace, workload_name, workload_type):
@@ -897,6 +918,12 @@ class KialiExtendedClient(KialiClient):
             _workload_health = self.get_workload_health(
                         namespace=namespace,
                         workload_name=_workload_data['name'])
+
+            _labels = self.get_labels(_workload_data)
+            _config_list = self.istio_config_list(
+                namespaces=[namespace], config_names=[],
+                params={'workloadSelector': dict_to_params(_labels)})
+
             _workload = WorkloadDetails(
                 name=_workload_data['name'],
                 istio_sidecar=_workload_rest.istio_sidecar,
@@ -907,12 +934,14 @@ class KialiExtendedClient(KialiClient):
                 health=_workload_health.is_healthy() if _workload_health else None,
                 workload_status=_workload_health,
                 icon=self.get_icon_type(_workload_data),
-                labels=self.get_labels(_workload_data),
+                labels=_labels,
                 pods_number=len(_pods),
                 services_number=len(_services),
                 traffic=_destination_services,
                 pods=_pods,
-                services=_services)
+                services=_services,
+                istio_configs=_config_list,
+                istio_configs_number=len(_config_list))
         return _workload
 
     def application_details(self, namespace, application_name):

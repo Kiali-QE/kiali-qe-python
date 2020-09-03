@@ -158,10 +158,10 @@ class ServiceDetails(EntityBase):
         self.icon = icon
         self.workloads_number = kwargs['workloads_number']\
             if 'workloads_number' in kwargs else None
-        self.virtual_services_number = kwargs['virtual_services_number']\
-            if 'virtual_services_number' in kwargs else None
-        self.destination_rules_number = kwargs['destination_rules_number']\
-            if 'destination_rules_number' in kwargs else None
+        self.istio_configs_number = kwargs['istio_configs_number']\
+            if 'istio_configs_number' in kwargs else None
+        self.istio_configs = kwargs['istio_configs']\
+            if 'istio_configs' in kwargs else None
         self.virtual_services = kwargs['virtual_services']\
             if 'virtual_services' in kwargs else None
         self.destination_rules = kwargs['destination_rules']\
@@ -468,6 +468,72 @@ class DestinationRule(EntityBase):
         if self.traffic_policy != other.traffic_policy:
             return False
         if self.subsets != other.subsets:
+            return False
+        # advanced check
+        if not advanced_check:
+            return True
+        if self.status != other.status:
+            return False
+        return True
+
+
+class IstioConfigRow(EntityBase):
+    """
+    Service class provides information details on Istio Config of Service/Workload Details.
+
+    Args:
+        status: the validation status of config
+        name: name of the config
+        type: the config type
+        created_at: creation datetime
+        resource_version: resource version
+    """
+
+    def __init__(self, status, name, type,
+                 created_at, created_at_ui, resource_version):
+        if name is None:
+            raise KeyError("'name' should not be 'None'")
+        self.name = name
+        self.type = type
+        self.created_at = created_at
+        self.created_at_ui = created_at_ui
+        self.resource_version = resource_version
+        self.status = status
+
+    def __str__(self):
+        return 'name:{}, status:{}, type:{}, '\
+            'created_at:{}, resource_version:{}'.format(
+                self.name, self.status, self.type,
+                self.created_at, self.resource_version)
+
+    def __repr__(self):
+        return "{}({}, {}, {}, {}, {})".format(
+            type(self).__name__,
+            repr(self.name), repr(self.status),
+            repr(self.host),
+            repr(self.traffic_policy), repr(self.subsets),
+            repr(self.created_at), repr(self.resource_version))
+
+    def __hash__(self):
+        return (hash(self.name) ^ hash(self.type) ^ hash(self.created_at)
+                ^ hash(self.resource_version))
+
+    def __eq__(self, other):
+        return self.is_equal(other, advanced_check=True)
+
+    def is_equal(self, other, advanced_check=True):
+        # basic check
+        if not isinstance(other, DestinationRule):
+            return False
+        if self.name != other.name:
+            return False
+        if self.type != other.type:
+            return False
+        if self.created_at != other.created_at:
+            return False
+        if self.created_at_ui != other.created_at_ui:
+            return False
+        if self.resource_version != other.resource_version:
             return False
         # advanced check
         if not advanced_check:
