@@ -35,7 +35,8 @@ from kiali_qe.entities.service import (
     SourceWorkload,
     VirtualServiceWeight,
     VirtualServiceGateway,
-    ServiceHealth
+    ServiceHealth,
+    IstioConfigRow
 )
 from kiali_qe.entities.istio_config import (
     IstioConfig,
@@ -1884,8 +1885,6 @@ class ListViewAbstract(ViewAbstract):
     CONFIG = 'strong[normalize-space(text()="{}:")]/..//'.format(CONFIG_TEXT)
     CONFIG_TABS_PARENT = './/ul[contains(@class, "pf-c-tabs__list")]'
     CONFIG_TAB_OVERVIEW = './/button[@id="pf-tab-0-basic-tabs"]'
-    ACTIVE_TAB_YAML = './/li[contains(@class, "pf-m-current")]//button[@id="pf-tab-1-basic-tabs"]'
-    CONFIG_TAB_YAML = './/button[@id="pf-tab-1-basic-tabs"]'
     GRAPH_OVERVIEW_MENU = '//div[contains(@class, "pf-c-card__head")]//'\
         'h3[text()="Graph Overview"]/../..//button'
 
@@ -1906,27 +1905,6 @@ class ListViewAbstract(ViewAbstract):
     @property
     def is_displayed(self):
         return self.browser.is_displayed(self.ROOT)
-
-    def has_overview_tab(self):
-        return len(self.browser.elements(locator=self.CONFIG_TAB_OVERVIEW,
-                                         parent=self.CONFIG_TABS_PARENT)) > 0
-
-    def is_yaml_tab_active(self):
-        return len(self.browser.elements(locator=self.ACTIVE_TAB_YAML,
-                                         parent=self.CONFIG_TABS_PARENT)) > 0
-
-    def display_overview_editor(self):
-        logger.debug('Opening overview editor')
-        if self.has_overview_tab():
-            self.browser.click(self.browser.element(locator=self.CONFIG_TAB_OVERVIEW,
-                                                    parent=self.CONFIG_TABS_PARENT))
-
-    def display_yaml_editor(self):
-        logger.debug('Opening yaml editor')
-        if not self.is_yaml_tab_active():
-            self.browser.click(self.browser.element(locator=self.CONFIG_TAB_YAML,
-                                                    parent=self.CONFIG_TABS_PARENT))
-            self.browser.wait_for_element(locator=self.CONFIG_TEXT, parent=self.CONFIG_DETAILS_ROOT)
 
     def _item_namespace(self, cell):
         return cell.text.replace('NS', '').strip()
@@ -2635,6 +2613,8 @@ class ListViewWorkloads(ListViewAbstract):
                                services_number=_table_view_services.number,
                                pods=_table_view_pods.all_items,
                                services=_table_view_services.all_items,
+                               istio_configs_number=self.table_view_istio_config.number,
+                               istio_configs=self.table_view_istio_config.all_items,
                                labels=self._get_details_labels(),
                                traffic_tab=_traffic_tab,
                                logs_tab=_logs_tab,
@@ -2667,6 +2647,10 @@ class ListViewWorkloads(ListViewAbstract):
             _items.append(_workload)
         return _items
 
+    @property
+    def table_view_istio_config(self):
+        return TableViewWorkloadIstioConfig(self.parent, self.locator, self.logger)
+
 
 class ListViewServices(ListViewAbstract):
 
@@ -2688,7 +2672,8 @@ class ListViewServices(ListViewAbstract):
         self.browser.click('.//button[contains(text(), "Properties")]', parent=self)
         _name = self.browser.text(
             locator=self.NETWORK_PROPERTIES.format(self.NAME),
-            parent=self.DETAILS_ROOT).replace(self.NAME, '').strip()
+            parent=self.DETAILS_ROOT).replace(self.NAME, '').replace(
+                self.MISSING_SIDECAR_TEXT, '').strip()
         _created_at_ui = self.browser.text(
             locator=self.NETWORK_PROPERTIES.format(self.CREATED_AT),
             parent=self.DETAILS_ROOT).replace(self.CREATED_AT, '').strip()
@@ -2719,11 +2704,9 @@ class ListViewServices(ListViewAbstract):
                               labels=self._get_details_labels(),
                               selectors=self._get_details_selectors(),
                               workloads_number=_table_view_wl.number,
-                              virtual_services_number=self.table_view_vs.number,
-                              destination_rules_number=self.table_view_dr.number,
+                              istio_configs_number=self.table_view_istio_config.number,
+                              istio_configs=self.table_view_istio_config.all_items,
                               workloads=_table_view_wl.all_items,
-                              virtual_services=self.table_view_vs.all_items,
-                              destination_rules=self.table_view_dr.all_items,
                               traffic_tab=_traffic_tab,
                               inbound_metrics=_inbound_metrics)
 
@@ -2755,12 +2738,8 @@ class ListViewServices(ListViewAbstract):
         return _items
 
     @property
-    def table_view_dr(self):
-        return TableViewDestinationRules(self.parent, self.locator, self.logger)
-
-    @property
-    def table_view_vs(self):
-        return TableViewVirtualServices(self.parent, self.locator, self.logger)
+    def table_view_istio_config(self):
+        return TableViewIstioConfig(self.parent, self.locator, self.logger)
 
 
 class ListViewIstioConfig(ListViewAbstract):
@@ -2840,7 +2819,6 @@ class ListViewIstioConfig(ListViewAbstract):
         if load_only:
             return BreadCrumb(self.parent)
         _error_messages = self._get_overview_error_messages()
-        self.display_yaml_editor()
         _text = self.browser.text(locator=self.CONFIG_TEXT,
                                   parent=self.CONFIG_DETAILS_ROOT)
         return IstioConfigDetails(name=name, text=_text,
@@ -3324,6 +3302,66 @@ class TableViewDestinationRules(TableViewAbstract):
             # append this item to the final list
             _items.append(_destination_rule)
         return _items
+
+
+class TableViewIstioConfig(TableViewAbstract):
+    CONFIG_TEXT = 'Istio Config'
+    CONFIG_ROWS = '//section[@id="{}"]//table[contains(@class, "table")]'\
+        '//tbody//tr//td//a[text()="{}"]/../..'
+    CONFIG_ROUTES = '//section[@id="{}"]//table[contains(@class, "pf-c-table")]'\
+        '//tbody//tr'
+    TAB_ID = 'pf-tab-section-1-service-tabs'
+
+    def open(self):
+        wait_to_spinner_disappear(self.browser)
+        tab = self.browser.element(locator=self.SERVICES_TAB.format(self.CONFIG_TEXT),
+                                   parent=self.SERVICE_DETAILS_ROOT)
+        try:
+            self.browser.click(tab)
+        finally:
+            self.browser.click(tab)
+        wait_to_spinner_disappear(self.browser)
+        self.browser.wait_for_element(locator='//section[@id="{}"]'.format(self.TAB_ID),
+                                      parent=self.ROOT)
+
+    @property
+    def number(self):
+        _vs_text = self.browser.text(locator=self.SERVICES_TAB.format(self.CONFIG_TEXT),
+                                     parent=self.SERVICE_DETAILS_ROOT)
+        return int(re.search(r'\d+', _vs_text).group())
+
+    @property
+    def items(self):
+        self.open()
+
+        _items = []
+        for el in self.browser.elements(locator=self.ROWS.format(
+            self.TAB_ID),
+                                        parent=self.ROOT):
+            _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
+            if len(_columns) < 2:
+                # empty row
+                continue
+            _name = _columns[1].text.strip()
+            _type = _columns[2].text.strip()
+            _created_at_ui = _columns[3].text.strip()
+            _created_at = self._get_date_tooltip(_columns[3])
+            _resource_version = _columns[4].text.strip()
+            # create IstioConfigRow instance
+            _istio_config = IstioConfigRow(
+                status=self._get_item_status(_columns[0]),
+                name=_name,
+                type=_type,
+                created_at=parse_from_rest(_created_at),
+                created_at_ui=_created_at_ui,
+                resource_version=_resource_version)
+            # append this item to the final list
+            _items.append(_istio_config)
+        return _items
+
+
+class TableViewWorkloadIstioConfig(TableViewIstioConfig):
+    TAB_ID = 'pf-tab-section-2-service-tabs'
 
 
 class TableViewWorkloadPods(TableViewAbstract):

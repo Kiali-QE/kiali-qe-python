@@ -32,6 +32,13 @@ def get_yaml_path(path, yaml_file):
     return os.path.join(path, yaml_file)
 
 
+def dict_to_params(dictionary):
+    result = ''
+    for k, v in dictionary.items():
+        result += '{}={},'.format(k, v)
+    return result
+
+
 def is_equal(object_a, object_b):
     if isinstance(object_a, list):
         if len(object_a) == len(object_b):

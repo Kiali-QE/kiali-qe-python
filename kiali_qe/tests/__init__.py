@@ -491,6 +491,25 @@ class AbstractListPageTest(object):
         else:
             assert False, "Graph Overview Page is not recognised"
 
+    def assert_istio_configs(self, object_ui, object_rest):
+        assert object_ui.istio_configs_number == len(object_ui.istio_configs), \
+            'Config tab\'s number should be equal to items'
+        assert len(object_rest.istio_configs) == len(object_ui.istio_configs), \
+            'UI configs should be equal to REST configs items'
+
+        for istio_config_ui in object_ui.istio_configs:
+            found = False
+            for istio_config_rest in object_rest.istio_configs:
+                if istio_config_ui.name == istio_config_rest.name and \
+                    istio_config_ui.type == istio_config_rest.object_type and \
+                        istio_config_ui.status == istio_config_rest.validation:
+                    found = True
+                    break
+            if not found:
+                assert found, 'Config {} not found in REST {}'.format(istio_config_ui,
+                                                                      istio_config_rest)
+            # TODO Overview verification
+
 
 class OverviewPageTest(AbstractListPageTest):
     FILTER_ENUM = OverviewPageFilter
@@ -989,6 +1008,8 @@ class WorkloadsPageTest(AbstractListPageTest):
             if not found:
                 assert found, 'Service {} not found in REST {}'.format(service_ui, service_rest)
 
+        self.assert_istio_configs(workload_details_ui, workload_details_rest)
+
         self.assert_logs_tab(workload_details_ui.logs_tab, all_pods)
         if check_metrics:
             self.assert_metrics_options(workload_details_ui.inbound_metrics, check_grafana=True)
@@ -1250,16 +1271,12 @@ class ServicesPageTest(AbstractListPageTest):
             .format(service_details_ui, service_details_oc)
         assert service_details_ui.workloads_number\
             == len(service_details_rest.workloads)
-        assert service_details_ui.virtual_services_number\
-            == len(service_details_rest.virtual_services)
-        assert service_details_ui.destination_rules_number\
-            == len(service_details_rest.destination_rules)
+        assert service_details_ui.istio_configs_number\
+            == len(service_details_rest.istio_configs)
         assert service_details_ui.workloads_number\
             == len(service_details_rest.workloads)
-        assert service_details_ui.virtual_services_number\
-            == len(service_details_ui.virtual_services)
-        assert service_details_ui.destination_rules_number\
-            == len(service_details_ui.destination_rules)
+        assert service_details_ui.istio_configs_number\
+            == len(service_details_ui.istio_configs)
 
         if service_details_ui.service_status:
             assert service_details_ui.service_status.is_healthy() == \
@@ -1276,36 +1293,11 @@ class ServicesPageTest(AbstractListPageTest):
                 if workload_ui.is_equal(workload_rest, advanced_check=True):
                     found = True
                     break
-            assert found, 'Workload {} not found in REST {}'.format(workload_ui,
-                                                                    workload_rest)
-        for virtual_service_ui in service_details_ui.virtual_services:
-            found = False
-            for virtual_service_rest in service_details_rest.virtual_services:
-                if virtual_service_ui.is_equal(virtual_service_rest, advanced_check=False):
-                    found = True
-                    break
             if not found:
-                assert found, 'VS {} not found in REST {}'.format(virtual_service_ui,
-                                                                  virtual_service_rest)
-            vs_overview = self.page.content.table_view_vs.get_overview(virtual_service_ui.name)
-            assert vs_overview.is_equal(virtual_service_rest, advanced_check=True)
+                assert found, 'Workload {} not found in REST {}'.format(workload_ui,
+                                                                        workload_rest)
 
-        for destination_rule_ui in service_details_ui.destination_rules:
-            found = False
-            for destination_rule_rest in service_details_rest.destination_rules:
-                if destination_rule_ui.is_equal(destination_rule_rest, advanced_check=True):
-                    found = True
-                    break
-            if not found:
-                assert found, 'DR {} not found in REST {}'.format(destination_rule_ui,
-                                                                  destination_rule_rest)
-            dr_overview = self.page.content.table_view_dr.get_overview(destination_rule_ui.name)
-            # TODO advanced_check=True when KIALI-2152 is done
-            assert dr_overview.is_equal(
-                destination_rule_ui,
-                advanced_check=True if
-                destination_rule_ui.status == IstioConfigValidation.NOT_VALID
-                else False)
+        self.assert_istio_configs(service_details_ui, service_details_rest)
 
         if check_metrics:
             self.assert_metrics_options(service_details_ui.inbound_metrics, check_grafana=True)
