@@ -18,7 +18,8 @@ from kiali_qe.components.enums import (
     ItemIconType,
     MutualTLSMode,
     ThreeScaleConfigType,
-    OverviewInjectionLinks
+    OverviewInjectionLinks,
+    RoutingWizardType
 )
 from kiali_qe.entities import (
     TrafficItem,
@@ -715,12 +716,12 @@ class Actions(Widget):
     REMOVE_RULE = 'Remove Rule'
     ADD_RULE_BUTTON = './/button[text()="Add Rule"]'
     DELETE_ALL_TRAFFIC_ROUTING = 'Delete ALL Traffic Routing'
-    CREATE_MATCHING_ROUTING = 'Create Matching Routing'
-    UPDATE_MATCHING_ROUTING = 'Update Matching Routing'
-    CREATE_WEIGHTED_ROUTING = 'Create Weighted Routing'
-    UPDATE_WEIGHTED_ROUTING = 'Update Weighted Routing'
-    SUSPEND_TRAFFIC = 'Suspend Traffic'
-    UPDATE_SUSPENDED_TRAFFIC = 'Update Suspended Traffic'
+    CREATE_MATCHING_ROUTING = RoutingWizardType.CREATE_MATCHING_ROUTING.text
+    UPDATE_MATCHING_ROUTING = RoutingWizardType.UPDATE_MATCHING_ROUTING.text
+    CREATE_WEIGHTED_ROUTING = RoutingWizardType.CREATE_WEIGHTED_ROUTING.text
+    UPDATE_WEIGHTED_ROUTING = RoutingWizardType.UPDATE_WEIGHTED_ROUTING.text
+    SUSPEND_TRAFFIC = RoutingWizardType.SUSPEND_TRAFFIC.text
+    UPDATE_SUSPENDED_TRAFFIC = RoutingWizardType.UPDATE_SUSPENDED_TRAFFIC.text
     CREATE_3SCALE_LINK = 'Link 3scale Authorization'
     DELETE_3SCALE_LINK = 'Unlink 3scale Authorization'
 

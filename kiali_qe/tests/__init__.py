@@ -385,7 +385,7 @@ class AbstractListPageTest(object):
         self.browser.click(self.browser.element(locator=self.page.content.CONFIG_TAB_OVERVIEW,
                                                 parent=self.page.content.CONFIG_TABS_PARENT))
         return len(self.browser.elements(
-            './/div[@id="hosts"]//a[contains(text(), "{}")]'.format(
+            './/div[@id="subsets"]//a[contains(text(), "{}")]'.format(
                 link_name),
             parent=self.page.content.locator)) > 0
 
