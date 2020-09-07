@@ -386,10 +386,10 @@ class MeshWideTLSType(StringEnum):
 
 
 class RoutingWizardType(StringEnum):
-    CREATE_WEIGHTED_ROUTING = ('Create Weighted Routing')
-    UPDATE_WEIGHTED_ROUTING = ('Update Weighted Routing')
-    CREATE_MATCHING_ROUTING = ('Create Matching Routing')
-    UPDATE_MATCHING_ROUTING = ('Update Matching Routing')
+    CREATE_WEIGHTED_ROUTING = ('Create Traffic Shifting')
+    UPDATE_WEIGHTED_ROUTING = ('Update Traffic Shifting')
+    CREATE_MATCHING_ROUTING = ('Create Request Routing')
+    UPDATE_MATCHING_ROUTING = ('Update Request Routing')
     SUSPEND_TRAFFIC = ('Suspend Traffic')
     UPDATE_SUSPENDED_TRAFFIC = ('Update Suspended Traffic')
     ADD_3_SCALE_RULE = ('Add 3scale API Management Rule')
