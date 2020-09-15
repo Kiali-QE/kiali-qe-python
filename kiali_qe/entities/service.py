@@ -396,6 +396,120 @@ class VirtualServiceGateway(EntityBase):
         return True
 
 
+class VirtualServiceOverview(EntityBase):
+    """
+    Service class provides information details on VirtualService Overview.
+
+    Args:
+        hosts: references to hosts
+        gateways: references to gateways
+        validation_references: references to other VS objects having conflicts with
+    """
+
+    def __init__(self, name, status=None, hosts=[], gateways=[], validation_references=[]):
+        if name is None:
+            raise KeyError("'name' should not be 'None'")
+        self.name = name
+        self.status = status
+        self.hosts = hosts
+        self.gateways = gateways
+        self.validation_references = validation_references
+
+    def __str__(self):
+        return 'name:{}, status:{}, '\
+            'resource_version:{}, hosts:{}, weights:{}'.format(
+                self.name, self.status,
+                self.hosts, self.gateways, self.validation_references)
+
+    def __repr__(self):
+        return "{}({}, {}, {}, {}, {})".format(
+            type(self).__name__,
+            repr(self.name),
+            repr(self.status),
+            repr(self.hosts), repr(self.gateways), repr(self.validation_references))
+
+    def __hash__(self):
+        return (hash(self.name) ^ hash(self.hosts) ^ hash(self.gateways))
+
+    def __eq__(self, other):
+        return self.is_equal(other, advanced_check=True)
+
+    def is_equal(self, other, advanced_check=True):
+        # basic check
+        if not isinstance(other, VirtualServiceOverview):
+            return False
+        if self.name != other.name:
+            return False
+        if not compare_lists(self.hosts, other.hosts):
+            return False
+        if not compare_lists(self.gateways, other.gateways):
+            return False
+        if not compare_lists(self.validation_references, other.validation_references):
+            return False
+        # advanced check
+        if not advanced_check:
+            return True
+        if self.status != other.status:
+            return False
+        return True
+
+
+class DestinationRuleOverview(EntityBase):
+    """
+    Service class provides information details on DestinationRule Overview.
+
+    Args:
+        status: the validation status of DR
+        name: name of the destination rule
+        host: the host of destination rule
+        subsets: subsets as a plain text
+    """
+
+    def __init__(self, status, name, host, subsets):
+        if name is None:
+            raise KeyError("'name' should not be 'None'")
+        self.name = name
+        self.host = host
+        self.subsets = subsets
+        self.status = status
+
+    def __str__(self):
+        return 'name:{}, status:{}, host:{}, subsets:{}, '\
+            'created_at:{}, resource_version:{}'.format(
+                self.name, self.status, self.host,
+                self.subsets)
+
+    def __repr__(self):
+        return "{}({}, {}, {}, {})".format(
+            type(self).__name__,
+            repr(self.name), repr(self.status),
+            repr(self.host),
+            repr(self.subsets))
+
+    def __hash__(self):
+        return (hash(self.name) ^ hash(self.host))
+
+    def __eq__(self, other):
+        return self.is_equal(other, advanced_check=True)
+
+    def is_equal(self, other, advanced_check=True):
+        # basic check
+        if not isinstance(other, DestinationRuleOverview):
+            return False
+        if self.name != other.name:
+            return False
+        if self.host != other.host:
+            return False
+        if self.subsets != other.subsets:
+            return False
+        # advanced check
+        if not advanced_check:
+            return True
+        if self.status != other.status:
+            return False
+        return True
+
+
 class DestinationRule(EntityBase):
     """
     Service class provides information details on DestinationRule of Service Details.
