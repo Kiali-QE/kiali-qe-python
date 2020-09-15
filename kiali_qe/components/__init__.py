@@ -2080,7 +2080,7 @@ class ListViewAbstract(ViewAbstract):
     def _get_request_statuses(self):
         return self.browser.element(
             locator=('.//*[contains(text(), "Pod Status") or ' +
-                     'contains(text(), "Error Rate")]/../..'),
+                     'contains(text(), "Traffic Status")]/../..'),
             parent=self.locator).text.split('\n')
 
     def _get_deployment_status(self, statuses, name=None):
