@@ -16,6 +16,21 @@ class EntityBase(object):
     def is_equal(self, item):
         raise NotImplementedError('Should be implemented on sub class')
 
+    @classmethod
+    def _get_error_ratio(cls, error_ratios):
+        _ratio = 0.0
+        _rate = 0
+        if error_ratios:
+            for _ratios in error_ratios.values():
+                for _k, _v in _ratios.items():
+                    _rate += 1
+                    if _k != '200':
+                        _ratio += float(_v)
+        if _rate != 0:
+            return float(_ratio/_rate)
+        else:
+            return -1/100
+
 
 class Requests(EntityBase):
 

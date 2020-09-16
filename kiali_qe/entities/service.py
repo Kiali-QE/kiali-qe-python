@@ -40,14 +40,8 @@ class ServiceHealth(EntityBase):
         # update requests
         _r_rest = health['requests']
         _requests = Requests(
-            errorRatio=cls._get_error_ratio(_r_rest['errorRatio']))
+            errorRatio=cls._get_error_ratio(_r_rest['inbound']))
         return ServiceHealth(requests=_requests)
-
-    @classmethod
-    def _get_error_ratio(cls, error_ratio):
-        if error_ratio != -1:
-            return float(error_ratio)
-        return float(error_ratio / 100)
 
 
 class Service(EntityBase):

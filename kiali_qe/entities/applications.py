@@ -71,16 +71,10 @@ class ApplicationHealth(EntityBase):
             # update requests
         _r_rest = health['requests']
         _requests = AppRequests(
-            inboundErrorRatio=cls._get_error_ratio(_r_rest['inboundErrorRatio']),
-            outboundErrorRatio=cls._get_error_ratio(_r_rest['outboundErrorRatio']))
+            inboundErrorRatio=cls._get_error_ratio(_r_rest['inbound']),
+            outboundErrorRatio=cls._get_error_ratio(_r_rest['outbound']))
         return ApplicationHealth(
             deployment_statuses=_deployment_status_list, requests=_requests)
-
-    @classmethod
-    def _get_error_ratio(cls, error_ratio):
-        if error_ratio != -1:
-            return float(error_ratio)
-        return float(error_ratio / 100)
 
 
 class Application(EntityBase):
