@@ -39,6 +39,7 @@ from kiali_qe.components.enums import (
     OverviewLinks,
     OverviewInjectionLinks,
     OverviewGraphTypeLink,
+    OverviewTrafficLinks,
     TailLines,
     TLSMutualValues,
     IstioConfigObjectType,
@@ -668,6 +669,8 @@ class OverviewPageTest(AbstractListPageTest):
             expected_options.append(OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
         if not deleted:
             expected_options.append(OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text)
+        # TODO change when automating Traffic Actions
+        expected_options.append(OverviewTrafficLinks.CREATE_TRAFFIC_POLICIES.text)
         assert is_equal(expected_options, options), \
             '{} not equal to {}'.format(expected_options, options)
 
@@ -720,7 +723,7 @@ class ApplicationsPageTest(AbstractListPageTest):
         if not self.is_in_details_page(name, namespace):
             self._prepare_load_details_page(name, namespace)
             self.open(name, namespace, force_refresh)
-            self.browser.wait_for_element(locator='//strong[contains(., "Traffic Status")]')
+            self.browser.wait_for_element(locator='//*[contains(text(), "Overall Health")]')
         return self.page.content.get_details(load_only)
 
     def assert_random_details(self, namespaces=[], filters=[], force_refresh=False):
@@ -1218,7 +1221,7 @@ class ServicesPageTest(AbstractListPageTest):
         if not self.is_in_details_page(name, namespace):
             self._prepare_load_details_page(name, namespace)
             self.open(name, namespace, force_refresh)
-            self.browser.wait_for_element(locator='//strong[contains(., "Traffic Status")]',
+            self.browser.wait_for_element(locator='//*[contains(text(), "Overall Health")]',
                                           parent='//*[@id="health"]')
         return self.page.content.get_details(load_only)
 
@@ -1259,8 +1262,9 @@ class ServicesPageTest(AbstractListPageTest):
         assert service_details_oc
         assert name == service_details_oc.name
 
-        assert service_details_rest.istio_sidecar\
-            == service_details_ui.istio_sidecar
+        if namespace != 'istio-system':
+            assert service_details_rest.istio_sidecar\
+                == service_details_ui.istio_sidecar
         assert service_details_ui.is_equal(service_details_rest,
                                            advanced_check=True), \
             'Service UI {} not equal to REST {}'\
@@ -1417,7 +1421,7 @@ class ServicesPageTest(AbstractListPageTest):
         self._prepare_load_details_page(name, namespace)
         self.open(name, namespace)
         self.page.actions.delete_all_routing()
-        if routing_type == RoutingWizardType.CREATE_WEIGHTED_ROUTING:
+        if routing_type == RoutingWizardType.TRAFFIC_SHIFTING:
             assert self.page.actions.create_weighted_routing(
                 tls=tls,
                 peer_auth_mode=peer_auth_mode,
@@ -1429,7 +1433,7 @@ class ServicesPageTest(AbstractListPageTest):
             assert self.page.actions.is_update_weighted_enabled()
             assert self.page.actions.is_create_matching_disabled()
             assert self.page.actions.is_suspend_disabled()
-        elif routing_type == RoutingWizardType.CREATE_MATCHING_ROUTING:
+        elif routing_type == RoutingWizardType.REQUEST_ROUTING:
             assert self.page.actions.create_matching_routing(
                 tls=tls,
                 peer_auth_mode=peer_auth_mode,
@@ -1441,7 +1445,7 @@ class ServicesPageTest(AbstractListPageTest):
             assert self.page.actions.is_update_matching_enabled()
             assert self.page.actions.is_create_weighted_disabled()
             assert self.page.actions.is_suspend_disabled()
-        elif routing_type == RoutingWizardType.SUSPEND_TRAFFIC:
+        elif routing_type == RoutingWizardType.FAULT_INJECTION:
             assert self.page.actions.suspend_traffic(
                 tls=tls,
                 peer_auth_mode=peer_auth_mode,
@@ -1503,7 +1507,7 @@ class ServicesPageTest(AbstractListPageTest):
         # load service details page
         self._prepare_load_details_page(name, namespace)
         self.open(name, namespace)
-        if routing_type == RoutingWizardType.UPDATE_WEIGHTED_ROUTING:
+        if routing_type == RoutingWizardType.TRAFFIC_SHIFTING:
             assert self.page.actions.update_weighted_routing(
                 tls=tls,
                 peer_auth_mode=peer_auth_mode,
@@ -1515,7 +1519,7 @@ class ServicesPageTest(AbstractListPageTest):
             assert self.page.actions.is_update_weighted_enabled()
             assert self.page.actions.is_create_matching_disabled()
             assert self.page.actions.is_suspend_disabled()
-        elif routing_type == RoutingWizardType.UPDATE_MATCHING_ROUTING:
+        elif routing_type == RoutingWizardType.REQUEST_ROUTING:
             assert self.page.actions.update_matching_routing(
                 tls=tls,
                 peer_auth_mode=peer_auth_mode,
@@ -1527,7 +1531,7 @@ class ServicesPageTest(AbstractListPageTest):
             assert self.page.actions.is_update_matching_enabled()
             assert self.page.actions.is_create_weighted_disabled()
             assert self.page.actions.is_suspend_disabled()
-        elif routing_type == RoutingWizardType.UPDATE_SUSPENDED_TRAFFIC:
+        elif routing_type == RoutingWizardType.FAULT_INJECTION:
             assert self.page.actions.update_suspended_traffic(
                 tls=tls,
                 peer_auth_mode=peer_auth_mode,

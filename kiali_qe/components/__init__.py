@@ -118,11 +118,11 @@ class Button(Widget):
 
 
 class ButtonSwitch(Button):
-    DEFAULT = '//span[(contains(@class, "pf-c-form__label-text") or ' + \
+    DEFAULT = DEFAULT = '//span[(contains(@class, "pf-c-form__label-text") or ' + \
         'contains(@class, "pf-c-switch__label"))' + \
         ' and normalize-space(text())="{}"]' + \
         '/../..//*[contains(@class, "pf-c-switch__input")]'
-    TEXT = '/../..//*[contains(@class, "control-label")]'
+    TEXT = '/../..//*[contains(@class, "pf-c-form__label-text")]'
 
     def __init__(self, parent, label=None, locator=None, logger=None):
         Button.__init__(self, parent,
@@ -143,7 +143,8 @@ class ButtonSwitch(Button):
 
     @property
     def text(self):
-        return self.browser.text(parent=self, locator=self.locator + self.TEXT)
+        return self.browser.text_or_default(parent=self, locator=self.locator + self.TEXT,
+                                            default='')
 
 
 class FilterInput(Widget):
@@ -715,13 +716,10 @@ class Actions(Widget):
     SELECT_BUTTON = './/button[text()="SELECT"]'
     REMOVE_RULE = 'Remove Rule'
     ADD_RULE_BUTTON = './/button[text()="Add Rule"]'
-    DELETE_ALL_TRAFFIC_ROUTING = 'Delete ALL Traffic Routing'
-    CREATE_MATCHING_ROUTING = RoutingWizardType.CREATE_MATCHING_ROUTING.text
-    UPDATE_MATCHING_ROUTING = RoutingWizardType.UPDATE_MATCHING_ROUTING.text
-    CREATE_WEIGHTED_ROUTING = RoutingWizardType.CREATE_WEIGHTED_ROUTING.text
-    UPDATE_WEIGHTED_ROUTING = RoutingWizardType.UPDATE_WEIGHTED_ROUTING.text
-    SUSPEND_TRAFFIC = RoutingWizardType.SUSPEND_TRAFFIC.text
-    UPDATE_SUSPENDED_TRAFFIC = RoutingWizardType.UPDATE_SUSPENDED_TRAFFIC.text
+    DELETE_TRAFFIC_ROUTING = 'Delete Traffic Routing'
+    REQUEST_ROUTING = RoutingWizardType.REQUEST_ROUTING.text
+    TRAFFIC_SHIFTING = RoutingWizardType.TRAFFIC_SHIFTING.text
+    FAULT_INJECTION = RoutingWizardType.FAULT_INJECTION.text
     CREATE_3SCALE_LINK = 'Link 3scale Authorization'
     DELETE_3SCALE_LINK = 'Unlink 3scale Authorization'
 
@@ -736,6 +734,8 @@ class Actions(Widget):
         self._rule_actions = MenuDropDown(parent=self, locator=self.RULE_ACTIONS,
                                           select_button='')
         self._tls = SelectDropDown(parent=self, locator=self.TLS_DROPDOWN, select_button='')
+        self._vs_hosts = TextInput(parent=self,
+                                   locator='//input[@id="advanced-vshosts"]')
         self._client_certificate = TextInput(parent=self,
                                              locator='//input[@id="clientCertificate"]')
         self._private_key = TextInput(parent=self, locator='//input[@id="privateKey"]')
@@ -776,7 +776,7 @@ class Actions(Widget):
         self._actions.select(action)
 
     def is_delete_disabled(self):
-        return self.DELETE_ALL_TRAFFIC_ROUTING in self.disabled_actions
+        return self.DELETE_TRAFFIC_ROUTING in self.disabled_actions
 
     def is_link_3scale_visible(self):
         return self.CREATE_3SCALE_LINK in self.actions
@@ -785,31 +785,31 @@ class Actions(Widget):
         return self.DELETE_3SCALE_LINK in self.actions
 
     def is_create_weighted_disabled(self):
-        return self.CREATE_WEIGHTED_ROUTING in self.disabled_actions
+        return self.TRAFFIC_SHIFTING in self.disabled_actions
 
     def is_create_matching_disabled(self):
-        return self.CREATE_MATCHING_ROUTING in self.disabled_actions
+        return self.REQUEST_ROUTING in self.disabled_actions
 
     def is_suspend_disabled(self):
-        return self.SUSPEND_TRAFFIC in self.disabled_actions
+        return self.FAULT_INJECTION in self.disabled_actions
 
     def is_create_weighted_enabled(self):
-        return self.CREATE_WEIGHTED_ROUTING in self.actions
+        return self.TRAFFIC_SHIFTING in self.actions
 
     def is_create_matching_enabled(self):
-        return self.CREATE_MATCHING_ROUTING in self.actions
+        return self.REQUEST_ROUTING in self.actions
 
     def is_suspend_enabled(self):
-        return self.SUSPEND_TRAFFIC in self.actions
+        return self.FAULT_INJECTION in self.actions
 
     def is_update_weighted_enabled(self):
-        return self.UPDATE_WEIGHTED_ROUTING in self.actions
+        return self.TRAFFIC_SHIFTING in self.actions
 
     def is_update_matching_enabled(self):
-        return self.UPDATE_MATCHING_ROUTING in self.actions
+        return self.REQUEST_ROUTING in self.actions
 
     def is_update_suspended_enabled(self):
-        return self.UPDATE_SUSPENDED_TRAFFIC in self.actions
+        return self.FAULT_INJECTION in self.actions
 
     def is_enable_auto_injection_visible(self):
         return OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text in self.actions
@@ -824,7 +824,7 @@ class Actions(Widget):
         if self.is_delete_disabled():
             return False
         else:
-            self.select(self.DELETE_ALL_TRAFFIC_ROUTING)
+            self.select(self.DELETE_TRAFFIC_ROUTING)
             delete_button = self.browser.element(
                 parent=self.DIALOG_ROOT,
                 locator=('.//button[text()="Delete"]'))
@@ -843,7 +843,7 @@ class Actions(Widget):
         if self.is_create_weighted_disabled():
             return False
         else:
-            self.select(self.CREATE_WEIGHTED_ROUTING)
+            self.select(self.TRAFFIC_SHIFTING)
             self.advanced_options(tls=tls,
                                   peer_auth_mode=peer_auth_mode,
                                   load_balancer=load_balancer,
@@ -868,7 +868,7 @@ class Actions(Widget):
                                 include_mesh_gateway=False,
                                 skip_advanced=False):
         if self.is_update_weighted_enabled():
-            self.select(self.UPDATE_WEIGHTED_ROUTING)
+            self.select(self.TRAFFIC_SHIFTING)
             self.advanced_options(tls=tls,
                                   peer_auth_mode=peer_auth_mode,
                                   load_balancer=load_balancer,
@@ -896,7 +896,7 @@ class Actions(Widget):
         if self.is_create_matching_disabled():
             return False
         else:
-            self.select(self.CREATE_MATCHING_ROUTING)
+            self.select(self.REQUEST_ROUTING)
             self.advanced_options(tls=tls,
                                   peer_auth_mode=peer_auth_mode,
                                   load_balancer=load_balancer,
@@ -925,7 +925,7 @@ class Actions(Widget):
                                 include_mesh_gateway=False,
                                 skip_advanced=False):
         if self.is_update_matching_enabled():
-            self.select(self.UPDATE_MATCHING_ROUTING)
+            self.select(self.REQUEST_ROUTING)
             self.advanced_options(tls=tls,
                                   peer_auth_mode=peer_auth_mode,
                                   load_balancer=load_balancer,
@@ -959,7 +959,7 @@ class Actions(Widget):
         if self.is_suspend_disabled():
             return False
         else:
-            self.select(self.SUSPEND_TRAFFIC)
+            self.select(self.FAULT_INJECTION)
             self.advanced_options(tls=tls,
                                   peer_auth_mode=peer_auth_mode,
                                   load_balancer=load_balancer,
@@ -983,7 +983,7 @@ class Actions(Widget):
                                  include_mesh_gateway=False,
                                  skip_advanced=False):
         if self.is_update_suspended_enabled():
-            self.select(self.UPDATE_SUSPENDED_TRAFFIC)
+            self.select(self.FAULT_INJECTION)
             self.advanced_options(tls=tls,
                                   peer_auth_mode=peer_auth_mode,
                                   load_balancer=load_balancer,
@@ -1014,8 +1014,19 @@ class Actions(Widget):
         if skip_advanced:
             return
         self.browser.click(Button(parent=self.parent, locator=self.SHOW_ADVANCED_OPTIONS))
-        wait_displayed(self._tls)
+        wait_displayed(self._vs_hosts)
+        _traffic_tab = self.browser.element(
+            parent=self.DIALOG_ROOT,
+            locator=('.//button[text()="Traffic Policy"]'))
+        _gateways_tab = self.browser.element(
+            parent=self.DIALOG_ROOT,
+            locator=('.//button[text()="Gateways"]'))
+        # TODO new test to be added
+        '''_circuit_tab = self.browser.element(
+            parent=self.DIALOG_ROOT,
+            locator=('.//button[text()="Circuit Breaker"]'))'''
         if tls:
+            self.browser.click(_traffic_tab)
             self._tls.select(tls.text)
             if tls == RoutingWizardTLS.MUTUAL:
                 wait_displayed(self._client_certificate)
@@ -1023,23 +1034,29 @@ class Actions(Widget):
                 self._private_key.fill(TLSMutualValues.PRIVATE_KEY.text)
                 self._ca_certificate.fill(TLSMutualValues.CA_CERT.text)
         if peer_auth_mode:
+            self.browser.click(_traffic_tab)
             self._peer_auth_switch.on()
             wait_displayed(self._peer_auth_mode)
             self._peer_auth_mode.select(peer_auth_mode.text)
         else:
+            self.browser.click(_traffic_tab)
             self._peer_auth_switch.off()
         if load_balancer and load_balancer_type:
+            self.browser.click(_traffic_tab)
             self._loadbalancer_switch.on()
             if load_balancer_type:
                 wait_displayed(self._loadbalancer_type)
                 self._loadbalancer_type.select(load_balancer_type.text)
         else:
+            self.browser.click(_traffic_tab)
             self._loadbalancer_switch.off()
         if gateway:
+            self.browser.click(_gateways_tab)
             self._gateway_switch.on()
             wait_displayed(self._include_mesh_gateway)
             self._include_mesh_gateway.fill(include_mesh_gateway)
         else:
+            self.browser.click(_gateways_tab)
             self._gateway_switch.off()
 
     def create_3scale_link(self, service_id, rule_name):
@@ -2078,10 +2095,13 @@ class ListViewAbstract(ViewAbstract):
             return None
 
     def _get_request_statuses(self):
-        return self.browser.element(
-            locator=('.//*[contains(text(), "Pod Status") or ' +
-                     'contains(text(), "Traffic Status")]/../..'),
-            parent=self.locator).text.split('\n')
+        try:
+            return self.browser.element(
+                locator=('.//*[contains(text(), "Pod Status") or ' +
+                         'contains(text(), "Traffic Status")]/../..'),
+                parent=self.locator).text.split('\n')
+        except (NoSuchElementException, StaleElementReferenceException):
+            return []
 
     def _get_deployment_status(self, statuses, name=None):
         result = self._get_deployment_statuses(statuses, name)
