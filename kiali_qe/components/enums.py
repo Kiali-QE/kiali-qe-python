@@ -191,17 +191,23 @@ class OverviewViewType(StringEnum):
 
 
 class OverviewLinks(StringEnum):
-    GRAPH = ('Show Graph')
-    APPLICATIONS = ('Show Applications')
-    WORKLOADS = ('Show Workloads')
-    SERVICES = ('Show Services')
-    ISTIO_CONFIG = ('Show Istio Config')
+    GRAPH = ('Graph')
+    APPLICATIONS = ('Applications')
+    WORKLOADS = ('Workloads')
+    SERVICES = ('Services')
+    ISTIO_CONFIG = ('Istio Config')
 
 
 class OverviewInjectionLinks(StringEnum):
     DISABLE_AUTO_INJECTION = ('Disable Auto Injection')
     ENABLE_AUTO_INJECTION = ('Enable Auto Injection')
     REMOVE_AUTO_INJECTION = ('Remove Auto Injection')
+
+
+class OverviewTrafficLinks(StringEnum):
+    CREATE_TRAFFIC_POLICIES = ('Create Traffic Policies')
+    UPDATE_TRAFFIC_POLICIES = ('Update Traffic Policies')
+    DELETE_TRAFFIC_POLICIES = ('Delete Traffic Policies')
 
 
 class OverviewGraphTypeLink(StringEnum):
@@ -349,7 +355,6 @@ class IstioConfigValidation(StringEnum):
 
 class InboundMetricsFilter(StringEnum):
     LOCAL_VERSION = ('Local version')
-    REMOTE_APP = ('Remote app')
     REMOTE_VERSION = ('Remote version')
     RESPONSE_CODE = ('Response code')
     GRPC_STATUS = ('GRPC status')
@@ -358,8 +363,6 @@ class InboundMetricsFilter(StringEnum):
 
 class OutboundMetricsFilter(StringEnum):
     LOCAL_VERSION = ('Local version')
-    REMOTE_SERVICE = ('Remote service')
-    REMOTE_APP = ('Remote app')
     REMOTE_VERSION = ('Remote version')
     RESPONSE_CODE = ('Response code')
     GRPC_STATUS = ('GRPC status')
@@ -386,12 +389,9 @@ class MeshWideTLSType(StringEnum):
 
 
 class RoutingWizardType(StringEnum):
-    CREATE_WEIGHTED_ROUTING = ('Create Traffic Shifting')
-    UPDATE_WEIGHTED_ROUTING = ('Update Traffic Shifting')
-    CREATE_MATCHING_ROUTING = ('Create Request Routing')
-    UPDATE_MATCHING_ROUTING = ('Update Request Routing')
-    SUSPEND_TRAFFIC = ('Suspend Traffic')
-    UPDATE_SUSPENDED_TRAFFIC = ('Update Suspended Traffic')
+    TRAFFIC_SHIFTING = ('Traffic Shifting')
+    REQUEST_ROUTING = ('Request Routing')
+    FAULT_INJECTION = ('Fault Injection')
     ADD_3_SCALE_RULE = ('Add 3scale API Management Rule')
     UPDATE_3_SCALE_RULE = ('Update 3scale API Management Rule')
     DELETE_3_SCALE_RULE = ('Delete 3Scale API Management Rule')

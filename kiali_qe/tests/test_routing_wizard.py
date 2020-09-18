@@ -31,12 +31,12 @@ def test_weighted_routing_single(kiali_client, openshift_client, browser, pick_n
     namespace = pick_namespace(BOOKINFO_2)
     name = 'details'
     tests.test_routing_create(name=name, namespace=namespace,
-                              routing_type=RoutingWizardType.CREATE_WEIGHTED_ROUTING,
+                              routing_type=RoutingWizardType.TRAFFIC_SHIFTING,
                               tls=RoutingWizardTLS.ISTIO_MUTUAL, load_balancer=True,
                               load_balancer_type=RoutingWizardLoadBalancer.ROUND_ROBIN,
                               gateway=True, include_mesh_gateway=True)
     tests.test_routing_update(name=name, namespace=namespace,
-                              routing_type=RoutingWizardType.UPDATE_WEIGHTED_ROUTING,
+                              routing_type=RoutingWizardType.TRAFFIC_SHIFTING,
                               tls=RoutingWizardTLS.SIMPLE, load_balancer=True,
                               load_balancer_type=RoutingWizardLoadBalancer.LEAST_CONN,
                               gateway=False, include_mesh_gateway=False)
@@ -52,7 +52,7 @@ def test_routing_keep_advanced_settings(kiali_client, openshift_client, browser,
     namespace = pick_namespace(BOOKINFO_2)
     name = 'mysqldb'
     tests.test_routing_create(name=name, namespace=namespace,
-                              routing_type=RoutingWizardType.CREATE_WEIGHTED_ROUTING,
+                              routing_type=RoutingWizardType.TRAFFIC_SHIFTING,
                               tls=RoutingWizardTLS.ISTIO_MUTUAL,
                               peer_auth_mode=PeerAuthMode.PERMISSIVE,
                               load_balancer=True,
@@ -65,7 +65,7 @@ def test_routing_keep_advanced_settings(kiali_client, openshift_client, browser,
     assert '\"mode\": \"{}\"'.format(
         PeerAuthMode.PERMISSIVE.text) in peerauth_details.text
     tests.test_routing_update(name=name, namespace=namespace,
-                              routing_type=RoutingWizardType.UPDATE_WEIGHTED_ROUTING,
+                              routing_type=RoutingWizardType.TRAFFIC_SHIFTING,
                               skip_advanced=True)
     service_details = kiali_client.service_details(service_name=name, namespace=namespace)
     assert len(service_details.virtual_services) == 1
@@ -104,12 +104,12 @@ def test_matching_routing_multi(kiali_client, openshift_client, browser, pick_na
     namespace = pick_namespace(BOOKINFO_2)
     name = 'ratings'
     tests.test_routing_create(name=name, namespace=namespace,
-                              routing_type=RoutingWizardType.CREATE_MATCHING_ROUTING,
+                              routing_type=RoutingWizardType.REQUEST_ROUTING,
                               tls=RoutingWizardTLS.SIMPLE, load_balancer=True,
                               load_balancer_type=RoutingWizardLoadBalancer.PASSTHROUGH,
                               gateway=True, include_mesh_gateway=True)
     tests.test_routing_update(name=name, namespace=namespace,
-                              routing_type=RoutingWizardType.UPDATE_MATCHING_ROUTING,
+                              routing_type=RoutingWizardType.REQUEST_ROUTING,
                               tls=None, load_balancer=False,
                               load_balancer_type=None,
                               gateway=True, include_mesh_gateway=False)
@@ -125,12 +125,12 @@ def test_suspend_traffic_multi(kiali_client, openshift_client, browser, pick_nam
     namespace = pick_namespace(BOOKINFO_2)
     name = 'ratings'
     tests.test_routing_create(name=name, namespace=namespace,
-                              routing_type=RoutingWizardType.SUSPEND_TRAFFIC,
+                              routing_type=RoutingWizardType.FAULT_INJECTION,
                               tls=RoutingWizardTLS.SIMPLE, load_balancer=True,
                               load_balancer_type=RoutingWizardLoadBalancer.RANDOM,
                               gateway=True, include_mesh_gateway=False)
     tests.test_routing_update(name=name, namespace=namespace,
-                              routing_type=RoutingWizardType.UPDATE_SUSPENDED_TRAFFIC,
+                              routing_type=RoutingWizardType.FAULT_INJECTION,
                               tls=None, load_balancer=False,
                               load_balancer_type=None,
                               gateway=False, include_mesh_gateway=False)
@@ -146,14 +146,14 @@ def test_tls_mutual(kiali_client, openshift_client, browser, pick_namespace):
     namespace = pick_namespace(BOOKINFO_2)
     name = 'mongodb'
     tests.test_routing_create(name=name, namespace=namespace,
-                              routing_type=RoutingWizardType.CREATE_WEIGHTED_ROUTING,
+                              routing_type=RoutingWizardType.TRAFFIC_SHIFTING,
                               tls=RoutingWizardTLS.MUTUAL,
                               peer_auth_mode=PeerAuthMode.PERMISSIVE,
                               load_balancer=False,
                               load_balancer_type=RoutingWizardLoadBalancer.ROUND_ROBIN,
                               gateway=False, include_mesh_gateway=False)
     tests.test_routing_update(name=name, namespace=namespace,
-                              routing_type=RoutingWizardType.UPDATE_WEIGHTED_ROUTING,
+                              routing_type=RoutingWizardType.TRAFFIC_SHIFTING,
                               tls=RoutingWizardTLS.UNSET,
                               peer_auth_mode=PeerAuthMode.UNSET,
                               load_balancer=True,
