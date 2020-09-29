@@ -194,14 +194,6 @@ class OpenshiftExtendedClient(object):
         return self._istio_config(kind='RequestAuthentication', api_version='v1beta1')
 
     @property
-    def _servicemeshpolicy(self):
-        return self._istio_config(kind='ServiceMeshPolicy', api_version='v1')
-
-    @property
-    def _servicemeshrbacconfig(self):
-        return self._istio_config(kind='ServiceMeshRbacConfig', api_version='v1')
-
-    @property
     def _authorizationpolicy(self):
         return self._istio_config(kind='AuthorizationPolicy', api_version='v1beta1')
 
