@@ -516,7 +516,8 @@ class AbstractListPageTest(object):
                 namespace=namespace,
                 object_name=istio_config_ui.name,
                 object_type=istio_config_ui.type)
-            assert config_overview_ui.status == istio_config_rest.validation
+            # TODO get the status from overview
+            assert istio_config_ui.status == istio_config_rest.validation
             if istio_config_ui.type == IstioConfigObjectType.VIRTUAL_SERVICE.text:
                 for _host in config_overview_ui.hosts:
                     assert '\'host\': \'{}\''.format(_host) in config_details_oc.text
@@ -1814,7 +1815,7 @@ class IstioConfigPageTest(AbstractListPageTest):
                     continue
                 for config_oc in config_oc_list:
                     if config_oc.endswith(':'):
-                        oc_key = config_oc
+                        oc_key = re.sub('^f:', '', config_oc)
                     else:
                         # the previous one was the key of this value
                         if (ui_key == oc_key and config_ui == config_oc) or config_ui == 'null':

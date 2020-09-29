@@ -517,14 +517,6 @@ class OpenshiftExtendedClient(object):
                              object_type=resource_type)
                 # append this item to the final list
                 items.append(_rule)
-            elif str(resource_type) == IstioConfigObjectType.SERVICE_MESH_POLICY.text or\
-                    str(resource_type) == IstioConfigObjectType.SERVICE_MESH_RBAC_CONFIG.text:
-                _config = IstioConfig(name=_item.metadata.name,
-                                      namespace=self.ISTIO_SYSTEM,
-                                      object_type=resource_type)
-                if _config not in items:
-                    # append this item to the final list
-                    items.append(_config)
             else:
                 _config = IstioConfig(name=_item.metadata.name,
                                       namespace=_item.metadata.namespace,
