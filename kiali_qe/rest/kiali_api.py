@@ -57,7 +57,6 @@ ISTIO_CONFIG_TYPES = {'DestinationRule': 'destinationrules',
                       'PeerAuthentication': 'peerauthentications',
                       'RequestAuthentication': 'requestauthentications',
                       'MeshPolicy': 'meshpolicies',
-                      'ServiceMeshRbacConfig': 'servicemeshrbacconfigs',
                       'RbacConfig': 'rbacconfigs',
                       'AuthorizationPolicy': 'authorizationpolicies',
                       'Sidecar': 'sidecars',
@@ -484,17 +483,6 @@ class KialiExtendedClient(KialiClient):
                                                                     'workloadentries',
                                                                     _policy['metadata']['name'])))
 
-            # update serviceMeshRbacConfigs
-            if len(_data['serviceMeshRbacConfigs']) > 0:
-                for _policy in _data['serviceMeshRbacConfigs']:
-                    items.append(IstioConfig(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.SERVICE_MESH_RBAC_CONFIG.text,
-                        validation=self.get_istio_config_validation(_namespace,
-                                                                    'servicemeshrbacconfigs',
-                                                                    _policy['metadata']['name'])))
-
             # update sidecars
             if len(_data['sidecars']) > 0:
                 for _policy in _data['sidecars']:
@@ -636,10 +624,6 @@ class KialiExtendedClient(KialiClient):
             # get meshPolicy
             if _data['meshPolicy']:
                 config_data = _data['meshPolicy']
-
-            # get serviceMeshRbacConfig
-            if _data['serviceMeshRbacConfig']:
-                config_data = _data['serviceMeshRbacConfig']
 
             # get sidecar
             if _data['sidecar']:
