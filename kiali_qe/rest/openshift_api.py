@@ -194,14 +194,6 @@ class OpenshiftExtendedClient(object):
         return self._istio_config(kind='RequestAuthentication', api_version='v1beta1')
 
     @property
-    def _servicemeshpolicy(self):
-        return self._istio_config(kind='ServiceMeshPolicy', api_version='v1')
-
-    @property
-    def _servicemeshrbacconfig(self):
-        return self._istio_config(kind='ServiceMeshRbacConfig', api_version='v1')
-
-    @property
     def _authorizationpolicy(self):
         return self._istio_config(kind='AuthorizationPolicy', api_version='v1beta1')
 
@@ -525,14 +517,6 @@ class OpenshiftExtendedClient(object):
                              object_type=resource_type)
                 # append this item to the final list
                 items.append(_rule)
-            elif str(resource_type) == IstioConfigObjectType.SERVICE_MESH_POLICY.text or\
-                    str(resource_type) == IstioConfigObjectType.SERVICE_MESH_RBAC_CONFIG.text:
-                _config = IstioConfig(name=_item.metadata.name,
-                                      namespace=self.ISTIO_SYSTEM,
-                                      object_type=resource_type)
-                if _config not in items:
-                    # append this item to the final list
-                    items.append(_config)
             else:
                 _config = IstioConfig(name=_item.metadata.name,
                                       namespace=_item.metadata.namespace,

@@ -317,8 +317,6 @@ class IstioConfigObjectType(StringEnum):
     REQUEST_AUTHENTICATION = ('RequestAuthentication')
     MESH_POLICY = ('MeshPolicy')
     CLUSTER_RBAC_CONFIG = ('ClusterRbacConfig')
-    SERVICE_MESH_POLICY = ('ServiceMeshPolicy')
-    SERVICE_MESH_RBAC_CONFIG = ('ServiceMeshRbacConfig')
     RBAC_CONFIG = ('RbacConfig')
     SIDECAR = ('Sidecar')
     AUTHORIZATION_POLICY = ('AuthorizationPolicy')
