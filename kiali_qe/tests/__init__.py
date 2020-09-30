@@ -492,7 +492,7 @@ class AbstractListPageTest(object):
         else:
             assert False, "Graph Overview Page is not recognised"
 
-    def assert_istio_configs(self, object_ui, object_rest):
+    def assert_istio_configs(self, object_ui, object_rest, namespace):
         assert object_ui.istio_configs_number == len(object_ui.istio_configs), \
             'Config tab\'s number should be equal to items'
         assert len(object_rest.istio_configs) == len(object_ui.istio_configs), \
@@ -509,7 +509,24 @@ class AbstractListPageTest(object):
             if not found:
                 assert found, 'Config {} not found in REST {}'.format(istio_config_ui,
                                                                       istio_config_rest)
-            # TODO Overview verification
+            config_overview_ui = self.page.content.table_view_istio_config.get_overview(
+                    istio_config_ui.name,
+                    istio_config_ui.type)
+            config_details_oc = self.openshift_client.istio_config_details(
+                namespace=namespace,
+                object_name=istio_config_ui.name,
+                object_type=istio_config_ui.type)
+            # TODO get the status from overview
+            assert istio_config_ui.status == istio_config_rest.validation
+            if istio_config_ui.type == IstioConfigObjectType.VIRTUAL_SERVICE.text:
+                for _host in config_overview_ui.hosts:
+                    assert '\'host\': \'{}\''.format(_host) in config_details_oc.text
+                for _gateway in config_overview_ui.gateways:
+                    assert _gateway.text in config_details_oc.text
+            else:
+                assert '\'host\': \'{}\''.format(config_overview_ui.host) in config_details_oc.text
+                # TODO Subsets
+                # assert config_overview_ui.subsets in config_details_oc.text
 
 
 class OverviewPageTest(AbstractListPageTest):
@@ -1011,7 +1028,7 @@ class WorkloadsPageTest(AbstractListPageTest):
             if not found:
                 assert found, 'Service {} not found in REST {}'.format(service_ui, service_rest)
 
-        self.assert_istio_configs(workload_details_ui, workload_details_rest)
+        self.assert_istio_configs(workload_details_ui, workload_details_rest, namespace)
 
         self.assert_logs_tab(workload_details_ui.logs_tab, all_pods)
         if check_metrics:
@@ -1301,7 +1318,7 @@ class ServicesPageTest(AbstractListPageTest):
                 assert found, 'Workload {} not found in REST {}'.format(workload_ui,
                                                                         workload_rest)
 
-        self.assert_istio_configs(service_details_ui, service_details_rest)
+        self.assert_istio_configs(service_details_ui, service_details_rest, namespace)
 
         if check_metrics:
             self.assert_metrics_options(service_details_ui.inbound_metrics, check_grafana=True)
@@ -1798,7 +1815,7 @@ class IstioConfigPageTest(AbstractListPageTest):
                     continue
                 for config_oc in config_oc_list:
                     if config_oc.endswith(':'):
-                        oc_key = config_oc
+                        oc_key = re.sub('^f:', '', config_oc)
                     else:
                         # the previous one was the key of this value
                         if (ui_key == oc_key and config_ui == config_oc) or config_ui == 'null':

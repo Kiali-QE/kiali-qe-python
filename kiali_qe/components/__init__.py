@@ -32,7 +32,9 @@ from kiali_qe.entities.service import (
     Service,
     ServiceDetails,
     VirtualService,
+    VirtualServiceOverview,
     DestinationRule,
+    DestinationRuleOverview,
     SourceWorkload,
     VirtualServiceWeight,
     VirtualServiceGateway,
@@ -1792,12 +1794,8 @@ class ViewAbstract(Widget):
     MISSING_ICON_SIDECAR = './/span//svg'
     INFO_TAB = '//button[@id="pf-tab-0-basic-tabs"]'
 
-    def back_to_service_info(self, parent):
-        # TODO find a better way after KIALI-2251
-        try:
-            self.browser.click('.//a[contains(@href, "/services/")]', parent)
-        except NoSuchElementException:
-            self.browser.execute_script("history.back();")
+    def back_to_service_info(self):
+        self.browser.execute_script("history.back();")
 
     def back_to_info(self):
         tab = self.browser.element(locator=self.INFO_TAB,
@@ -2884,7 +2882,8 @@ class TableViewAbstract(ViewAbstract):
         '//h6[contains(@class, "pf-c-title") and contains(text(), "{}")]/..'
     OVERVIEW_PROPERTIES = ('.//div[contains(@class, "pf-c-card__body")]//'
                            'h3[@data-pf-content="true" and contains(text(), "{}")]/..')
-    HOSTS_PROPERTIES = './/div/h6[contains(text(), "{}")]/..//li'
+    HOSTS_PROPERTIES = './/div/h3[contains(text(), "{}")]/..//li'
+    HOST_PROPERTIES = './/div/h3[contains(text(), "{}")]/../a'
     SERVICES_TAB = '//*[contains(@class, "pf-c-tabs__item")]//button[contains(text(), "{}")]'
     ROOT = '//[contains(@class, "tab-pane") and contains(@class, "active") and \
         contains(@class, "in")]'
@@ -3166,7 +3165,7 @@ class TableViewVirtualServices(TableViewAbstract):
                 _gateways.append(VirtualServiceGateway(text=el.text))
 
         # back to service details
-        self.back_to_service_info(parent=self.OVERVIEW_DETAILS_ROOT)
+        self.back_to_service_info()
 
         return VirtualService(
                 status=_status,
@@ -3271,7 +3270,7 @@ class TableViewDestinationRules(TableViewAbstract):
         _status = self._get_overview_status(self.OVERVIEW_DETAILS_ROOT)
 
         # back to service details
-        self.back_to_service_info(parent=self.OVERVIEW_DETAILS_ROOT)
+        self.back_to_service_info()
 
         return DestinationRule(
                 status=_status,
@@ -3327,11 +3326,12 @@ class TableViewDestinationRules(TableViewAbstract):
 
 class TableViewIstioConfig(TableViewAbstract):
     CONFIG_TEXT = 'Istio Config'
-    CONFIG_ROWS = '//section[@id="{}"]//table[contains(@class, "table")]'\
-        '//tbody//tr//td//a[text()="{}"]/../..'
-    CONFIG_ROUTES = '//section[@id="{}"]//table[contains(@class, "pf-c-table")]'\
-        '//tbody//tr'
+    GATEWAYS = '//div[@id="gateways"]//ul[contains(@class, "details")]//li'
     TAB_ID = 'pf-tab-section-1-service-tabs'
+    ROWS = '//section[@id="{}"]//table[contains(@class, "table")]'\
+        '//tbody//tr'
+    ROW = '//section[@id="{}"]//table[contains(@class, "table")]'\
+        '//tbody//tr//td//a[text()="{}"]/../..//td[text()="{}"]/..'
 
     def open(self):
         wait_to_spinner_disappear(self.browser)
@@ -3356,8 +3356,7 @@ class TableViewIstioConfig(TableViewAbstract):
         self.open()
 
         _items = []
-        for el in self.browser.elements(locator=self.ROWS.format(
-            self.TAB_ID),
+        for el in self.browser.elements(locator=self.ROWS.format(self.TAB_ID),
                                         parent=self.ROOT):
             _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
             if len(_columns) < 2:
@@ -3379,6 +3378,82 @@ class TableViewIstioConfig(TableViewAbstract):
             # append this item to the final list
             _items.append(_istio_config)
         return _items
+
+    def get_overview(self, name, config_type):
+        if config_type == IstioConfigObjectType.VIRTUAL_SERVICE.text:
+            return self._get_vs_overview(name)
+        else:
+            return self._get_dr_overview(name)
+
+    def _get_vs_overview(self, name):
+        self.open()
+
+        _row = self.browser.element(locator=self.ROW.format(
+            self.TAB_ID, name,
+            IstioConfigObjectType.VIRTUAL_SERVICE.text),
+                                    parent=self.ROOT)
+        _columns = list(self.browser.elements(locator=self.COLUMN, parent=_row))
+
+        self.browser.click('.//a', parent=_columns[1])
+        wait_to_spinner_disappear(self.browser)
+
+        _hosts = get_texts_of_elements(self.browser.elements(
+            locator=self.HOSTS_PROPERTIES.format(self.HOSTS),
+            parent=self.OVERVIEW_DETAILS_ROOT))
+        _gateway_elements = self.browser.elements(
+            locator=self.GATEWAYS,
+            parent=self.OVERVIEW_DETAILS_ROOT)
+        _status = self._get_overview_status(self.OVERVIEW_DETAILS_ROOT)
+        _gateways = []
+        _validation_references = []
+
+        for el in _gateway_elements:
+            try:
+                _link = self.browser.element(
+                    locator='//a', parent=el)
+                _gateways.append(
+                    VirtualServiceGateway(
+                        text=el.text, link=self.browser.get_attribute('href', _link)))
+            except NoSuchElementException:
+                _gateways.append(VirtualServiceGateway(text=el.text))
+
+        # back to service details
+        self.back_to_service_info()
+
+        return VirtualServiceOverview(
+                status=_status,
+                name=name,
+                hosts=_hosts,
+                gateways=_gateways,
+                validation_references=_validation_references)
+
+    def _get_dr_overview(self, name):
+        self.open()
+
+        _row = self.browser.element(locator=self.ROW.format(
+            self.TAB_ID, name,
+            IstioConfigObjectType.DESTINATION_RULE.text),
+                                    parent=self.ROOT)
+        _columns = list(self.browser.elements(locator=self.COLUMN, parent=_row))
+
+        self.browser.click('.//a', parent=_columns[1])
+        wait_to_spinner_disappear(self.browser)
+
+        _host = self.browser.text(
+            locator=self.HOST_PROPERTIES.format(self.HOST),
+            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.HOST, '').strip()
+        _status = self._get_overview_status(self.OVERVIEW_DETAILS_ROOT)
+        _subsets = ''
+        # TODO Subsets with status
+
+        # back to service details
+        self.back_to_service_info()
+
+        return DestinationRuleOverview(
+                status=_status,
+                name=name,
+                host=_host,
+                subsets=_subsets)
 
 
 class TableViewWorkloadIstioConfig(TableViewIstioConfig):
