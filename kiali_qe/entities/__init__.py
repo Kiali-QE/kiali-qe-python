@@ -131,29 +131,32 @@ class DeploymentStatus(EntityBase):
 
 class TrafficItem(EntityBase):
 
-    def __init__(self, status, name, object_type, request_type, rps, success_rate):
+    def __init__(self, status, name, object_type, request_type, rps, success_rate,
+                 bound_traffic_type=None):
         self.name = name
         self.status = status
         self.object_type = object_type
         self.request_type = request_type
         self.rps = rps
         self.success_rate = success_rate
+        self.bound_traffic_type = bound_traffic_type
 
     def __str__(self):
-        return 'name:{}, object_type: {}, status:{}, request_type:{}'.format(
-            self.name, self.object_type, self.status, self.request_type)
+        return 'name:{}, object_type: {}, status:{}, request_type:{}, bound_traffic_type{}'.format(
+            self.name, self.object_type, self.status, self.request_type, self.bound_traffic_type)
 
     def __repr__(self):
-        return "{}({}, {}, {}, {})".format(
+        return "{}({}, {}, {}, {}, {})".format(
             type(self).__name__, repr(self.name), repr(self.object_type),
-            repr(self.status), repr(self.request_type))
+            repr(self.status), repr(self.request_type), repr(self.bound_traffic_type))
 
     def is_equal(self, other):
         return isinstance(other, TrafficItem)\
          and self.name == other.name\
          and self.object_type == other.object_type\
          and self.status == other.status\
-         and self.request_type == other.request_type
+         and self.request_type == other.request_type\
+         and self.bound_traffic_type == other.bound_traffic_type
 
 
 class ConfigurationStatus(EntityBase):

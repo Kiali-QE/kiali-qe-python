@@ -461,3 +461,8 @@ class PeerAuthMode(StringEnum):
 class LabelOperation(StringEnum):
     OR = ('or')
     AND = ('and')
+
+
+class BoundTrafficType(StringEnum):
+    INBOUND = ('Inbound')
+    OUTBOUND = ('Outbound')

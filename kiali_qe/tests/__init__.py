@@ -434,37 +434,37 @@ class AbstractListPageTest(object):
         assert _filter not in logs_tab.proxy_textarea.text
 
     def assert_traffic(self, name, traffic_tab, self_object_type, traffic_object_type):
-        inbound_traffic = traffic_tab.inbound_items()
-        for inbound_item in inbound_traffic:
-            if inbound_item.object_type == traffic_object_type:
+        bound_traffic = traffic_tab.traffic_items()
+        for bound_item in bound_traffic:
+            if bound_item.object_type == traffic_object_type:
                 # skip istio traffic
-                if "istio" in inbound_item.name:
+                if "istio" in bound_item.name:
                     continue
                 outbound_traffic = traffic_tab.click_on(
-                    object_type=traffic_object_type, name=inbound_item.name, inbound=True)
+                    object_type=traffic_object_type, name=bound_item.name)
                 found = False
                 for outbound_item in outbound_traffic:
                     if (outbound_item.name == name
                         and outbound_item.object_type == self_object_type
-                            and outbound_item.request_type == inbound_item.request_type):
+                            and outbound_item.request_type == bound_item.request_type):
                         found = True
-                        assert inbound_item.status == outbound_item.status, \
+                        assert bound_item.status == outbound_item.status, \
                             "Inbound Status {} is not equal to Outbound Status {} for {}".format(
-                                inbound_item.status, outbound_item.status, name)
-                        assert math.isclose(inbound_item.rps, outbound_item.rps, abs_tol=1.0), \
+                                bound_item.status, outbound_item.status, name)
+                        assert math.isclose(bound_item.rps, outbound_item.rps, abs_tol=2.0), \
                             "Inbound RPS {} is not equal to Outbound RPS {} for {}".format(
-                                inbound_item.rps,
+                                bound_item.rps,
                                 outbound_item.rps,
                                 name)
-                        assert math.isclose(inbound_item.success_rate,
+                        assert math.isclose(bound_item.success_rate,
                                             outbound_item.success_rate,
-                                            abs_tol=1.0), \
+                                            abs_tol=2.0), \
                             "Inbound Rate {} is not equal to Outbound Rate {} for {}".format(
-                                inbound_item.success_rate, outbound_item.success_rate, name)
+                                bound_item.success_rate, outbound_item.success_rate, name)
                 if not found:
                     assert found, "{} {} {} not found in {}".format(name,
                                                                     self_object_type,
-                                                                    inbound_item.request_type,
+                                                                    bound_item.request_type,
                                                                     outbound_traffic)
                 # check only the first item
                 break
@@ -1037,7 +1037,7 @@ class WorkloadsPageTest(AbstractListPageTest):
             self.assert_metrics_options(workload_details_ui.outbound_metrics, check_grafana=True)
         self.assert_traffic(name, workload_details_ui.traffic_tab,
                             self_object_type=TrafficType.WORKLOAD,
-                            traffic_object_type=TrafficType.SERVICE)
+                            traffic_object_type=TrafficType.WORKLOAD)
 
     def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True,
                          label_operation=LabelOperation.OR):
@@ -1326,7 +1326,7 @@ class ServicesPageTest(AbstractListPageTest):
         # service traffic is linked to workloads
         self.assert_traffic(name, service_details_ui.traffic_tab,
                             self_object_type=TrafficType.SERVICE,
-                            traffic_object_type=TrafficType.WORKLOAD)
+                            traffic_object_type=TrafficType.SERVICE)
 
     def get_workload_names_set(self, source_workloads):
         workload_names = []
