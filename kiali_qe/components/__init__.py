@@ -70,19 +70,19 @@ from kiali_qe.utils import (
 )
 
 
-def wait_displayed(obj, timeout='10s'):
+def wait_displayed(obj, timeout='20s'):
     wait_for(
         lambda: obj.is_displayed, timeout=timeout,
         delay=0.2, very_quiet=True, silent_failure=False)
 
 
-def wait_not_displayed(obj, timeout='10s'):
+def wait_not_displayed(obj, timeout='20s'):
     wait_for(
         lambda: not obj.is_displayed, timeout=timeout,
         delay=0.2, very_quiet=True, silent_failure=False)
 
 
-def wait_to_spinner_disappear(browser, timeout='10s', very_quiet=True, silent_failure=False):
+def wait_to_spinner_disappear(browser, timeout='20s', very_quiet=True, silent_failure=False):
     def _is_disappeared(browser):
         count = len(browser.elements(locator='//*[@id="loading_kiali_spinner"]', parent='/'))
         logger.debug("Count of spinner elements: {}".format(count))
@@ -1826,7 +1826,7 @@ class ViewAbstract(Widget):
         try:
             elements = self.browser.elements(
                 parent=parent,
-                locator=('.//a[text()="More labels..."]'))
+                locator=('.//*[text()="More labels..."]'))
             for element in elements:
                 self.browser.click(element)
         except NoSuchElementException:
@@ -2245,7 +2245,7 @@ class ListViewAbstract(ViewAbstract):
         try:
             self.browser.click(self.browser.element(
                 parent=self.DETAILS_ROOT,
-                locator=('.//a[text()="More labels..."]')))
+                locator=('.//*[text()="More labels..."]')))
         except NoSuchElementException:
             pass
         _labels = self.browser.elements(
