@@ -100,6 +100,7 @@ def test_service_breadcrumb_object(kiali_client, openshift_client, browser, pick
 
 # putting to p_ro_top group although right now there are no tests changing health of app so
 # it could be in p_ro_top_safe
+@pytest.mark.skip(reason="https://issues.jboss.org/browse/MAISTRA-1893")
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group2
 def test_config_breadcrumb_menu(kiali_client, openshift_client, browser):
@@ -108,6 +109,7 @@ def test_config_breadcrumb_menu(kiali_client, openshift_client, browser):
     tests.assert_breadcrumb_menu(name='threescale', namespace=ISTIO_SYSTEM)
 
 
+@pytest.mark.skip(reason="https://issues.jboss.org/browse/MAISTRA-1893")
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group2
 def test_config_breadcrumb_namespace(kiali_client, openshift_client, browser):
@@ -116,6 +118,7 @@ def test_config_breadcrumb_namespace(kiali_client, openshift_client, browser):
     tests.assert_breadcrumb_namespace(name='threescale', namespace=ISTIO_SYSTEM)
 
 
+@pytest.mark.skip(reason="https://issues.jboss.org/browse/MAISTRA-1893")
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group2
 def test_config_breadcrumb_object(kiali_client, openshift_client, browser):
