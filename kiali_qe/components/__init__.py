@@ -586,7 +586,7 @@ class FilterList(Widget):
     ITEM_LABEL = './/*[contains(@class, "pf-c-chip-group__label")]'
     ITEM_TEXT = './/*[contains(@class, "pf-c-chip__text")]'
     CLEAR = (ITEMS + '//*[contains(text(), "{}")]/..//*[contains(@aria-label, "close")]')
-    CLEAR_ALL = '//a[text()="Clear All Filters"]'
+    CLEAR_ALL = '//*[text()="Clear All Filters"]'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
