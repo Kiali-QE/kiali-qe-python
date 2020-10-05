@@ -165,6 +165,7 @@ def test_tls_mutual(kiali_client, openshift_client, browser, pick_namespace):
         config_names=[name])
 
 
+@pytest.mark.skip(reason="https://issues.jboss.org/browse/MAISTRA-1893")
 @pytest.mark.p_ro_namespace
 @pytest.mark.p_crud_group5
 def test_3scale_rule(kiali_client, openshift_client, browser, pick_namespace):
@@ -184,6 +185,7 @@ def test_3scale_rule(kiali_client, openshift_client, browser, pick_namespace):
     tests.test_3scale_link_delete(name=name, namespace=namespace)
 
 
+@pytest.mark.skip(reason="https://issues.jboss.org/browse/MAISTRA-1893")
 @pytest.mark.p_ro_namespace
 @pytest.mark.p_crud_group5
 def test_3scale_link_auto_delete(kiali_client, openshift_client, browser, pick_namespace):
