@@ -70,19 +70,19 @@ from kiali_qe.utils import (
 )
 
 
-def wait_displayed(obj, timeout='10s'):
+def wait_displayed(obj, timeout='20s'):
     wait_for(
         lambda: obj.is_displayed, timeout=timeout,
         delay=0.2, very_quiet=True, silent_failure=False)
 
 
-def wait_not_displayed(obj, timeout='10s'):
+def wait_not_displayed(obj, timeout='20s'):
     wait_for(
         lambda: not obj.is_displayed, timeout=timeout,
         delay=0.2, very_quiet=True, silent_failure=False)
 
 
-def wait_to_spinner_disappear(browser, timeout='10s', very_quiet=True, silent_failure=False):
+def wait_to_spinner_disappear(browser, timeout='20s', very_quiet=True, silent_failure=False):
     def _is_disappeared(browser):
         count = len(browser.elements(locator='//*[@id="loading_kiali_spinner"]', parent='/'))
         logger.debug("Count of spinner elements: {}".format(count))
@@ -586,7 +586,7 @@ class FilterList(Widget):
     ITEM_LABEL = './/*[contains(@class, "pf-c-chip-group__label")]'
     ITEM_TEXT = './/*[contains(@class, "pf-c-chip__text")]'
     CLEAR = (ITEMS + '//*[contains(text(), "{}")]/..//*[contains(@aria-label, "close")]')
-    CLEAR_ALL = '//a[text()="Clear All Filters"]'
+    CLEAR_ALL = '//*[text()="Clear All Filters"]'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -1826,7 +1826,7 @@ class ViewAbstract(Widget):
         try:
             elements = self.browser.elements(
                 parent=parent,
-                locator=('.//a[text()="More labels..."]'))
+                locator=('.//*[text()="More labels..."]'))
             for element in elements:
                 self.browser.click(element)
         except NoSuchElementException:
@@ -2245,7 +2245,7 @@ class ListViewAbstract(ViewAbstract):
         try:
             self.browser.click(self.browser.element(
                 parent=self.DETAILS_ROOT,
-                locator=('.//a[text()="More labels..."]')))
+                locator=('.//*[text()="More labels..."]')))
         except NoSuchElementException:
             pass
         _labels = self.browser.elements(
@@ -3616,8 +3616,7 @@ class TabViewAbstract(ViewAbstract):
 class TrafficView(TabViewAbstract):
     TRAFFIC_TAB = '//button[contains(normalize-space(text()), "Traffic")]'
     TRAFFIC_ROOT = '//section[@id="pf-tab-section-1-basic-tabs"]'
-    ROWS = ('//table[contains(@class, "pf-c-table")]'
-            '//span[contains(text(), "{}")]/../../tbody/tr')
+    ROWS = ('//h5//..//tbody//tr')
     COLUMN = './/td'
 
     def open(self):
@@ -3629,66 +3628,53 @@ class TrafficView(TabViewAbstract):
         finally:
             self.browser.click(tab)
         wait_to_spinner_disappear(self.browser)
-        self.browser.wait_for_element(locator=self.ROWS.format("Inbound"), parent=self.TRAFFIC_ROOT)
 
-    def inbound_items(self):
-        return self._bound_items(inbound=True)
-
-    def outbound_items(self):
-        return self._bound_items(inbound=False)
-
-    def _bound_items(self, inbound=True):
+    def traffic_items(self):
         self.open()
-
         _items = []
-        for el in self.browser.elements(
-            locator=self.ROWS.format("Inbound" if inbound else "Outbound"),
-                parent=self.TRAFFIC_ROOT):
+        for el in self.browser.elements(locator=self.ROWS, parent=self.TRAFFIC_ROOT):
             if "Not enough" in el.text:
                 break
             _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
 
-            _name = _columns[1].text.strip()
-            _request_type = _columns[2].text.strip()
+            _name = self._get_name(_columns[1])
+            _rate = _columns[2].text.strip()
             _traffic = _columns[3].text.strip().replace('N/A', '0.0')
+            _request_type = _columns[4].text.strip()
 
             # Traffic Item object creation
+            # TODO traffic bound type
             _item = TrafficItem(
                 status=self._get_item_health(_columns[0]),
                 name=_name,
                 object_type=self._get_type(_columns[1]),
                 request_type=_request_type,
-                rps=float(re.sub('rps.*', '', _traffic).strip()),
+                rps=float(re.sub('rps.*', '', _rate).strip()),
                 success_rate=float(re.sub('\\%.*', '', re.sub('.*\\|', '', _traffic)).strip()))
             # append this item to the final list
             _items.append(_item)
         return _items
 
-    def click_on(self, object_type, name, inbound=True):
+    def click_on(self, object_type, name):
         self.open()
 
-        for el in self.browser.elements(
-            locator=self.ROWS.format("Inbound" if inbound else "Outbound"),
-                parent=self.TRAFFIC_ROOT):
+        for el in self.browser.elements(locator=self.ROWS, parent=self.TRAFFIC_ROOT):
             if "Not enough" in el.text:
                 continue
             _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
 
-            if name == _columns[1].text.strip() and self._get_type(_columns[1]) == object_type:
-                self.browser.click(self.browser.element(parent=_columns[1], locator='.//a'))
-                return self._bound_items(not inbound)
+            if name == self._get_name(_columns[1]) and self._get_type(_columns[1]) == object_type:
+                _links = self.browser.elements(parent=_columns[1], locator='.//a')
+                if len(_links) > 0:
+                    self.browser.click(_links[0])
+                    return self.traffic_items()
         return []
 
     def _get_type(self, element):
-        _appliction = len(self.browser.elements(
-            parent=element,
-            locator='.//*[contains(@d, "M950")]')) > 0
-        _workload = len(self.browser.elements(
-            parent=element,
-            locator='.//*[contains(@d, "M348")]')) > 0
-        _service = len(self.browser.elements(
-            parent=element,
-            locator='.//*[contains(@d, "M1316")]')) > 0
+        _text = element.text.strip()
+        _appliction = _text.startswith('A')
+        _workload = _text.startswith('W')
+        _service = _text.startswith('S')
         if _appliction:
             return TrafficType.APP
         elif _workload:
@@ -3697,6 +3683,9 @@ class TrafficView(TabViewAbstract):
             return TrafficType.SERVICE
         else:
             return TrafficType.UNKNOWN
+
+    def _get_name(self, element):
+        return re.sub('^[WSA]', '', element.text.strip())
 
 
 class LogsView(TabViewAbstract):
