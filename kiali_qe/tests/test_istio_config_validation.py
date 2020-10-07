@@ -65,6 +65,7 @@ SCENARIO_24 = "vs_wrong_subset_no_dr.yaml"
 SCENARIO_25 = "duplicate-vs-gateway.yaml"
 SCENARIO_26 = "vs_destination_host_not_found.yaml"
 SCENARIO_27 = "request_auth_no_workload.yaml"
+SCENARIO_28 = "two_gateways_different_selectors.yaml"
 
 
 @pytest.mark.p_group_last
@@ -88,6 +89,31 @@ def test_two_gateways_same_host(kiali_client, openshift_client):
                 object_name='bookinfo-gateway-auto-copy',
                 namespace=BOOKINFO2,
                 error_messages=[KIA0301])
+        ],
+        ignore_common_errors=False)
+
+
+@pytest.mark.p_group_last
+def test_two_gateways_different_selectors(kiali_client, openshift_client):
+    """ More than one Gateway for the same host port combination referring to different selectors
+    """
+    tests = ValidationsTest(
+        kiali_client=kiali_client,
+        openshift_client=openshift_client,
+        objects_path=istio_objects_validation_path.strpath)
+    tests.test_istio_objects(
+        scenario=SCENARIO_28, namespace=ISTIO_SYSTEM,
+        config_validation_objects=[
+            ConfigValidationObject(
+                object_type='Gateway',
+                object_name='istio-gateway-prv',
+                namespace=ISTIO_SYSTEM,
+                error_messages=[KIA0302]),
+            ConfigValidationObject(
+                object_type='Gateway',
+                object_name='istio-gateway-pub',
+                namespace=ISTIO_SYSTEM,
+                error_messages=[KIA0302])
         ],
         ignore_common_errors=False)
 
