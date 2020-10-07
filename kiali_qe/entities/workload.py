@@ -106,6 +106,8 @@ class WorkloadDetails(EntityBase):
             if 'istio_configs_number' in kwargs else None
         self.istio_configs = kwargs['istio_configs']\
             if 'istio_configs' in kwargs else None
+        self.traces_tab = kwargs['traces_tab']\
+            if 'traces_tab' in kwargs else None
 
     def __str__(self):
         return 'name:{}, type:{}, sidecar:{}, createdAt:{}, \
