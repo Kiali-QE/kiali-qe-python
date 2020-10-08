@@ -2618,6 +2618,8 @@ class ListViewWorkloads(ListViewAbstract):
         _outbound_metrics = MetricsView(parent=self.parent,
                                         tab_name=self.OUTBOUND_METRICS)
 
+        _traces_tab = TracesView(parent=self.parent, locator=self.locator, logger=self.logger)
+
         return WorkloadDetails(name=str(_name),
                                workload_type=_type,
                                sidecar_injection=self._details_sidecar_injection_text(),
@@ -2638,7 +2640,8 @@ class ListViewWorkloads(ListViewAbstract):
                                traffic_tab=_traffic_tab,
                                logs_tab=_logs_tab,
                                inbound_metrics=_inbound_metrics,
-                               outbound_metrics=_outbound_metrics)
+                               outbound_metrics=_outbound_metrics,
+                               traces_tab=_traces_tab)
 
     @property
     def items(self):
@@ -2709,6 +2712,8 @@ class ListViewServices(ListViewAbstract):
 
         _inbound_metrics = MetricsView(parent=self.parent, tab_name=self.INBOUND_METRICS)
 
+        _traces_tab = TracesView(parent=self.parent, locator=self.locator, logger=self.logger)
+
         return ServiceDetails(name=_name,
                               created_at=parse_from_rest(_created_at),
                               created_at_ui=_created_at_ui,
@@ -2727,7 +2732,8 @@ class ListViewServices(ListViewAbstract):
                               istio_configs=self.table_view_istio_config.all_items,
                               workloads=_table_view_wl.all_items,
                               traffic_tab=_traffic_tab,
-                              inbound_metrics=_inbound_metrics)
+                              inbound_metrics=_inbound_metrics,
+                              traces_tab=_traces_tab)
 
     @property
     def items(self):
