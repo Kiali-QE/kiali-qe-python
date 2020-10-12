@@ -678,7 +678,73 @@ class OverviewPageTest(AbstractListPageTest):
                     enabled=True,
                     deleted=False)
 
-    def _assert_overview_options(self, options, enabled=True, deleted=False):
+    def test_create_update_delete_traffic_policies(self, namespace):
+        # load the page first
+        self.page.load(force_load=True)
+        self.apply_filters(filters=[{"name": OverviewPageFilter.NAME.text, "value": namespace}],
+                           force_clear_all=True)
+
+        # first delete the policies if exists
+        self.kiali_client.update_namespace_auto_injection(namespace, 'enabled')
+        self.kiali_client.update_namespace_auto_injection(namespace, 'disabled')
+        if self.page.content.select_action(
+                namespace, OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text):
+            self.browser.click(self.browser.element(
+                parent=ListViewAbstract.DIALOG_ROOT,
+                locator=('.//button[text()="Delete"]')))
+        wait_to_spinner_disappear(self.browser)
+        self.page.page_refresh()
+        wait_to_spinner_disappear(self.browser)
+
+        self._assert_overview_options(
+            options=self.page.content.overview_actions(namespace),
+            enabled=False,
+            deleted=False,
+            policy_created=False)
+
+        assert self.page.content.select_action(
+            namespace, OverviewTrafficLinks.CREATE_TRAFFIC_POLICIES.text)
+        wait_to_spinner_disappear(self.browser)
+        self.page.page_refresh()
+        wait_to_spinner_disappear(self.browser)
+
+        self._assert_overview_options(
+            options=self.page.content.overview_actions(namespace),
+            enabled=False,
+            deleted=False,
+            policy_created=True)
+
+        assert self.page.content.select_action(
+            namespace, OverviewTrafficLinks.UPDATE_TRAFFIC_POLICIES.text)
+        self.browser.click(self.browser.element(
+            parent=ListViewAbstract.DIALOG_ROOT,
+            locator=('.//button[text()="Update"]')))
+        wait_to_spinner_disappear(self.browser)
+        self.page.page_refresh()
+        wait_to_spinner_disappear(self.browser)
+
+        self._assert_overview_options(
+            options=self.page.content.overview_actions(namespace),
+            enabled=False,
+            deleted=False,
+            policy_created=True)
+
+        assert self.page.content.select_action(
+            namespace, OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text)
+        self.browser.click(self.browser.element(
+            parent=ListViewAbstract.DIALOG_ROOT,
+            locator=('.//button[text()="Delete"]')))
+        wait_to_spinner_disappear(self.browser)
+        self.page.page_refresh()
+        wait_to_spinner_disappear(self.browser)
+
+        self._assert_overview_options(
+            options=self.page.content.overview_actions(namespace),
+            enabled=False,
+            deleted=False,
+            policy_created=False)
+
+    def _assert_overview_options(self, options, enabled=True, deleted=False, policy_created=False):
         expected_options = [item.text for item in OverviewLinks]
         if not enabled:
             expected_options.append(OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
@@ -686,8 +752,11 @@ class OverviewPageTest(AbstractListPageTest):
             expected_options.append(OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
         if not deleted:
             expected_options.append(OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text)
-        # TODO change when automating Traffic Actions
-        expected_options.append(OverviewTrafficLinks.CREATE_TRAFFIC_POLICIES.text)
+        if not policy_created:
+            expected_options.append(OverviewTrafficLinks.CREATE_TRAFFIC_POLICIES.text)
+        else:
+            expected_options.append(OverviewTrafficLinks.UPDATE_TRAFFIC_POLICIES.text)
+            expected_options.append(OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text)
         assert is_equal(expected_options, options), \
             '{} not equal to {}'.format(expected_options, options)
 

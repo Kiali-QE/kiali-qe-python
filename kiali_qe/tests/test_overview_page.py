@@ -144,5 +144,14 @@ def test_overview_auto_injection(kiali_client, openshift_client, browser, pick_n
     tests.test_disable_enable_delete_auto_injection(namespace)
 
 
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group6
+def test_overview_traffic_policies(kiali_client, openshift_client, browser, pick_namespace):
+    tests = OverviewPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    namespace = pick_namespace(BOOKINFO_2)
+    tests.test_create_update_delete_traffic_policies(namespace)
+
+
 def _idle_bookinfo():
     oc_idle('details', 'bookinfo')
