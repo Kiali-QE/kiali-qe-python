@@ -900,8 +900,8 @@ class ApplicationsPageTest(AbstractListPageTest):
             for application_oc in applications_oc:
                 logger.debug('{} {}'.format(application_oc.name, application_oc.namespace))
                 if application_ui.is_equal(application_oc, advanced_check=False):
-                    # in OC it contains more labels, skip for jaeger, grafana and istiod
-                    if application_ui.name not in ['jaeger', 'grafana', 'istiod']:
+                    # in OC it contains more labels, skip for istio-system
+                    if application_ui.namespace not in ['istio-system']:
                         assert application_ui.labels.items() == application_oc.labels.items(), \
                             'Expected {} but got {} labels for application {}'.format(
                                 application_oc.labels,
@@ -2033,6 +2033,7 @@ class ValidationsTest(object):
         yaml_file = get_yaml_path(self.objects_path, scenario)
 
         try:
+            self._istio_config_delete(yaml_file, namespace=namespace)
             self._istio_config_create(yaml_file, namespace=namespace)
 
             for _object in config_validation_objects:
