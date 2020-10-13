@@ -101,6 +101,7 @@ def test_two_gateways_different_selectors(kiali_client, openshift_client):
         kiali_client=kiali_client,
         openshift_client=openshift_client,
         objects_path=istio_objects_validation_path.strpath)
+    # KIA0301 exists in errors as the issue is not cherry-picked into 1.24
     tests.test_istio_objects(
         scenario=SCENARIO_28, namespace=ISTIO_SYSTEM,
         config_validation_objects=[
@@ -108,12 +109,12 @@ def test_two_gateways_different_selectors(kiali_client, openshift_client):
                 object_type='Gateway',
                 object_name='istio-gateway-prv',
                 namespace=ISTIO_SYSTEM,
-                error_messages=[KIA0302]),
+                error_messages=[KIA0302, KIA0301, KIA0301]),
             ConfigValidationObject(
                 object_type='Gateway',
                 object_name='istio-gateway-pub',
                 namespace=ISTIO_SYSTEM,
-                error_messages=[KIA0302])
+                error_messages=[KIA0302, KIA0301, KIA0301])
         ],
         ignore_common_errors=False)
 
