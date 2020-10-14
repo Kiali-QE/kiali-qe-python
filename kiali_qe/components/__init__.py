@@ -716,12 +716,14 @@ class Actions(Widget):
     CREATE_BUTTON = './/button[text()="Create"]'
     UPDATE_BUTTON = './/button[text()="Update"]'
     SELECT_BUTTON = './/button[text()="SELECT"]'
+    DELETE_BUTTON = './/button[text()="Delete"]'
     REMOVE_RULE = 'Remove Rule'
     ADD_RULE_BUTTON = './/button[text()="Add Rule"]'
     DELETE_TRAFFIC_ROUTING = 'Delete Traffic Routing'
     REQUEST_ROUTING = RoutingWizardType.REQUEST_ROUTING.text
     TRAFFIC_SHIFTING = RoutingWizardType.TRAFFIC_SHIFTING.text
     FAULT_INJECTION = RoutingWizardType.FAULT_INJECTION.text
+    REQUEST_TIMEOUTS = RoutingWizardType.REQUEST_TIMEOUTS.text
     CREATE_3SCALE_LINK = 'Link 3scale Authorization'
     DELETE_3SCALE_LINK = 'Unlink 3scale Authorization'
 
@@ -757,6 +759,8 @@ class Actions(Widget):
             select_button='')
         self._gateway_switch = ButtonSwitch(parent=self, label="Add Gateway")
         self._include_mesh_gateway = Checkbox(locator=self.INCLUDE_MESH_GATEWAY, parent=self)
+        self._timeout_switch = ButtonSwitch(parent=self, label="Add HTTP Timeout")
+        self._retry_switch = ButtonSwitch(parent=self, label="Add HTTP Retry")
 
     def __locator__(self):
         return self.locator
@@ -795,6 +799,9 @@ class Actions(Widget):
     def is_suspend_disabled(self):
         return self.FAULT_INJECTION in self.disabled_actions
 
+    def is_timeouts_disabled(self):
+        return self.REQUEST_TIMEOUTS in self.disabled_actions
+
     def is_create_weighted_enabled(self):
         return self.TRAFFIC_SHIFTING in self.actions
 
@@ -813,6 +820,9 @@ class Actions(Widget):
     def is_update_suspended_enabled(self):
         return self.FAULT_INJECTION in self.actions
 
+    def is_timeouts_enabled(self):
+        return self.REQUEST_TIMEOUTS in self.actions
+
     def is_enable_auto_injection_visible(self):
         return OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text in self.actions
 
@@ -827,9 +837,11 @@ class Actions(Widget):
             return False
         else:
             self.select(self.DELETE_TRAFFIC_ROUTING)
+            self.browser.wait_for_element(locator=self.DELETE_BUTTON,
+                                          parent=self.DIALOG_ROOT)
             delete_button = self.browser.element(
                 parent=self.DIALOG_ROOT,
-                locator=('.//button[text()="Delete"]'))
+                locator=self.DELETE_BUTTON)
             wait_displayed(delete_button)
             self.browser.click(delete_button)
             wait_to_spinner_disappear(self.browser)
@@ -986,6 +998,62 @@ class Actions(Widget):
                                  skip_advanced=False):
         if self.is_update_suspended_enabled():
             self.select(self.FAULT_INJECTION)
+            self.advanced_options(tls=tls,
+                                  peer_auth_mode=peer_auth_mode,
+                                  load_balancer=load_balancer,
+                                  load_balancer_type=load_balancer_type,
+                                  gateway=gateway,
+                                  include_mesh_gateway=include_mesh_gateway,
+                                  skip_advanced=skip_advanced)
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.UPDATE_BUTTON)))
+            wait_not_displayed(self)
+            # wait to Spinner disappear
+            wait_to_spinner_disappear(self.browser)
+            return True
+        else:
+            return False
+
+    def request_timeouts(self, tls=RoutingWizardTLS.DISABLE,
+                         peer_auth_mode=None,
+                         load_balancer=False,
+                         load_balancer_type=None,
+                         gateway=False,
+                         include_mesh_gateway=False,
+                         skip_advanced=False):
+        if self.is_timeouts_disabled():
+            return False
+        else:
+            self.select(self.REQUEST_TIMEOUTS)
+            self._timeout_switch.on()
+            self._retry_switch.on()
+            self.advanced_options(tls=tls,
+                                  peer_auth_mode=peer_auth_mode,
+                                  load_balancer=load_balancer,
+                                  load_balancer_type=load_balancer_type,
+                                  gateway=gateway,
+                                  include_mesh_gateway=include_mesh_gateway,
+                                  skip_advanced=skip_advanced)
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.CREATE_BUTTON)))
+            wait_not_displayed(self)
+            # wait to Spinner disappear
+            wait_to_spinner_disappear(self.browser)
+            return True
+
+    def update_request_timeouts(self, tls=RoutingWizardTLS.DISABLE,
+                                peer_auth_mode=None,
+                                load_balancer=False,
+                                load_balancer_type=None,
+                                gateway=False,
+                                include_mesh_gateway=False,
+                                skip_advanced=False):
+        if self.is_timeouts_enabled():
+            self.select(self.REQUEST_TIMEOUTS)
+            self._timeout_switch.off()
+            self._retry_switch.off()
             self.advanced_options(tls=tls,
                                   peer_auth_mode=peer_auth_mode,
                                   load_balancer=load_balancer,

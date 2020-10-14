@@ -29,7 +29,7 @@ def test_weighted_routing_single(kiali_client, openshift_client, browser, pick_n
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     # use only bookinfo2 namespace where colliding tests are in the same p_group
     namespace = pick_namespace(BOOKINFO_2)
-    name = 'details'
+    name = 'productpage'
     tests.test_routing_create(name=name, namespace=namespace,
                               routing_type=RoutingWizardType.TRAFFIC_SHIFTING,
                               tls=RoutingWizardTLS.ISTIO_MUTUAL, load_balancer=True,
@@ -131,6 +131,27 @@ def test_suspend_traffic_multi(kiali_client, openshift_client, browser, pick_nam
                               gateway=True, include_mesh_gateway=False)
     tests.test_routing_update(name=name, namespace=namespace,
                               routing_type=RoutingWizardType.FAULT_INJECTION,
+                              tls=None, load_balancer=False,
+                              load_balancer_type=None,
+                              gateway=False, include_mesh_gateway=False)
+    tests.test_routing_delete(name=name, namespace=namespace)
+
+
+@pytest.mark.p_ro_namespace
+@pytest.mark.p_crud_group6
+def test_request_timeouts_multi(kiali_client, openshift_client, browser, pick_namespace):
+    tests = ServicesPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    # use only bookinfo2 namespace where colliding tests are in the same p_group
+    namespace = pick_namespace(BOOKINFO_2)
+    name = 'ratings'
+    tests.test_routing_create(name=name, namespace=namespace,
+                              routing_type=RoutingWizardType.REQUEST_TIMEOUTS,
+                              tls=RoutingWizardTLS.SIMPLE, load_balancer=True,
+                              load_balancer_type=RoutingWizardLoadBalancer.RANDOM,
+                              gateway=True, include_mesh_gateway=False)
+    tests.test_routing_update(name=name, namespace=namespace,
+                              routing_type=RoutingWizardType.REQUEST_TIMEOUTS,
                               tls=None, load_balancer=False,
                               load_balancer_type=None,
                               gateway=False, include_mesh_gateway=False)

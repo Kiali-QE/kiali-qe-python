@@ -1523,6 +1523,7 @@ class ServicesPageTest(AbstractListPageTest):
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_weighted_enabled()
             assert self.page.actions.is_create_matching_disabled()
+            assert self.page.actions.is_timeouts_disabled()
             assert self.page.actions.is_suspend_disabled()
         elif routing_type == RoutingWizardType.REQUEST_ROUTING:
             assert self.page.actions.create_matching_routing(
@@ -1535,6 +1536,7 @@ class ServicesPageTest(AbstractListPageTest):
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_matching_enabled()
             assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_timeouts_disabled()
             assert self.page.actions.is_suspend_disabled()
         elif routing_type == RoutingWizardType.FAULT_INJECTION:
             assert self.page.actions.suspend_traffic(
@@ -1547,7 +1549,21 @@ class ServicesPageTest(AbstractListPageTest):
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_create_matching_disabled()
             assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_timeouts_disabled()
             assert self.page.actions.is_update_suspended_enabled()
+        elif routing_type == RoutingWizardType.REQUEST_TIMEOUTS:
+            assert self.page.actions.request_timeouts(
+                tls=tls,
+                peer_auth_mode=peer_auth_mode,
+                load_balancer=load_balancer,
+                load_balancer_type=load_balancer_type, gateway=gateway,
+                include_mesh_gateway=include_mesh_gateway,
+                skip_advanced=skip_advanced)
+            assert not self.page.actions.is_delete_disabled()
+            assert self.page.actions.is_create_matching_disabled()
+            assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_suspend_disabled()
+            assert self.page.actions.is_timeouts_enabled()
         # get service details from rest
         service_details_rest = self.kiali_client.service_details(
             namespace=namespace,
@@ -1609,6 +1625,7 @@ class ServicesPageTest(AbstractListPageTest):
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_weighted_enabled()
             assert self.page.actions.is_create_matching_disabled()
+            assert self.page.actions.is_timeouts_disabled()
             assert self.page.actions.is_suspend_disabled()
         elif routing_type == RoutingWizardType.REQUEST_ROUTING:
             assert self.page.actions.update_matching_routing(
@@ -1621,6 +1638,7 @@ class ServicesPageTest(AbstractListPageTest):
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_matching_enabled()
             assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_timeouts_disabled()
             assert self.page.actions.is_suspend_disabled()
         elif routing_type == RoutingWizardType.FAULT_INJECTION:
             assert self.page.actions.update_suspended_traffic(
@@ -1633,7 +1651,21 @@ class ServicesPageTest(AbstractListPageTest):
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_create_matching_disabled()
             assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_timeouts_disabled()
             assert self.page.actions.is_update_suspended_enabled()
+        elif routing_type == RoutingWizardType.REQUEST_TIMEOUTS:
+            assert self.page.actions.update_request_timeouts(
+                tls=tls,
+                peer_auth_mode=peer_auth_mode,
+                load_balancer=load_balancer,
+                load_balancer_type=load_balancer_type, gateway=gateway,
+                include_mesh_gateway=include_mesh_gateway,
+                skip_advanced=skip_advanced)
+            assert not self.page.actions.is_delete_disabled()
+            assert self.page.actions.is_create_matching_disabled()
+            assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_suspend_disabled()
+            assert self.page.actions.is_timeouts_enabled()
         # get service details from rest
         service_details_rest = self.kiali_client.service_details(
             namespace=namespace,
@@ -1672,6 +1704,7 @@ class ServicesPageTest(AbstractListPageTest):
         assert self.page.actions.is_create_weighted_enabled()
         assert self.page.actions.is_create_matching_enabled()
         assert self.page.actions.is_suspend_enabled()
+        assert self.page.actions.is_timeouts_enabled()
         # get service details from rest
         service_details_rest = self.kiali_client.service_details(
             namespace=namespace,
