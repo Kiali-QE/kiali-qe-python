@@ -387,9 +387,10 @@ class MeshWideTLSType(StringEnum):
 
 
 class RoutingWizardType(StringEnum):
-    TRAFFIC_SHIFTING = ('Traffic Shifting')
     REQUEST_ROUTING = ('Request Routing')
     FAULT_INJECTION = ('Fault Injection')
+    TRAFFIC_SHIFTING = ('Traffic Shifting')
+    REQUEST_TIMEOUTS = ('Request Timeouts')
     ADD_3_SCALE_RULE = ('Add 3scale API Management Rule')
     UPDATE_3_SCALE_RULE = ('Update 3scale API Management Rule')
     DELETE_3_SCALE_RULE = ('Delete 3Scale API Management Rule')
