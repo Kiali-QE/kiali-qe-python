@@ -512,6 +512,55 @@ class DestinationRuleOverview(EntityBase):
         return True
 
 
+class DestinationRuleSubset(EntityBase):
+    """
+    Service class provides information details on Subsets of DR Overview.
+
+    """
+
+    def __init__(self, name, status=None, labels={}, traffic_policy=None):
+        if name is None:
+            raise KeyError("'name' should not be 'None'")
+        self.name = name
+        self.traffic_policy = traffic_policy
+        self.status = status
+        self.labels = labels
+
+    def __str__(self):
+        return 'status:{}, name:{}, labels:{}, traffic_policy:{}'.format(
+            self.status, self.name, self.labels, self.traffic_policy)
+
+    def __repr__(self):
+        return "{}({}, {}, {}, {})".format(
+            type(self).__name__,
+            repr(self.status),
+            repr(self.name), repr(self.labels),
+            repr(self.traffic_policy))
+
+    def __hash__(self):
+        return (hash(self.name))
+
+    def __eq__(self, other):
+        return self.is_equal(other, advanced_check=True)
+
+    def is_equal(self, other, advanced_check=True):
+        # basic check
+        if not isinstance(other, DestinationRuleSubset):
+            return False
+        if self.name != other.name:
+            return False
+        # advanced check
+        if not advanced_check:
+            return True
+        if self.status != other.status:
+            return False
+        if self.labels != other.labels:
+            return False
+        if self.traffic_policy != other.traffic_policy:
+            return False
+        return True
+
+
 class DestinationRule(EntityBase):
     """
     Service class provides information details on DestinationRule of Service Details.
