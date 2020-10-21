@@ -63,7 +63,8 @@ from kiali_qe.utils import (
     word_in_text,
     get_url,
     get_yaml_path,
-    remove_from_list
+    remove_from_list,
+    dict_contains
 )
 from kiali_qe.utils.log import logger
 from kiali_qe.utils.command_exec import oc_apply, oc_delete
@@ -525,8 +526,17 @@ class AbstractListPageTest(object):
                     assert _gateway.text in config_details_oc.text
             else:
                 assert '\'host\': \'{}\''.format(config_overview_ui.host) in config_details_oc.text
-                # TODO Subsets
-                # assert config_overview_ui.subsets in config_details_oc.text
+                for _rest_dr in object_rest.destination_rules:
+                    if _rest_dr.name == istio_config_ui.name:
+                        for _ui_subset in config_overview_ui.subsets:
+                            found = False
+                            for _rest_subset in _rest_dr.subsets:
+                                if _ui_subset.name == _rest_subset.name and \
+                                    dict_contains(_ui_subset.labels, _rest_subset.labels) and \
+                                        _ui_subset.traffic_policy == _rest_subset.traffic_policy:
+                                            found = True
+                            assert found, 'Subset {} not fund in REST {}'.format(
+                                _ui_subset, _rest_subset)
 
 
 class OverviewPageTest(AbstractListPageTest):

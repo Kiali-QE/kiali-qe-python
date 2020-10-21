@@ -22,7 +22,8 @@ from kiali_qe.entities.service import (
     VirtualService,
     DestinationRule,
     SourceWorkload,
-    VirtualServiceWeight
+    VirtualServiceWeight,
+    DestinationRuleSubset
 )
 from kiali_qe.entities.workload import (
     Workload,
@@ -731,11 +732,16 @@ class KialiExtendedClient(KialiClient):
                         _traffic_policy = to_linear_string(_dr_data['spec']['trafficPolicy'])
                     else:
                         _traffic_policy = None
+                    _dr_subsets = []
                     if 'subsets' in _dr_data['spec']:
-                        _subsets = to_linear_string(
-                            self.get_subset_labels(_dr_data['spec']['subsets']))
-                    else:
-                        _subsets = None
+                        for _subset in _dr_data['spec']['subsets']:
+                            _dr_subsets.append(DestinationRuleSubset(
+                                status=None,
+                                name=_subset['name'],
+                                labels=_subset['labels'] if 'labels' in _subset else {},
+                                traffic_policy=(to_linear_string(_subset['trafficPolicy'])
+                                                if 'trafficPolicy' in _subset else None)))
+
                     _validation = self.get_istio_config_validation(
                             _dr_data['metadata']['namespace'],
                             'destinationrules',
@@ -745,7 +751,7 @@ class KialiExtendedClient(KialiClient):
                         name=_dr_data['metadata']['name'],
                         host=_dr_data['spec']['host'],
                         traffic_policy=_traffic_policy if _traffic_policy else '',
-                        subsets=_subsets if _subsets else '',
+                        subsets=_dr_subsets,
                         created_at=parse_from_rest(_dr_data['metadata']['creationTimestamp']),
                         created_at_ui=from_rest_to_ui(_dr_data['metadata']['creationTimestamp']),
                         resource_version=_dr_data['metadata']['resourceVersion']))
@@ -1136,20 +1142,6 @@ class KialiExtendedClient(KialiClient):
         if 'selectors' in object_rest:
             _selectors = object_rest['selectors']
         return _selectors
-
-    def get_subset_labels(self, subsets):
-        """
-        Returns the labels in subsets as shown in UI: {v1: 'versionv1'}
-        """
-        _labels = {}
-        if subsets:
-            for _subset in subsets:
-                if 'name' in _subset and 'labels' in _subset:
-                    _values = []
-                    for _key, _value in _subset['labels'].items():
-                        _values.append('{}{}'.format(_key, _value))
-                    _labels[_subset['name']] = _values
-        return _labels
 
     def get_response(self, method_name, path=None, params=None):
         return super(KialiExtendedClient, self).request(method_name=method_name, path=path,

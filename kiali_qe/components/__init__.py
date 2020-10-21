@@ -39,7 +39,8 @@ from kiali_qe.entities.service import (
     VirtualServiceWeight,
     VirtualServiceGateway,
     ServiceHealth,
-    IstioConfigRow
+    IstioConfigRow,
+    DestinationRuleSubset
 )
 from kiali_qe.entities.istio_config import (
     IstioConfig,
@@ -3406,6 +3407,7 @@ class TableViewIstioConfig(TableViewAbstract):
         '//tbody//tr'
     ROW = '//section[@id="{}"]//table[contains(@class, "table")]'\
         '//tbody//tr//td//a[text()="{}"]/../..//td[text()="{}"]/..'
+    SUBSETS_ROW = '//div[@id="subsets"]//table//tbody//tr'
 
     def open(self):
         wait_to_spinner_disappear(self.browser)
@@ -3517,8 +3519,16 @@ class TableViewIstioConfig(TableViewAbstract):
             locator=self.HOST_PROPERTIES.format(self.HOST),
             parent=self.OVERVIEW_DETAILS_ROOT).replace(self.HOST, '').strip()
         _status = self._get_overview_status(self.OVERVIEW_DETAILS_ROOT)
-        _subsets = ''
-        # TODO Subsets with status
+        _subsets = []
+
+        for _subset_row in self.browser.elements(locator=self.SUBSETS_ROW, parent=self.ROOT):
+            _subset_columns = list(self.browser.elements(locator=self.COLUMN, parent=_subset_row))
+            _subsets.append(DestinationRuleSubset(
+                status=self._get_item_status(_subset_columns[0]),
+                name=_subset_columns[1].text.strip(),
+                labels=self._get_labels(_subset_columns[2]),
+                traffic_policy=to_linear_string(_subset_columns[3].text.strip())
+                if _subset_columns[3].text else None))
 
         # back to service details
         self.back_to_service_info()
