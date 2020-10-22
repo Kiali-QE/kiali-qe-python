@@ -11,7 +11,8 @@ from kiali_qe.components.enums import (
     TimeIntervalRestParam,
     HealthType as HEALTH_TYPE,
     ItemIconType,
-    LabelOperation
+    LabelOperation,
+    HealthType
 )
 from kiali_qe.entities import Requests
 from kiali_qe.entities.istio_config import IstioConfig, IstioConfigDetails, Rule
@@ -1177,6 +1178,6 @@ class KialiExtendedClient(KialiClient):
     def get_pod_status(self, istioSidecar, pod_data):
         if not pod_data['versionLabel'] or not pod_data['appLabel'] \
                 or pod_data['status'] == 'Pending':
-            return IstioConfigValidation.WARNING
+            return HealthType.DEGRADED
         else:
-            return IstioConfigValidation.VALID
+            return HealthType.HEALTHY
