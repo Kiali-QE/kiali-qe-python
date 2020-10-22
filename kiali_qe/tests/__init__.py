@@ -1460,6 +1460,7 @@ class ServicesPageTest(AbstractListPageTest):
                             tls=RoutingWizardTLS.ISTIO_MUTUAL, load_balancer=True,
                             load_balancer_type=RoutingWizardLoadBalancer.ROUND_ROBIN,
                             gateway=True, include_mesh_gateway=True,
+                            circuit_braker=False,
                             skip_advanced=False):
         logger.debug('Routing Wizard {} for Service: {}, {}'.format(routing_type, name, namespace))
         # load service details page
@@ -1473,6 +1474,7 @@ class ServicesPageTest(AbstractListPageTest):
                 load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
                 include_mesh_gateway=include_mesh_gateway,
+                circuit_braker=circuit_braker,
                 skip_advanced=skip_advanced)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_weighted_enabled()
@@ -1486,6 +1488,7 @@ class ServicesPageTest(AbstractListPageTest):
                 load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
                 include_mesh_gateway=include_mesh_gateway,
+                circuit_braker=circuit_braker,
                 skip_advanced=skip_advanced)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_matching_enabled()
@@ -1499,6 +1502,7 @@ class ServicesPageTest(AbstractListPageTest):
                 load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
                 include_mesh_gateway=include_mesh_gateway,
+                circuit_braker=circuit_braker,
                 skip_advanced=skip_advanced)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_create_matching_disabled()
@@ -1512,6 +1516,7 @@ class ServicesPageTest(AbstractListPageTest):
                 load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
                 include_mesh_gateway=include_mesh_gateway,
+                circuit_braker=circuit_braker,
                 skip_advanced=skip_advanced)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_create_matching_disabled()
@@ -1551,16 +1556,24 @@ class ServicesPageTest(AbstractListPageTest):
             namespace=namespace,
             object_type=OBJECT_TYPE.VIRTUAL_SERVICE.text,
             object_name=service_details_rest.virtual_services[0].name)
-
         assert word_in_text('\"mesh\"',
                             istio_config_details_rest.text,
                             gateway and include_mesh_gateway)
+        # get destination rule details from rest
+        istio_config_details_rest = self.kiali_client.istio_config_details(
+            namespace=namespace,
+            object_type=OBJECT_TYPE.DESTINATION_RULE.text,
+            object_name=service_details_rest.destination_rules[0].name)
+        assert word_in_text('\"http1MaxPendingRequests\"',
+                            istio_config_details_rest.text,
+                            circuit_braker)
 
     def test_routing_update(self, name, namespace, routing_type,
                             peer_auth_mode=None,
                             tls=RoutingWizardTLS.ISTIO_MUTUAL, load_balancer=True,
                             load_balancer_type=RoutingWizardLoadBalancer.ROUND_ROBIN,
                             gateway=True, include_mesh_gateway=True,
+                            circuit_braker=False,
                             skip_advanced=False):
         logger.debug('Routing Update Wizard {} for Service: {}, {}'.format(routing_type,
                                                                            name,
@@ -1575,6 +1588,7 @@ class ServicesPageTest(AbstractListPageTest):
                 load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
                 include_mesh_gateway=include_mesh_gateway,
+                circuit_braker=circuit_braker,
                 skip_advanced=skip_advanced)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_weighted_enabled()
@@ -1601,6 +1615,7 @@ class ServicesPageTest(AbstractListPageTest):
                 load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
                 include_mesh_gateway=include_mesh_gateway,
+                circuit_braker=circuit_braker,
                 skip_advanced=skip_advanced)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_create_matching_disabled()
@@ -1614,6 +1629,7 @@ class ServicesPageTest(AbstractListPageTest):
                 load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
                 include_mesh_gateway=include_mesh_gateway,
+                circuit_braker=circuit_braker,
                 skip_advanced=skip_advanced)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_create_matching_disabled()
@@ -1647,6 +1663,14 @@ class ServicesPageTest(AbstractListPageTest):
         assert word_in_text('\"mesh\"',
                             istio_config_details_rest.text,
                             gateway and include_mesh_gateway)
+        # get destination rule details from rest
+        istio_config_details_rest = self.kiali_client.istio_config_details(
+            namespace=namespace,
+            object_type=OBJECT_TYPE.DESTINATION_RULE.text,
+            object_name=service_details_rest.destination_rules[0].name)
+        assert word_in_text('\"http1MaxPendingRequests\"',
+                            istio_config_details_rest.text,
+                            circuit_braker)
 
     def test_routing_delete(self, name, namespace):
         logger.debug('Routing Delete for Service: {}, {}'.format(name, namespace))
