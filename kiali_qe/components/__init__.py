@@ -1934,6 +1934,35 @@ class ViewAbstract(Widget):
         return not len(self.browser.elements(
                 parent=element, locator=self.MISSING_ICON_SIDECAR)) > 0
 
+    def _get_item_health(self, element):
+        _healthy = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@class, "icon-healthy")]')) > 0
+        _not_healthy = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@class, "icon-failure")]')) > 0
+        _degraded = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@class, "icon-degraded")]')) > 0
+        _idle = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@class, "icon-idle")]')) > 0
+        _not_available = len(self.browser.elements(
+            parent=element,
+            locator='.//*[contains(@class, "icon-na")]')) > 0
+        _health = None
+        if _healthy:
+            _health = HealthType.HEALTHY
+        elif _not_healthy:
+            _health = HealthType.FAILURE
+        elif _degraded:
+            _health = HealthType.DEGRADED
+        elif _idle:
+            _health = HealthType.IDLE
+        elif _not_available:
+            _health = HealthType.NA
+        return _health
+
 
 class ListViewAbstract(ViewAbstract):
     ROOT = '//*[contains(@style, "overflow-y")]'
@@ -2019,35 +2048,6 @@ class ListViewAbstract(ViewAbstract):
         _not_available = len(self.browser.elements(
             parent=self.DETAILS_ROOT,
             locator='.//*[contains(@class, "icon-na")]' + _health_sublocator)) > 0
-        _health = None
-        if _healthy:
-            _health = HealthType.HEALTHY
-        elif _not_healthy:
-            _health = HealthType.FAILURE
-        elif _degraded:
-            _health = HealthType.DEGRADED
-        elif _idle:
-            _health = HealthType.IDLE
-        elif _not_available:
-            _health = HealthType.NA
-        return _health
-
-    def _get_item_health(self, element):
-        _healthy = len(self.browser.elements(
-            parent=element,
-            locator='.//*[contains(@class, "icon-healthy")]')) > 0
-        _not_healthy = len(self.browser.elements(
-            parent=element,
-            locator='.//*[contains(@class, "icon-failure")]')) > 0
-        _degraded = len(self.browser.elements(
-            parent=element,
-            locator='.//*[contains(@class, "icon-degraded")]')) > 0
-        _idle = len(self.browser.elements(
-            parent=element,
-            locator='.//*[contains(@class, "icon-idle")]')) > 0
-        _not_available = len(self.browser.elements(
-            parent=element,
-            locator='.//*[contains(@class, "icon-na")]')) > 0
         _health = None
         if _healthy:
             _health = HealthType.HEALTHY
@@ -3595,7 +3595,7 @@ class TableViewWorkloadPods(TableViewAbstract):
                         labels=self._get_labels(_columns[4]),
                         istio_init_containers=_istio_init_containers,
                         istio_containers=_istio_containers,
-                        status=self._get_item_status(el),
+                        status=self._get_item_health(el),
                         phase=_phase))
         return _items
 
