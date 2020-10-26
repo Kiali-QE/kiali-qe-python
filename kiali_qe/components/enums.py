@@ -297,31 +297,16 @@ class IstioConfigPageSort(StringEnum):
 
 
 class IstioConfigObjectType(StringEnum):
+    AUTHORIZATION_POLICY = ('AuthorizationPolicy')
     DESTINATION_RULE = ('DestinationRule')
-    RULE = ('Rule')
-    ADAPTER = ('Adapter')
     ENVOY_FILTER = ('EnvoyFilter')
-    HTTP_API_SPEC = ('HTTPAPISpec')
-    HTTP_API_SPEC_BINDING = ('HTTPAPISpecBinding')
-    TEMPLATE = ('Template')
-    HANDLER = ('Handler')
-    INSTANCE = ('Instance')
-    VIRTUAL_SERVICE = ('VirtualService')
     GATEWAY = ('Gateway')
-    SERVICE_ENTRY = ('ServiceEntry')
-    WORKLOAD_ENTRY = ('WorkloadEntry')
-    QUOTA_SPEC = ('QuotaSpec')
-    QUOTA_SPEC_BINDING = ('QuotaSpecBinding')
-    POLICY = ('Policy')
     PEER_AUTHENTICATION = ('PeerAuthentication')
     REQUEST_AUTHENTICATION = ('RequestAuthentication')
-    MESH_POLICY = ('MeshPolicy')
-    CLUSTER_RBAC_CONFIG = ('ClusterRbacConfig')
-    RBAC_CONFIG = ('RbacConfig')
+    SERVICE_ENTRY = ('ServiceEntry')
     SIDECAR = ('Sidecar')
-    AUTHORIZATION_POLICY = ('AuthorizationPolicy')
-    SERVICE_ROLE = ('ServiceRole')
-    SERVICE_ROLE_BINDING = ('ServiceRoleBinding')
+    VIRTUAL_SERVICE = ('VirtualService')
+    WORKLOAD_ENTRY = ('WorkloadEntry')
 
 
 class IstioConfigValidationType(StringEnum):
@@ -329,11 +314,6 @@ class IstioConfigValidationType(StringEnum):
     NOT_VALID = ('Not Valid')
     WARNING = ('Warning')
     NOT_VALIDATED = ('Not Validated')
-
-
-class ThreeScaleConfigType(StringEnum):
-    HANDLER = ('3scale Account (Istio Handler)')
-    INSTANCE_RULE = ('3scale Authorization (Istio Instance+Rule)')
 
 
 class HealthType(StringEnum):
@@ -391,9 +371,6 @@ class RoutingWizardType(StringEnum):
     FAULT_INJECTION = ('Fault Injection')
     TRAFFIC_SHIFTING = ('Traffic Shifting')
     REQUEST_TIMEOUTS = ('Request Timeouts')
-    ADD_3_SCALE_RULE = ('Add 3scale API Management Rule')
-    UPDATE_3_SCALE_RULE = ('Update 3scale API Management Rule')
-    DELETE_3_SCALE_RULE = ('Delete 3Scale API Management Rule')
 
 
 class RoutingWizardTLS(StringEnum):
@@ -415,12 +392,6 @@ class RoutingWizardLoadBalancer(StringEnum):
     LEAST_CONN = ('LEAST_CONN')
     RANDOM = ('RANDOM')
     PASSTHROUGH = ('PASSTHROUGH')
-
-
-class ThreeScaleConfigPageSort(StringEnum):
-    HANDLER_NAME = ('Handler Name')
-    SERVICE_ID = ('Service Id')
-    SYSTEM_URL = ('System Url')
 
 
 class TrafficType(StringEnum):

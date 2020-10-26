@@ -17,7 +17,6 @@ from kiali_qe.components.enums import (
     TLSMutualValues,
     ItemIconType,
     MutualTLSMode,
-    ThreeScaleConfigType,
     OverviewInjectionLinks,
     RoutingWizardType
 )
@@ -44,7 +43,6 @@ from kiali_qe.entities.service import (
 )
 from kiali_qe.entities.istio_config import (
     IstioConfig,
-    Rule,
     IstioConfigDetails
 )
 from kiali_qe.entities.workload import (
@@ -708,8 +706,6 @@ class Actions(Widget):
         '//select[@id="trafficPolicy-pa-mode"]'
     LOAD_BALANCER_TYPE_DROPDOWN = '//div[contains(@class, "pf-c-form__group")]'\
         '//select[@id="trafficPolicy-lb"]'
-    THREESCALE_CONFIG_DROPDOWN = '//div[contains(@class, "pf-c-form__group")]'\
-        '//select[@id="threescale-config"]'
     INCLUDE_MESH_GATEWAY = '//label[contains(text(), "Include")]/..//input[@type="checkbox"]'
     SHOW_ADVANCED_OPTIONS = '//span[text()="Show Advanced Options"]/..'
     SHOW_CREATE_HANDLER = '//span[text()="Show Create Handler"]/..'
@@ -725,8 +721,6 @@ class Actions(Widget):
     TRAFFIC_SHIFTING = RoutingWizardType.TRAFFIC_SHIFTING.text
     FAULT_INJECTION = RoutingWizardType.FAULT_INJECTION.text
     REQUEST_TIMEOUTS = RoutingWizardType.REQUEST_TIMEOUTS.text
-    CREATE_3SCALE_LINK = 'Link 3scale Authorization'
-    DELETE_3SCALE_LINK = 'Unlink 3scale Authorization'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -752,11 +746,6 @@ class Actions(Widget):
         self._loadbalancer_switch = ButtonSwitch(parent=self, label="Add LoadBalancer")
         self._loadbalancer_type = SelectDropDown(
             parent=self, locator=self.LOAD_BALANCER_TYPE_DROPDOWN,
-            select_button='')
-        self._threescale_service_id = TextInput(parent=self,
-                                                locator='//input[@id="threescale-service-id"]')
-        self._threescale_config = SelectDropDown(
-            parent=self, locator=self.THREESCALE_CONFIG_DROPDOWN,
             select_button='')
         self._gateway_switch = ButtonSwitch(parent=self, label="Add Gateway")
         self._include_mesh_gateway = Checkbox(locator=self.INCLUDE_MESH_GATEWAY, parent=self)
@@ -784,12 +773,6 @@ class Actions(Widget):
 
     def is_delete_disabled(self):
         return self.DELETE_TRAFFIC_ROUTING in self.disabled_actions
-
-    def is_link_3scale_visible(self):
-        return self.CREATE_3SCALE_LINK in self.actions
-
-    def is_unlink_3scale_visible(self):
-        return self.DELETE_3SCALE_LINK in self.actions
 
     def is_create_weighted_disabled(self):
         return self.TRAFFIC_SHIFTING in self.disabled_actions
@@ -1129,33 +1112,6 @@ class Actions(Widget):
         else:
             self.browser.click(_gateways_tab)
             self._gateway_switch.off()
-
-    def create_3scale_link(self, service_id, rule_name):
-        if not self.is_link_3scale_visible():
-            return False
-        else:
-            self.select(self.CREATE_3SCALE_LINK)
-            self._threescale_service_id.fill(service_id)
-            self._threescale_config.select(rule_name)
-            create_button = self.browser.element(
-                parent=self.WIZARD_ROOT,
-                locator=(self.CREATE_BUTTON))
-            wait_displayed(create_button)
-            if create_button.get_attribute("disabled"):
-                return False
-            self.browser.click(create_button)
-            wait_not_displayed(self)
-            # wait to Spinner disappear
-            wait_to_spinner_disappear(self.browser)
-            return True
-
-    def delete_3scale_link(self):
-        if not self.is_unlink_3scale_visible():
-            return False
-        else:
-            self.select(self.DELETE_3SCALE_LINK)
-            wait_to_spinner_disappear(self.browser)
-            return True
 
 
 class ConfigActions(Actions):
@@ -1987,7 +1943,6 @@ class ListViewAbstract(ViewAbstract):
     SERVICE_IP = 'Service IP'
     PORTS = 'Ports'
     CREATED_AT = 'Created at'
-    RULE_3SCALE_HANDLER = '3scale API handler'
     RESOURCE_VERSION = 'Resource Version'
     INBOUND_METRICS = 'Inbound Metrics'
     OUTBOUND_METRICS = 'Outbound Metrics'
@@ -2842,12 +2797,7 @@ class ListViewIstioConfig(ListViewAbstract):
     CONFIG_HEADER = './/div[contains(@class, "row")]//h4'
     CONFIG_TEXT = './/div[contains(@class, "ace_content")]'
     CONFIG_DETAILS_ROOT = './/div[contains(@class, "container-fluid")]'
-    CREATE_3SCALE_HANDLER = 'Create New 3scale Config'
     TABLE_ROOT = './/table[contains(@class, "pf-c-table")]'
-    CONFIG_TYPE_DROPDOWN = '//div[contains(@class, "pf-c-form__group")]'\
-        '//select[@id="threescale-config"]'
-    ACCOUNT_DROPDOWN = '//div[contains(@class, "pf-c-form__group")]'\
-        '//select[@id="theescale-handler"]'
     CONFIG_INPUT = '//input[@id="{}"]'
     CONFIG_DETAILS_ROOT = './/*[contains(@class, "pf-c-form")]'
     CREATE_HANDLER_BUTTON = './/button[text()="Create"]'
@@ -2855,59 +2805,8 @@ class ListViewIstioConfig(ListViewAbstract):
 
     def __init__(self, parent, locator=None, logger=None):
         TableViewAbstract.__init__(self, parent, locator=self.CONFIG_DETAILS_ROOT, logger=logger)
-        self._threescale_config = SelectDropDown(
-            parent=self, locator=self.CONFIG_TYPE_DROPDOWN,
-            select_button='')
         self._handler_name = TextInput(parent=self,
                                        locator=self.CONFIG_INPUT.format('name'))
-        self._system_url = TextInput(parent=self,
-                                     locator=self.CONFIG_INPUT.format('threescale-url'))
-        self._access_token = TextInput(parent=self,
-                                       locator=self.CONFIG_INPUT.format('threescale-token'))
-        self._threescale_account = SelectDropDown(
-            parent=self, locator=self.ACCOUNT_DROPDOWN,
-            select_button='')
-
-    def create_3scale_handler(self, name, system_url, access_token):
-        """
-        Creates 3scale Handler.
-        """
-        self.parent.actions.select(self.CREATE_3SCALE_HANDLER)
-        wait_to_spinner_disappear(self.browser)
-        self._threescale_config.select(ThreeScaleConfigType.HANDLER.text)
-        self._handler_name.fill(name)
-        self._system_url.fill(system_url)
-        self._access_token.fill(access_token)
-        wait_to_spinner_disappear(self.browser)
-        create_button = self.browser.element(
-                parent=self.CONFIG_DETAILS_ROOT,
-                locator=(self.CREATE_HANDLER_BUTTON))
-        wait_displayed(create_button)
-        if create_button.get_attribute("disabled"):
-            return False
-        self.browser.click(create_button)
-        wait_to_spinner_disappear(self.browser)
-        return True
-
-    def create_3scale_instance_rule(self, name, handler_name):
-        """
-        Creates 3scale Authorization (Handler + Rule).
-        """
-        self.parent.actions.select(self.CREATE_3SCALE_HANDLER)
-        wait_to_spinner_disappear(self.browser)
-        self._threescale_config.select(ThreeScaleConfigType.INSTANCE_RULE.text)
-        self._handler_name.fill(name)
-        self._threescale_account.select(handler_name)
-        wait_to_spinner_disappear(self.browser)
-        create_button = self.browser.element(
-                parent=self.CONFIG_DETAILS_ROOT,
-                locator=(self.CREATE_HANDLER_BUTTON))
-        wait_displayed(create_button)
-        if create_button.get_attribute("disabled"):
-            return False
-        self.browser.click(create_button)
-        wait_to_spinner_disappear(self.browser)
-        return True
 
     def get_details(self, name, load_only=False):
         if load_only:
@@ -2930,23 +2829,13 @@ class ListViewIstioConfig(ListViewAbstract):
             _namespace = self._item_namespace(columns[1])
             _object_type = columns[2].text.strip()
 
-            if str(_object_type) == IstioConfigObjectType.RULE.text or \
-                    str(_object_type) == IstioConfigObjectType.ADAPTER.text or \
-                    str(_object_type) == IstioConfigObjectType.HANDLER.text or \
-                    str(_object_type) == IstioConfigObjectType.INSTANCE.text or \
-                    str(_object_type) == IstioConfigObjectType.TEMPLATE.text:
-                _rule = Rule(name=_name, namespace=_namespace, object_type=_object_type,
-                             validation=IstioConfigValidation.NA)
-                # append this item to the final list
-                _items.append(_rule)
-            else:
-                _config = IstioConfig(name=_name,
-                                      namespace=_namespace,
-                                      object_type=_object_type,
-                                      validation=self._get_item_validation(el),
-                                      config_link=self._get_item_config_link(columns[3]))
-                # append this item to the final list
-                _items.append(_config)
+            _config = IstioConfig(name=_name,
+                                  namespace=_namespace,
+                                  object_type=_object_type,
+                                  validation=self._get_item_validation(el),
+                                  config_link=self._get_item_config_link(columns[3]))
+            # append this item to the final list
+            _items.append(_config)
         return _items
 
 

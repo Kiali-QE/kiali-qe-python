@@ -1,6 +1,6 @@
 import pytest
 
-from kiali_qe.tests import ServicesPageTest, WorkloadsPageTest
+from kiali_qe.tests import ServicesPageTest
 from kiali_qe.components.enums import (
     RoutingWizardType,
     RoutingWizardLoadBalancer,
@@ -8,7 +8,6 @@ from kiali_qe.components.enums import (
     IstioConfigObjectType,
     PeerAuthMode
 )
-from kiali_qe.tests import test_3scale_config_page as THREESCALE_TEST
 
 BOOKINFO = 'bookinfo'
 BOOKINFO_2 = 'bookinfo2'
@@ -184,43 +183,3 @@ def test_tls_mutual(kiali_client, openshift_client, browser, pick_namespace):
     assert not kiali_client.istio_config_list(
         namespaces=[namespace],
         config_names=[name])
-
-
-@pytest.mark.p_ro_namespace
-@pytest.mark.p_crud_group5
-def test_3scale_rule(kiali_client, openshift_client, browser, pick_namespace):
-    tests = WorkloadsPageTest(
-        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    # use only bookinfo2 namespace where colliding tests are in the same p_group
-    namespace = pick_namespace(BOOKINFO_2)
-    name = 'details-v1'
-    THREESCALE_TEST.handler_create(openshift_client, THREESCALE_TEST.HANDLER1)
-    THREESCALE_TEST.handler_create(openshift_client, THREESCALE_TEST.HANDLER2)
-    THREESCALE_TEST.handler_create(openshift_client, THREESCALE_TEST.RULE1, kind='rule')
-    THREESCALE_TEST.handler_create(openshift_client, THREESCALE_TEST.RULE2, kind='rule')
-    THREESCALE_TEST.handler_create(openshift_client, THREESCALE_TEST.INSTANCE1, kind='instance')
-    THREESCALE_TEST.handler_create(openshift_client, THREESCALE_TEST.INSTANCE2, kind='instance')
-    tests.test_3scale_link_create(name=name, namespace=namespace, service_id=SERVICE_ID1,
-                                  rule_name=THREESCALE_TEST.RULE_NAME1)
-    tests.test_3scale_link_delete(name=name, namespace=namespace)
-
-
-@pytest.mark.p_ro_namespace
-@pytest.mark.p_crud_group5
-def test_3scale_link_auto_delete(kiali_client, openshift_client, browser, pick_namespace):
-    tests = WorkloadsPageTest(
-        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    """ Delete the Handler, Rule and Instance, the link should still exist in workload """
-    # use only bookinfo2 namespace where colliding tests are in the same p_group
-    namespace = pick_namespace(BOOKINFO_2)
-    name = 'details-v1'
-    THREESCALE_TEST.handler_create(openshift_client, THREESCALE_TEST.HANDLER1)
-    THREESCALE_TEST.handler_create(openshift_client, THREESCALE_TEST.RULE1, kind='rule')
-    THREESCALE_TEST.handler_create(openshift_client, THREESCALE_TEST.INSTANCE1, kind='instance')
-    tests.test_3scale_link_create(name=name, namespace=namespace, service_id=SERVICE_ID1,
-                                  rule_name=THREESCALE_TEST.RULE_NAME1)
-    THREESCALE_TEST.handler_delete(openshift_client, THREESCALE_TEST.HANDLER_NAME1)
-    THREESCALE_TEST.handler_delete(openshift_client, THREESCALE_TEST.RULE_NAME1, kind='rule')
-    THREESCALE_TEST.handler_delete(openshift_client, THREESCALE_TEST.INSTANCE_NAME1,
-                                   kind='instance')
-    tests.test_3scale_link(name=name, namespace=namespace, exists=True)

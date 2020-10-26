@@ -3,8 +3,8 @@ from kubernetes import config
 from openshift.dynamic import DynamicClient
 from openshift.dynamic.exceptions import NotFoundError
 
-from kiali_qe.components.enums import IstioConfigObjectType, LabelOperation, WorkloadType
-from kiali_qe.entities.istio_config import IstioConfig, Rule, IstioConfigDetails
+from kiali_qe.components.enums import LabelOperation, WorkloadType
+from kiali_qe.entities.istio_config import IstioConfig, IstioConfigDetails
 from kiali_qe.entities.service import Service, ServiceDetails
 from kiali_qe.entities.workload import Workload, WorkloadDetails
 from kiali_qe.entities.applications import (
@@ -38,15 +38,6 @@ class OpenshiftExtendedClient(object):
         'ServiceEntry': '_serviceentry',
         'WorkloadEntry': '_workloadentry',
         'EnvoyFilter': '_envoyfilter',
-        'HTTPAPISpec': '_httpapispec',
-        'HTTPAPISpecBinding': '_httpapispecbinding',
-        'Rule': '_rule',
-        'Handler': '_handler',
-        'Adapter': '_adapter',
-        'Template': '_template',
-        'Instance': '_instance',
-        'QuotaSpec': '_quotaspec',
-        'QuotaSpecBinding': '_quotaspecbinding',
         'PeerAuthentication': '_peerauthentication',
         'RequestAuthentication': '_requestauthentication',
         'AuthorizationPolicy': '_authorizationpolicy',
@@ -111,14 +102,6 @@ class OpenshiftExtendedClient(object):
         return self._resource(kind='EnvoyFilter', api_version='v1alpha3')
 
     @property
-    def _httpapispec(self):
-        return self._resource(kind='HTTPAPISpec', api_version='v1alpha2')
-
-    @property
-    def _httpapispecbinding(self):
-        return self._resource(kind='HTTPAPISpecBinding', api_version='v1alpha2')
-
-    @property
     def _replicationcontroller(self):
         return self._resource(kind='ReplicationController')
 
@@ -150,40 +133,12 @@ class OpenshiftExtendedClient(object):
         return self._istio_config(kind='WorkloadEntry', api_version='v1alpha3')
 
     @property
-    def _rule(self):
-        return self._istio_config(kind='rule', api_version='v1alpha2')
-
-    @property
     def _kubernetes(self):
         return self._istio_config(kind='kubernetes', api_version='v1alpha2')
 
     @property
     def _metric(self):
         return self._istio_config(kind='metric', api_version='v1alpha2')
-
-    @property
-    def _template(self):
-        return self._istio_config(kind='template', api_version='v1alpha2')
-
-    @property
-    def _instance(self):
-        return self._istio_config(kind='instance', api_version='v1alpha2')
-
-    @property
-    def _handler(self):
-        return self._istio_config(kind='handler', api_version='v1alpha2')
-
-    @property
-    def _adapter(self):
-        return self._istio_config(kind='adapter', api_version='v1alpha2')
-
-    @property
-    def _quotaspec(self):
-        return self._istio_config(kind='QuotaSpec', api_version='v1alpha2')
-
-    @property
-    def _quotaspecbinding(self):
-        return self._istio_config(kind='QuotaSpecBinding', api_version='v1alpha2')
 
     @property
     def _peerauthentication(self):
@@ -507,22 +462,11 @@ class OpenshiftExtendedClient(object):
             if hasattr(_response, 'items'):
                 _raw_items.extend(_response.items)
         for _item in _raw_items:
-            if str(resource_type) == IstioConfigObjectType.RULE.text or\
-                    str(resource_type) == IstioConfigObjectType.ADAPTER.text or\
-                    str(resource_type) == IstioConfigObjectType.HANDLER.text or\
-                    str(resource_type) == IstioConfigObjectType.INSTANCE.text or\
-                    str(resource_type) == IstioConfigObjectType.TEMPLATE.text:
-                _rule = Rule(name=_item.metadata.name,
-                             namespace=_item.metadata.namespace,
-                             object_type=resource_type)
-                # append this item to the final list
-                items.append(_rule)
-            else:
-                _config = IstioConfig(name=_item.metadata.name,
-                                      namespace=_item.metadata.namespace,
-                                      object_type=resource_type)
-                # append this item to the final list
-                items.append(_config)
+            _config = IstioConfig(name=_item.metadata.name,
+                                  namespace=_item.metadata.namespace,
+                                  object_type=resource_type)
+            # append this item to the final list
+            items.append(_config)
         # filter by resource name
         if len(resource_names) > 0:
             filtered_list = []
