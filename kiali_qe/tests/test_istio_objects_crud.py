@@ -50,8 +50,6 @@ VIRTUAL_SERVICE_BROKEN_WEIGHT = 'virtual-service-broken-weight.yaml'
 VIRTUAL_SERVICE_BROKEN_WEIGHT_TEXT = 'virtual-service-broken-weight-text.yaml'
 VIRTUAL_SERVICE_SVC = 'virtual-service-svc.yaml'
 VIRTUAL_SERVICE_SVC2 = 'virtual-service-svc2.yaml'
-QUOTA_SPEC = 'quota-spec.yaml'
-QUOTA_SPEC_BINDING = 'quota-spec-binding.yaml'
 GATEWAY = 'gateway.yaml'
 SERVICE_ENTRY = 'service-entry.yaml'
 SERVICE_MESH_RBAC_CONFIG = 'service-mesh-rbac-config.yaml'
@@ -351,50 +349,6 @@ def test_virtual_service_broken_weight_text(kiali_client, openshift_client, brow
         _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_RATINGS)
     except (ApiException, InternalServerError):
         pass
-
-
-@pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group3
-def test_quota_spec(kiali_client, openshift_client, browser):
-    quota_spec = get_yaml(istio_objects_path.strpath, QUOTA_SPEC)
-    quota_spec_dict = get_dict(istio_objects_path.strpath, QUOTA_SPEC)
-
-    _istio_config_test(kiali_client, openshift_client, browser,
-                       quota_spec_dict,
-                       quota_spec,
-                       [
-                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
-                         'value': IstioConfigObjectType.QUOTA_SPEC.text},
-                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': 'quota-spec-auto'}
-                        ],
-                       namespace=BOOKINFO_1,
-                       kind='QuotaSpec',
-                       api_version='config.istio.io/v1alpha2',
-                       service_name=RATINGS,
-                       check_service_details=False)
-
-
-@pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group3
-def test_quota_spec_binding(kiali_client, openshift_client, browser):
-    quota_spec_binding = get_yaml(istio_objects_path.strpath, QUOTA_SPEC_BINDING)
-    quota_spec_binding_dict = get_dict(istio_objects_path.strpath, QUOTA_SPEC_BINDING)
-
-    _istio_config_test(kiali_client, openshift_client, browser,
-                       quota_spec_binding_dict,
-                       quota_spec_binding,
-                       [
-                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
-                         'value': IstioConfigObjectType.QUOTA_SPEC_BINDING.text},
-                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': 'quota-spec-binding-auto'}
-                        ],
-                       namespace=BOOKINFO_1,
-                       kind='QuotaSpecBinding',
-                       api_version='config.istio.io/v1alpha2',
-                       service_name=RATINGS,
-                       check_service_details=False)
 
 
 @pytest.mark.p_crud_resource

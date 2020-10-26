@@ -15,7 +15,7 @@ from kiali_qe.components.enums import (
     HealthType
 )
 from kiali_qe.entities import Requests
-from kiali_qe.entities.istio_config import IstioConfig, IstioConfigDetails, Rule
+from kiali_qe.entities.istio_config import IstioConfig, IstioConfigDetails
 from kiali_qe.entities.service import (
     ServiceHealth,
     Service,
@@ -308,51 +308,6 @@ class KialiExtendedClient(KialiClient):
                                                                     'destinationrules',
                                                                     _policy['metadata']['name'])))
 
-            # update Rule
-            if len(_data['rules']) > 0:
-                for _policy in _data['rules']:
-                    items.append(Rule(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.RULE.text,
-                        validation=IstioConfigValidation.NA))
-
-            # update Rule with Adapter
-            if len(_data['adapters']) > 0:
-                for _policy in _data['adapters']:
-                    items.append(Rule(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.ADAPTER.text,
-                        validation=IstioConfigValidation.NA))
-
-            # update Rule with Handler
-            if len(_data['handlers']) > 0:
-                for _policy in _data['handlers']:
-                    items.append(Rule(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.HANDLER.text,
-                        validation=IstioConfigValidation.NA))
-
-            # update Rule with Instance
-            if len(_data['instances']) > 0:
-                for _policy in _data['instances']:
-                    items.append(Rule(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.INSTANCE.text,
-                        validation=IstioConfigValidation.NA))
-
-            # update Rule with Template
-            if len(_data['templates']) > 0:
-                for _policy in _data['templates']:
-                    items.append(Rule(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.TEMPLATE.text,
-                        validation=IstioConfigValidation.NA))
-
             # update VirtualService
             if len(_data['virtualServices']) > 0 and len(_data['virtualServices']['items']) > 0:
                 for _policy in _data['virtualServices']['items']:
@@ -362,28 +317,6 @@ class KialiExtendedClient(KialiClient):
                         object_type=OBJECT_TYPE.VIRTUAL_SERVICE.text,
                         validation=self.get_istio_config_validation(_namespace,
                                                                     'virtualservices',
-                                                                    _policy['metadata']['name'])))
-
-            # update QuotaSpec
-            if len(_data['quotaSpecs']) > 0:
-                for _policy in _data['quotaSpecs']:
-                    items.append(IstioConfig(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.QUOTA_SPEC.text,
-                        validation=self.get_istio_config_validation(_namespace,
-                                                                    'quotaspecs',
-                                                                    _policy['metadata']['name'])))
-
-            # update QuotaSpecBindings
-            if len(_data['quotaSpecBindings']) > 0:
-                for _policy in _data['quotaSpecBindings']:
-                    items.append(IstioConfig(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.QUOTA_SPEC_BINDING.text,
-                        validation=self.get_istio_config_validation(_namespace,
-                                                                    'quotaspecbindings',
                                                                     _policy['metadata']['name'])))
 
             # update Policy
@@ -408,17 +341,6 @@ class KialiExtendedClient(KialiClient):
                                                                     'requestauthentications',
                                                                     _policy['metadata']['name'])))
 
-            # update MeshPolicy
-            if len(_data['meshPolicies']) > 0:
-                for _policy in _data['meshPolicies']:
-                    items.append(IstioConfig(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.MESH_POLICY.text,
-                        validation=self.get_istio_config_validation(_namespace,
-                                                                    'meshpolicies',
-                                                                    _policy['metadata']['name'])))
-
             # update Gateway
             if len(_data['gateways']) > 0:
                 for _policy in _data['gateways']:
@@ -439,28 +361,6 @@ class KialiExtendedClient(KialiClient):
                         object_type=OBJECT_TYPE.ENVOY_FILTER.text,
                         validation=self.get_istio_config_validation(_namespace,
                                                                     'envoyfilters',
-                                                                    _policy['metadata']['name'])))
-
-            # update HTTPAPISpec
-            if len(_data['httpApiSpecs']) > 0 and len(_data['httpApiSpecs']) > 0:
-                for _policy in _data['httpApiSpecs']:
-                    items.append(IstioConfig(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.HTTP_API_SPEC.text,
-                        validation=self.get_istio_config_validation(_namespace,
-                                                                    'httpApiSpecs',
-                                                                    _policy['metadata']['name'])))
-
-            # update HTTPAPISpecBinding
-            if len(_data['httpApiSpecBindings']) > 0 and len(_data['httpApiSpecBindings']) > 0:
-                for _policy in _data['httpApiSpecBindings']:
-                    items.append(IstioConfig(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.HTTP_API_SPEC_BINDING.text,
-                        validation=self.get_istio_config_validation(_namespace,
-                                                                    'httpApiSpecBindings',
                                                                     _policy['metadata']['name'])))
 
             # update serviceEntries
@@ -507,52 +407,12 @@ class KialiExtendedClient(KialiClient):
                                                                     'authorizationpolicies',
                                                                     _policy['metadata']['name'])))
 
-            # not required at this stage. These options not availabe in UI
-            # # update all the rules to our custom entity
-            # for _rule_rest in _rules:
-            #     # update actions
-            #     _actions = []
-            #     for _action_r in _rule_rest['actions']:
-            #         _actions.append(Action.get_from_rest(_action_r))
-            #     _match = None
-            #     if 'match' in _rule_rest:
-            #         _match = _rule_rest['match']
-            #     _rule = Rule(
-            #         namespace=_namespace,
-            #         name=_rule_rest['name'],
-            #         actions=_actions,
-            #         match=_match)
-            #     items.append(_rule)
-
         # apply filters
         if len(config_names) > 0:
             name_filtered_list = []
             for _name in config_names:
                 name_filtered_list.extend([_i for _i in items if _name in _i.name])
             return set(name_filtered_list)
-        return items
-
-    def three_scale_handler_list(self, namespace, handler_names=[]):
-        """Returns list of 3scale handlers.
-        Args:
-            handler_names: filter by given names
-        """
-        items = []
-        # update items
-        _data = self.istio_config_list(namespaces=[namespace], config_names=handler_names)
-
-        for _handler in _data:
-            if _handler.object_type in [OBJECT_TYPE.HANDLER.text,
-                                        OBJECT_TYPE.RULE.text,
-                                        OBJECT_TYPE.INSTANCE.text]:
-                items.append(_handler)
-
-        # apply filters
-        if len(handler_names) > 0:
-            name_filtered_list = []
-            for _name in handler_names:
-                name_filtered_list.extend([_i for _i in items if _name in _i.name])
-            return name_filtered_list
         return items
 
     def istio_config_details(self, namespace, object_type, object_name):
@@ -575,10 +435,6 @@ class KialiExtendedClient(KialiClient):
             if _data['destinationRule']:
                 config_data = _data['destinationRule']
 
-            # get Rule
-            if _data['rule']:
-                config_data = _data['rule']
-
             # get VirtualService
             if _data['virtualService']:
                 config_data = _data['virtualService']
@@ -586,22 +442,6 @@ class KialiExtendedClient(KialiClient):
             # get EnvoyFilter
             if _data['envoyFilter']:
                 config_data = _data['envoyFilter']
-
-            # get HTTPAPISpec
-            if _data['httpApiSpec']:
-                config_data = _data['httpApiSpec']
-
-            # get HTTPAPISpecBinding
-            if _data['httpApiSpecBinding']:
-                config_data = _data['httpApiSpecBinding']
-
-            # get QuotaSpec
-            if _data['quotaSpec']:
-                config_data = _data['quotaSpec']
-
-            # get QuotaSpecBindings
-            if _data['quotaSpecBinding']:
-                config_data = _data['quotaSpecBinding']
 
             # get Gateway
             if _data['gateway']:
@@ -622,10 +462,6 @@ class KialiExtendedClient(KialiClient):
             # get RequestAuthentication
             if _data['requestAuthentication']:
                 config_data = _data['requestAuthentication']
-
-            # get meshPolicy
-            if _data['meshPolicy']:
-                config_data = _data['meshPolicy']
 
             # get sidecar
             if _data['sidecar']:
