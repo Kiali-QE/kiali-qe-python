@@ -655,5 +655,5 @@ class OpenshiftExtendedClient(object):
         return resp
 
     def is_auto_mtls(self):
-        return 'enableAutoMtls: true' in self._configmap.get(name='istio-install-istio-system',
+        return 'enableAutoMtls: true' in self._configmap.get(name='istio-basic',
                                                              namespace=self.ISTIO_SYSTEM).data.mesh
