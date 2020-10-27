@@ -24,7 +24,7 @@ ACCESS_TOKEN2 = 'token2'
 ISTIO_SYSTEM = 'istio-system'
 
 
-@pytest.mark.skip(reason="https://issues.jboss.org/browse/MAISTRA-1893")
+@pytest.mark.skip
 @pytest.mark.p_crud_resource
 @pytest.mark.p_crud_group2
 def test_all_handlers(kiali_client, openshift_client, browser):
@@ -39,7 +39,7 @@ def test_all_handlers(kiali_client, openshift_client, browser):
     tests.assert_all_items(namespace=ISTIO_SYSTEM)
 
 
-@pytest.mark.skip(reason="https://issues.jboss.org/browse/MAISTRA-1893")
+@pytest.mark.skip
 @pytest.mark.p_crud_resource
 @pytest.mark.p_crud_group2
 def test_handler_details(kiali_client, openshift_client, browser):
@@ -49,7 +49,7 @@ def test_handler_details(kiali_client, openshift_client, browser):
     tests.assert_handler_details(HANDLER_NAME1, SYSTEM_URL1, ACCESS_TOKEN1)
 
 
-@pytest.mark.skip(reason="https://issues.jboss.org/browse/MAISTRA-1893")
+@pytest.mark.skip
 @pytest.mark.p_crud_resource
 @pytest.mark.p_crud_group2
 def test_handler_create(kiali_client, openshift_client, browser):
@@ -59,7 +59,7 @@ def test_handler_create(kiali_client, openshift_client, browser):
     tests.assert_three_scale_handler_creation(HANDLER_NAME1, SYSTEM_URL1, ACCESS_TOKEN1)
 
 
-@pytest.mark.skip(reason="https://issues.jboss.org/browse/MAISTRA-1893")
+@pytest.mark.skip
 @pytest.mark.p_crud_resource
 @pytest.mark.p_crud_group2
 def test_handler_delete(kiali_client, openshift_client, browser):
@@ -70,7 +70,7 @@ def test_handler_delete(kiali_client, openshift_client, browser):
     assert len(_handler_list(kiali_client, HANDLER_NAME1)) == 0
 
 
-@pytest.mark.skip(reason="https://issues.jboss.org/browse/MAISTRA-1893")
+@pytest.mark.skip
 @pytest.mark.p_crud_resource
 @pytest.mark.p_crud_group2
 def test_rule_instance_create(kiali_client, openshift_client, browser):
