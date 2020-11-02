@@ -11,6 +11,7 @@ from kiali_qe.components.error_codes import (
     KIA0201,
     KIA0202,
     KIA0203,
+    KIA0209,
     KIA1102,
     KIA0701,
     KIA0601,
@@ -66,6 +67,7 @@ SCENARIO_25 = "duplicate-vs-gateway.yaml"
 SCENARIO_26 = "vs_destination_host_not_found.yaml"
 SCENARIO_27 = "request_auth_no_workload.yaml"
 SCENARIO_28 = "two_gateways_different_selectors.yaml"
+SCENARIO_29 = "subset_not_have_label.yaml"
 
 
 @pytest.mark.p_group_last
@@ -700,4 +702,23 @@ def test_request_auth_workload_not_found(kiali_client, openshift_client):
                 object_name='httpbin-ns-wise-1',
                 namespace=BOOKINFO,
                 error_messages=[KIA0002])
+        ])
+
+
+@pytest.mark.p_group_last
+def test_subset_no_label(kiali_client, openshift_client):
+    """ This subset have not label
+    """
+    tests = ValidationsTest(
+        kiali_client=kiali_client,
+        openshift_client=openshift_client,
+        objects_path=istio_objects_validation_path.strpath)
+    tests.test_istio_objects(
+        scenario=SCENARIO_29, namespace=BOOKINFO,
+        config_validation_objects=[
+            ConfigValidationObject(
+                object_type='DestinationRule',
+                object_name='reviews-subset-not-label-auto',
+                namespace=BOOKINFO,
+                error_messages=[KIA0209])
         ])
