@@ -33,12 +33,14 @@ def test_weighted_routing_single(kiali_client, openshift_client, browser, pick_n
                               routing_type=RoutingWizardType.TRAFFIC_SHIFTING,
                               tls=RoutingWizardTLS.ISTIO_MUTUAL, load_balancer=True,
                               load_balancer_type=RoutingWizardLoadBalancer.ROUND_ROBIN,
-                              gateway=True, include_mesh_gateway=True)
+                              gateway=True, include_mesh_gateway=True,
+                              circuit_braker=False)
     tests.test_routing_update(name=name, namespace=namespace,
                               routing_type=RoutingWizardType.TRAFFIC_SHIFTING,
                               tls=RoutingWizardTLS.SIMPLE, load_balancer=True,
                               load_balancer_type=RoutingWizardLoadBalancer.LEAST_CONN,
-                              gateway=False, include_mesh_gateway=False)
+                              gateway=False, include_mesh_gateway=False,
+                              circuit_braker=True)
     tests.test_routing_delete(name=name, namespace=namespace)
 
 

@@ -751,6 +751,8 @@ class Actions(Widget):
         self._include_mesh_gateway = Checkbox(locator=self.INCLUDE_MESH_GATEWAY, parent=self)
         self._timeout_switch = ButtonSwitch(parent=self, label="Add HTTP Timeout")
         self._retry_switch = ButtonSwitch(parent=self, label="Add HTTP Retry")
+        self._connection_pool_switch = ButtonSwitch(parent=self, label="Add Connection Pool")
+        self._outlier_detection_switch = ButtonSwitch(parent=self, label="Add Outlier Detection")
 
     def __locator__(self):
         return self.locator
@@ -837,6 +839,7 @@ class Actions(Widget):
                                 load_balancer_type=None,
                                 gateway=False,
                                 include_mesh_gateway=False,
+                                circuit_braker=False,
                                 skip_advanced=False):
         if self.is_create_weighted_disabled():
             return False
@@ -848,6 +851,7 @@ class Actions(Widget):
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
                                   include_mesh_gateway=include_mesh_gateway,
+                                  circuit_braker=circuit_braker,
                                   skip_advanced=skip_advanced)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
@@ -864,6 +868,7 @@ class Actions(Widget):
                                 load_balancer_type=None,
                                 gateway=False,
                                 include_mesh_gateway=False,
+                                circuit_braker=False,
                                 skip_advanced=False):
         if self.is_update_weighted_enabled():
             self.select(self.TRAFFIC_SHIFTING)
@@ -873,6 +878,7 @@ class Actions(Widget):
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
                                   include_mesh_gateway=include_mesh_gateway,
+                                  circuit_braker=circuit_braker,
                                   skip_advanced=skip_advanced)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
@@ -890,6 +896,7 @@ class Actions(Widget):
                                 load_balancer_type=None,
                                 gateway=False,
                                 include_mesh_gateway=False,
+                                circuit_braker=False,
                                 skip_advanced=False):
         if self.is_create_matching_disabled():
             return False
@@ -901,6 +908,7 @@ class Actions(Widget):
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
                                   include_mesh_gateway=include_mesh_gateway,
+                                  circuit_braker=circuit_braker,
                                   skip_advanced=skip_advanced)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
@@ -921,6 +929,7 @@ class Actions(Widget):
                                 load_balancer_type=None,
                                 gateway=False,
                                 include_mesh_gateway=False,
+                                circuit_braker=False,
                                 skip_advanced=False):
         if self.is_update_matching_enabled():
             self.select(self.REQUEST_ROUTING)
@@ -930,6 +939,7 @@ class Actions(Widget):
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
                                   include_mesh_gateway=include_mesh_gateway,
+                                  circuit_braker=circuit_braker,
                                   skip_advanced=skip_advanced)
             self._rule_actions.select(self.REMOVE_RULE)
             self.browser.click(self.browser.element(
@@ -953,6 +963,7 @@ class Actions(Widget):
                         load_balancer_type=None,
                         gateway=False,
                         include_mesh_gateway=False,
+                        circuit_braker=False,
                         skip_advanced=False):
         if self.is_suspend_disabled():
             return False
@@ -964,6 +975,7 @@ class Actions(Widget):
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
                                   include_mesh_gateway=include_mesh_gateway,
+                                  circuit_braker=circuit_braker,
                                   skip_advanced=skip_advanced)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
@@ -979,6 +991,7 @@ class Actions(Widget):
                                  load_balancer_type=None,
                                  gateway=False,
                                  include_mesh_gateway=False,
+                                 circuit_braker=False,
                                  skip_advanced=False):
         if self.is_update_suspended_enabled():
             self.select(self.FAULT_INJECTION)
@@ -988,6 +1001,7 @@ class Actions(Widget):
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
                                   include_mesh_gateway=include_mesh_gateway,
+                                  circuit_braker=circuit_braker,
                                   skip_advanced=skip_advanced)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
@@ -1005,6 +1019,7 @@ class Actions(Widget):
                          load_balancer_type=None,
                          gateway=False,
                          include_mesh_gateway=False,
+                         circuit_braker=False,
                          skip_advanced=False):
         if self.is_timeouts_disabled():
             return False
@@ -1018,6 +1033,7 @@ class Actions(Widget):
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
                                   include_mesh_gateway=include_mesh_gateway,
+                                  circuit_braker=circuit_braker,
                                   skip_advanced=skip_advanced)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
@@ -1033,6 +1049,7 @@ class Actions(Widget):
                                 load_balancer_type=None,
                                 gateway=False,
                                 include_mesh_gateway=False,
+                                circuit_braker=False,
                                 skip_advanced=False):
         if self.is_timeouts_enabled():
             self.select(self.REQUEST_TIMEOUTS)
@@ -1044,6 +1061,7 @@ class Actions(Widget):
                                   load_balancer_type=load_balancer_type,
                                   gateway=gateway,
                                   include_mesh_gateway=include_mesh_gateway,
+                                  circuit_braker=circuit_braker,
                                   skip_advanced=skip_advanced)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
@@ -1061,6 +1079,7 @@ class Actions(Widget):
                          load_balancer_type=None,
                          gateway=False,
                          include_mesh_gateway=False,
+                         circuit_braker=False,
                          skip_advanced=False):
         """
         Adds Advanced Options to Wizard.
@@ -1075,10 +1094,9 @@ class Actions(Widget):
         _gateways_tab = self.browser.element(
             parent=self.DIALOG_ROOT,
             locator=('.//button[text()="Gateways"]'))
-        # TODO new test to be added
-        '''_circuit_tab = self.browser.element(
+        _circuit_tab = self.browser.element(
             parent=self.DIALOG_ROOT,
-            locator=('.//button[text()="Circuit Breaker"]'))'''
+            locator=('.//button[text()="Circuit Breaker"]'))
         if tls:
             self.browser.click(_traffic_tab)
             self._tls.select(tls.text)
@@ -1112,6 +1130,14 @@ class Actions(Widget):
         else:
             self.browser.click(_gateways_tab)
             self._gateway_switch.off()
+        if circuit_braker:
+            self.browser.click(_circuit_tab)
+            self._connection_pool_switch.on()
+            self._outlier_detection_switch.on()
+        else:
+            self.browser.click(_circuit_tab)
+            self._connection_pool_switch.off()
+            self._outlier_detection_switch.off()
 
 
 class ConfigActions(Actions):
