@@ -83,12 +83,12 @@ def test_two_gateways_same_host(kiali_client, openshift_client):
         config_validation_objects=[
             ConfigValidationObject(
                 object_type='Gateway',
-                object_name='bookinfo-gateway-auto',
+                object_name='bookinfo-gateway-auto-host',
                 namespace=BOOKINFO,
                 error_messages=[KIA0301]),
             ConfigValidationObject(
                 object_type='Gateway',
-                object_name='bookinfo-gateway-auto-copy',
+                object_name='bookinfo-gateway-auto-host-copy',
                 namespace=BOOKINFO2,
                 error_messages=[KIA0301])
         ],

@@ -422,7 +422,9 @@ class AbstractListPageTest(object):
         assert is_equal(all_pods, logs_tab.pods.options)
         assert is_equal([item.text for item in TailLines],
                         logs_tab.tail_lines.options)
-        assert is_equal([item.text for item in TimeIntervalUIText],
+        _interval_options = [item.text for item in TimeIntervalUIText]
+        _interval_options.append('Custom')
+        assert is_equal(_interval_options,
                         logs_tab.duration.options)
         assert is_equal([item.text for item in GraphRefreshInterval],
                         logs_tab.interval.options)
