@@ -1,7 +1,7 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
 metadata:
-  name: bookinfo-gateway-auto
+  name: bookinfo-gateway-auto-host
   namespace: bookinfo
 spec:
   selector:
@@ -17,7 +17,7 @@ spec:
 apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
 metadata:
-  name: bookinfo-gateway-auto-copy
+  name: bookinfo-gateway-auto-host-copy
   namespace: bookinfo2
 spec:
   selector:

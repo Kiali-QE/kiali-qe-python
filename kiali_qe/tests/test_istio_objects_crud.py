@@ -51,6 +51,7 @@ VIRTUAL_SERVICE_BROKEN_WEIGHT_TEXT = 'virtual-service-broken-weight-text.yaml'
 VIRTUAL_SERVICE_SVC = 'virtual-service-svc.yaml'
 VIRTUAL_SERVICE_SVC2 = 'virtual-service-svc2.yaml'
 GATEWAY = 'gateway.yaml'
+GATEWAY_LINK = 'gateway-link.yaml'
 SERVICE_ENTRY = 'service-entry.yaml'
 SERVICE_MESH_RBAC_CONFIG = 'service-mesh-rbac-config.yaml'
 RBAC_CONFIG = 'rbac-config.yaml'
@@ -165,8 +166,8 @@ def test_destination_rule_host_warning(kiali_client, openshift_client, browser):
 @pytest.mark.p_crud_resource
 @pytest.mark.p_crud_group5
 def test_virtual_service(kiali_client, openshift_client, browser):
-    gateway = get_yaml(istio_objects_path.strpath, GATEWAY)
-    gateway_dict = get_dict(istio_objects_path.strpath, GATEWAY)
+    gateway = get_yaml(istio_objects_path.strpath, GATEWAY_LINK)
+    gateway_dict = get_dict(istio_objects_path.strpath, GATEWAY_LINK)
     _istio_config_create(openshift_client, gateway_dict, gateway,
                          'Gateway',
                          'networking.istio.io/v1alpha3',
@@ -198,7 +199,7 @@ def test_virtual_service(kiali_client, openshift_client, browser):
                           vs_name=virtual_service_dict.metadata.name,
                           namespace=BOOKINFO_2)
     _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
-    _delete_gateway_vs(openshift_client, GATEWAY)
+    _delete_gateway_vs(openshift_client, GATEWAY_LINK)
 
 
 @pytest.mark.p_crud_resource

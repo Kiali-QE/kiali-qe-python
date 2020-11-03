@@ -3693,7 +3693,7 @@ class LogsView(TabViewAbstract):
 
     pods = DropDown(locator=DROP_DOWN.format('wpl_pods'))
     tail_lines = DropDown(locator=DROP_DOWN.format('wpl_tailLines'))
-    duration = DropDown(locator=DROP_DOWN.format('workload-pod-logging-duration-dropdown'))
+    duration = DropDown(locator=DROP_DOWN.format('metrics_filter_interval_duration'))
     interval = DropDown(locator=DROP_DOWN.format('workload-pod-logging-refresh'))
     refresh = Button(locator='//button[@id="refresh_button"]')
     pod_textarea = Text(locator='//textarea/..//div[contains(@class, "pf-l-toolbar__item") '
