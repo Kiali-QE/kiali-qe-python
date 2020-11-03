@@ -10,6 +10,8 @@ KIA0203 = 'KIA0203 This subset\'s labels are not found in any matching host'
 KIA0201 = 'KIA0201 More than one DestinationRules '\
     'for the same host subset combination'
 
+KIA0209 = 'KIA0209 This subset has not labels'
+
 KIA1106 = 'KIA1106 More than one Virtual Service for same host'
 
 KIA1101 = "KIA1101 DestinationWeight on route doesn't have a "\
