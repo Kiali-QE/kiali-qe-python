@@ -751,6 +751,8 @@ class Actions(Widget):
         self._include_mesh_gateway = Checkbox(locator=self.INCLUDE_MESH_GATEWAY, parent=self)
         self._timeout_switch = ButtonSwitch(parent=self, label="Add HTTP Timeout")
         self._retry_switch = ButtonSwitch(parent=self, label="Add HTTP Retry")
+        self._delay_switch = ButtonSwitch(parent=self, label="Add HTTP Delay")
+        self._abort_switch = ButtonSwitch(parent=self, label="Add HTTP Abort")
         self._connection_pool_switch = ButtonSwitch(parent=self, label="Add Connection Pool")
         self._outlier_detection_switch = ButtonSwitch(parent=self, label="Add Outlier Detection")
 
@@ -913,6 +915,18 @@ class Actions(Widget):
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.ADD_RULE_BUTTON)))
+            _injection_tab = self.browser.element(
+                parent=self.DIALOG_ROOT,
+                locator=('.//button[text()="Fault Injection"]'))
+            _timeout_tab = self.browser.element(
+                parent=self.DIALOG_ROOT,
+                locator=('.//button[text()="Request Timeouts"]'))
+            self.browser.click(_injection_tab)
+            self._delay_switch.on()
+            self._abort_switch.on()
+            self.browser.click(_timeout_tab)
+            self._timeout_switch.on()
+            self._retry_switch.on()
             create_button = self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.CREATE_BUTTON))
@@ -945,6 +959,18 @@ class Actions(Widget):
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.ADD_RULE_BUTTON)))
+            _injection_tab = self.browser.element(
+                parent=self.DIALOG_ROOT,
+                locator=('.//button[text()="Fault Injection"]'))
+            _timeout_tab = self.browser.element(
+                parent=self.DIALOG_ROOT,
+                locator=('.//button[text()="Request Timeouts"]'))
+            self.browser.click(_injection_tab)
+            self._delay_switch.off()
+            self._abort_switch.off()
+            self.browser.click(_timeout_tab)
+            self._timeout_switch.off()
+            self._retry_switch.off()
             update_button = self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.UPDATE_BUTTON))
@@ -969,6 +995,8 @@ class Actions(Widget):
             return False
         else:
             self.select(self.FAULT_INJECTION)
+            self._delay_switch.on()
+            self._abort_switch.on()
             self.advanced_options(tls=tls,
                                   peer_auth_mode=peer_auth_mode,
                                   load_balancer=load_balancer,
@@ -995,6 +1023,8 @@ class Actions(Widget):
                                  skip_advanced=False):
         if self.is_update_suspended_enabled():
             self.select(self.FAULT_INJECTION)
+            self._delay_switch.off()
+            self._abort_switch.off()
             self.advanced_options(tls=tls,
                                   peer_auth_mode=peer_auth_mode,
                                   load_balancer=load_balancer,
