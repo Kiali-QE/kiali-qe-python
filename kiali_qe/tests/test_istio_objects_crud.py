@@ -103,7 +103,7 @@ def test_destination_rule_broken(kiali_client, openshift_client, browser):
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
                          'value': destination_rule_broken_dict.metadata.name}
                         ],
-                       namespace=BOOKINFO_1,
+                       namespace=BOOKINFO_2,
                        kind='DestinationRule',
                        api_version='networking.istio.io/v1alpha3',
                        service_name=DETAILS,
