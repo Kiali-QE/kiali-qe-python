@@ -154,4 +154,4 @@ def test_overview_traffic_policies(kiali_client, openshift_client, browser, pick
 
 
 def _idle_bookinfo():
-    oc_idle('details', 'bookinfo')
+    oc_idle('mysqldb', 'bookinfo')
