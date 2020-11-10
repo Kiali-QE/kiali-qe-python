@@ -18,7 +18,8 @@ from kiali_qe.components.enums import (
     ItemIconType,
     MutualTLSMode,
     OverviewInjectionLinks,
-    RoutingWizardType
+    RoutingWizardType,
+    BoundTrafficType
 )
 from kiali_qe.entities import (
     TrafficItem,
@@ -3679,7 +3680,11 @@ class TrafficView(TabViewAbstract):
                 object_type=self._get_type(_columns[1]),
                 request_type=_request_type,
                 rps=float(re.sub('rps.*', '', _rate).strip()),
-                success_rate=float(re.sub('\\%.*', '', re.sub('.*\\|', '', _traffic)).strip()))
+                success_rate=float(re.sub('\\%.*', '', re.sub('.*\\|', '', _traffic)).strip()),
+                bound_traffic_type=(BoundTrafficType.INBOUND.text if
+                                    BoundTrafficType.INBOUND.text in
+                                    self.browser.element(locator='../../..', parent=el).text else
+                                    BoundTrafficType.OUTBOUND.text))
             # append this item to the final list
             _items.append(_item)
         return _items
