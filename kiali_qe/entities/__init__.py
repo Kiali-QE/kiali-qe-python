@@ -132,7 +132,7 @@ class DeploymentStatus(EntityBase):
 class TrafficItem(EntityBase):
 
     def __init__(self, status, name, object_type, request_type, rps, success_rate,
-                 bound_traffic_type=None):
+                 bound_traffic_type):
         self.name = name
         self.status = status
         self.object_type = object_type
@@ -142,7 +142,7 @@ class TrafficItem(EntityBase):
         self.bound_traffic_type = bound_traffic_type
 
     def __str__(self):
-        return 'name:{}, object_type: {}, status:{}, request_type:{}, bound_traffic_type{}'.format(
+        return 'name:{}, object_type: {}, status:{}, request_type:{}, bound_traffic_type:{}'.format(
             self.name, self.object_type, self.status, self.request_type, self.bound_traffic_type)
 
     def __repr__(self):

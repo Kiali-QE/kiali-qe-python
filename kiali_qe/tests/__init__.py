@@ -449,7 +449,8 @@ class AbstractListPageTest(object):
                 for outbound_item in outbound_traffic:
                     if (outbound_item.name == name
                         and outbound_item.object_type == self_object_type
-                            and outbound_item.request_type == bound_item.request_type):
+                            and outbound_item.request_type == bound_item.request_type
+                            and outbound_item.bound_traffic_type != bound_item.bound_traffic_type):
                         found = True
                         assert bound_item.status == outbound_item.status, \
                             "Inbound Status {} is not equal to Outbound Status {} for {}".format(
@@ -536,7 +537,7 @@ class AbstractListPageTest(object):
                                 if _ui_subset.name == _rest_subset.name and \
                                     dict_contains(_ui_subset.labels, _rest_subset.labels) and \
                                         _ui_subset.traffic_policy == _rest_subset.traffic_policy:
-                                            found = True
+                                    found = True
                             assert found, 'Subset {} not fund in REST {}'.format(
                                 _ui_subset, _rest_subset)
 
