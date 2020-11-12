@@ -129,6 +129,9 @@ class WorkloadDetails(EntityBase):
     def __hash__(self):
         return (hash(self.name) ^ hash(self.istio_sidecar) ^ hash(self.workload_type))
 
+    def set_istio_configs(self, istio_configs):
+        self.istio_configs = istio_configs
+
     def is_equal(self, other, advanced_check=True):
         # basic check
         if not isinstance(other, WorkloadDetails):

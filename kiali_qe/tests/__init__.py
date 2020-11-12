@@ -499,11 +499,13 @@ class AbstractListPageTest(object):
         else:
             assert False, "Graph Overview Page is not recognised"
 
-    def assert_istio_configs(self, object_ui, object_rest, namespace):
+    def assert_istio_configs(self, object_ui, object_rest, object_oc, namespace):
         assert object_ui.istio_configs_number == len(object_ui.istio_configs), \
             'Config tab\'s number should be equal to items'
         assert len(object_rest.istio_configs) == len(object_ui.istio_configs), \
             'UI configs should be equal to REST configs items'
+        assert len(object_rest.istio_configs) == len(object_oc.istio_configs), \
+            'REST configs should be equal to OC configs items'
 
         for istio_config_ui in object_ui.istio_configs:
             found = False
@@ -516,6 +518,19 @@ class AbstractListPageTest(object):
             if not found:
                 assert found, 'Config {} not found in REST {}'.format(istio_config_ui,
                                                                       istio_config_rest)
+            found = False
+            for istio_config_oc in object_oc.istio_configs:
+                if istio_config_ui.name == istio_config_oc.name and \
+                    istio_config_ui.type == istio_config_oc.object_type and \
+                        namespace == istio_config_oc.namespace:
+                    found = True
+                    break
+            if not found:
+                assert found, 'Config {} not found in OC {}'.format(istio_config_ui,
+                                                                    istio_config_oc)
+            # TODO AuthPolicies
+            if istio_config_ui.type == IstioConfigObjectType.PEER_AUTHENTICATION.text:
+                return
             config_overview_ui = self.page.content.table_view_istio_config.get_overview(
                     istio_config_ui.name,
                     istio_config_ui.type)
@@ -1113,7 +1128,10 @@ class WorkloadsPageTest(AbstractListPageTest):
             if not found:
                 assert found, 'Service {} not found in REST {}'.format(service_ui, service_rest)
 
-        self.assert_istio_configs(workload_details_ui, workload_details_rest, namespace)
+        self.assert_istio_configs(workload_details_ui,
+                                  workload_details_rest,
+                                  workload_details_oc,
+                                  namespace)
 
         self.assert_logs_tab(workload_details_ui.logs_tab, all_pods)
         if check_metrics:
@@ -1345,7 +1363,10 @@ class ServicesPageTest(AbstractListPageTest):
                 assert found, 'Workload {} not found in REST {}'.format(workload_ui,
                                                                         workload_rest)
 
-        self.assert_istio_configs(service_details_ui, service_details_rest, namespace)
+        self.assert_istio_configs(service_details_ui,
+                                  service_details_rest,
+                                  service_details_oc,
+                                  namespace)
 
         if check_metrics:
             self.assert_metrics_options(service_details_ui.inbound_metrics, check_grafana=True)

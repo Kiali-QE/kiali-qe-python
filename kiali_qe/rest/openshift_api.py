@@ -3,7 +3,7 @@ from kubernetes import config
 from openshift.dynamic import DynamicClient
 from openshift.dynamic.exceptions import NotFoundError
 
-from kiali_qe.components.enums import LabelOperation, WorkloadType
+from kiali_qe.components.enums import LabelOperation, WorkloadType, IstioConfigObjectType
 from kiali_qe.entities.istio_config import IstioConfig, IstioConfigDetails
 from kiali_qe.entities.service import Service, ServiceDetails
 from kiali_qe.entities.workload import Workload, WorkloadDetails
@@ -12,7 +12,7 @@ from kiali_qe.entities.applications import (
     ApplicationDetails,
     AppWorkload
 )
-from kiali_qe.utils import dict_contains
+from kiali_qe.utils import dict_contains, to_linear_string
 from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
 from kiali_qe.utils.log import logger
 
@@ -464,7 +464,7 @@ class OpenshiftExtendedClient(object):
         for _item in _raw_items:
             _config = IstioConfig(name=_item.metadata.name,
                                   namespace=_item.metadata.namespace,
-                                  object_type=resource_type)
+                                  object_type=_item.kind)
             # append this item to the final list
             items.append(_config)
         # filter by resource name
@@ -534,9 +534,43 @@ class OpenshiftExtendedClient(object):
             labels=dict(_response.metadata.labels if _response.metadata.labels else {}),
             selectors=dict(_response.spec.selector if _response.spec.selector else {}),
             # TODO health
-            health=None)
+            health=None,
+            istio_configs=self.get_service_configs(
+                _response.metadata.namespace,
+                service_name))
 
         return _service
+
+    def get_service_configs(self, namespace, service_name):
+        """ Returns the list of istio config pages for particular service
+        Args:
+            namespace: Namespace where service is located
+            service_name: Name of service
+        """
+        istio_configs = []
+        _all_vs_list = self._resource_list(
+            attribute_name=self.CONFIG_TYPES[IstioConfigObjectType.VIRTUAL_SERVICE.text],
+            resource_type=self.CONFIG_TYPES[IstioConfigObjectType.VIRTUAL_SERVICE.text],
+            namespaces=[namespace])
+        for _vs_item in _all_vs_list:
+            if 'host {} '.format(service_name) in to_linear_string(
+                self.istio_config_details(
+                    namespace=namespace,
+                    object_name=_vs_item.name,
+                    object_type=IstioConfigObjectType.VIRTUAL_SERVICE.text).text):
+                istio_configs.append(_vs_item)
+        _all_dr_list = self._resource_list(
+            attribute_name=self.CONFIG_TYPES[IstioConfigObjectType.DESTINATION_RULE.text],
+            resource_type=self.CONFIG_TYPES[IstioConfigObjectType.DESTINATION_RULE.text],
+            namespaces=[namespace])
+        for _dr_item in _all_dr_list:
+            if 'host {} '.format(service_name) in to_linear_string(
+                self.istio_config_details(
+                    namespace=namespace,
+                    object_name=_dr_item.name,
+                    object_type=IstioConfigObjectType.DESTINATION_RULE.text).text):
+                istio_configs.append(_dr_item)
+        return istio_configs
 
     def workload_details(self, namespace, workload_name, workload_type):
         """ Returns the details of Workload
@@ -562,8 +596,28 @@ class OpenshiftExtendedClient(object):
                         else _response.spec.selector.matchLabels),
             # TODO health
             health=None)
-
+        _workload.set_istio_configs(istio_configs=self.get_workload_configs(namespace, _workload))
         return _workload
+
+    def get_workload_configs(self, namespace, workload):
+        """ Returns the list of istio config pages for particular workload
+        Args:
+            namespace: Namespace where service is located
+            workload: Workload object
+        """
+        istio_configs = []
+        _all_peer_auth_list = self._resource_list(
+            attribute_name=self.CONFIG_TYPES[IstioConfigObjectType.PEER_AUTHENTICATION.text],
+            resource_type=self.CONFIG_TYPES[IstioConfigObjectType.PEER_AUTHENTICATION.text],
+            namespaces=[namespace])
+        for _peer_auth_item in _all_peer_auth_list:
+            if 'app {}'.format(self._get_app_name(workload)) in to_linear_string(
+                self.istio_config_details(
+                    namespace=namespace,
+                    object_name=_peer_auth_item.name,
+                    object_type=IstioConfigObjectType.PEER_AUTHENTICATION.text).text):
+                istio_configs.append(_peer_auth_item)
+        return istio_configs
 
     def istio_config_details(self, namespace, object_name, object_type):
         """ Returns the details of Istio Config

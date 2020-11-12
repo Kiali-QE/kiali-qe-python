@@ -3415,6 +3415,7 @@ class TableViewIstioConfig(TableViewAbstract):
         return _items
 
     def get_overview(self, name, config_type):
+        # TODO PeerAuth overview.
         if config_type == IstioConfigObjectType.VIRTUAL_SERVICE.text:
             return self._get_vs_overview(name)
         else:
