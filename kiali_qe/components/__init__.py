@@ -1638,9 +1638,21 @@ class NamespaceFilter(CheckBoxFilter):
 
     def clear_all(self):
         self.open()
-        self.browser.click(Button(
-            parent=self.parent,
-            locator=('//button/span[normalize-space(text())="Clear all"]')))
+        select_all_box = Checkbox(locator='//label/input[@aria-label="Select all"]',
+                                  parent=self.parent)
+        self.browser.click(select_all_box)
+        if select_all_box.selected:
+            self.browser.click(select_all_box)
+        wait_to_spinner_disappear(self.browser)
+        self.close()
+
+    def select_all(self):
+        self.open()
+        select_all_box = Checkbox(locator='//label/input[@aria-label="Select all"]',
+                                  parent=self.parent)
+        self.browser.click(select_all_box)
+        if not select_all_box.selected:
+            self.browser.click(select_all_box)
         wait_to_spinner_disappear(self.browser)
         self.close()
 
@@ -1915,6 +1927,7 @@ class ViewAbstract(Widget):
             pass
 
     def _get_labels(self, el):
+        self.click_more_labels(el)
         _label_dict = {}
         _labels = self.browser.elements(
             parent=el,
@@ -3729,7 +3742,7 @@ class LogsView(TabViewAbstract):
     pods = DropDown(locator=DROP_DOWN.format('wpl_pods'))
     tail_lines = DropDown(locator=DROP_DOWN.format('wpl_tailLines'))
     duration = DropDown(locator=DROP_DOWN.format('metrics_filter_interval_duration'))
-    interval = DropDown(locator=DROP_DOWN.format('workload-pod-logging-refresh'))
+    interval = DropDown(locator=DROP_DOWN.format('metrics-refresh'))
     refresh = Button(locator='//button[@id="refresh_button"]')
     pod_textarea = Text(locator='//textarea/..//div[contains(@class, "pf-l-toolbar__item") '
                         'and not(contains(normalize-space(text()), '
