@@ -169,17 +169,20 @@ class AbstractListPageTest(object):
         else:
             _pre_filters.extend(self.page.namespace.checked_items)
 
-        # apply namespaces
-        for _filter in namespaces:
-            if _filter not in _pre_filters:
-                self.page.namespace.check(_filter)
-            if _filter in _pre_filters:
-                _pre_filters.remove(_filter)
-        # remove filters not in list
-        for _filter in _pre_filters:
-            self.page.namespace.uncheck(_filter)
+        if not namespaces:
+            self.page.namespace.select_all()
+        else:
+            # apply namespaces
+            for _filter in namespaces:
+                if _filter not in _pre_filters:
+                    self.page.namespace.check(_filter)
+                if _filter in _pre_filters:
+                    _pre_filters.remove(_filter)
+            # remove filters not in list
+            for _filter in _pre_filters:
+                self.page.namespace.uncheck(_filter)
 
-        self.assert_applied_namespaces(namespaces)
+            self.assert_applied_namespaces(namespaces)
 
     def apply_filters(self, filters, force_clear_all=False):
         """
