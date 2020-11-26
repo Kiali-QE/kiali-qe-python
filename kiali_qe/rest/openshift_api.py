@@ -17,38 +17,39 @@ from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
 from kiali_qe.utils.log import logger
 
 
+WORKLOAD_TYPES = {
+    'CronJob': '_cronjob',
+    'DaemonSet': '_daemonset',
+    'Deployment': '_deployment',
+    'DeploymentConfig': '_deploymentconfig',
+    'Job': '_job',
+    'Pod': '_pod',
+    'ReplicaSet': '_replicaset',
+    'ReplicationController': '_replicationcontroller',
+    'StatefulSet': '_statefulset',
+}
+
+CONFIG_TYPES = {
+    'Gateway': '_gateway',
+    'VirtualService': '_virtualservice',
+    'DestinationRule': '_destinationrule',
+    'ServiceEntry': '_serviceentry',
+    'WorkloadEntry': '_workloadentry',
+    'EnvoyFilter': '_envoyfilter',
+    'PeerAuthentication': '_peerauthentication',
+    'RequestAuthentication': '_requestauthentication',
+    'AuthorizationPolicy': '_authorizationpolicy',
+    'Sidecar': '_sidecar',
+}
+
+APP_NAME_REGEX = re.compile('(-v\\d+-.*)?(-v\\d+$)?(-(\\w{0,7}\\d+\\w{0,7})$)?')
+
+WORKLOAD_NAME_REGEX = re.compile('(-(\\w{1,8}\\d+\\w{1,8}))?(-(\\w{0,4}\\d?\\w{0,4})$)?')
+
+ISTIO_SYSTEM = "istio-system"
+
+
 class OpenshiftExtendedClient(object):
-
-    WORKLOAD_TYPES = {
-        'CronJob': '_cronjob',
-        'DaemonSet': '_daemonset',
-        'Deployment': '_deployment',
-        'DeploymentConfig': '_deploymentconfig',
-        'Job': '_job',
-        'Pod': '_pod',
-        'ReplicaSet': '_replicaset',
-        'ReplicationController': '_replicationcontroller',
-        'StatefulSet': '_statefulset',
-    }
-
-    CONFIG_TYPES = {
-        'Gateway': '_gateway',
-        'VirtualService': '_virtualservice',
-        'DestinationRule': '_destinationrule',
-        'ServiceEntry': '_serviceentry',
-        'WorkloadEntry': '_workloadentry',
-        'EnvoyFilter': '_envoyfilter',
-        'PeerAuthentication': '_peerauthentication',
-        'RequestAuthentication': '_requestauthentication',
-        'AuthorizationPolicy': '_authorizationpolicy',
-        'Sidecar': '_sidecar',
-    }
-
-    APP_NAME_REGEX = re.compile('(-v\\d+-.*)?(-v\\d+$)?(-(\\w{0,7}\\d+\\w{0,7})$)?')
-
-    WORKLOAD_NAME_REGEX = re.compile('(-(\\w{1,8}\\d+\\w{1,8}))?(-(\\w{0,4}\\d?\\w{0,4})$)?')
-
-    ISTIO_SYSTEM = "istio-system"
 
     def __init__(self):
         self._k8s_client = config.new_client_from_config()
@@ -277,7 +278,7 @@ class OpenshiftExtendedClient(object):
         """
         full_list = []
         filtered_list = []
-        for _key, _value in self.WORKLOAD_TYPES.items():
+        for _key, _value in WORKLOAD_TYPES.items():
             full_list.extend(self._workload_list(_value, _key,
                                                  namespaces=namespaces,
                                                  workload_names=workload_names,
@@ -420,20 +421,20 @@ class OpenshiftExtendedClient(object):
 
     def _get_app_name(self, workload):
         return workload.labels['app'] if 'app' in workload.labels else re.sub(
-            self.APP_NAME_REGEX,
+            APP_NAME_REGEX,
             '',
             workload.name)
 
     def _get_workload_name(self, workload):
         return re.sub(
-            self.WORKLOAD_NAME_REGEX,
+            WORKLOAD_NAME_REGEX,
             '',
             workload.name)
 
     def istio_config_list(self, namespaces=[], config_names=[]):
         """ Returns list of Istio Configs """
         result = []
-        for _key, _value in self.CONFIG_TYPES.items():
+        for _key, _value in CONFIG_TYPES.items():
             result.extend(self._resource_list(_value, _key,
                                               namespaces=namespaces,
                                               resource_names=config_names))
@@ -549,8 +550,8 @@ class OpenshiftExtendedClient(object):
         """
         istio_configs = []
         _all_vs_list = self._resource_list(
-            attribute_name=self.CONFIG_TYPES[IstioConfigObjectType.VIRTUAL_SERVICE.text],
-            resource_type=self.CONFIG_TYPES[IstioConfigObjectType.VIRTUAL_SERVICE.text],
+            attribute_name=CONFIG_TYPES[IstioConfigObjectType.VIRTUAL_SERVICE.text],
+            resource_type=CONFIG_TYPES[IstioConfigObjectType.VIRTUAL_SERVICE.text],
             namespaces=[namespace])
         for _vs_item in _all_vs_list:
             if 'host {} '.format(service_name) in to_linear_string(
@@ -560,8 +561,8 @@ class OpenshiftExtendedClient(object):
                     object_type=IstioConfigObjectType.VIRTUAL_SERVICE.text).text):
                 istio_configs.append(_vs_item)
         _all_dr_list = self._resource_list(
-            attribute_name=self.CONFIG_TYPES[IstioConfigObjectType.DESTINATION_RULE.text],
-            resource_type=self.CONFIG_TYPES[IstioConfigObjectType.DESTINATION_RULE.text],
+            attribute_name=CONFIG_TYPES[IstioConfigObjectType.DESTINATION_RULE.text],
+            resource_type=CONFIG_TYPES[IstioConfigObjectType.DESTINATION_RULE.text],
             namespaces=[namespace])
         for _dr_item in _all_dr_list:
             if 'host {} '.format(service_name) in to_linear_string(
@@ -580,7 +581,7 @@ class OpenshiftExtendedClient(object):
             workload_type: Type of workload
         """
         _response = getattr(self,
-                            self.WORKLOAD_TYPES[workload_type]).get(
+                            WORKLOAD_TYPES[workload_type]).get(
                                 namespace=namespace,
                                 name=workload_name)
         _workload = WorkloadDetails(
@@ -607,8 +608,8 @@ class OpenshiftExtendedClient(object):
         """
         istio_configs = []
         _all_peer_auth_list = self._resource_list(
-            attribute_name=self.CONFIG_TYPES[IstioConfigObjectType.PEER_AUTHENTICATION.text],
-            resource_type=self.CONFIG_TYPES[IstioConfigObjectType.PEER_AUTHENTICATION.text],
+            attribute_name=CONFIG_TYPES[IstioConfigObjectType.PEER_AUTHENTICATION.text],
+            resource_type=CONFIG_TYPES[IstioConfigObjectType.PEER_AUTHENTICATION.text],
             namespaces=[namespace])
         for _peer_auth_item in _all_peer_auth_list:
             if 'app {}'.format(self._get_app_name(workload)) in to_linear_string(
@@ -627,7 +628,7 @@ class OpenshiftExtendedClient(object):
             object_type: Type of config
         """
         _response = getattr(self,
-                            self.CONFIG_TYPES[object_type]).get(
+                            CONFIG_TYPES[object_type]).get(
                                 namespace=namespace,
                                 name=object_name)
         config = IstioConfigDetails(
@@ -654,4 +655,4 @@ class OpenshiftExtendedClient(object):
 
     def is_auto_mtls(self):
         return 'enableAutoMtls: true' in self._configmap.get(name='istio',
-                                                             namespace=self.ISTIO_SYSTEM).data.mesh
+                                                             namespace=ISTIO_SYSTEM).data.mesh
