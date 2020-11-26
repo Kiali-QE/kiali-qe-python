@@ -31,12 +31,9 @@ from kiali_qe.entities import (
 from kiali_qe.entities.service import (
     Service,
     ServiceDetails,
-    VirtualService,
     VirtualServiceOverview,
-    DestinationRule,
     DestinationRuleOverview,
     SourceWorkload,
-    VirtualServiceWeight,
     VirtualServiceGateway,
     ServiceHealth,
     IstioConfigRow,
@@ -1887,6 +1884,9 @@ class ViewAbstract(Widget):
     NO_SIDECAR_HEALTH = './/div[contains(text(), "{}")]'.format(NO_SIDECAR_TEXT)
     MISSING_ICON_SIDECAR = './/span//svg'
     INFO_TAB = '//button[@id="pf-tab-0-basic-tabs"]'
+    CONFIG_HEADER = './/div[contains(@class, "row")]//h4'
+    CONFIG_TEXT_LOCATOR = './/div[contains(@class, "ace_content")]'
+    CONFIG_DETAILS_ROOT = './/div[contains(@class, "container-fluid")]'
 
     def back_to_service_info(self):
         self.browser.execute_script("history.back();")
@@ -2864,9 +2864,6 @@ class ListViewServices(ListViewAbstract):
 class ListViewIstioConfig(ListViewAbstract):
     ACTION_HEADER = ('.//*[contains(@class, "list-group-item-text")]'
                      '//strong[normalize-space(text())="{}"]/..')
-    CONFIG_HEADER = './/div[contains(@class, "row")]//h4'
-    CONFIG_TEXT = './/div[contains(@class, "ace_content")]'
-    CONFIG_DETAILS_ROOT = './/div[contains(@class, "container-fluid")]'
     TABLE_ROOT = './/table[contains(@class, "pf-c-table")]'
     CONFIG_INPUT = '//input[@id="{}"]'
     CONFIG_DETAILS_ROOT = './/*[contains(@class, "pf-c-form")]'
@@ -2882,7 +2879,7 @@ class ListViewIstioConfig(ListViewAbstract):
         if load_only:
             return BreadCrumb(self.parent)
         _error_messages = self._get_overview_error_messages()
-        _text = self.browser.text(locator=self.CONFIG_TEXT,
+        _text = self.browser.text(locator=self.CONFIG_TEXT_LOCATOR,
                                   parent=self.CONFIG_DETAILS_ROOT)
         return IstioConfigDetails(name=name, text=_text,
                                   validation=self._get_details_validation(),
@@ -3113,251 +3110,6 @@ class TableViewSourceWorkloads(TableViewAbstract):
         return _items
 
 
-class TableViewVirtualServices(TableViewAbstract):
-    VS_TEXT = 'Virtual Services'
-    VS_ROWS = '//section[@id="{}"]//table[contains(@class, "table")]'\
-        '//tbody//tr//td//a[text()="{}"]/../..'
-    VS_ROUTES = '//section[@id="{}"]//table[contains(@class, "pf-c-table")]'\
-        '//tbody//tr'
-
-    def open(self):
-        wait_to_spinner_disappear(self.browser)
-        tab = self.browser.element(locator=self.SERVICES_TAB.format(self.VS_TEXT),
-                                   parent=self.SERVICE_DETAILS_ROOT)
-        try:
-            self.browser.click(tab)
-        finally:
-            self.browser.click(tab)
-        wait_to_spinner_disappear(self.browser)
-        self.browser.wait_for_element(locator='//section[@id="pf-tab-section-1-service-tabs"]',
-                                      parent=self.ROOT)
-
-    def get_overview(self, name):
-        self.open()
-
-        _row = self.browser.element(locator=self.VS_ROWS.format(
-                'pf-tab-section-1-service-tabs', name),
-                                        parent=self.ROOT)
-        _columns = list(self.browser.elements(locator=self.COLUMN, parent=_row))
-
-        self.browser.click('.//a', parent=_columns[1])
-        wait_to_spinner_disappear(self.browser)
-
-        _name = self.browser.text(
-            locator=self.OVERVIEW_HEADER.format(self.NAME),
-            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.NAME, '').strip()
-        _created_at_ui = self.browser.text(locator=self.OVERVIEW_HEADER.format(self.CREATED_AT),
-                                           parent=self.OVERVIEW_DETAILS_ROOT).replace(
-                                            self.CREATED_AT, '').strip()
-        _created_at = self._get_date_tooltip(self.browser.element(
-            locator=self.OVERVIEW_HEADER.format(self.CREATED_AT),
-            parent=self.OVERVIEW_DETAILS_ROOT))
-        _resource_version = self.browser.text(
-            locator=self.OVERVIEW_HEADER.format(self.RESOURCE_VERSION),
-            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.RESOURCE_VERSION, '').strip()
-        _hosts = get_texts_of_elements(self.browser.elements(
-            locator=self.HOSTS_PROPERTIES.format(self.HOSTS),
-            parent=self.OVERVIEW_DETAILS_ROOT))
-        _http_route = self.browser.text_or_default(
-            locator=self.OVERVIEW_PROPERTIES.format(self.HTTP_ROUTE),
-            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.HTTP_ROUTE, '').strip()
-        _gateway_elements = self.browser.elements(
-            locator='//div[contains(@class, "pf-c-card__body")]/ul[contains(@class, "details")]/li',
-            parent=self.OVERVIEW_DETAILS_ROOT)
-        _status = self._get_overview_status(self.OVERVIEW_DETAILS_ROOT)
-        _weights = []
-        _gateways = []
-
-        for el in self.browser.elements(locator=self.VS_ROUTES.format(
-                'pf-tab-section-0-basic-tabs'),
-                parent=self.OVERVIEW_DETAILS_ROOT):
-            _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
-
-            _weight_status = _columns[0].text.strip()
-            _host = _columns[1].text.strip()
-            _subset = _columns[2].text.strip()
-            _port = _columns[3].text.strip().replace('-', '')
-            _weight = _columns[4].text.strip().replace('-', '')
-            if _host == "Host" and _port == "Port":
-                continue
-
-            _weights.append(VirtualServiceWeight(host=_host,
-                                                 status=_weight_status
-                                                 if _weight_status != '' else None,
-                                                 subset=_subset if _subset != '-' else None,
-                                                 port=int(_port) if _port != '' else None,
-                                                 weight=int(_weight) if _weight != '' else None))
-
-        for el in _gateway_elements:
-            try:
-                _link = self.browser.element(
-                    locator='/a', parent=el)
-                _gateways.append(
-                    VirtualServiceGateway(
-                        text=el.text, link=self.browser.get_attribute('href', _link)))
-            except NoSuchElementException:
-                _gateways.append(VirtualServiceGateway(text=el.text))
-
-        # back to service details
-        self.back_to_service_info()
-
-        return VirtualService(
-                status=_status,
-                name=_name,
-                created_at=parse_from_rest(_created_at),
-                created_at_ui=_created_at_ui,
-                resource_version=_resource_version,
-                http_route=to_linear_string(
-                    _http_route if _http_route != self.NONE else ''),
-                hosts=_hosts,
-                weights=_weights,
-                gateways=_gateways)
-
-    @property
-    def number(self):
-        _vs_text = self.browser.text(locator=self.SERVICES_TAB.format(self.VS_TEXT),
-                                     parent=self.SERVICE_DETAILS_ROOT)
-        return int(re.search(r'\d+', _vs_text).group())
-
-    @property
-    def items(self):
-        self.open()
-
-        _items = []
-        for el in self.browser.elements(locator=self.ROWS.format(
-            'pf-tab-section-1-service-tabs'),
-                                        parent=self.ROOT):
-            _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
-            if len(_columns) < 2:
-                # empty row
-                continue
-            _name = _columns[1].text.strip()
-            _created_at_ui = _columns[2].text.strip()
-            _created_at = self._get_date_tooltip(_columns[2])
-            _resource_version = _columns[3].text.strip()
-            # create Virtual Service instance
-            _virtual_service = VirtualService(
-                status=self._get_item_status(_columns[0]),
-                name=_name,
-                created_at=parse_from_rest(_created_at),
-                created_at_ui=_created_at_ui,
-                resource_version=_resource_version)
-            # append this item to the final list
-            _items.append(_virtual_service)
-        return _items
-
-
-class TableViewDestinationRules(TableViewAbstract):
-    DR_ROWS = '//section[@id="{}"]//table[contains(@class, "table")]'\
-        '//tbody//tr//td//a[text()="{}"]/../..'
-    DR_TEXT = 'Destination Rules'
-
-    def open(self):
-        wait_to_spinner_disappear(self.browser)
-        tab = self.browser.element(locator=self.SERVICES_TAB.format(self.DR_TEXT),
-                                   parent=self.SERVICE_DETAILS_ROOT)
-        try:
-            self.browser.click(tab)
-        finally:
-            self.browser.click(tab)
-        wait_to_spinner_disappear(self.browser)
-        self.browser.wait_for_element(locator='//section[@id="pf-tab-section-2-service-tabs"]',
-                                      parent=self.ROOT)
-
-    def get_overview(self, name):
-        self.open()
-
-        _row = self.browser.element(locator=self.DR_ROWS.format(
-                'pf-tab-section-2-service-tabs', name),
-                                        parent=self.ROOT)
-        _columns = list(self.browser.elements(locator=self.COLUMN, parent=_row))
-
-        self.browser.click('.//a', parent=_columns[1])
-        wait_to_spinner_disappear(self.browser)
-
-        _name = self.browser.text(
-            locator=self.OVERVIEW_HEADER.format(self.NAME),
-            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.NAME, '').strip()
-        _created_at_ui = self.browser.text(locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
-                                           parent=self.OVERVIEW_DETAILS_ROOT).replace(
-                                            self.CREATED_AT, '').strip()
-        _created_at = self._get_date_tooltip(self.browser.element(
-            locator=self.OVERVIEW_PROPERTIES.format(self.CREATED_AT),
-            parent=self.OVERVIEW_DETAILS_ROOT))
-        _resource_version = self.browser.text(
-            locator=self.OVERVIEW_PROPERTIES.format(self.RESOURCE_VERSION),
-            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.RESOURCE_VERSION, '').strip()
-        _host = self.browser.text(
-            locator=self.OVERVIEW_PROPERTIES.format(self.HOST),
-            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.HOST, '').strip()
-        _traffic_policy = self.browser.text_or_default(
-            locator='//div[@id="traffic_policy"]',
-            parent=self.OVERVIEW_DETAILS_ROOT).\
-            replace(self.NO_TRAFFIC_POLICY, self.NONE).strip()
-        _subsets = self.browser.text_or_default(
-            locator=('.//div[contains(@class, "pf-c-card__body")]//'
-                     'h2[@data-pf-content="true" and contains(text(), "{}")]/..//tbody').format(
-                        self.SUBSETS),
-            parent=self.OVERVIEW_DETAILS_ROOT).\
-            replace(self.NO_SUBSETS, self.NONE).\
-            replace(' :', '').strip()
-        _status = self._get_overview_status(self.OVERVIEW_DETAILS_ROOT)
-
-        # back to service details
-        self.back_to_service_info()
-
-        return DestinationRule(
-                status=_status,
-                name=_name,
-                host=_host,
-                created_at=parse_from_rest(_created_at),
-                created_at_ui=_created_at_ui,
-                resource_version=_resource_version,
-                traffic_policy=to_linear_string(
-                    _traffic_policy if _traffic_policy != self.NONE else ''),
-                subsets=to_linear_string(_subsets if _subsets != self.NONE else ''))
-
-    @property
-    def number(self):
-        _dr_text = self.browser.text(locator=self.SERVICES_TAB.format(self.DR_TEXT),
-                                     parent=self.SERVICE_DETAILS_ROOT)
-        return int(re.search(r'\d+', _dr_text).group())
-
-    @property
-    def items(self):
-        self.open()
-
-        _items = []
-        for el in self.browser.elements(locator=self.ROWS.format(
-                'pf-tab-section-2-service-tabs'),
-                                        parent=self.ROOT):
-            _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
-            if len(_columns) < 2:
-                # empty row
-                continue
-            _name = _columns[1].text.strip()
-            _traffic_policy = _columns[2].text.strip()
-            _subsets = _columns[3].text.strip()
-            _host = _columns[4].text.strip()
-            _created_at_ui = _columns[5].text.strip()
-            _created_at = self._get_date_tooltip(_columns[5])
-            _resource_version = _columns[6].text.strip()
-            # create Destination Rule instance
-            _destination_rule = DestinationRule(
-                status=self._get_item_status(_columns[0]),
-                name=_name,
-                host=_host,
-                created_at=parse_from_rest(_created_at),
-                created_at_ui=_created_at_ui,
-                resource_version=_resource_version,
-                traffic_policy=to_linear_string(
-                    _traffic_policy if _traffic_policy != self.NONE else ''),
-                subsets=to_linear_string(_subsets if _subsets != self.NONE else ''))
-            # append this item to the final list
-            _items.append(_destination_rule)
-        return _items
-
-
 class TableViewIstioConfig(TableViewAbstract):
     CONFIG_TEXT = 'Istio Config'
     GATEWAYS = '//div[@id="gateways"]//ul[contains(@class, "details")]//li'
@@ -3415,11 +3167,12 @@ class TableViewIstioConfig(TableViewAbstract):
         return _items
 
     def get_overview(self, name, config_type):
-        # TODO PeerAuth overview.
         if config_type == IstioConfigObjectType.VIRTUAL_SERVICE.text:
             return self._get_vs_overview(name)
-        else:
+        elif config_type == IstioConfigObjectType.DESTINATION_RULE.text:
             return self._get_dr_overview(name)
+        else:
+            return self._get_peerauth_overview(name)
 
     def _get_vs_overview(self, name):
         self.open()
@@ -3498,6 +3251,26 @@ class TableViewIstioConfig(TableViewAbstract):
                 name=name,
                 host=_host,
                 subsets=_subsets)
+
+    def _get_peerauth_overview(self, name):
+        self.open()
+
+        _row = self.browser.element(locator=self.ROW.format(
+            self.TAB_ID, name,
+            IstioConfigObjectType.PEER_AUTHENTICATION.text),
+                                    parent=self.ROOT)
+        _columns = list(self.browser.elements(locator=self.COLUMN, parent=_row))
+
+        self.browser.click('.//a', parent=_columns[1])
+        wait_to_spinner_disappear(self.browser)
+
+        _text = self.browser.text(locator=self.CONFIG_TEXT_LOCATOR,
+                                  parent=self.CONFIG_DETAILS_ROOT)
+
+        # back to workload details
+        self.back_to_service_info()
+
+        return IstioConfigDetails(name=name, text=_text)
 
 
 class TableViewWorkloadIstioConfig(TableViewIstioConfig):
@@ -3687,7 +3460,6 @@ class TrafficView(TabViewAbstract):
             _request_type = _columns[4].text.strip()
 
             # Traffic Item object creation
-            # TODO traffic bound type
             _item = TrafficItem(
                 status=self._get_item_health(_columns[0]),
                 name=_name,

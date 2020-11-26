@@ -57,6 +57,7 @@ from kiali_qe.components.error_codes import (
     KIA0206
 )
 from kiali_qe.rest.kiali_api import ISTIO_CONFIG_TYPES
+from kiali_qe.rest.openshift_api import APP_NAME_REGEX
 from kiali_qe.utils import (
     is_equal,
     is_sublist,
@@ -528,9 +529,6 @@ class AbstractListPageTest(object):
             if not found:
                 assert found, 'Config {} not found in OC {}'.format(istio_config_ui,
                                                                     istio_config_oc)
-            # TODO AuthPolicies
-            if istio_config_ui.type == IstioConfigObjectType.PEER_AUTHENTICATION.text:
-                return
             config_overview_ui = self.page.content.table_view_istio_config.get_overview(
                     istio_config_ui.name,
                     istio_config_ui.type)
@@ -540,7 +538,12 @@ class AbstractListPageTest(object):
                 object_type=istio_config_ui.type)
             # TODO get the status from overview
             assert istio_config_ui.status == istio_config_rest.validation
-            if istio_config_ui.type == IstioConfigObjectType.VIRTUAL_SERVICE.text:
+            if istio_config_ui.type == IstioConfigObjectType.PEER_AUTHENTICATION.text:
+                assert '\'app\': \'{}\''.format(re.sub(
+                    APP_NAME_REGEX,
+                    '',
+                    object_ui.name)) in config_overview_ui.text
+            elif istio_config_ui.type == IstioConfigObjectType.VIRTUAL_SERVICE.text:
                 for _host in config_overview_ui.hosts:
                     assert '\'host\': \'{}\''.format(_host) in config_details_oc.text
                 for _gateway in config_overview_ui.gateways:
@@ -1898,7 +1901,7 @@ class IstioConfigPageTest(AbstractListPageTest):
                         if ui_key == rest_key and config_ui == config_rest:
                             found = True
                             break
-                if not found:
+                if not found and 'last-applied-configuration' not in ui_key:
                     assert found, '{} {} not found in REST'.format(ui_key, config_ui)
                 found = False
                 # make the OC result into the same format as shown in UI
