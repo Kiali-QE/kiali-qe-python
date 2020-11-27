@@ -370,6 +370,7 @@ class RoutingWizardType(StringEnum):
     REQUEST_ROUTING = ('Request Routing')
     FAULT_INJECTION = ('Fault Injection')
     TRAFFIC_SHIFTING = ('Traffic Shifting')
+    TCP_TRAFFIC_SHIFTING = ('TCP Traffic Shifting')
     REQUEST_TIMEOUTS = ('Request Timeouts')
 
 

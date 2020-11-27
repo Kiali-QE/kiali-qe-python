@@ -1504,6 +1504,21 @@ class ServicesPageTest(AbstractListPageTest):
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_weighted_enabled()
             assert self.page.actions.is_create_matching_disabled()
+            assert self.page.actions.is_tcp_shifting_disabled()
+            assert self.page.actions.is_timeouts_disabled()
+            assert self.page.actions.is_suspend_disabled()
+        elif routing_type == RoutingWizardType.TCP_TRAFFIC_SHIFTING:
+            assert self.page.actions.create_tcp_traffic_shifting(
+                tls=tls,
+                peer_auth_mode=peer_auth_mode,
+                load_balancer=load_balancer,
+                load_balancer_type=load_balancer_type, gateway=gateway,
+                include_mesh_gateway=include_mesh_gateway,
+                skip_advanced=skip_advanced)
+            assert not self.page.actions.is_delete_disabled()
+            assert self.page.actions.is_tcp_shifting_enabled()
+            assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_create_matching_disabled()
             assert self.page.actions.is_timeouts_disabled()
             assert self.page.actions.is_suspend_disabled()
         elif routing_type == RoutingWizardType.REQUEST_ROUTING:
@@ -1518,6 +1533,7 @@ class ServicesPageTest(AbstractListPageTest):
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_matching_enabled()
             assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_tcp_shifting_disabled()
             assert self.page.actions.is_timeouts_disabled()
             assert self.page.actions.is_suspend_disabled()
         elif routing_type == RoutingWizardType.FAULT_INJECTION:
@@ -1532,6 +1548,7 @@ class ServicesPageTest(AbstractListPageTest):
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_create_matching_disabled()
             assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_tcp_shifting_disabled()
             assert self.page.actions.is_timeouts_disabled()
             assert self.page.actions.is_update_suspended_enabled()
         elif routing_type == RoutingWizardType.REQUEST_TIMEOUTS:
@@ -1546,6 +1563,7 @@ class ServicesPageTest(AbstractListPageTest):
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_create_matching_disabled()
             assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_tcp_shifting_disabled()
             assert self.page.actions.is_suspend_disabled()
             assert self.page.actions.is_timeouts_enabled()
         # get service details from rest
@@ -1618,6 +1636,21 @@ class ServicesPageTest(AbstractListPageTest):
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_weighted_enabled()
             assert self.page.actions.is_create_matching_disabled()
+            assert self.page.actions.is_tcp_shifting_disabled()
+            assert self.page.actions.is_timeouts_disabled()
+            assert self.page.actions.is_suspend_disabled()
+        elif routing_type == RoutingWizardType.TCP_TRAFFIC_SHIFTING:
+            assert self.page.actions.update_tcp_traffic_shifting(
+                tls=tls,
+                peer_auth_mode=peer_auth_mode,
+                load_balancer=load_balancer,
+                load_balancer_type=load_balancer_type, gateway=gateway,
+                include_mesh_gateway=include_mesh_gateway,
+                skip_advanced=skip_advanced)
+            assert not self.page.actions.is_delete_disabled()
+            assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_create_matching_disabled()
+            assert self.page.actions.is_tcp_shifting_enabled()
             assert self.page.actions.is_timeouts_disabled()
             assert self.page.actions.is_suspend_disabled()
         elif routing_type == RoutingWizardType.REQUEST_ROUTING:
@@ -1631,6 +1664,7 @@ class ServicesPageTest(AbstractListPageTest):
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_matching_enabled()
             assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_tcp_shifting_disabled()
             assert self.page.actions.is_timeouts_disabled()
             assert self.page.actions.is_suspend_disabled()
         elif routing_type == RoutingWizardType.FAULT_INJECTION:
@@ -1645,6 +1679,7 @@ class ServicesPageTest(AbstractListPageTest):
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_create_matching_disabled()
             assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_tcp_shifting_disabled()
             assert self.page.actions.is_timeouts_disabled()
             assert self.page.actions.is_update_suspended_enabled()
         elif routing_type == RoutingWizardType.REQUEST_TIMEOUTS:
@@ -1659,6 +1694,7 @@ class ServicesPageTest(AbstractListPageTest):
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_create_matching_disabled()
             assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_tcp_shifting_disabled()
             assert self.page.actions.is_suspend_disabled()
             assert self.page.actions.is_timeouts_enabled()
         # get service details from rest
@@ -1706,6 +1742,7 @@ class ServicesPageTest(AbstractListPageTest):
         assert self.page.actions.is_delete_disabled()
         assert self.page.actions.is_create_weighted_enabled()
         assert self.page.actions.is_create_matching_enabled()
+        assert self.page.actions.is_tcp_shifting_enabled()
         assert self.page.actions.is_suspend_enabled()
         assert self.page.actions.is_timeouts_enabled()
         # get service details from rest
