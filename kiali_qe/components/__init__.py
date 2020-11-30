@@ -717,6 +717,7 @@ class Actions(Widget):
     DELETE_TRAFFIC_ROUTING = 'Delete Traffic Routing'
     REQUEST_ROUTING = RoutingWizardType.REQUEST_ROUTING.text
     TRAFFIC_SHIFTING = RoutingWizardType.TRAFFIC_SHIFTING.text
+    TCP_TRAFFIC_SHIFTING = RoutingWizardType.TCP_TRAFFIC_SHIFTING.text
     FAULT_INJECTION = RoutingWizardType.FAULT_INJECTION.text
     REQUEST_TIMEOUTS = RoutingWizardType.REQUEST_TIMEOUTS.text
 
@@ -779,6 +780,9 @@ class Actions(Widget):
     def is_create_weighted_disabled(self):
         return self.TRAFFIC_SHIFTING in self.disabled_actions
 
+    def is_tcp_shifting_disabled(self):
+        return self.TCP_TRAFFIC_SHIFTING in self.disabled_actions
+
     def is_create_matching_disabled(self):
         return self.REQUEST_ROUTING in self.disabled_actions
 
@@ -790,6 +794,9 @@ class Actions(Widget):
 
     def is_create_weighted_enabled(self):
         return self.TRAFFIC_SHIFTING in self.actions
+
+    def is_tcp_shifting_enabled(self):
+        return self.TCP_TRAFFIC_SHIFTING in self.actions
 
     def is_create_matching_enabled(self):
         return self.REQUEST_ROUTING in self.actions
@@ -879,6 +886,61 @@ class Actions(Widget):
                                   gateway=gateway,
                                   include_mesh_gateway=include_mesh_gateway,
                                   circuit_braker=circuit_braker,
+                                  skip_advanced=skip_advanced)
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.UPDATE_BUTTON)))
+            wait_not_displayed(self)
+            # wait to Spinner disappear
+            wait_to_spinner_disappear(self.browser)
+            return True
+        else:
+            return False
+
+    def create_tcp_traffic_shifting(self, tls=RoutingWizardTLS.DISABLE,
+                                    peer_auth_mode=None,
+                                    load_balancer=False,
+                                    load_balancer_type=None,
+                                    gateway=False,
+                                    include_mesh_gateway=False,
+                                    skip_advanced=False):
+        if self.is_tcp_shifting_disabled():
+            return False
+        else:
+            self.select(self.TCP_TRAFFIC_SHIFTING)
+            self.advanced_options(tls=tls,
+                                  peer_auth_mode=peer_auth_mode,
+                                  load_balancer=load_balancer,
+                                  load_balancer_type=load_balancer_type,
+                                  gateway=gateway,
+                                  include_mesh_gateway=include_mesh_gateway,
+                                  circuit_braker=False,
+                                  skip_advanced=skip_advanced)
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.CREATE_BUTTON)))
+            wait_not_displayed(self)
+            # wait to Spinner disappear
+            wait_to_spinner_disappear(self.browser)
+            return True
+
+    def update_tcp_traffic_shifting(self,
+                                    tls=RoutingWizardTLS.DISABLE,
+                                    peer_auth_mode=None,
+                                    load_balancer=False,
+                                    load_balancer_type=None,
+                                    gateway=False,
+                                    include_mesh_gateway=False,
+                                    skip_advanced=False):
+        if self.is_tcp_shifting_enabled():
+            self.select(self.TCP_TRAFFIC_SHIFTING)
+            self.advanced_options(tls=tls,
+                                  peer_auth_mode=peer_auth_mode,
+                                  load_balancer=load_balancer,
+                                  load_balancer_type=load_balancer_type,
+                                  gateway=gateway,
+                                  include_mesh_gateway=include_mesh_gateway,
+                                  circuit_braker=False,
                                   skip_advanced=skip_advanced)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
@@ -1122,9 +1184,6 @@ class Actions(Widget):
         _gateways_tab = self.browser.element(
             parent=self.DIALOG_ROOT,
             locator=('.//button[text()="Gateways"]'))
-        _circuit_tab = self.browser.element(
-            parent=self.DIALOG_ROOT,
-            locator=('.//button[text()="Circuit Breaker"]'))
         if tls:
             self.browser.click(_traffic_tab)
             self._tls.select(tls.text)
@@ -1158,14 +1217,20 @@ class Actions(Widget):
         else:
             self.browser.click(_gateways_tab)
             self._gateway_switch.off()
-        if circuit_braker:
-            self.browser.click(_circuit_tab)
-            self._connection_pool_switch.on()
-            self._outlier_detection_switch.on()
-        else:
-            self.browser.click(_circuit_tab)
-            self._connection_pool_switch.off()
-            self._outlier_detection_switch.off()
+        try:
+            _circuit_tab = self.browser.element(
+                parent=self.DIALOG_ROOT,
+                locator=('.//button[text()="Circuit Breaker"]'))
+            if circuit_braker:
+                self.browser.click(_circuit_tab)
+                self._connection_pool_switch.on()
+                self._outlier_detection_switch.on()
+            else:
+                self.browser.click(_circuit_tab)
+                self._connection_pool_switch.off()
+                self._outlier_detection_switch.off()
+        except (NoSuchElementException):
+            pass
 
 
 class ConfigActions(Actions):

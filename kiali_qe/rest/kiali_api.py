@@ -524,7 +524,11 @@ class KialiExtendedClient(KialiClient):
                     and len(_service_data['virtualServices']['items']) > 0:
                 for _vs_data in _service_data['virtualServices']['items']:
                     _weights = []
-                    for _route in _vs_data['spec']['http'][0]['route']:
+                    if 'http' in _vs_data['spec']:
+                        _protocol = _vs_data['spec']['http'][0]
+                    else:
+                        _protocol = _vs_data['spec']['tcp'][0]
+                    for _route in _protocol['route']:
                         _weights.append(VirtualServiceWeight(
                             host=_route['destination']['host'],
                             subset=_route['destination']['subset']
@@ -536,11 +540,11 @@ class KialiExtendedClient(KialiClient):
                             weight=_route['weight'] if
                             ('weight' in _route and _route['weight'] != 0) else None)
                         )
-                    if 'match' in _vs_data['spec']['http'][0]:
-                        _http_route = 'match ' + \
-                            to_linear_string(_vs_data['spec']['http'][0]['match'])
+                    if 'match' in _protocol:
+                        _protocol_route = 'match ' + \
+                            to_linear_string(_protocol['match'])
                     else:
-                        _http_route = ''
+                        _protocol_route = ''
                     _validation = self.get_istio_config_validation(
                             _vs_data['metadata']['namespace'],
                             'virtualservices',
@@ -551,7 +555,7 @@ class KialiExtendedClient(KialiClient):
                         created_at=parse_from_rest(_vs_data['metadata']['creationTimestamp']),
                         created_at_ui=from_rest_to_ui(_vs_data['metadata']['creationTimestamp']),
                         resource_version=_vs_data['metadata']['resourceVersion'],
-                        http_route=_http_route,
+                        protocol_route=_protocol_route,
                         hosts=_vs_data['spec']['hosts'],
                         weights=_weights))
                     # It also requires IstioConfig type of objects in several testcases
