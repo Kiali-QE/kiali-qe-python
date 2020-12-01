@@ -1833,6 +1833,7 @@ class ViewAbstract(Widget):
             pass
 
     def _get_labels(self, el):
+        self.click_more_labels(el)
         _label_dict = {}
         _labels = self.browser.elements(
             parent=el,
