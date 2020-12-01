@@ -1792,7 +1792,7 @@ class IstioConfigPageTest(AbstractListPageTest):
                         if ui_key == rest_key and config_ui == config_rest:
                             found = True
                             break
-                if not found:
+                if not found and 'last-applied-configuration' not in ui_key:
                     assert found, '{} {} not found in REST'.format(ui_key, config_ui)
                 found = False
                 # make the OC result into the same format as shown in UI
