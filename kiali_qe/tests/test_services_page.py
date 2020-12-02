@@ -75,7 +75,8 @@ def test_filter_service_by_label(kiali_client, openshift_client, browser):
 def test_filter_service_by_or_label(kiali_client, openshift_client, browser):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.assert_all_items(filters=[
+    tests.assert_all_items(namespaces=[BOOKINFO_2],
+                           filters=[
         {"name": ServicesPageFilter.LABEL.text, "value": "app:reviews"},
         {"name": ServicesPageFilter.LABEL.text, "value": "service"}],
         label_operation=LabelOperation.OR.text)
@@ -86,7 +87,8 @@ def test_filter_service_by_or_label(kiali_client, openshift_client, browser):
 def test_filter_service_by_and_label(kiali_client, openshift_client, browser):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.assert_all_items(filters=[
+    tests.assert_all_items(namespaces=[BOOKINFO_2],
+                           filters=[
         {"name": ServicesPageFilter.LABEL.text, "value": "app"},
         {"name": ServicesPageFilter.LABEL.text, "value": "service"}],
         label_operation=LabelOperation.AND.text)
