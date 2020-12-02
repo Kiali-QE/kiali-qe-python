@@ -165,7 +165,7 @@ def test_destination_rule_host_warning(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group5
+@pytest.mark.p_crud_group2
 def test_virtual_service(kiali_client, openshift_client, browser):
     gateway = get_yaml(istio_objects_path.strpath, GATEWAY)
     gateway_dict = get_dict(istio_objects_path.strpath, GATEWAY)
