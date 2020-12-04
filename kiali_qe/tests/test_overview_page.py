@@ -9,6 +9,7 @@ from kiali_qe.components.enums import (
 from kiali_qe.utils.command_exec import oc_idle
 
 BOOKINFO_2 = 'bookinfo2'
+BOOKINFO_3 = 'bookinfo3'
 
 
 @pytest.mark.p_atomic
@@ -149,7 +150,7 @@ def test_overview_auto_injection(kiali_client, openshift_client, browser, pick_n
 def test_overview_traffic_policies(kiali_client, openshift_client, browser, pick_namespace):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    namespace = pick_namespace(BOOKINFO_2)
+    namespace = pick_namespace(BOOKINFO_3)
     tests.test_create_update_delete_traffic_policies(namespace)
 
 

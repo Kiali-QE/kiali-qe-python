@@ -10,6 +10,7 @@ from kiali_qe.components.enums import (
 
 BOOKINFO = 'bookinfo'
 BOOKINFO_2 = 'bookinfo2'
+BOOKINFO_3 = 'bookinfo3'
 ISTIO_SYSTEM = 'istio-system'
 
 
@@ -121,5 +122,5 @@ def test_workload_details_random(kiali_client, openshift_client, browser):
 def test_workload_auto_injection(kiali_client, openshift_client, browser, pick_namespace):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    namespace = pick_namespace(BOOKINFO_2)
+    namespace = pick_namespace(BOOKINFO_3)
     tests.test_disable_enable_delete_auto_injection(name='details-v1', namespace=namespace)

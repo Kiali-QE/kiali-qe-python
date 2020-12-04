@@ -34,6 +34,7 @@ can be run in parallel.
 
 BOOKINFO_1 = 'bookinfo'
 BOOKINFO_2 = 'bookinfo2'
+BOOKINFO_3 = 'bookinfo3'
 REVIEWS = 'reviews'
 DETAILS = 'details'
 RATINGS = 'ratings'
@@ -274,7 +275,7 @@ def test_virtual_service_subset_warning(kiali_client, openshift_client, browser)
 def test_virtual_service_broken(kiali_client, openshift_client, browser):
     virtual_service_broken = get_yaml(istio_objects_path.strpath, VIRTUAL_SERVICE_BROKEN)
     virtual_service_broken_dict = get_dict(istio_objects_path.strpath, VIRTUAL_SERVICE_BROKEN)
-    _create_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
+    _create_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS, BOOKINFO_3)
 
     try:
         _istio_config_test(kiali_client, openshift_client, browser,
@@ -288,7 +289,7 @@ def test_virtual_service_broken(kiali_client, openshift_client, browser):
                                {'name': IstioConfigPageFilter.ISTIO_NAME.text,
                                 'value': virtual_service_broken_dict.metadata.name}
                             ],
-                           namespace=BOOKINFO_1,
+                           namespace=BOOKINFO_3,
                            kind='VirtualService',
                            api_version='networking.istio.io/v1alpha3',
                            service_name=REVIEWS,

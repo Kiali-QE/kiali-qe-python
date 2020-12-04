@@ -721,6 +721,8 @@ class OverviewPageTest(AbstractListPageTest):
         # first delete the policies if exists
         self.kiali_client.update_namespace_auto_injection(namespace, 'enabled')
         self.kiali_client.update_namespace_auto_injection(namespace, 'disabled')
+        self.page.page_refresh()
+        wait_to_spinner_disappear(self.browser)
         if self.page.content.select_action(
                 namespace, OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text):
             self.browser.click(self.browser.element(
