@@ -6,7 +6,7 @@ from openshift.dynamic.exceptions import NotFoundError
 from kiali_qe.components.enums import LabelOperation, WorkloadType, IstioConfigObjectType
 from kiali_qe.entities.istio_config import IstioConfig, IstioConfigDetails
 from kiali_qe.entities.service import Service, ServiceDetails
-from kiali_qe.entities.workload import Workload, WorkloadDetails
+from kiali_qe.entities.workload import Workload, WorkloadDetails, WorkloadPod
 from kiali_qe.entities.applications import (
     Application,
     ApplicationDetails,
@@ -408,6 +408,12 @@ class OpenshiftExtendedClient(object):
             labels = {}
         return dict(labels)
 
+    def _get_initcontainer_image(self, item):
+        try:
+            return item.spec.initContainers[0].image
+        except (KeyError, AttributeError, TypeError):
+            return ''
+
     def _concat_labels(self, dict1, dict2):
         result = dict1
         for _key, _value in dict2.items():
@@ -475,6 +481,30 @@ class OpenshiftExtendedClient(object):
                 filtered_list.extend([_i for _i in items if _name in _i.name])
             return set(filtered_list)
         return items
+
+    def get_workload_pods(self, namespace, workload_name):
+        _raw_items = []
+        _filtered_items = []
+        _response = getattr(self, WORKLOAD_TYPES['Pod']).get(namespace=namespace)
+        if hasattr(_response, 'items'):
+            _raw_items.extend(_response.items)
+        for _item in _raw_items:
+            if self._get_workload_name(_item.metadata) == workload_name:
+                _filtered_items.append(WorkloadPod(
+                    name=_item.metadata.name,
+                    created_at=parse_from_rest(
+                        _item.metadata.creationTimestamp),
+                    created_at_ui=from_rest_to_ui(
+                        _item.metadata.creationTimestamp),
+                    created_by='{} ({})'.format(
+                        _item.metadata.ownerReferences[0].name,
+                        _item.metadata.ownerReferences[0].kind),
+                    labels=self._get_labels(_item),
+                    istio_init_containers=self._get_initcontainer_image(_item),
+                    istio_containers=self._get_initcontainer_image(_item),
+                    phase=_item.status.phase,
+                    podIP=_item.status.podIP))
+        return _filtered_items
 
     def application_details(self, namespace, application_name):
         """ Returns the details of Application
@@ -595,6 +625,7 @@ class OpenshiftExtendedClient(object):
             istio_sidecar=None,
             labels=dict(_response.metadata.labels if _response.metadata.labels
                         else _response.spec.selector.matchLabels),
+            pods=self.get_workload_pods(namespace, workload_name),
             # TODO health
             health=None)
         _workload.set_istio_configs(istio_configs=self.get_workload_configs(namespace, _workload))

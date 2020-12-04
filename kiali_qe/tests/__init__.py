@@ -423,6 +423,10 @@ class AbstractListPageTest(object):
     def assert_logs_tab(self, logs_tab, all_pods=[]):
         _filter = "GET"
         logs_tab.open()
+        if len(all_pods) == 0:
+            assert 'No logs for Workload' in \
+                self.browser.text(locator='//h5[contains(@class, "pf-c-title")]', parent=self)
+            return
         assert is_equal(all_pods, logs_tab.pods.options)
         assert is_equal([item.text for item in TailLines],
                         logs_tab.tail_lines.options)
@@ -1123,6 +1127,15 @@ class WorkloadsPageTest(AbstractListPageTest):
                     break
             if not found:
                 assert found, 'Pod {} not found in REST {}'.format(pod_ui, pod_rest)
+        for pod_oc in workload_details_oc.pods:
+            found = False
+            for pod_rest in workload_details_rest.pods:
+                if pod_oc.is_equal(pod_rest,
+                                   advanced_check=False):
+                    found = True
+                    break
+            if not found:
+                assert found, 'OC Pod {} not found in REST {}'.format(pod_oc, pod_rest)
         for service_ui in workload_details_ui.services:
             found = False
             for service_rest in workload_details_rest.services:
