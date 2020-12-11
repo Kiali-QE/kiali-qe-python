@@ -165,7 +165,8 @@ class WorkloadDetails(EntityBase):
 class WorkloadPod(EntityBase):
 
     def __init__(self, name, created_at, created_at_ui, created_by, labels={},
-                 istio_init_containers=None, istio_containers=None, status=None, phase=None):
+                 istio_init_containers=None, istio_containers=None, status=None,
+                 phase=None, podIP=None):
         self.name = name
         self.created_at = created_at
         self.created_by = created_by
@@ -175,6 +176,7 @@ class WorkloadPod(EntityBase):
         self.istio_containers = istio_containers
         self.status = status
         self.phase = phase
+        self.podIP = podIP
 
     def __str__(self):
         return 'name:{}, created_at:{}, created_by:{}, labels: {}\
@@ -212,15 +214,15 @@ class WorkloadPod(EntityBase):
             return False
         if self.labels != other.labels:
             return False
+        if self.istio_init_containers != other.istio_init_containers:
+            return False
+        if self.istio_containers != other.istio_containers:
+            return False
+        if self.phase != other.phase:
+            return False
         # advanced check
         if advanced_check:
-            if self.istio_init_containers != other.istio_init_containers:
-                return False
-            if self.istio_containers != other.istio_containers:
-                return False
             if self.status != other.status:
-                return False
-            if self.phase != other.phase:
                 return False
         return True
 
