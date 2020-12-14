@@ -437,6 +437,12 @@ class OpenshiftExtendedClient(object):
             '',
             workload.name)
 
+    def _get_service_app(self, name, labels):
+        return labels['app'] if 'app' in labels else re.sub(
+            APP_NAME_REGEX,
+            '',
+            name)
+
     def istio_config_list(self, namespaces=[], config_names=[]):
         """ Returns list of Istio Configs """
         result = []
@@ -549,6 +555,7 @@ class OpenshiftExtendedClient(object):
             _ports += '{}{} ({}) '.format(_port['protocol'],
                                           ' ' + _port['name'] if _port['name'] != '' else '',
                                           _port['port'])
+        _labels = dict(_response.metadata.labels if _response.metadata.labels else {})
         _service = ServiceDetails(
             namespace=_response.metadata.namespace,
             name=_response.metadata.name,
@@ -560,9 +567,11 @@ class OpenshiftExtendedClient(object):
             resource_version=_response.metadata.resourceVersion,
             service_type=_response.spec.type,
             ip=_response.spec.clusterIP,
-            # TODO endpoints from Deployments
+            endpoints=self._get_service_endpoints(namespace,
+                                                  self._get_service_app(_response.metadata.name,
+                                                                        _labels)),
             ports=_ports.strip(),
-            labels=dict(_response.metadata.labels if _response.metadata.labels else {}),
+            labels=_labels,
             selectors=dict(_response.spec.selector if _response.spec.selector else {}),
             # TODO health
             health=None,
@@ -571,6 +580,21 @@ class OpenshiftExtendedClient(object):
                 service_name))
 
         return _service
+
+    def _get_service_endpoints(self, namespace, app_label):
+        """ Returns the list of workload pod's IPs for particular service by application label
+        Args:
+            namespace: Namespace where service is located
+            app_label: app label value
+        """
+        endpoints = []
+        _workloads = self.workload_list(namespaces=[namespace],
+                                        workload_labels=['app:{}'.format(app_label)])
+        for _workload in _workloads:
+            _pods = self.get_workload_pods(namespace, _workload.name)
+            for _pod in _pods:
+                endpoints.append(_pod.podIP)
+        return endpoints
 
     def get_service_configs(self, namespace, service_name):
         """ Returns the list of istio config pages for particular service
