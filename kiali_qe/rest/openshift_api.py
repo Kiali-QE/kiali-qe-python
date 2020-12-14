@@ -573,6 +573,9 @@ class OpenshiftExtendedClient(object):
             ports=_ports.strip(),
             labels=_labels,
             selectors=dict(_response.spec.selector if _response.spec.selector else {}),
+            workloads=self._get_service_workloads(namespace,
+                                                  self._get_service_app(_response.metadata.name,
+                                                                        _labels)),
             # TODO health
             health=None,
             istio_configs=self.get_service_configs(
@@ -580,6 +583,22 @@ class OpenshiftExtendedClient(object):
                 service_name))
 
         return _service
+
+    def _get_service_workloads(self, namespace, app_label):
+        """ Returns the list of workload for particular service by application label
+        Args:
+            namespace: Namespace where service is located
+            app_label: app label value
+        """
+        result = []
+        _workloads_list = self.workload_list(namespaces=[namespace],
+                                        workload_labels=['app:{}'.format(app_label)])
+        for _workload_item in _workloads_list:
+            result.append(self.workload_details(namespace,
+                                                _workload_item.name,
+                                                _workload_item.workload_type))
+        return result
+
 
     def _get_service_endpoints(self, namespace, app_label):
         """ Returns the list of workload pod's IPs for particular service by application label

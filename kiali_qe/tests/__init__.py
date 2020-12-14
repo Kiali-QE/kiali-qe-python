@@ -1380,6 +1380,14 @@ class ServicesPageTest(AbstractListPageTest):
             if not found:
                 assert found, 'Workload {} not found in REST {}'.format(workload_ui,
                                                                         workload_rest)
+            found = False
+            for workload_oc in service_details_oc.workloads:
+                if workload_ui.is_equal(workload_oc, advanced_check=True):
+                    found = True
+                    break
+            if not found:
+                assert found, 'Workload {} not found in OC {}'.format(workload_ui,
+                                                                      workload_oc)
 
         self.assert_istio_configs(service_details_ui,
                                   service_details_rest,
