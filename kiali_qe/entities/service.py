@@ -211,14 +211,14 @@ class ServiceDetails(EntityBase):
             return False
         if self.labels != other.labels:
             return False
+        if not is_equal(self.endpoints, other.endpoints):
+            return False
         # https://github.com/kiali/kiali/issues/1382
         # if self.selectors != other.selectors:
         #    return False
         # advanced check
         if not advanced_check:
             return True
-        if not is_equal(self.endpoints, other.endpoints):
-            return False
         # if self.istio_sidecar != other.istio_sidecar:
         #    return False
         if self.health != other.health:
