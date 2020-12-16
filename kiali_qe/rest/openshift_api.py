@@ -543,7 +543,7 @@ class OpenshiftExtendedClient(object):
 
         return _application
 
-    def service_details(self, namespace, service_name):
+    def service_details(self, namespace, service_name, skip_workloads=True):
         """ Returns the details of service
         Args:
             namespace: Namespace of the service
@@ -567,15 +567,17 @@ class OpenshiftExtendedClient(object):
             resource_version=_response.metadata.resourceVersion,
             service_type=_response.spec.type,
             ip=_response.spec.clusterIP,
-            endpoints=self._get_service_endpoints(namespace,
-                                                  self._get_service_app(_response.metadata.name,
-                                                                        _labels)),
+            endpoints=([] if skip_workloads else self._get_service_endpoints(
+                namespace,
+                self._get_service_app(_response.metadata.name,
+                                      _labels))),
             ports=_ports.strip(),
             labels=_labels,
             selectors=dict(_response.spec.selector if _response.spec.selector else {}),
-            workloads=self._get_service_workloads(namespace,
-                                                  self._get_service_app(_response.metadata.name,
-                                                                        _labels)),
+            workloads=([] if skip_workloads else self._get_service_workloads(
+                namespace,
+                self._get_service_app(_response.metadata.name,
+                                      _labels))),
             # TODO health
             health=None,
             istio_configs=self.get_service_configs(
@@ -592,13 +594,12 @@ class OpenshiftExtendedClient(object):
         """
         result = []
         _workloads_list = self.workload_list(namespaces=[namespace],
-                                        workload_labels=['app:{}'.format(app_label)])
+                                             workload_labels=['app:{}'.format(app_label)])
         for _workload_item in _workloads_list:
             result.append(self.workload_details(namespace,
                                                 _workload_item.name,
                                                 _workload_item.workload_type))
         return result
-
 
     def _get_service_endpoints(self, namespace, app_label):
         """ Returns the list of workload pod's IPs for particular service by application label
