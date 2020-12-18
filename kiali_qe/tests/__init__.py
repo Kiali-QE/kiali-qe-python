@@ -1338,7 +1338,8 @@ class ServicesPageTest(AbstractListPageTest):
         assert service_details_rest
         assert name == service_details_rest.name
         service_details_oc = self.openshift_client.service_details(namespace=namespace,
-                                                                   service_name=name)
+                                                                   service_name=name,
+                                                                   skip_workloads=False)
         assert service_details_oc
         assert name == service_details_oc.name
 
