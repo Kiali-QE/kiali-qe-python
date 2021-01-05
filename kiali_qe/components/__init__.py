@@ -420,6 +420,14 @@ class ActionsDropDown(DropDown):
         if select_button or select_button == '':
             self.SELECT_BUTTON = select_button
 
+    def _update_options(self, locator):
+        options = []
+        self._open()
+        for el in self.browser.elements(locator=self.locator + locator, parent=self):
+            options.append(self.browser.text(el))
+        self._close()
+        return options
+
 
 class ItemDropDown(DropDown):
     ROOT = '//*[contains(@class, "pf-c-select")]'
@@ -1415,14 +1423,21 @@ class OverviewActions(Actions):
             self.locator = locator
         else:
             self.locator = self.ROOT
-        self._actions = ActionsDropDown(
+
+    @property
+    def actions(self):
+        return ActionsDropDown(
             parent=self, locator=self.locator + self.LINK_ACTIONS, select_button='')
 
     def __locator__(self):
         return self.locator
 
     def select(self, action):
-        self._actions.select(action)
+        self.actions.select(action)
+
+    def reload(self):
+        self.actions._open()
+        self.actions._close()
 
 
 class Traces(Widget):
@@ -2653,20 +2668,21 @@ class ListViewOverview(ListViewAbstract):
             _items.append(_overview)
         return _items
 
-    def overview_actions(self, namespace):
+    def overview_action_options(self, namespace):
         self._do_compact()
         _elements = self.browser.elements(self.ITEMS, parent=self)
         for el in _elements:
             _namespace = self.browser.element(
                 locator=self.ITEM_TITLE, parent=el).text.replace('N/A', '')
             if _namespace == namespace:
-                return OverviewActions(parent=self.parent,
-                                       locator=self.ITEM.format(_namespace),
-                                       logger=logger).actions
+                _actions = OverviewActions(parent=self.parent,
+                                           locator=self.ITEM.format(_namespace),
+                                           logger=logger)
+                return _actions.actions.options
         return None
 
     def select_action(self, namespace, action):
-        _actions = self.overview_actions(namespace)
+        _actions = self.overview_action_options(namespace)
         if action in _actions:
             OverviewActions(parent=self.parent,
                             locator=self.ITEM.format(namespace),
