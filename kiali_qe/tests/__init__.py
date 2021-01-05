@@ -671,7 +671,7 @@ class OverviewPageTest(AbstractListPageTest):
                 assert 'istio-injection' in overview_ui.labels and \
                     overview_ui.labels['istio-injection'] == 'disabled'
                 self._assert_overview_options(
-                    options=self.page.content.overview_actions(namespace),
+                    options=self.page.content.overview_action_options(namespace),
                     enabled=False,
                     deleted=False)
 
@@ -685,7 +685,7 @@ class OverviewPageTest(AbstractListPageTest):
                 assert 'istio-injection' in overview_ui.labels and \
                     overview_ui.labels['istio-injection'] == 'enabled'
                 self._assert_overview_options(
-                    options=self.page.content.overview_actions(namespace),
+                    options=self.page.content.overview_action_options(namespace),
                     enabled=True,
                     deleted=False)
 
@@ -698,7 +698,7 @@ class OverviewPageTest(AbstractListPageTest):
             if overview_ui.namespace == namespace:
                 assert 'istio-injection' not in overview_ui.labels
                 self._assert_overview_options(
-                    options=self.page.content.overview_actions(namespace),
+                    options=self.page.content.overview_action_options(namespace),
                     enabled=False,
                     deleted=True)
 
@@ -712,7 +712,7 @@ class OverviewPageTest(AbstractListPageTest):
                 assert 'istio-injection' in overview_ui.labels and \
                     overview_ui.labels['istio-injection'] == 'enabled'
                 self._assert_overview_options(
-                    options=self.page.content.overview_actions(namespace),
+                    options=self.page.content.overview_action_options(namespace),
                     enabled=True,
                     deleted=False)
 
@@ -729,6 +729,9 @@ class OverviewPageTest(AbstractListPageTest):
         wait_to_spinner_disappear(self.browser)
         if self.page.content.select_action(
                 namespace, OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text):
+            self.browser.wait_for_element(
+                parent=ListViewAbstract.DIALOG_ROOT,
+                locator=('.//button[text()="Delete"]'))
             self.browser.click(self.browser.element(
                 parent=ListViewAbstract.DIALOG_ROOT,
                 locator=('.//button[text()="Delete"]')))
@@ -737,7 +740,7 @@ class OverviewPageTest(AbstractListPageTest):
         wait_to_spinner_disappear(self.browser)
 
         self._assert_overview_options(
-            options=self.page.content.overview_actions(namespace),
+            options=self.page.content.overview_action_options(namespace),
             enabled=False,
             deleted=False,
             policy_created=False)
@@ -749,13 +752,16 @@ class OverviewPageTest(AbstractListPageTest):
         wait_to_spinner_disappear(self.browser)
 
         self._assert_overview_options(
-            options=self.page.content.overview_actions(namespace),
+            options=self.page.content.overview_action_options(namespace),
             enabled=False,
             deleted=False,
             policy_created=True)
 
         assert self.page.content.select_action(
             namespace, OverviewTrafficLinks.UPDATE_TRAFFIC_POLICIES.text)
+        self.browser.wait_for_element(
+            parent=ListViewAbstract.DIALOG_ROOT,
+            locator=('.//button[text()="Update"]'))
         self.browser.click(self.browser.element(
             parent=ListViewAbstract.DIALOG_ROOT,
             locator=('.//button[text()="Update"]')))
@@ -764,13 +770,16 @@ class OverviewPageTest(AbstractListPageTest):
         wait_to_spinner_disappear(self.browser)
 
         self._assert_overview_options(
-            options=self.page.content.overview_actions(namespace),
+            options=self.page.content.overview_action_options(namespace),
             enabled=False,
             deleted=False,
             policy_created=True)
 
         assert self.page.content.select_action(
             namespace, OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text)
+        self.browser.wait_for_element(
+            parent=ListViewAbstract.DIALOG_ROOT,
+            locator=('.//button[text()="Delete"]'))
         self.browser.click(self.browser.element(
             parent=ListViewAbstract.DIALOG_ROOT,
             locator=('.//button[text()="Delete"]')))
@@ -779,7 +788,7 @@ class OverviewPageTest(AbstractListPageTest):
         wait_to_spinner_disappear(self.browser)
 
         self._assert_overview_options(
-            options=self.page.content.overview_actions(namespace),
+            options=self.page.content.overview_action_options(namespace),
             enabled=False,
             deleted=False,
             policy_created=False)

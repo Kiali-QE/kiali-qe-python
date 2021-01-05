@@ -421,6 +421,33 @@ class ActionsDropDown(DropDown):
             self.SELECT_BUTTON = select_button
 
 
+class OverviewActionsDropDown(DropDown):
+    ROOT = '//*[contains(@class, "pf-l-toolbar")]'
+    SELECT_BUTTON = '//*[contains(@class, "pf-c-dropdown__toggle")]'
+    OPTIONS_LIST = ('//*[contains(@class, "pf-c-dropdown__menu")]//*[contains(@role, "menuitem")]'
+                    '//*[not(contains(@class, "pf-m-disabled"))]')
+    OPTION = ('//*[contains(@class, "pf-c-dropdown__menu")]'
+              '//*[contains(@role, "menuitem")]//*[text()="{}"]')
+    DISABLED_OPTIONS_LIST = ('/..//*[contains(@class, "pf-c-dropdown__menu")]//*'
+                             '[contains(@role, "menuitem")]'
+                             '//*[contains(@class, "pf-m-disabled")]')
+
+    def __init__(self, parent, force_open=False, locator=None, logger=None, select_button=None):
+        DropDown.__init__(self, parent=parent,
+                          force_open=force_open,
+                          locator=locator,
+                          logger=logger)
+        if select_button or select_button == '':
+            self.SELECT_BUTTON = select_button
+
+    def _update_options(self, locator):
+        self._open()
+        options = [item.text for item in self.browser.elements(locator=self.locator + locator,
+                                                               parent=self)]
+        self._close()
+        return options
+
+
 class ItemDropDown(DropDown):
     ROOT = '//*[contains(@class, "pf-c-select")]'
     SELECT_BUTTON = '//*[contains(@class, "pf-c-select__toggle")]'
@@ -1415,14 +1442,26 @@ class OverviewActions(Actions):
             self.locator = locator
         else:
             self.locator = self.ROOT
-        self._actions = ActionsDropDown(
+
+    @property
+    def options(self):
+        return OverviewActionsDropDown(
+            parent=self, locator=self.locator + self.LINK_ACTIONS, select_button='').options
+
+    @property
+    def actions(self):
+        return OverviewActionsDropDown(
             parent=self, locator=self.locator + self.LINK_ACTIONS, select_button='')
 
     def __locator__(self):
         return self.locator
 
     def select(self, action):
-        self._actions.select(action)
+        self.actions.select(action)
+
+    def reload(self):
+        self.actions._open()
+        self.actions._close()
 
 
 class Traces(Widget):
@@ -2653,7 +2692,7 @@ class ListViewOverview(ListViewAbstract):
             _items.append(_overview)
         return _items
 
-    def overview_actions(self, namespace):
+    def overview_action_options(self, namespace):
         self._do_compact()
         _elements = self.browser.elements(self.ITEMS, parent=self)
         for el in _elements:
@@ -2661,13 +2700,13 @@ class ListViewOverview(ListViewAbstract):
                 locator=self.ITEM_TITLE, parent=el).text.replace('N/A', '')
             if _namespace == namespace:
                 return OverviewActions(parent=self.parent,
-                                       locator=self.ITEM.format(_namespace),
-                                       logger=logger).actions
+                                           locator=self.ITEM.format(_namespace),
+                                           logger=logger).options
         return None
 
     def select_action(self, namespace, action):
-        _actions = self.overview_actions(namespace)
-        if action in _actions:
+        _options = self.overview_action_options(namespace)
+        if action in _options:
             OverviewActions(parent=self.parent,
                             locator=self.ITEM.format(namespace),
                             logger=logger).select(action)
