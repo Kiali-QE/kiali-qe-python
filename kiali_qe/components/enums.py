@@ -146,8 +146,8 @@ class GraphPageBadgesFilter(StringEnum):
 
 class EdgeLabelsFilter(StringEnum):
     HIDE = ('Hide')
-    REQUEST_PER_SECOND = ('Requests per second')
-    REQUEST_PERCENT = ('Requests percent of total')
+    REQUEST_RATE = ('Requests rate')
+    REQUEST_DISTRIBUTION = ('Requests distribution')
     RESPONSE_TIME = ('Response time 95th percentile')
 
 
