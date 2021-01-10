@@ -459,3 +459,9 @@ class AppHealth(StringEnum):
     DEGRADED = ('Degraded')
     FAILURE = ('Failure')
     NO_HEALTH_INFO = ('No health information')
+
+
+class OverviewMTSLStatus (StringEnum):
+    ENABLED = ('Enabled')
+    PARENABLED = ('Partially Enabled')
+    DISABLED = ('Disabled')
