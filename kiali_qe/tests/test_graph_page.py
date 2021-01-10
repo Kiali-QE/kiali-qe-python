@@ -85,7 +85,7 @@ def test_filter(browser):
     assert is_equal(options_defined, options_listed), \
         ('Filter Options mismatch: defined:{}, listed:{}'
          .format(options_defined, options_listed))
-    assert is_equal(options_defined, options_listed), \
+    assert is_equal(edge_options_defined, edge_options_listed), \
         ('Radio Options mismatch: defined:{}, listed:{}'
          .format(edge_options_defined, edge_options_listed))
     # enable disable each filter
