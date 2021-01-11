@@ -145,10 +145,10 @@ class GraphPageBadgesFilter(StringEnum):
 
 
 class EdgeLabelsFilter(StringEnum):
-    NO_LABEL = ('No label')
-    REQUEST_RATE = ('Requests rate')
-    REQUEST_DISTRIBUTION = ('Requests distribution')
-    RESPONSE_TIME = ('Response time')
+    NO_LABEL = ('No Label')
+    REQUEST_RATE = ('Request Rate')
+    REQUEST_DISTRIBUTION = ('Request Distribution')
+    RESPONSE_TIME = ('Response Time')
 
 
 class ApplicationsPageFilter(StringEnum):
