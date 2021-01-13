@@ -572,7 +572,9 @@ class OpenshiftExtendedClient(object):
         _ports = ''
         for _port in _response.spec.ports:
             _ports += '{}{} ({}) '.format(_port['protocol'],
-                                          ' ' + _port['name'] if _port['name'] != '' else '',
+                                          ' ' + _port['name']
+                                          if 'name' in _port and _port['name'] != ''
+                                          else '',
                                           _port['port'])
         _service = ServiceDetails(
             namespace=_response.metadata.namespace,
