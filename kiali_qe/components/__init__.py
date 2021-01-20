@@ -2700,8 +2700,8 @@ class ListViewOverview(ListViewAbstract):
                 locator=self.ITEM_TITLE, parent=el).text.replace('N/A', '')
             if _namespace == namespace:
                 return OverviewActions(parent=self.parent,
-                                           locator=self.ITEM.format(_namespace),
-                                           logger=logger).options
+                                       locator=self.ITEM.format(_namespace),
+                                       logger=logger).options
         return None
 
     def select_action(self, namespace, action):

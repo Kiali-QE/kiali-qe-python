@@ -3,14 +3,25 @@ from kubernetes import config
 from openshift.dynamic import DynamicClient
 from openshift.dynamic.exceptions import NotFoundError
 
-from kiali_qe.components.enums import LabelOperation, WorkloadType, IstioConfigObjectType
+from kiali_qe.components.enums import (
+    LabelOperation,
+    WorkloadType,
+    IstioConfigObjectType
+)
+from kiali_qe.entities import DeploymentStatus
 from kiali_qe.entities.istio_config import IstioConfig, IstioConfigDetails
 from kiali_qe.entities.service import Service, ServiceDetails
-from kiali_qe.entities.workload import Workload, WorkloadDetails, WorkloadPod
+from kiali_qe.entities.workload import (
+    Workload,
+    WorkloadDetails,
+    WorkloadPod,
+    WorkloadHealth
+)
 from kiali_qe.entities.applications import (
     Application,
     ApplicationDetails,
-    AppWorkload
+    AppWorkload,
+    ApplicationHealth
 )
 from kiali_qe.utils import dict_contains, to_linear_string
 from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
@@ -187,6 +198,7 @@ class OpenshiftExtendedClient(object):
                          label_operation=None):
         """ Returns list of applications """
         result_dict = {}
+        application_status_dict = {}
         workloads = []
         workloads.extend(self.workload_list(namespaces=namespaces))
 
@@ -206,11 +218,23 @@ class OpenshiftExtendedClient(object):
                     _labels)
             except NotFoundError:
                 pass
+            if workload.workload_status:
+                if _name+workload.namespace in application_status_dict:
+                    application_status_dict[_name+workload.namespace].append(
+                        workload.workload_status.workload_status)
+                else:
+                    application_status_dict[_name+workload.namespace] = \
+                        [workload.workload_status.workload_status]
             result_dict[_name+workload.namespace] = Application(
                 _name,
                 workload.namespace,
                 istio_sidecar=workload.istio_sidecar,
-                labels=_labels)
+                labels=_labels,
+                # @TODO requests are not in OC
+                application_status=ApplicationHealth(
+                    deployment_statuses=application_status_dict[_name+workload.namespace] \
+                    if _name+workload.namespace in application_status_dict else None,
+                    requests=None))
         result = result_dict.values()
         # filter by service name
         if len(application_names) > 0:
@@ -301,7 +325,8 @@ class OpenshiftExtendedClient(object):
                                             workload_type=_item.workload_type,
                                             istio_sidecar=_item.istio_sidecar,
                                             labels=_item.labels,
-                                            health=_item.health))
+                                            health=_item.health,
+                                            workload_status=_item.workload_status))
             elif _item.workload_type in [WorkloadType.POD.text,
                                          WorkloadType.JOB.text]:
                 if _workload_name + _item.namespace not in replicaset_names and\
@@ -312,7 +337,8 @@ class OpenshiftExtendedClient(object):
                                             workload_type=_item.workload_type,
                                             istio_sidecar=_item.istio_sidecar,
                                             labels=_item.labels,
-                                            health=_item.health))
+                                            health=_item.health,
+                                            workload_status=_item.workload_status))
             else:
                 filtered_list.append(_item)
 
@@ -347,7 +373,8 @@ class OpenshiftExtendedClient(object):
                 namespace=_item.metadata.namespace,
                 workload_type=workload_type,
                 istio_sidecar=self._contains_sidecar(_item),
-                labels=self._get_workload_labels(_item))
+                labels=self._get_workload_labels(_item),
+                workload_status=self._get_workload_status(_item))
             items.append(_workload)
         # filter by workload name
         if len(workload_names) > 0:
@@ -364,6 +391,18 @@ class OpenshiftExtendedClient(object):
                     (True if label_operation == LabelOperation.AND.text else False))])
             items = set(filtered_list)
         return items
+
+    def _get_workload_status(self, item):
+        if item.status.availableReplicas:
+            _workload_status = DeploymentStatus(
+                name=item.metadata.name,
+                replicas=item.status.replicas,
+                available=item.status.availableReplicas)
+            # @TODO requests are not in OC
+            return WorkloadHealth(
+                workload_status=_workload_status, requests=None)
+        else:
+            return None
 
     def get_failing_applications(self, namespace):
         """ Returns list of applications from given namespace which are not ready """
@@ -520,6 +559,7 @@ class OpenshiftExtendedClient(object):
         """
         workloads = {}
         services = []
+        deployment_statuses = []
         all_workloads = self.workload_list(namespaces=[namespace])
         all_services = self.service_list(namespaces=[namespace])
 
@@ -528,6 +568,8 @@ class OpenshiftExtendedClient(object):
                 workloads[workload.name] = AppWorkload(
                         name=workload.name,
                         istio_sidecar=workload.istio_sidecar)
+                if workload.workload_status:
+                    deployment_statuses.append(workload.workload_status.workload_status)
 
         for service in all_services:
             if application_name == self._get_app_name(service):
@@ -538,8 +580,11 @@ class OpenshiftExtendedClient(object):
             workloads=workloads.values(),
             services=list(set(services)),
             istio_sidecar=all([w.istio_sidecar for w in workloads.values()]),
-            # TODO health
-            health=None)
+            health=None,
+            # @TODO requests are not in OC
+            application_status=ApplicationHealth(
+                deployment_statuses=deployment_statuses,
+                requests=None))
 
         return _application
 
@@ -553,7 +598,9 @@ class OpenshiftExtendedClient(object):
         _ports = ''
         for _port in _response.spec.ports:
             _ports += '{}{} ({}) '.format(_port['protocol'],
-                                          ' ' + _port['name'] if _port['name'] != '' else '',
+                                          ' ' + _port['name']
+                                          if 'name' in _port and _port['name'] != ''
+                                          else '',
                                           _port['port'])
         _labels = dict(_response.metadata.labels if _response.metadata.labels else {})
         _service = ServiceDetails(
@@ -670,8 +717,8 @@ class OpenshiftExtendedClient(object):
             labels=dict(_response.metadata.labels if _response.metadata.labels
                         else _response.spec.selector.matchLabels),
             pods=self.get_workload_pods(namespace, workload_name),
-            # TODO health
-            health=None)
+            health=None,
+            workload_status=self._get_workload_status(_response))
         _workload.set_istio_configs(istio_configs=self.get_workload_configs(namespace, _workload))
         return _workload
 

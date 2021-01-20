@@ -914,6 +914,14 @@ class ApplicationsPageTest(AbstractListPageTest):
                 application_details_ui.application_status.is_healthy(),
                 application_details_ui.health,
                 application_details_ui.name)
+        if application_details_oc.application_status:
+            assert is_equal(application_details_ui.application_status.deployment_statuses,
+                            application_details_oc.application_status.deployment_statuses), \
+                    "Application REST Status {} is not equal to OC {} for {}"\
+                    .format(
+                            application_details_ui.application_status.deployment_statuses,
+                            application_details_oc.application_status.deployment_statuses,
+                            application_details_ui.name)
         for workload_ui in application_details_ui.workloads:
             found = False
             for workload_rest in application_details_rest.workloads:
@@ -1026,6 +1034,14 @@ class ApplicationsPageTest(AbstractListPageTest):
                                 application_ui.labels,
                                 application_ui.name)
                     found = True
+                    if application_oc.application_status:
+                        assert is_equal(application_rest.application_status.deployment_statuses,
+                                        application_oc.application_status.deployment_statuses), \
+                                "Application REST Status {} is not equal to OC {} for {}"\
+                                .format(
+                                        application_rest.application_status.deployment_statuses,
+                                        application_oc.application_status.deployment_statuses,
+                                        application_ui.name)
                     break
             if not found:
                 assert found, '{} not found in OC'.format(application_ui)
@@ -1238,6 +1254,14 @@ class WorkloadsPageTest(AbstractListPageTest):
                 if workload_ui.is_equal(workload_oc, advanced_check=False) and \
                         workload_ui.labels.items() == workload_oc.labels.items():
                     found = True
+                    if workload_oc.workload_status:
+                        assert workload_rest.workload_status.workload_status.is_equal(
+                            workload_oc.workload_status.workload_status), \
+                            "Workload REST Status {} is not equal to OC {} for {}"\
+                            .format(
+                            workload_rest.workload_status.workload_status,
+                            workload_oc.workload_status.workload_status,
+                            workload_ui.name)
                     break
             if not found:
                 assert found, '{} not found in OC'.format(workload_ui)
