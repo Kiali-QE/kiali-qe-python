@@ -599,7 +599,7 @@ class OpenshiftExtendedClient(object):
         for _port in _response.spec.ports:
             _ports += '{}{} ({}) '.format(_port['protocol'],
                                           ' ' + _port['name']
-                                          if 'name' in _port and _port['name'] != ''
+                                          if _port['name'] and _port['name'] != ''
                                           else '',
                                           _port['port'])
         _labels = dict(_response.metadata.labels if _response.metadata.labels else {})
