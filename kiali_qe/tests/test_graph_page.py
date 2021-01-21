@@ -60,10 +60,11 @@ def test_type(browser):
         ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
     for option in options_defined:
         p_type.select(option)
-        assert namespace == side_panel.get_namespace()
-        assert not side_panel.get_workload()
-        assert not side_panel.get_service()
-        assert not side_panel.get_application()
+        if len(browser.elements('//h5[contains(text(), "Empty Graph")]')) == 0:
+            assert namespace == side_panel.get_namespace()
+            assert not side_panel.get_workload()
+            assert not side_panel.get_service()
+            assert not side_panel.get_application()
 
 
 @pytest.mark.p_atomic
