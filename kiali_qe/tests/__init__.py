@@ -2020,6 +2020,13 @@ class ValidationsTest(object):
         oc_delete(yaml_file=yaml_file,
                   namespace=namespace)
 
+    def delete_istio_objects(self, scenario, namespace=None):
+        """
+            Deletes istio objects from scenario file.
+        """
+        yaml_file = get_yaml_path(self.objects_path, scenario)
+        self._istio_config_delete(yaml_file, namespace=namespace)
+
     def test_istio_objects(self, scenario, namespace=None,
                            config_validation_objects=[],
                            tls_type=None,

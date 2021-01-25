@@ -45,6 +45,7 @@ SCENARIO_21 = "scenario21.yaml"
 SCENARIO_22 = "scenario22.yaml"
 SCENARIO_23 = "scenario23.yaml"
 SCENARIO_24 = "scenario24.yaml"
+SCENARIO_MTLS = "scenario_mtls.yaml"
 
 
 @pytest.mark.p_group_last
@@ -54,6 +55,7 @@ def test_scenario1(kiali_client, openshift_client, browser):
     tests = ValidationsTest(
             kiali_client=kiali_client, openshift_client=openshift_client, browser=browser,
             objects_path=istio_objects_mtls_path.strpath)
+    tests.delete_istio_objects(SCENARIO_MTLS, namespace='istio-system')
     tests.test_istio_objects(SCENARIO_1,
                              namespace=BOOKINFO,
                              config_validation_objects=[
@@ -87,6 +89,7 @@ def test_scenario2(kiali_client, openshift_client, browser):
     tests = ValidationsTest(
             kiali_client=kiali_client, openshift_client=openshift_client, browser=browser,
             objects_path=istio_objects_mtls_path.strpath)
+    tests.delete_istio_objects(SCENARIO_MTLS, namespace='istio-system')
     tests.test_istio_objects(
         SCENARIO_2, namespace=BOOKINFO,
         config_validation_objects=[
