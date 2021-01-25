@@ -42,8 +42,10 @@ def test_about(browser, kiali_client):
     # get version details from REST API
 
     # kiali core version
-    _core_rest = '{} ({})'.format(
-        _response['status']['Kiali core version'], _response['status']['Kiali core commit hash'])
+    _core_rest = '{}{}'.format(
+        _response['status']['Kiali core version'], ' ({})'.format(
+            _response['status']['Kiali core commit hash'])
+        if _response['status']['Kiali core commit hash'] != 'unknown' else '')
     # skip in case of code coverage run where the version is not set correctly during the build
     if "ENABLE_CODE_COVERAGE" not in os.environ or os.environ["ENABLE_CODE_COVERAGE"] != "true":
         assert versions_ui[version_enum.KIALI_CORE.text] == _core_rest
