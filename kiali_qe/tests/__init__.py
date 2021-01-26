@@ -1995,7 +1995,7 @@ class IstioConfigPageTest(AbstractListPageTest):
                         if ui_key == rest_key and config_ui == config_rest:
                             found = True
                             break
-                if not found and 'last-applied-configuration' not in ui_key:
+                if not found and not self._is_skip_key(ui_key):
                     assert found, '{} {} not found in REST'.format(ui_key, config_ui)
                 found = False
                 # make the OC result into the same format as shown in UI
@@ -2024,9 +2024,14 @@ class IstioConfigPageTest(AbstractListPageTest):
                         if (ui_key == oc_key and config_ui == config_oc) or config_ui == 'null':
                             found = True
                             break
-                if not found:
+                if not found and not self._is_skip_key(ui_key):
                     assert found, '{} {} not found in OC'.format(ui_key, config_ui)
         logger.debug('Done asserting details for: {}, in namespace: {}'.format(name, namespace))
+
+    def _is_skip_key(self, key):
+        return 'last-applied-configuration' in key \
+            or key.startswith('f:') \
+            or 'managedFields' in key
 
     def test_gateway_create(self, name, hosts, namespaces):
         logger.debug('Creating Gateway: {}, from namespaces: {}'.format(name, namespaces))
