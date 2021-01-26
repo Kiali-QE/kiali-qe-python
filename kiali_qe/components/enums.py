@@ -128,14 +128,15 @@ class GraphType(StringEnum):
 
 
 class GraphPageDisplayFilter(StringEnum):
+    CLUSTER_BOXES = ('Cluster Boxes')
+    NAMESPACE_BOXES = ('Namespace Boxes')
     COMPRESSED_HIDE = ('Compressed Hide')
     IDLE_EDGES = ('Idle Edges')
     IDLE_NODES = ('Idle Nodes')
     OPERATION_NODES = ('Operation Nodes')
     SERVICE_NODES = ('Service Nodes')
     TRAFFIC_ANIMATION = ('Traffic Animation')
-    CLUSTER_BOXES = ('Cluster Boxes')
-    NAMESPACE_BOXES = ('Namespace Boxes')
+    
 
 
 class GraphPageBadgesFilter(StringEnum):
