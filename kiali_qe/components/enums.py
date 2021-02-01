@@ -442,3 +442,9 @@ class LabelOperation(StringEnum):
 class BoundTrafficType(StringEnum):
     INBOUND = ('Inbound')
     OUTBOUND = ('Outbound')
+    
+    
+class OverviewHealth(StringEnum):
+    FAILURE = ('Failure')
+    DEGRADED = ('Degraded')
+    HEALTHY = ('Healthy')
