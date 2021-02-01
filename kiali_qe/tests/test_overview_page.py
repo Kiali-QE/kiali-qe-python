@@ -4,7 +4,8 @@ from kiali_qe.tests import OverviewPageTest
 from kiali_qe.components.enums import (
     OverviewPageType,
     OverviewViewType,
-    OverviewPageFilter
+    OverviewPageFilter,
+    OverviewHealth
 )
 from kiali_qe.utils.command_exec import oc_idle
 
@@ -173,6 +174,33 @@ def test_overview_traffic_policies(kiali_client, openshift_client, browser, pick
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     namespace = pick_namespace(BOOKINFO_3)
     tests.test_create_update_delete_traffic_policies(namespace)
+    
+    
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group6
+def test_filter_overviews_by_health_failure(kiali_client, openshift_client, browser):
+    tests = OverviewPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.apply_filters(filters=[
+        {"name": OverviewPageFilter.HEALTH.text, "value": OverviewHealth.FAILURE.text}],)
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group6
+def test_filter_overviews_by_health_degraded(kiali_client, openshift_client, browser):
+    tests = OverviewPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.apply_filters(filters=[
+        {"name": OverviewPageFilter.HEALTH.text, "value": OverviewHealth.DEGRADED.text}])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group6
+def test_filter_overviews_by_health_healthy(kiali_client, openshift_client, browser):
+    tests = OverviewPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.apply_filters(filters=[
+        {"name": OverviewPageFilter.HEALTH.text, "value": OverviewHealth.HEALTHY.text}])    
 
 
 def _idle_bookinfo():
