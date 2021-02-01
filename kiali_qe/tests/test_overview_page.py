@@ -174,8 +174,8 @@ def test_overview_traffic_policies(kiali_client, openshift_client, browser, pick
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     namespace = pick_namespace(BOOKINFO_3)
     tests.test_create_update_delete_traffic_policies(namespace)
-    
-    
+
+
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
 def test_filter_overviews_by_health_failure(kiali_client, openshift_client, browser):
@@ -200,7 +200,7 @@ def test_filter_overviews_by_health_healthy(kiali_client, openshift_client, brow
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.apply_filters(filters=[
-        {"name": OverviewPageFilter.HEALTH.text, "value": OverviewHealth.HEALTHY.text}])    
+        {"name": OverviewPageFilter.HEALTH.text, "value": OverviewHealth.HEALTHY.text}])
 
 
 def _idle_bookinfo():
