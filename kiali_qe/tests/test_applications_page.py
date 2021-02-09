@@ -1,7 +1,14 @@
 import pytest
 
 from kiali_qe.tests import ApplicationsPageTest
-from kiali_qe.components.enums import ApplicationsPageSort, ApplicationsPageFilter, LabelOperation
+from kiali_qe.components.enums import (
+    ApplicationsPageSort,
+    ApplicationsPageFilter,
+    LabelOperation,
+    AppIstioSideCar,
+    AppHealth
+)
+
 
 BOOKINFO_2 = 'bookinfo2'
 ISTIO_SYSTEM = 'istio-system'
@@ -100,3 +107,57 @@ def test_application_details_random(kiali_client, openshift_client, browser, pic
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     namespace = pick_namespace(BOOKINFO_2)
     tests.assert_random_details(namespaces=[namespace])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group5
+def test_filter_applications_istio_sidecar_present(kiali_client, openshift_client, browser):
+    tests = ApplicationsPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.apply_filters(filters=[
+        {"name": ApplicationsPageFilter.ISTIO_SIDECAR.text, "value": AppIstioSideCar.PRESENT.text}])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group5
+def test_filter_applications_istio_sidecar_not_present(kiali_client, openshift_client, browser):
+    tests = ApplicationsPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.apply_filters(filters=[
+        {"name": ApplicationsPageFilter.ISTIO_SIDECAR.text, "value": AppIstioSideCar.NOT_PRE.text}])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group5
+def test_filter_applications_health_healthy(kiali_client, openshift_client, browser):
+    tests = ApplicationsPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.apply_filters(filters=[
+        {"name": ApplicationsPageFilter.HEALTH.text, "value": AppHealth.HEALTHY.text}])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group5
+def test_filter_applications_health_degraded(kiali_client, openshift_client, browser):
+    tests = ApplicationsPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.apply_filters(filters=[
+        {"name": ApplicationsPageFilter.HEALTH.text, "value": AppHealth.DEGRADED.text}])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group5
+def test_filter_applications_health_failure(kiali_client, openshift_client, browser):
+    tests = ApplicationsPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.apply_filters(filters=[
+        {"name": ApplicationsPageFilter.HEALTH.text, "value": AppHealth.FAILURE.text}])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group5
+def test_filter_applications_health_no_health_information(kiali_client, openshift_client, browser):
+    tests = ApplicationsPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.apply_filters(filters=[
+        {"name": ApplicationsPageFilter.HEALTH.text, "value": AppHealth.NO_HEALTH_INFO.text}])
