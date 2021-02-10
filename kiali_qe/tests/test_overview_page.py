@@ -5,7 +5,8 @@ from kiali_qe.components.enums import (
     OverviewPageType,
     OverviewViewType,
     OverviewPageFilter,
-    OverviewHealth
+    OverviewHealth,
+    OverviewMTSLStatus
 )
 from kiali_qe.utils.command_exec import oc_idle
 
@@ -201,6 +202,33 @@ def test_filter_overviews_by_health_healthy(kiali_client, openshift_client, brow
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.apply_filters(filters=[
         {"name": OverviewPageFilter.HEALTH.text, "value": OverviewHealth.HEALTHY.text}])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group6
+def test_filter_overviews_by_mtlsstatus_enabled(kiali_client, openshift_client, browser):
+    tests = OverviewPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.apply_filters(filters=[
+        {"name": OverviewPageFilter.MTLS_STATUS.text, "value": OverviewMTSLStatus.ENABLED.text}])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group6
+def test_filter_overviews_by_mtlsstatus_partiallyenabled(kiali_client, openshift_client, browser):
+    tests = OverviewPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.apply_filters(filters=[
+        {"name": OverviewPageFilter.MTLS_STATUS.text, "value": OverviewMTSLStatus.PARENABLED.text}])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group6
+def test_filter_overviews_by_mtlsstatus_disabled(kiali_client, openshift_client, browser):
+    tests = OverviewPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.apply_filters(filters=[
+        {"name": OverviewPageFilter.MTLS_STATUS.text, "value": OverviewMTSLStatus.DISABLED.text}])
 
 
 def _idle_bookinfo():
