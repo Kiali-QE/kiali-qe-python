@@ -185,7 +185,7 @@ class AbstractListPageTest(object):
 
             self.assert_applied_namespaces(namespaces)
 
-    def apply_filters(self, filters, force_clear_all=False):
+    def apply_filters(self, filters, force_clear_all=True):
         """
         Apply supplied filter in to UI and assert with supplied and applied filters
 

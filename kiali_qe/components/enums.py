@@ -447,3 +447,15 @@ class OverviewHealth(StringEnum):
     FAILURE = ('Failure')
     DEGRADED = ('Degraded')
     HEALTHY = ('Healthy')
+
+
+class AppIstioSideCar(StringEnum):
+    PRESENT = ('Present')
+    NOT_PRE = ('Not Present')
+
+
+class AppHealth(StringEnum):
+    HEALTHY = ('Healthy')
+    DEGRADED = ('Degraded')
+    FAILURE = ('Failure')
+    NO_HEALTH_INFO = ('No health information')
