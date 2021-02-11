@@ -233,12 +233,10 @@ class KialiExtendedClient(KialiClient):
             items = set(filtered_list)
         return items
 
-    def workload_list(self, namespaces=[], workload_names=[], workload_labels=[],
-                      label_operation=None):
+    def workload_list(self, namespaces=[]):
         """Returns list of workloads.
         Args:
             namespaces: can be zero or any number of namespaces
-            workload_names: can be zero or any number of workloads
         """
         items = []
         namespace_list = []
@@ -265,20 +263,6 @@ class KialiExtendedClient(KialiClient):
                         icon=self.get_icon_type(_workload_rest),
                         workload_status=_workload_health)
                     items.append(_workload)
-        # filter by workload name
-        if len(workload_names) > 0:
-            filtered_list = []
-            for _name in workload_names:
-                filtered_list.extend([_i for _i in items if _name in _i.name])
-            items = set(filtered_list)
-        # filter by labels
-        if len(workload_labels) > 0:
-            filtered_list = []
-            filtered_list.extend(
-                [_i for _i in items if dict_contains(
-                    _i.labels, workload_labels,
-                    (True if label_operation == LabelOperation.AND.text else False))])
-            items = set(filtered_list)
         return items
 
     def istio_config_list(self, namespaces=[], config_names=[], params=None):
@@ -659,8 +643,9 @@ class KialiExtendedClient(KialiClient):
                                            path={'namespace': namespace, 'workload': workload_name})
         _workload = None
         if _workload_data:
-            _workload_rest = self.workload_list(namespaces=[namespace],
-                                                workload_names=[workload_name]).pop()
+            _workloads_rest = self.workload_list(namespaces=[namespace])
+            _workload_rest = set([_w for _w in _workloads_rest
+                                  if _w.name == workload_name]).pop()
             _services = []
             if _workload_data['services']:
                 for _ws_data in _workload_data['services']:

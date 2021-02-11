@@ -60,85 +60,12 @@ def test_workloads_filter_2_names(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group8
-def test_workloads_filter_workloadtype_cronjob(kiali_client, openshift_client, browser):
+def test_workloads_filter_workloadtype(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.apply_filters(filters=[
-        {"name": WorkloadsPageFilter.WORKLOAD_TYPE.text, "value": WorkloadType.CRON_JOB.text}])
-
-
-@pytest.mark.p_ro_top
-@pytest.mark.p_ro_group8
-def test_workloads_filter_workloadtype_daemonset(kiali_client, openshift_client, browser):
-    tests = WorkloadsPageTest(
-        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.apply_filters(filters=[
-        {"name": WorkloadsPageFilter.WORKLOAD_TYPE.text, "value": WorkloadType.DAEMON_SET.text}])
-
-
-@pytest.mark.p_ro_top
-@pytest.mark.p_ro_group8
-def test_workloads_filter_workloadtype_deployment(kiali_client, openshift_client, browser):
-    tests = WorkloadsPageTest(
-        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.apply_filters(filters=[
-        {"name": WorkloadsPageFilter.WORKLOAD_TYPE.text, "value": WorkloadType.DEPLOYMENT.text}])
-
-
-@pytest.mark.p_ro_top
-@pytest.mark.p_ro_group8
-def test_workloads_filter_workloadtype_deploymentconfig(kiali_client, openshift_client, browser):
-    tests = WorkloadsPageTest(
-        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.apply_filters(filters=[
-        {"name": WorkloadsPageFilter.WORKLOAD_TYPE.text,
-         "value": WorkloadType.DEPLOYMENT_CONFIG.text}])
-
-
-@pytest.mark.p_ro_top
-@pytest.mark.p_ro_group8
-def test_workloads_filter_workloadtype_job(kiali_client, openshift_client, browser):
-    tests = WorkloadsPageTest(
-        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.apply_filters(filters=[
-        {"name": WorkloadsPageFilter.WORKLOAD_TYPE.text, "value": WorkloadType.JOB.text}])
-
-
-@pytest.mark.p_ro_top
-@pytest.mark.p_ro_group8
-def test_workloads_filter_workloadtype_pod(kiali_client, openshift_client, browser):
-    tests = WorkloadsPageTest(
-        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.apply_filters(filters=[
-        {"name": WorkloadsPageFilter.WORKLOAD_TYPE.text, "value": WorkloadType.POD.text}])
-
-
-@pytest.mark.p_ro_top
-@pytest.mark.p_ro_group8
-def test_workloads_filter_workloadtype_replicaset(kiali_client, openshift_client, browser):
-    tests = WorkloadsPageTest(
-        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.apply_filters(filters=[
-        {"name": WorkloadsPageFilter.WORKLOAD_TYPE.text, "value": WorkloadType.REPLICA_SET.text}])
-
-
-@pytest.mark.p_ro_top
-@pytest.mark.p_ro_group8
-def test_workloads_filter_workloadtype_replicacontroller(kiali_client, openshift_client, browser):
-    tests = WorkloadsPageTest(
-        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.apply_filters(filters=[
-        {"name": WorkloadsPageFilter.WORKLOAD_TYPE.text,
-         "value": WorkloadType.REPLICATION_CONTROLLER.text}])
-
-
-@pytest.mark.p_ro_top
-@pytest.mark.p_ro_group8
-def test_workloads_filter_workloadtype_statefulset(kiali_client, openshift_client, browser):
-    tests = WorkloadsPageTest(
-        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.apply_filters(filters=[
-        {"name": WorkloadsPageFilter.WORKLOAD_TYPE.text, "value": WorkloadType.STATEFUL_SET.text}])
+    for _type in WorkloadType:
+        tests.assert_all_items(filters=[
+            {"name": WorkloadsPageFilter.WORKLOAD_TYPE.text, "value": _type.text}])
 
 
 @pytest.mark.p_ro_top

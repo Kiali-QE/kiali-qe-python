@@ -295,8 +295,7 @@ class OpenshiftExtendedClient(object):
             items = set(filtered_list)
         return items
 
-    def workload_list(self, namespaces=[], workload_names=[], workload_labels=[],
-                      label_operation=None):
+    def workload_list(self, namespaces=[]):
         """ Returns list of workloads
             Order of showing/hiding priority is: Deployments, ReplicaSets, Pods
         """
@@ -304,10 +303,7 @@ class OpenshiftExtendedClient(object):
         filtered_list = []
         for _key, _value in WORKLOAD_TYPES.items():
             full_list.extend(self._workload_list(_value, _key,
-                                                 namespaces=namespaces,
-                                                 workload_names=workload_names,
-                                                 workload_labels=workload_labels,
-                                                 label_operation=label_operation))
+                                                 namespaces=namespaces))
 
         deployment_names = [_item.name + _item.namespace for _item in full_list if
                             _item.workload_type == WorkloadType.DEPLOYMENT.text]
@@ -345,8 +341,7 @@ class OpenshiftExtendedClient(object):
         return filtered_list
 
     def _workload_list(self, attribute_name, workload_type,
-                       namespaces=[], workload_names=[], workload_labels=[],
-                       label_operation=None):
+                       namespaces=[]):
         """ Returns list of workload
         Args:
             attribute_name: the attribute of class for getting workload
@@ -376,20 +371,6 @@ class OpenshiftExtendedClient(object):
                 labels=self._get_workload_labels(_item),
                 workload_status=self._get_workload_status(_item))
             items.append(_workload)
-        # filter by workload name
-        if len(workload_names) > 0:
-            filtered_list = []
-            for _name in workload_names:
-                filtered_list.extend([_i for _i in items if _name in _i.name])
-            items = set(filtered_list)
-        # filter by labels
-        if len(workload_labels) > 0:
-            filtered_list = []
-            filtered_list.extend(
-                [_i for _i in items if dict_contains(
-                    _i.labels, workload_labels,
-                    (True if label_operation == LabelOperation.AND.text else False))])
-            items = set(filtered_list)
         return items
 
     def _get_workload_status(self, item):
@@ -640,12 +621,12 @@ class OpenshiftExtendedClient(object):
             app_label: app label value
         """
         result = []
-        _workloads_list = self.workload_list(namespaces=[namespace],
-                                             workload_labels=['app:{}'.format(app_label)])
+        _workloads_list = self.workload_list(namespaces=[namespace])
         for _workload_item in _workloads_list:
-            result.append(self.workload_details(namespace,
-                                                _workload_item.name,
-                                                _workload_item.workload_type))
+            if dict_contains(_workload_item.labels, ['app:{}'.format(app_label)]):
+                result.append(self.workload_details(namespace,
+                                                    _workload_item.name,
+                                                    _workload_item.workload_type))
         return result
 
     def _get_service_endpoints(self, namespace, app_label):
@@ -655,12 +636,12 @@ class OpenshiftExtendedClient(object):
             app_label: app label value
         """
         endpoints = []
-        _workloads = self.workload_list(namespaces=[namespace],
-                                        workload_labels=['app:{}'.format(app_label)])
+        _workloads = self.workload_list(namespaces=[namespace])
         for _workload in _workloads:
-            _pods = self.get_workload_pods(namespace, _workload.name)
-            for _pod in _pods:
-                endpoints.append(_pod.podIP)
+            if dict_contains(_workload.labels, ['app:{}'.format(app_label)]):
+                _pods = self.get_workload_pods(namespace, _workload.name)
+                for _pod in _pods:
+                    endpoints.append(_pod.podIP)
         return endpoints
 
     def get_service_configs(self, namespace, service_name):
