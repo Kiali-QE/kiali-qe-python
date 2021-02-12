@@ -45,7 +45,9 @@ from kiali_qe.components.enums import (
     IstioConfigObjectType,
     AuthPolicyType,
     AuthPolicyActionType,
-    LabelOperation
+    LabelOperation,
+    VersionLabel,
+    AppLabel
 )
 from kiali_qe.components.error_codes import (
     KIA0201,
@@ -1077,11 +1079,9 @@ class WorkloadsPageTest(AbstractListPageTest):
     def assert_random_details(self, namespaces=[], filters=[],
                               force_clear_all=True, force_refresh=False):
         # get workloads from rest api
-        _sn = self.FILTER_ENUM.WORKLOAD_NAME.text
-        _workload_names = [_f['value'] for _f in filters if _f['name'] == _sn]
-        logger.debug('Namespaces:{}, Workload names:{}'.format(namespaces, _workload_names))
-        workloads_rest = self.kiali_client.workload_list(
-            namespaces=namespaces, workload_names=_workload_names)
+        logger.debug('Namespaces:{}'.format(namespaces))
+        workloads_rest = self._apply_workload_filters(self.kiali_client.workload_list(
+            namespaces=namespaces), filters)
         # random workloads filters
         assert len(workloads_rest) > 0
         if len(workloads_rest) > 3:
@@ -1189,7 +1189,7 @@ class WorkloadsPageTest(AbstractListPageTest):
                             traffic_object_type=TrafficType.WORKLOAD)
 
     def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True,
-                         label_operation=LabelOperation.OR):
+                         label_operation=None):
         # apply namespaces
         self.apply_namespaces(namespaces, force_clear_all=force_clear_all)
 
@@ -1199,30 +1199,21 @@ class WorkloadsPageTest(AbstractListPageTest):
         # apply sorting
         self.sort(sort_options)
 
-        _sn = self.FILTER_ENUM.WORKLOAD_NAME.text
-        _workload_names = [_f['value'] for _f in filters if _f['name'] == _sn]
-        logger.debug('Namespaces:{}, Workload names:{}'.format(namespaces, _workload_names))
-        _wl = self.FILTER_ENUM.LABEL.text
-        _labels = [_f['value'] for _f in filters if _f['name'] == _wl]
-        if _labels:
+        if label_operation:
             self.apply_label_operation(label_operation)
 
         # get workloads from rest api
-        workloads_rest = self.kiali_client.workload_list(
-            namespaces=namespaces, workload_names=_workload_names,
-            workload_labels=_labels,
-            label_operation=label_operation)
+        workloads_rest = self._apply_workload_filters(self.kiali_client.workload_list(
+            namespaces=namespaces), filters, label_operation)
         # get workloads from OC client
-        workloads_oc = self.openshift_client.workload_list(
-            namespaces=(namespaces if namespaces else self.kiali_client.namespace_list()),
-            workload_names=_workload_names,
-            workload_labels=_labels,
-            label_operation=label_operation)
+        workloads_oc = self._apply_workload_filters(self.openshift_client.workload_list(
+            namespaces=(namespaces if namespaces else self.kiali_client.namespace_list())),
+            filters, label_operation)
         # get workloads from ui
         workloads_ui = self.page.content.all_items
 
         # compare all results
-        logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _workload_names))
+        logger.debug('Namespaces:{}'.format(namespaces))
         logger.debug('Items count[UI:{}, REST:{}, OC:{}]'.format(
             len(workloads_ui), len(workloads_rest), len(workloads_oc)))
         logger.debug('Workloads UI:{}'.format(workloads_ui))
@@ -1265,6 +1256,75 @@ class WorkloadsPageTest(AbstractListPageTest):
                     break
             if not found:
                 assert found, '{} not found in OC'.format(workload_ui)
+
+    def _apply_workload_filters(self, workloads=[], filters=[], label_operation=None):
+        _sn = self.FILTER_ENUM.WORKLOAD_NAME.text
+        _names = [_f['value'] for _f in filters if _f['name'] == _sn]
+        logger.debug('Workload names:{}'.format(_names))
+        _wl = self.FILTER_ENUM.LABEL.text
+        _labels = [_f['value'] for _f in filters if _f['name'] == _wl]
+        logger.debug('Workload Labels:{}'.format(_labels))
+        _wt = self.FILTER_ENUM.WORKLOAD_TYPE.text
+        _types = [_f['value'] for _f in filters if _f['name'] == _wt]
+        logger.debug('Workload Types:{}'.format(_types))
+        _wis = self.FILTER_ENUM.ISTIO_SIDECAR.text
+        _sidecars = [_f['value'] for _f in filters if _f['name'] == _wis]
+        logger.debug('Istio Sidecars:{}'.format(_sidecars))
+        _version_label = None
+        for _f in filters:
+            if _f['name'] == self.FILTER_ENUM.VERSION_LABEL.text:
+                _version_label = _f['value']
+                break
+        logger.debug('Version Label:{}'.format(_version_label))
+        _app_label = None
+        for _f in filters:
+            if _f['name'] == self.FILTER_ENUM.APP_LABEL.text:
+                _app_label = _f['value']
+                break
+        logger.debug('App Label:{}'.format(_app_label))
+        items = workloads
+        # filter by name
+        if len(_names) > 0:
+            filtered_list = []
+            for _name in _names:
+                filtered_list.extend([_i for _i in items if _name in _i.name])
+            items = set(filtered_list)
+        # filter by labels
+        if len(_labels) > 0:
+            filtered_list = []
+            filtered_list.extend(
+                [_i for _i in workloads if dict_contains(
+                    _i.labels, _labels,
+                    (True if label_operation == LabelOperation.AND.text else False))])
+            items = set(filtered_list)
+        # filter by types
+        if len(_types) > 0:
+            filtered_list = []
+            for _type in _types:
+                filtered_list.extend([_i for _i in items if _type == _i.workload_type])
+            items = set(filtered_list)
+        # filter by sidecars
+        if len(_sidecars) > 0:
+            filtered_list = []
+            for _sidecar in _sidecars:
+                filtered_list.extend([_i for _i in items if _sidecar == _i.istio_sidecar])
+            items = set(filtered_list)
+        # @TODO filter by health
+        # filter by version label present
+        if _version_label:
+            filtered_list = []
+            filtered_list.extend([_i for _i in items if _version_label ==
+                                  VersionLabel.NOT_PRESENT.text ^ dict_contains(
+                                      given_list=['version'], original_dict=_i._labels)])
+            items = set(filtered_list)
+        # filter by app label present
+        if _app_label:
+            filtered_list = []
+            filtered_list.extend([_i for _i in items if _app_label ==
+                                  AppLabel.NOT_PRESENT.text ^ dict_contains(
+                                      given_list=['app'], original_dict=_i._labels)])
+            items = set(filtered_list)
+        return items
 
     def test_disable_enable_delete_auto_injection(self, name, namespace):
         logger.debug('Auto Injection test for Workload: {}, {}'.format(name, namespace))
