@@ -194,8 +194,7 @@ class OpenshiftExtendedClient(object):
         except NotFoundError:
             return False
 
-    def application_list(self, namespaces=[], application_names=[], application_labels=[],
-                         label_operation=None):
+    def application_list(self, namespaces=[]):
         """ Returns list of applications """
         result_dict = {}
         application_status_dict = {}
@@ -235,23 +234,7 @@ class OpenshiftExtendedClient(object):
                     deployment_statuses=application_status_dict[_name+workload.namespace] \
                     if _name+workload.namespace in application_status_dict else None,
                     requests=None))
-        result = result_dict.values()
-        # filter by service name
-        if len(application_names) > 0:
-            filtered_list = []
-            for _name in application_names:
-                filtered_list.extend([_i for _i in result if _name in _i.name])
-            result = set(filtered_list)
-
-        # filter by labels
-        if len(application_labels) > 0:
-            filtered_list = []
-            filtered_list.extend(
-                [_i for _i in result if dict_contains(
-                    _i.labels, application_labels,
-                    (True if label_operation == LabelOperation.AND.text else False))])
-            result = set(filtered_list)
-        return result
+        return result_dict.values()
 
     def service_list(self, namespaces=[], service_names=[], service_labels=[],
                      label_operation=None):

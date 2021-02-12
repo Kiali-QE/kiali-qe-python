@@ -187,8 +187,7 @@ class KialiExtendedClient(KialiClient):
             overviews.append(_overview)
         return overviews
 
-    def application_list(self, namespaces=[], application_names=[], application_labels=[],
-                         label_operation=None):
+    def application_list(self, namespaces=[]):
         """Returns list of applications.
         Args:
             namespaces: can be zero or any number of namespaces
@@ -217,20 +216,6 @@ class KialiExtendedClient(KialiClient):
                         application_status=_app_health,
                         labels=self.get_labels(_application_rest))
                     items.append(_application)
-        # filter by application name
-        if len(application_names) > 0:
-            filtered_list = []
-            for _name in application_names:
-                filtered_list.extend([_i for _i in items if _name in _i.name])
-            items = set(filtered_list)
-        # filter by labels
-        if len(application_labels) > 0:
-            filtered_list = []
-            filtered_list.extend(
-                [_i for _i in items if dict_contains(
-                    _i.labels, application_labels,
-                    (True if label_operation == LabelOperation.AND.text else False))])
-            items = set(filtered_list)
         return items
 
     def workload_list(self, namespaces=[]):
@@ -772,8 +757,9 @@ class KialiExtendedClient(KialiClient):
                                                     'app': application_name})
         _application = None
         if _application_data:
-            _application_rest = self.application_list(namespaces=[namespace],
-                                                      application_names=[application_name]).pop()
+            _applications_rest = self.application_list(namespaces=[namespace])
+            _application_rest = set([_a for _a in _applications_rest
+                                     if _a.name == application_name]).pop()
             _workloads = []
             if _application_data['workloads']:
                 for _wl_data in _application_data['workloads']:
