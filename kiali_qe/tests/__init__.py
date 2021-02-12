@@ -868,8 +868,8 @@ class ApplicationsPageTest(AbstractListPageTest):
         _sn = self.FILTER_ENUM.APP_NAME.text
         _application_names = [_f['value'] for _f in filters if _f['name'] == _sn]
         logger.debug('Namespaces:{}, Application names:{}'.format(namespaces, _application_names))
-        applications_rest = self.kiali_client.application_list(
-            namespaces=namespaces, application_names=_application_names)
+        applications_rest = self._apply_app_filters(self.kiali_client.application_list(
+            namespaces=namespaces), filters=filters)
 
         # random applications filters
         assert len(applications_rest) > 0
@@ -961,7 +961,7 @@ class ApplicationsPageTest(AbstractListPageTest):
                             self_object_type=TrafficType.APP, traffic_object_type=TrafficType.APP)
 
     def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True,
-                         label_operation=LabelOperation.OR):
+                         label_operation=None):
         # apply namespaces
         self.apply_namespaces(namespaces, force_clear_all=force_clear_all)
 
@@ -971,29 +971,25 @@ class ApplicationsPageTest(AbstractListPageTest):
         # apply sorting
         self.sort(sort_options)
 
-        # get applications from rest api
-        _sn = self.FILTER_ENUM.APP_NAME.text
-        _application_names = [_f['value'] for _f in filters if _f['name'] == _sn]
-
-        _al = self.FILTER_ENUM.LABEL.text
-        _labels = [_f['value'] for _f in filters if _f['name'] == _al]
-        if _labels:
+        if label_operation:
             self.apply_label_operation(label_operation)
 
-        logger.debug('Namespaces:{}, Application names:{}'.format(namespaces, _application_names))
+        logger.debug('Namespaces:{}'.format(namespaces))
         # get applications from ui
         applications_ui = self.page.content.all_items
         # get from REST
-        applications_rest = self.kiali_client.application_list(
-            namespaces=namespaces, application_names=_application_names, application_labels=_labels,
-            label_operation=label_operation)
+        applications_rest = self._apply_app_filters(self.kiali_client.application_list(
+            namespaces=namespaces),
+            filters,
+            label_operation)
         # get from OC
-        applications_oc = self.openshift_client.application_list(
-            namespaces=namespaces, application_names=_application_names, application_labels=_labels,
-            label_operation=label_operation)
+        applications_oc = self._apply_app_filters(self.openshift_client.application_list(
+            namespaces=namespaces),
+            filters,
+            label_operation)
 
         # compare all results
-        logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _application_names))
+        logger.debug('Namespaces:{}'.format(namespaces))
         logger.debug('Items count[UI:{}, REST:{}]'.format(
             len(applications_ui), len(applications_rest)))
         logger.debug('Applications UI:{}'.format(applications_ui))
@@ -1002,11 +998,8 @@ class ApplicationsPageTest(AbstractListPageTest):
 
         assert len(applications_ui) == len(applications_rest), \
             "UI {} and REST {} applications number not equal".format(applications_ui,
-                                                                     applications_ui)
-        if len(_labels) > 0 or len(_application_names) > 0:
-            assert len(applications_rest) == len(applications_oc)
-        else:
-            assert len(applications_rest) <= len(applications_oc)
+                                                                     applications_rest)
+        assert len(applications_rest) <= len(applications_oc)
 
         for application_ui in applications_ui:
             found = False
@@ -1047,6 +1040,40 @@ class ApplicationsPageTest(AbstractListPageTest):
                     break
             if not found:
                 assert found, '{} not found in OC'.format(application_ui)
+
+    def _apply_app_filters(self, applications=[], filters=[], label_operation=None):
+        _an = self.FILTER_ENUM.APP_NAME.text
+        _application_names = [_f['value'] for _f in filters if _f['name'] == _an]
+        logger.debug('Application names:{}'.format(_application_names))
+        _al = self.FILTER_ENUM.LABEL.text
+        _labels = [_f['value'] for _f in filters if _f['name'] == _al]
+        logger.debug('Application Labels:{}'.format(_labels))
+        _ais = self.FILTER_ENUM.ISTIO_SIDECAR.text
+        _sidecars = [_f['value'] for _f in filters if _f['name'] == _ais]
+        logger.debug('Istio Sidecars:{}'.format(_sidecars))
+        # @TODO health
+        # filter by application name
+        items = applications
+        if len(_application_names) > 0:
+            filtered_list = []
+            for _name in _application_names:
+                filtered_list.extend([_i for _i in items if _name in _i.name])
+            items = set(filtered_list)
+        # filter by labels
+        if len(_labels) > 0:
+            filtered_list = []
+            filtered_list.extend(
+                [_i for _i in items if dict_contains(
+                    _i.labels, _labels,
+                    (True if label_operation == LabelOperation.AND.text else False))])
+            items = set(filtered_list)
+        # filter by sidecars
+        if len(_sidecars) > 0:
+            filtered_list = []
+            for _sidecar in _sidecars:
+                filtered_list.extend([_i for _i in items if _sidecar == _i.istio_sidecar])
+            items = set(filtered_list)
+        return items
 
 
 class WorkloadsPageTest(AbstractListPageTest):
