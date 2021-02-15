@@ -4,7 +4,6 @@ from openshift.dynamic import DynamicClient
 from openshift.dynamic.exceptions import NotFoundError
 
 from kiali_qe.components.enums import (
-    LabelOperation,
     WorkloadType,
     IstioConfigObjectType
 )
@@ -236,8 +235,7 @@ class OpenshiftExtendedClient(object):
                     requests=None))
         return result_dict.values()
 
-    def service_list(self, namespaces=[], service_names=[], service_labels=[],
-                     label_operation=None):
+    def service_list(self, namespaces=[]):
         """ Returns list of services
         Args:
             namespace: Namespace of the service, optional
@@ -262,20 +260,6 @@ class OpenshiftExtendedClient(object):
                 labels=self._get_labels(_item),
                 health=None)
             items.append(_service)
-        # filter by service name
-        if len(service_names) > 0:
-            filtered_list = []
-            for _name in service_names:
-                filtered_list.extend([_i for _i in items if _name in _i.name])
-            items = set(filtered_list)
-        # filter by labels
-        if len(service_labels) > 0:
-            filtered_list = []
-            filtered_list.extend(
-                [_i for _i in items if dict_contains(
-                    _i.labels, service_labels,
-                    (True if label_operation == LabelOperation.AND.text else False))])
-            items = set(filtered_list)
         return items
 
     def workload_list(self, namespaces=[]):
