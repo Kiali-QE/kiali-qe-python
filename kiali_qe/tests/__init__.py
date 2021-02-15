@@ -1427,11 +1427,8 @@ class ServicesPageTest(AbstractListPageTest):
 
     def assert_random_details(self, namespaces=[], filters=[], force_refresh=False):
         # get services from rest api
-        _sn = self.FILTER_ENUM.SERVICE_NAME.text
-        _service_names = [_f['value'] for _f in filters if _f['name'] == _sn]
-        logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _service_names))
-        services_rest = self.kiali_client.service_list(
-            namespaces=namespaces, service_names=_service_names)
+        services_rest = self._apply_service_filters(self.kiali_client.service_list(
+            namespaces=namespaces), filters=filters)
         # random services filters
         assert len(services_rest) > 0
         if len(services_rest) > 2:
@@ -1533,7 +1530,7 @@ class ServicesPageTest(AbstractListPageTest):
         return set(workload_names)
 
     def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True,
-                         label_operation=LabelOperation.OR):
+                         label_operation=None):
         # apply namespaces
         self.apply_namespaces(namespaces, force_clear_all=force_clear_all)
 
@@ -1543,30 +1540,20 @@ class ServicesPageTest(AbstractListPageTest):
         # apply sorting
         self.sort(sort_options)
 
-        _sn = self.FILTER_ENUM.SERVICE_NAME.text
-        _service_names = [_f['value'] for _f in filters if _f['name'] == _sn]
-        logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _service_names))
-
-        _sl = self.FILTER_ENUM.LABEL.text
-        _labels = [_f['value'] for _f in filters if _f['name'] == _sl]
-        if _labels:
+        if label_operation:
             self.apply_label_operation(label_operation)
 
         # get services from ui
         services_ui = self.page.content.all_items
         # get services from rest api
-        services_rest = self.kiali_client.service_list(
-            namespaces=namespaces, service_names=_service_names,
-            service_labels=_labels,
-            label_operation=label_operation)
+        services_rest = self._apply_service_filters(self.kiali_client.service_list(
+            namespaces=namespaces), filters=filters)
         # get services from OC client
-        services_oc = self.openshift_client.service_list(
-            namespaces=namespaces, service_names=_service_names,
-            service_labels=_labels,
-            label_operation=label_operation)
+        services_oc = self._apply_service_filters(self.openshift_client.service_list(
+            namespaces=namespaces), filters=filters)
 
         # compare all results
-        logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _service_names))
+        logger.debug('Namespaces:{}'.format(namespaces))
         logger.debug('Items count[UI:{}, REST:{}, OC:{}]'.format(
             len(services_ui), len(services_rest), len(services_oc)))
         logger.debug('Services UI:{}'.format(services_ui))
@@ -1605,6 +1592,38 @@ class ServicesPageTest(AbstractListPageTest):
                     service_ui.name) in \
                         service_ui.config_status.link, 'Wrong service link {}'.format(
                             service_ui.config_status.link)
+
+    def _apply_service_filters(self, services=[], filters=[], label_operation=None):
+        _sn = self.FILTER_ENUM.SERVICE_NAME.text
+        _service_names = [_f['value'] for _f in filters if _f['name'] == _sn]
+        logger.debug('Service names:{}'.format(_service_names))
+        _sis = self.FILTER_ENUM.ISTIO_SIDECAR.text
+        _sidecars = [_f['value'] for _f in filters if _f['name'] == _sis]
+        logger.debug('Istio Sidecars:{}'.format(_sidecars))
+        _sl = self.FILTER_ENUM.LABEL.text
+        _labels = [_f['value'] for _f in filters if _f['name'] == _sl]
+        items = services
+        # filter by service name
+        if len(_service_names) > 0:
+            filtered_list = []
+            for _name in _service_names:
+                filtered_list.extend([_i for _i in items if _name in _i.name])
+            items = set(filtered_list)
+        # filter by sidecars
+        if len(_sidecars) > 0:
+            filtered_list = []
+            for _sidecar in _sidecars:
+                filtered_list.extend([_i for _i in items if _sidecar == _i.istio_sidecar])
+            items = set(filtered_list)
+        # filter by labels
+        if len(_labels) > 0:
+            filtered_list = []
+            filtered_list.extend(
+                [_i for _i in items if dict_contains(
+                    _i.labels, _labels,
+                    (True if label_operation == LabelOperation.AND.text else False))])
+            items = set(filtered_list)
+        return items
 
     def get_additional_filters(self, namespaces, current_filters):
         logger.debug('Current filters:{}'.format(current_filters))

@@ -11,7 +11,6 @@ from kiali_qe.components.enums import (
     TimeIntervalRestParam,
     HealthType as HEALTH_TYPE,
     ItemIconType,
-    LabelOperation,
     HealthType
 )
 from kiali_qe.entities import Requests
@@ -40,7 +39,7 @@ from kiali_qe.entities.applications import (
     ApplicationHealth
 )
 from kiali_qe.entities.overview import Overview
-from kiali_qe.utils import to_linear_string, dict_contains, dict_to_params
+from kiali_qe.utils import to_linear_string, dict_to_params
 from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
 from kiali_qe.utils.log import logger
 
@@ -91,8 +90,7 @@ class KialiExtendedClient(KialiClient):
         """ Returns True if given namespace exists. False otherwise. """
         return namespace in self.namespace_list()
 
-    def service_list(self, namespaces=[], service_names=[], service_labels=[],
-                     label_operation=None):
+    def service_list(self, namespaces=[]):
         """Returns list of services.
         Args:
             namespaces: can be zero or any number of namespaces
@@ -122,20 +120,6 @@ class KialiExtendedClient(KialiClient):
                     icon=self.get_icon_type(_service_rest),
                     labels=self.get_labels(_service_rest))
                 items.append(_service)
-        # filter by service name
-        if len(service_names) > 0:
-            filtered_list = []
-            for _name in service_names:
-                filtered_list.extend([_i for _i in items if _name in _i.name])
-            items = set(filtered_list)
-        # filter by labels
-        if len(service_labels) > 0:
-            filtered_list = []
-            filtered_list.extend(
-                [_i for _i in items if dict_contains(
-                    _i.labels, service_labels,
-                    (True if label_operation == LabelOperation.AND.text else False))])
-            items = set(filtered_list)
         return items
 
     def overview_list(self, namespaces=[], overview_type=OverviewPageType.APPS):
@@ -465,8 +449,9 @@ class KialiExtendedClient(KialiClient):
                                           params={'validate': 'true'})
         _service = None
         if _service_data:
-            _service_rest = self.service_list(namespaces=[namespace],
-                                              service_names=[service_name]).pop()
+            _services_rest = self.service_list(namespaces=[namespace])
+            _service_rest = set([_s for _s in _services_rest
+                                if _s.name == service_name]).pop()
             workloads = []
             if _service_data['workloads']:
                 for _wl_data in _service_data['workloads']:
