@@ -105,7 +105,7 @@ def test_service_breadcrumb_object(kiali_client, openshift_client, browser, pick
 def test_config_breadcrumb_menu(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.assert_breadcrumb_menu(name='metadata-exchange-1.7', namespace=ISTIO_SYSTEM)
+    tests.assert_breadcrumb_menu(name='metadata-exchange-1.9', namespace=ISTIO_SYSTEM)
 
 
 @pytest.mark.p_ro_top
@@ -113,7 +113,7 @@ def test_config_breadcrumb_menu(kiali_client, openshift_client, browser):
 def test_config_breadcrumb_namespace(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.assert_breadcrumb_namespace(name='metadata-exchange-1.7', namespace=ISTIO_SYSTEM)
+    tests.assert_breadcrumb_namespace(name='metadata-exchange-1.9', namespace=ISTIO_SYSTEM)
 
 
 @pytest.mark.p_ro_top
@@ -121,4 +121,4 @@ def test_config_breadcrumb_namespace(kiali_client, openshift_client, browser):
 def test_config_breadcrumb_object(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.assert_breadcrumb_object(name='metadata-exchange-1.7', namespace=ISTIO_SYSTEM)
+    tests.assert_breadcrumb_object(name='metadata-exchange-1.9', namespace=ISTIO_SYSTEM)
