@@ -48,7 +48,10 @@ from kiali_qe.components.enums import (
     LabelOperation,
     VersionLabel,
     AppLabel,
-    IstioSidecar
+    IstioSidecar,
+    OverviewHealth,
+    OverviewMTSLStatus,
+    MeshWideTLSType
 )
 from kiali_qe.components.error_codes import (
     KIA0201,
@@ -613,9 +616,10 @@ class OverviewPageTest(AbstractListPageTest):
         _ns = self.FILTER_ENUM.NAME.text
         _namespaces = [_f['value'] for _f in filters if _f['name'] == _ns]
         logger.debug('Namespaces:{}'.format(_namespaces))
-        overviews_rest = self.kiali_client.overview_list(
+        overviews_rest = self._apply_overview_filters(self.kiali_client.overview_list(
             namespaces=_namespaces,
-            overview_type=overview_type)
+            overview_type=overview_type),
+            filters)
 
         # get overviews from ui
         if list_type == self.VIEW_ENUM.LIST:
@@ -656,6 +660,58 @@ class OverviewPageTest(AbstractListPageTest):
             self._assert_overview_config_status(overview_ui.namespace, overview_ui.config_status)
             assert overview_ui.labels == self.openshift_client.namespace_labels(
                 overview_ui.namespace)
+
+    def _apply_overview_filters(self, overviews=[], filters=[],
+                                skip_health=False,
+                                skip_mtls=False):
+        _ol = self.FILTER_ENUM.LABEL.text
+        _labels = [_f['value'] for _f in filters if _f['name'] == _ol]
+        logger.debug('Namespace Labels:{}'.format(_labels))
+        _omtls = self.FILTER_ENUM.MTLS_STATUS.text
+        _mtls_filters = [_f['value'] for _f in filters if _f['name'] == _omtls]
+        logger.debug('mTls Status:{}'.format(_mtls_filters))
+        _oh = self.FILTER_ENUM.HEALTH.text
+        _healths = [_f['value'] for _f in filters if _f['name'] == _oh]
+        logger.debug('Health:{}'.format(_healths))
+        items = overviews
+        # filter by labels
+        if len(_labels) > 0:
+            filtered_list = []
+            filtered_list.extend(
+                [_i for _i in items if dict_contains(
+                    _i.labels, _labels)])
+            items = set(filtered_list)
+        # filter by mtls
+        if len(_mtls_filters) > 0 and not skip_mtls:
+            filtered_list = []
+            for _mtls in _mtls_filters:
+                filtered_list.extend([_i for _i in items if
+                                      self._tls_equals(_mtls, _i.tls_type)])
+            items = set(filtered_list)
+        # filter by health
+        if len(_healths) > 0 and not skip_health:
+            filtered_list = []
+            for _health in _healths:
+                filtered_list.extend([_i for _i in items if self._health_equals(_health, _i)])
+            items = set(filtered_list)
+        return items
+
+    def _tls_equals(self, tls_filter, overview_tls):
+        if tls_filter == OverviewMTSLStatus.ENABLED.text:
+            return overview_tls == MeshWideTLSType.ENABLED
+        elif tls_filter == OverviewMTSLStatus.DISABLED.text:
+            return overview_tls == MeshWideTLSType.DISABLED
+        else:
+            return overview_tls == MeshWideTLSType.PARTLY_ENABLED
+
+    def _health_equals(self, health_filter, overview_item):
+        if health_filter == OverviewHealth.HEALTHY.text:
+            return overview_item.degraded == 0 and overview_item.unhealthy == 0 \
+                    and overview_item.healthy > 0
+        elif health_filter == OverviewHealth.DEGRADED.text:
+            return overview_item.degraded > 0 and overview_item.unhealthy == 0
+        else:
+            return overview_item.degraded == 0 and overview_item.unhealthy > 0
 
     def test_disable_enable_delete_auto_injection(self, namespace):
         # load the page first

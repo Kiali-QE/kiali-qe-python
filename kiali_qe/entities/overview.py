@@ -38,6 +38,9 @@ class Overview(EntityBase):
     def __eq__(self, other):
         return self.is_equal(other, advanced_check=True)
 
+    def __hash__(self):
+        return (hash(self.namespace) ^ hash(self.overview_type))
+
     def is_equal(self, other, advanced_check=True):
         # basic check
         if not isinstance(other, Overview):
