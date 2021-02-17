@@ -449,9 +449,9 @@ class OverviewHealth(StringEnum):
     HEALTHY = ('Healthy')
 
 
-class AppIstioSideCar(StringEnum):
+class AppIstioSidecar(StringEnum):
     PRESENT = ('Present')
-    NOT_PRE = ('Not Present')
+    NOT_PRESENT = ('Not Present')
 
 
 class AppHealth(StringEnum):

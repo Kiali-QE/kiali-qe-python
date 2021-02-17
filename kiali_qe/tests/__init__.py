@@ -47,7 +47,8 @@ from kiali_qe.components.enums import (
     AuthPolicyActionType,
     LabelOperation,
     VersionLabel,
-    AppLabel
+    AppLabel,
+    IstioSidecar
 )
 from kiali_qe.components.error_codes import (
     KIA0201,
@@ -986,7 +987,9 @@ class ApplicationsPageTest(AbstractListPageTest):
         applications_oc = self._apply_app_filters(self.openshift_client.application_list(
             namespaces=namespaces),
             filters,
-            label_operation)
+            label_operation,
+            True,
+            True)
 
         # compare all results
         logger.debug('Namespaces:{}'.format(namespaces))
@@ -1029,7 +1032,8 @@ class ApplicationsPageTest(AbstractListPageTest):
                                 application_ui.labels,
                                 application_ui.name)
                     found = True
-                    if application_oc.application_status:
+                    if application_oc.application_status and \
+                            application_oc.application_status.deployment_statuses:
                         assert is_equal(application_rest.application_status.deployment_statuses,
                                         application_oc.application_status.deployment_statuses), \
                                 "Application REST Status {} is not equal to OC {} for {}"\
@@ -1041,7 +1045,8 @@ class ApplicationsPageTest(AbstractListPageTest):
             if not found:
                 assert found, '{} not found in OC'.format(application_ui)
 
-    def _apply_app_filters(self, applications=[], filters=[], label_operation=None):
+    def _apply_app_filters(self, applications=[], filters=[], label_operation=None,
+                           skip_health=False, skip_sidecar=False):
         _an = self.FILTER_ENUM.APP_NAME.text
         _application_names = [_f['value'] for _f in filters if _f['name'] == _an]
         logger.debug('Application names:{}'.format(_application_names))
@@ -1051,7 +1056,9 @@ class ApplicationsPageTest(AbstractListPageTest):
         _ais = self.FILTER_ENUM.ISTIO_SIDECAR.text
         _sidecars = [_f['value'] for _f in filters if _f['name'] == _ais]
         logger.debug('Istio Sidecars:{}'.format(_sidecars))
-        # @TODO health
+        _ah = self.FILTER_ENUM.HEALTH.text
+        _health = [_f['value'] for _f in filters if _f['name'] == _ah]
+        logger.debug('Health:{}'.format(_health))
         # filter by application name
         items = applications
         if len(_application_names) > 0:
@@ -1068,12 +1075,27 @@ class ApplicationsPageTest(AbstractListPageTest):
                     (True if label_operation == LabelOperation.AND.text else False))])
             items = set(filtered_list)
         # filter by sidecars
-        if len(_sidecars) > 0:
+        if len(_sidecars) > 0 and not skip_sidecar:
             filtered_list = []
             for _sidecar in _sidecars:
-                filtered_list.extend([_i for _i in items if _sidecar == _i.istio_sidecar])
+                filtered_list.extend([_i for _i in items if
+                                      self.sidecar_presents(_sidecar, _i.istio_sidecar)])
+            items = set(filtered_list)
+        # filter by health
+        if len(_health) > 0 and not skip_health:
+            filtered_list = []
+            filtered_list.extend([_i for _i in items if self.health_equals(_health[0], _i.health)])
             items = set(filtered_list)
         return items
+
+    def sidecar_presents(self, sidecar_filter, item_sidecar):
+        if item_sidecar:
+            return sidecar_filter == IstioSidecar.PRESENT.text
+        else:
+            return sidecar_filter == IstioSidecar.NOT_PRESENT.text
+
+    def health_equals(self, health_filter, health):
+        return health and health_filter == health.text
 
 
 class WorkloadsPageTest(AbstractListPageTest):
