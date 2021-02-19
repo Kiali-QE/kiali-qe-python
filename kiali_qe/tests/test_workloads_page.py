@@ -5,7 +5,10 @@ from kiali_qe.components.enums import (
     WorkloadsPageSort,
     WorkloadType,
     WorkloadsPageFilter,
-    LabelOperation
+    LabelOperation,
+    IstioSidecar,
+    AppLabel,
+    VersionLabel
 )
 
 BOOKINFO = 'bookinfo'
@@ -66,6 +69,60 @@ def test_workloads_filter_workloadtype(kiali_client, openshift_client, browser):
     for _type in WorkloadType:
         tests.assert_all_items(filters=[
             {"name": WorkloadsPageFilter.WORKLOAD_TYPE.text, "value": _type.text}])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group5
+def test_workloads_filter_istio_sidecar_present(kiali_client, openshift_client, browser):
+    tests = WorkloadsPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.apply_filters(filters=[
+        {"name": WorkloadsPageFilter.ISTIO_SIDECAR.text, "value": IstioSidecar.PRESENT.text}])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group5
+def test_workloads_filter_istio_sidecar_not_present(kiali_client, openshift_client, browser):
+    tests = WorkloadsPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.apply_filters(filters=[
+        {"name": WorkloadsPageFilter.ISTIO_SIDECAR.text, "value": IstioSidecar.NOT_PRESENT.text}])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group5
+def test_workloads_filter_app_label_present(kiali_client, openshift_client, browser):
+    tests = WorkloadsPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.apply_filters(filters=[
+        {"name": WorkloadsPageFilter.APP_LABEL.text, "value": AppLabel.PRESENT.text}])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group5
+def test_workloads_filter_app_label_not_present(kiali_client, openshift_client, browser):
+    tests = WorkloadsPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.apply_filters(filters=[
+        {"name": WorkloadsPageFilter.APP_LABEL.text, "value": AppLabel.NOT_PRESENT.text}])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group5
+def test_workloads_filter_version_label_present(kiali_client, openshift_client, browser):
+    tests = WorkloadsPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.apply_filters(filters=[
+        {"name": WorkloadsPageFilter.VERSION_LABEL.text, "value": VersionLabel.PRESENT.text}])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group5
+def test_workloads_filter_version_label_not_present(kiali_client, openshift_client, browser):
+    tests = WorkloadsPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.apply_filters(filters=[
+        {"name": WorkloadsPageFilter.VERSION_LABEL.text, "value": VersionLabel.NOT_PRESENT.text}])
 
 
 @pytest.mark.p_ro_top
