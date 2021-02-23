@@ -182,7 +182,7 @@ def test_overview_traffic_policies(kiali_client, openshift_client, browser, pick
 def test_filter_overviews_by_health_failure(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.apply_filters(filters=[
+    tests.assert_all_items(filters=[
         {"name": OverviewPageFilter.HEALTH.text, "value": OverviewHealth.FAILURE.text}],)
 
 
@@ -191,7 +191,7 @@ def test_filter_overviews_by_health_failure(kiali_client, openshift_client, brow
 def test_filter_overviews_by_health_degraded(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.apply_filters(filters=[
+    tests.assert_all_items(filters=[
         {"name": OverviewPageFilter.HEALTH.text, "value": OverviewHealth.DEGRADED.text}])
 
 
@@ -200,7 +200,7 @@ def test_filter_overviews_by_health_degraded(kiali_client, openshift_client, bro
 def test_filter_overviews_by_health_healthy(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.apply_filters(filters=[
+    tests.assert_all_items(filters=[
         {"name": OverviewPageFilter.HEALTH.text, "value": OverviewHealth.HEALTHY.text}])
 
 
@@ -209,7 +209,7 @@ def test_filter_overviews_by_health_healthy(kiali_client, openshift_client, brow
 def test_filter_overviews_by_mtlsstatus_enabled(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.apply_filters(filters=[
+    tests.assert_all_items(filters=[
         {"name": OverviewPageFilter.MTLS_STATUS.text, "value": OverviewMTSLStatus.ENABLED.text}])
 
 
@@ -218,7 +218,7 @@ def test_filter_overviews_by_mtlsstatus_enabled(kiali_client, openshift_client, 
 def test_filter_overviews_by_mtlsstatus_partiallyenabled(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.apply_filters(filters=[
+    tests.assert_all_items(filters=[
         {"name": OverviewPageFilter.MTLS_STATUS.text, "value": OverviewMTSLStatus.PARENABLED.text}])
 
 
@@ -227,7 +227,7 @@ def test_filter_overviews_by_mtlsstatus_partiallyenabled(kiali_client, openshift
 def test_filter_overviews_by_mtlsstatus_disabled(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.apply_filters(filters=[
+    tests.assert_all_items(filters=[
         {"name": OverviewPageFilter.MTLS_STATUS.text, "value": OverviewMTSLStatus.DISABLED.text}])
 
 
