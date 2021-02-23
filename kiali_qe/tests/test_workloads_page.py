@@ -76,7 +76,7 @@ def test_workloads_filter_workloadtype(kiali_client, openshift_client, browser):
 def test_workloads_filter_istio_sidecar_present(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.apply_filters(filters=[
+    tests.assert_all_items(filters=[
         {"name": WorkloadsPageFilter.ISTIO_SIDECAR.text, "value": IstioSidecar.PRESENT.text}])
 
 
@@ -85,7 +85,7 @@ def test_workloads_filter_istio_sidecar_present(kiali_client, openshift_client, 
 def test_workloads_filter_istio_sidecar_not_present(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.apply_filters(filters=[
+    tests.assert_all_items(filters=[
         {"name": WorkloadsPageFilter.ISTIO_SIDECAR.text, "value": IstioSidecar.NOT_PRESENT.text}])
 
 
@@ -94,7 +94,7 @@ def test_workloads_filter_istio_sidecar_not_present(kiali_client, openshift_clie
 def test_workloads_filter_app_label_present(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.apply_filters(filters=[
+    tests.assert_all_items(filters=[
         {"name": WorkloadsPageFilter.APP_LABEL.text, "value": AppLabel.PRESENT.text}])
 
 
@@ -103,7 +103,7 @@ def test_workloads_filter_app_label_present(kiali_client, openshift_client, brow
 def test_workloads_filter_app_label_not_present(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.apply_filters(filters=[
+    tests.assert_all_items(filters=[
         {"name": WorkloadsPageFilter.APP_LABEL.text, "value": AppLabel.NOT_PRESENT.text}])
 
 
@@ -112,7 +112,7 @@ def test_workloads_filter_app_label_not_present(kiali_client, openshift_client, 
 def test_workloads_filter_version_label_present(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.apply_filters(filters=[
+    tests.assert_all_items(filters=[
         {"name": WorkloadsPageFilter.VERSION_LABEL.text, "value": VersionLabel.PRESENT.text}])
 
 
@@ -121,7 +121,7 @@ def test_workloads_filter_version_label_present(kiali_client, openshift_client, 
 def test_workloads_filter_version_label_not_present(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.apply_filters(filters=[
+    tests.assert_all_items(filters=[
         {"name": WorkloadsPageFilter.VERSION_LABEL.text, "value": VersionLabel.NOT_PRESENT.text}])
 
 
