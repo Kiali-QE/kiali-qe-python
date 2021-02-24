@@ -140,6 +140,12 @@ class AbstractListPageTest(object):
             self.page.page_refresh()
         wait_to_spinner_disappear(self.browser)
 
+    def sidecar_presents(self, sidecar_filter, item_sidecar):
+        if item_sidecar:
+            return sidecar_filter == IstioSidecar.PRESENT.text
+        else:
+            return sidecar_filter == IstioSidecar.NOT_PRESENT.text
+
     def is_in_details_page(self, name, namespace):
         breadcrumb = BreadCrumb(self.page)
         if len(breadcrumb.locations) < 3:
@@ -1144,12 +1150,6 @@ class ApplicationsPageTest(AbstractListPageTest):
             items = set(filtered_list)
         return items
 
-    def sidecar_presents(self, sidecar_filter, item_sidecar):
-        if item_sidecar:
-            return sidecar_filter == IstioSidecar.PRESENT.text
-        else:
-            return sidecar_filter == IstioSidecar.NOT_PRESENT.text
-
     def health_equals(self, health_filter, health):
         return health and health_filter == health.text
 
@@ -1313,7 +1313,8 @@ class WorkloadsPageTest(AbstractListPageTest):
         # get workloads from OC client
         workloads_oc = self._apply_workload_filters(self.openshift_client.workload_list(
             namespaces=(namespaces if namespaces else self.kiali_client.namespace_list())),
-            filters, label_operation)
+            filters, label_operation,
+            skip_sidecar=True)
         # get workloads from ui
         workloads_ui = self.page.content.all_items
 
@@ -1327,8 +1328,8 @@ class WorkloadsPageTest(AbstractListPageTest):
 
         assert len(workloads_ui) == len(workloads_rest), \
             "UI {} and REST {} workloads number not equal".format(workloads_ui, workloads_rest)
-        assert len(workloads_rest) == len(workloads_oc), \
-            "REST {} and OC {} workloads number not equal".format(workloads_rest, workloads_oc)
+        assert len(workloads_rest) <= len(workloads_oc), \
+            "REST {} should be less or equal OC {}".format(workloads_rest, workloads_oc)
 
         for workload_ui in workloads_ui:
             found = False
@@ -1362,7 +1363,8 @@ class WorkloadsPageTest(AbstractListPageTest):
             if not found:
                 assert found, '{} not found in OC'.format(workload_ui)
 
-    def _apply_workload_filters(self, workloads=[], filters=[], label_operation=None):
+    def _apply_workload_filters(self, workloads=[], filters=[], label_operation=None,
+                                skip_sidecar=False):
         _sn = self.FILTER_ENUM.WORKLOAD_NAME.text
         _names = [_f['value'] for _f in filters if _f['name'] == _sn]
         logger.debug('Workload names:{}'.format(_names))
@@ -1409,25 +1411,28 @@ class WorkloadsPageTest(AbstractListPageTest):
                 filtered_list.extend([_i for _i in items if _type == _i.workload_type])
             items = set(filtered_list)
         # filter by sidecars
-        if len(_sidecars) > 0:
+        if len(_sidecars) > 0 and not skip_sidecar:
             filtered_list = []
             for _sidecar in _sidecars:
-                filtered_list.extend([_i for _i in items if _sidecar == _i.istio_sidecar])
+                filtered_list.extend([_i for _i in items if
+                                      self.sidecar_presents(_sidecar, _i.istio_sidecar)])
             items = set(filtered_list)
         # @TODO filter by health
         # filter by version label present
         if _version_label:
             filtered_list = []
-            filtered_list.extend([_i for _i in items if _version_label ==
-                                  VersionLabel.NOT_PRESENT.text ^ dict_contains(
-                                      given_list=['version'], original_dict=_i._labels)])
+            filtered_list.extend([_i for _i in items if
+                                  (_version_label == VersionLabel.NOT_PRESENT.text)
+                                  ^ dict_contains(
+                                      given_list=['version'], original_dict=_i.labels)])
             items = set(filtered_list)
         # filter by app label present
         if _app_label:
             filtered_list = []
-            filtered_list.extend([_i for _i in items if _app_label ==
-                                  AppLabel.NOT_PRESENT.text ^ dict_contains(
-                                      given_list=['app'], original_dict=_i._labels)])
+            filtered_list.extend([_i for _i in items if
+                                  (_app_label == AppLabel.NOT_PRESENT.text)
+                                  ^ dict_contains(
+                                      given_list=['app'], original_dict=_i.labels)])
             items = set(filtered_list)
         return items
 
@@ -1691,7 +1696,8 @@ class ServicesPageTest(AbstractListPageTest):
         if len(_sidecars) > 0:
             filtered_list = []
             for _sidecar in _sidecars:
-                filtered_list.extend([_i for _i in items if _sidecar == _i.istio_sidecar])
+                filtered_list.extend([_i for _i in items if
+                                      self.sidecar_presents(_sidecar, _i.istio_sidecar)])
             items = set(filtered_list)
         # filter by labels
         if len(_labels) > 0:
