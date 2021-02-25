@@ -45,6 +45,9 @@ SCENARIO_21 = "scenario21.yaml"
 SCENARIO_22 = "scenario22.yaml"
 SCENARIO_23 = "scenario23.yaml"
 SCENARIO_24 = "scenario24.yaml"
+SCENARIO_25 = "scenario25.yaml"
+SCENARIO_26 = "scenario26.yaml"
+SCENARIO_27 = "scenario27.yaml"
 
 
 @pytest.mark.p_group_last
@@ -738,6 +741,117 @@ def test_scenario24(kiali_client, openshift_client, browser):
                                      'PeerAuthentication', 'disable-mesh-mtls',
                                      namespace=ISTIO_SYSTEM,
                                      error_messages=[KIA0401])
+                                 ],
+                             tls_type=MeshWideTLSType.PARTLY_ENABLED,
+                             namespace_tls_objects=[
+                                NamespaceTLSObject(
+                                    'bookinfo',
+                                    MeshWideTLSType.DISABLED),
+                                NamespaceTLSObject(
+                                    'istio-system',
+                                    MeshWideTLSType.DISABLED),
+                                NamespaceTLSObject(
+                                    'default',
+                                    MeshWideTLSType.DISABLED)
+                             ])
+
+
+@pytest.mark.p_group_last
+def test_scenario25(kiali_client, openshift_client, browser):
+    """ PeerAuthentication is STRICT in mesh level but DISABLED in port level
+    """
+
+    tests = ValidationsTest(
+            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser,
+            objects_path=istio_objects_mtls_path.strpath)
+    tests.test_istio_objects(SCENARIO_25,
+                             config_validation_objects=[
+                                 ConfigValidationObject(
+                                     'DestinationRule', 'enable-mesh-mtls',
+                                     namespace=BOOKINFO,
+                                     error_messages=[KIA0205]),
+                                 ConfigValidationObject(
+                                     'PeerAuthentication', 'strict-mesh-mtls',
+                                     namespace=ISTIO_SYSTEM,
+                                     error_messages=[]),
+                                 ConfigValidationObject(
+                                     'PeerAuthentication', 'grafana-ports-mtls-disabled',
+                                     namespace=ISTIO_SYSTEM,
+                                     error_messages=[])
+                                 ],
+                             tls_type=MeshWideTLSType.ENABLED,
+                             namespace_tls_objects=[
+                                NamespaceTLSObject(
+                                    'bookinfo',
+                                    MeshWideTLSType.ENABLED),
+                                NamespaceTLSObject(
+                                    'istio-system',
+                                    MeshWideTLSType.ENABLED),
+                                NamespaceTLSObject(
+                                    'default',
+                                    MeshWideTLSType.ENABLED)
+                             ])
+
+
+@pytest.mark.p_group_last
+def test_scenario26(kiali_client, openshift_client, browser):
+    """ PeerAuthentication is PERMISSIVE in mesh level but STRICT in port level
+    """
+
+    tests = ValidationsTest(
+            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser,
+            objects_path=istio_objects_mtls_path.strpath)
+    tests.test_istio_objects(SCENARIO_26,
+                             config_validation_objects=[
+                                 ConfigValidationObject(
+                                     'DestinationRule', 'enable-mesh-mtls',
+                                     namespace=BOOKINFO,
+                                     error_messages=[KIA0205]),
+                                 ConfigValidationObject(
+                                     'PeerAuthentication', 'permissive-mesh-mtls',
+                                     namespace=ISTIO_SYSTEM,
+                                     error_messages=[]),
+                                 ConfigValidationObject(
+                                     'PeerAuthentication', 'grafana-ports-mtls-strict',
+                                     namespace=ISTIO_SYSTEM,
+                                     error_messages=[])
+                                 ],
+                             tls_type=MeshWideTLSType.PARTLY_ENABLED,
+                             namespace_tls_objects=[
+                                NamespaceTLSObject(
+                                    'bookinfo',
+                                    MeshWideTLSType.DISABLED),
+                                NamespaceTLSObject(
+                                    'istio-system',
+                                    MeshWideTLSType.DISABLED),
+                                NamespaceTLSObject(
+                                    'default',
+                                    MeshWideTLSType.DISABLED)
+                             ])
+
+
+@pytest.mark.p_group_last
+def test_scenario27(kiali_client, openshift_client, browser):
+    """ PeerAuthentication is PERMISSIVE in mesh level, Grafana UNSET but DISABLE in port level
+    """
+
+    tests = ValidationsTest(
+            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser,
+            objects_path=istio_objects_mtls_path.strpath)
+    tests.test_istio_objects(SCENARIO_27,
+                             config_validation_objects=[
+                                 ConfigValidationObject(
+                                     'DestinationRule', 'enable-mesh-mtls',
+                                     namespace=BOOKINFO,
+                                     error_messages=[KIA0205]),
+                                 ConfigValidationObject(
+                                     'PeerAuthentication', 'permissive-mesh-mtls',
+                                     namespace=ISTIO_SYSTEM,
+                                     error_messages=[]),
+                                 ConfigValidationObject(
+                                     'PeerAuthentication', 'grafana-unset-ports-mtls-disabled',
+                                     namespace=ISTIO_SYSTEM,
+                                     error_messages=[])
                                  ],
                              tls_type=MeshWideTLSType.PARTLY_ENABLED,
                              namespace_tls_objects=[
