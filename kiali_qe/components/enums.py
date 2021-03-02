@@ -263,6 +263,13 @@ class VersionLabel(StringEnum):
     NOT_PRESENT = ('Not Present')
 
 
+class WorkloadHealth(StringEnum):
+    HEALTHY = ('Healthy')
+    DEGRADED = ('Degraded')
+    FAILURE = ('Failure')
+    NO_HEALTH_INFO = ('No health information')
+
+
 class ServicesPageFilter(StringEnum):
     SERVICE_NAME = ('Service Name')
     ISTIO_SIDECAR = ('Istio Sidecar')

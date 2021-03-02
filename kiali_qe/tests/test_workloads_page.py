@@ -8,7 +8,8 @@ from kiali_qe.components.enums import (
     LabelOperation,
     IstioSidecar,
     AppLabel,
-    VersionLabel
+    VersionLabel,
+    WorkloadHealth
 )
 
 BOOKINFO = 'bookinfo'
@@ -87,6 +88,16 @@ def test_workloads_filter_istio_sidecar_not_present(kiali_client, openshift_clie
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
         {"name": WorkloadsPageFilter.ISTIO_SIDECAR.text, "value": IstioSidecar.NOT_PRESENT.text}])
+
+
+@pytest.mark.p_ro_top
+@pytest.mark.p_ro_group8
+def test_workloads_filter_health(kiali_client, openshift_client, browser):
+    tests = WorkloadsPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    for _status in WorkloadHealth:
+        tests.apply_filters(filters=[
+            {"name": WorkloadsPageFilter.HEALTH.text, "value": _status.text}])
 
 
 @pytest.mark.p_ro_top
