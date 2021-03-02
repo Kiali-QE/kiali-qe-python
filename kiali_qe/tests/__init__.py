@@ -2168,6 +2168,7 @@ class IstioConfigPageTest(AbstractListPageTest):
                                   replace('\\', '').
                                   replace(' :', ':').
                                   replace(' .', '.').
+                                  replace('...', '').
                                   replace(' \/', '\/')):
             if config_ui.endswith(':'):
                 ui_key = config_ui
@@ -2229,7 +2230,8 @@ class IstioConfigPageTest(AbstractListPageTest):
     def _is_skip_key(self, key):
         return 'last-applied-configuration' in key \
             or key.startswith('f:') \
-            or 'managedFields' in key
+            or 'managedFields' in key \
+            or 'creationTimestamp' in key
 
     def test_gateway_create(self, name, hosts, namespaces):
         logger.debug('Creating Gateway: {}, from namespaces: {}'.format(name, namespaces))
