@@ -146,6 +146,9 @@ class AbstractListPageTest(object):
         else:
             return sidecar_filter == IstioSidecar.NOT_PRESENT.text
 
+    def health_equals(self, health_filter, health):
+        return health and health_filter == health.text
+
     def is_in_details_page(self, name, namespace):
         breadcrumb = BreadCrumb(self.page)
         if len(breadcrumb.locations) < 3:
@@ -1150,9 +1153,6 @@ class ApplicationsPageTest(AbstractListPageTest):
             items = set(filtered_list)
         return items
 
-    def health_equals(self, health_filter, health):
-        return health and health_filter == health.text
-
 
 class WorkloadsPageTest(AbstractListPageTest):
     FILTER_ENUM = WorkloadsPageFilter
@@ -1314,7 +1314,8 @@ class WorkloadsPageTest(AbstractListPageTest):
         workloads_oc = self._apply_workload_filters(self.openshift_client.workload_list(
             namespaces=(namespaces if namespaces else self.kiali_client.namespace_list())),
             filters, label_operation,
-            skip_sidecar=True)
+            skip_sidecar=True,
+            skip_health=True)
         # get workloads from ui
         workloads_ui = self.page.content.all_items
 
@@ -1364,7 +1365,7 @@ class WorkloadsPageTest(AbstractListPageTest):
                 assert found, '{} not found in OC'.format(workload_ui)
 
     def _apply_workload_filters(self, workloads=[], filters=[], label_operation=None,
-                                skip_sidecar=False):
+                                skip_sidecar=False, skip_health=False):
         _sn = self.FILTER_ENUM.WORKLOAD_NAME.text
         _names = [_f['value'] for _f in filters if _f['name'] == _sn]
         logger.debug('Workload names:{}'.format(_names))
@@ -1377,6 +1378,9 @@ class WorkloadsPageTest(AbstractListPageTest):
         _wis = self.FILTER_ENUM.ISTIO_SIDECAR.text
         _sidecars = [_f['value'] for _f in filters if _f['name'] == _wis]
         logger.debug('Istio Sidecars:{}'.format(_sidecars))
+        _wh = self.FILTER_ENUM.HEALTH.text
+        _health = [_f['value'] for _f in filters if _f['name'] == _wh]
+        logger.debug('Health:{}'.format(_health))
         _version_label = None
         for _f in filters:
             if _f['name'] == self.FILTER_ENUM.VERSION_LABEL.text:
@@ -1417,7 +1421,6 @@ class WorkloadsPageTest(AbstractListPageTest):
                 filtered_list.extend([_i for _i in items if
                                       self.sidecar_presents(_sidecar, _i.istio_sidecar)])
             items = set(filtered_list)
-        # @TODO filter by health
         # filter by version label present
         if _version_label:
             filtered_list = []
@@ -1433,6 +1436,11 @@ class WorkloadsPageTest(AbstractListPageTest):
                                   (_app_label == AppLabel.NOT_PRESENT.text)
                                   ^ dict_contains(
                                       given_list=['app'], original_dict=_i.labels)])
+            items = set(filtered_list)
+        # filter by health
+        if len(_health) > 0 and not skip_health:
+            filtered_list = []
+            filtered_list.extend([_i for _i in items if self.health_equals(_health[0], _i.health)])
             items = set(filtered_list)
         return items
 
