@@ -96,7 +96,7 @@ def test_workloads_filter_health(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     for _status in WorkloadHealth:
-        tests.apply_filters(filters=[
+        tests.assert_all_items(filters=[
             {"name": WorkloadsPageFilter.HEALTH.text, "value": _status.text}])
 
 
