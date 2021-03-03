@@ -15,7 +15,7 @@ BOOKINFO_3 = 'bookinfo3'
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_ro_group6
+@pytest.mark.p_ro_group1
 def test_filter_options(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -23,7 +23,7 @@ def test_filter_options(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_ro_group6
+@pytest.mark.p_ro_group2
 def test_sort_options(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -31,7 +31,7 @@ def test_sort_options(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_ro_group6
+@pytest.mark.p_ro_group3
 def test_type_options(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -196,7 +196,7 @@ def test_filter_overviews_by_health_degraded(kiali_client, openshift_client, bro
 
 
 @pytest.mark.p_ro_top
-@pytest.mark.p_ro_group6
+@pytest.mark.p_ro_group4
 def test_filter_overviews_by_health_healthy(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -205,7 +205,7 @@ def test_filter_overviews_by_health_healthy(kiali_client, openshift_client, brow
 
 
 @pytest.mark.p_ro_top
-@pytest.mark.p_ro_group6
+@pytest.mark.p_ro_group3
 def test_filter_overviews_by_mtlsstatus_enabled(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -214,7 +214,7 @@ def test_filter_overviews_by_mtlsstatus_enabled(kiali_client, openshift_client, 
 
 
 @pytest.mark.p_ro_top
-@pytest.mark.p_ro_group6
+@pytest.mark.p_ro_group2
 def test_filter_overviews_by_mtlsstatus_partiallyenabled(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -223,7 +223,7 @@ def test_filter_overviews_by_mtlsstatus_partiallyenabled(kiali_client, openshift
 
 
 @pytest.mark.p_ro_top
-@pytest.mark.p_ro_group6
+@pytest.mark.p_ro_group1
 def test_filter_overviews_by_mtlsstatus_disabled(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)

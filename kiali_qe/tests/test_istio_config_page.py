@@ -39,7 +39,7 @@ def test_filter_feature_random(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_ro_top
-@pytest.mark.p_ro_group6
+@pytest.mark.p_ro_group4
 def test_all_configs(kiali_client, openshift_client, browser):
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)

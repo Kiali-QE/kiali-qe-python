@@ -321,7 +321,7 @@ def test_virtual_service_broken_weight(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group3
+@pytest.mark.p_crud_group2
 def test_virtual_service_broken_weight_text(kiali_client, openshift_client, browser):
     virtual_service_broken = get_yaml(istio_objects_path.strpath,
                                       VIRTUAL_SERVICE_BROKEN_WEIGHT_TEXT)
@@ -354,7 +354,7 @@ def test_virtual_service_broken_weight_text(kiali_client, openshift_client, brow
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group3
+@pytest.mark.p_crud_group2
 def test_gateway(kiali_client, openshift_client, browser, pick_namespace):
     gateway = get_yaml(istio_objects_path.strpath, GATEWAY)
     gateway_dict = get_dict(istio_objects_path.strpath, GATEWAY)
@@ -474,7 +474,7 @@ def test_authpolicy_rules_deny_disabled(kiali_client, openshift_client, browser,
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group3
+@pytest.mark.p_crud_group9
 def test_peerauth_create(kiali_client, openshift_client, browser, pick_namespace):
     namespace = pick_namespace(BOOKINFO_2)
     name = 'peerauthtocreate'
@@ -508,7 +508,7 @@ def test_peerauth_create_disabled(kiali_client, openshift_client, browser, pick_
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group3
+@pytest.mark.p_crud_group4
 def test_requestauth_create(kiali_client, openshift_client, browser, pick_namespace):
     namespace = pick_namespace(BOOKINFO_2)
     name = 'requestauthtocreate'
@@ -526,7 +526,7 @@ def test_requestauth_create(kiali_client, openshift_client, browser, pick_namesp
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group3
+@pytest.mark.p_crud_group4
 def test_requestauth_create_disabled(kiali_client, openshift_client, browser, pick_namespace):
     namespace = pick_namespace(BOOKINFO_2)
     name = 'requestauthtocreatedisabled'

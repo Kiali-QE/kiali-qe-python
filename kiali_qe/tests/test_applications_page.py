@@ -147,7 +147,7 @@ def test_filter_applications_health_degraded(kiali_client, openshift_client, bro
 
 
 @pytest.mark.p_ro_top
-@pytest.mark.p_ro_group5
+@pytest.mark.p_ro_group4
 def test_filter_applications_health_failure(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -156,7 +156,7 @@ def test_filter_applications_health_failure(kiali_client, openshift_client, brow
 
 
 @pytest.mark.p_ro_top
-@pytest.mark.p_ro_group5
+@pytest.mark.p_ro_group7
 def test_filter_applications_health_no_health_information(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
