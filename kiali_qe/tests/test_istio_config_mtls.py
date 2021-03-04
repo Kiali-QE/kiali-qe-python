@@ -48,6 +48,7 @@ SCENARIO_24 = "scenario24.yaml"
 SCENARIO_25 = "scenario25.yaml"
 SCENARIO_26 = "scenario26.yaml"
 SCENARIO_27 = "scenario27.yaml"
+SCENARIO_28 = "scenario28.yaml"
 
 
 @pytest.mark.p_group_last
@@ -769,7 +770,7 @@ def test_scenario25(kiali_client, openshift_client, browser):
                                  ConfigValidationObject(
                                      'DestinationRule', 'enable-mesh-mtls',
                                      namespace=BOOKINFO,
-                                     error_messages=[KIA0205]),
+                                     error_messages=[]),
                                  ConfigValidationObject(
                                      'PeerAuthentication', 'strict-mesh-mtls',
                                      namespace=ISTIO_SYSTEM,
@@ -806,7 +807,7 @@ def test_scenario26(kiali_client, openshift_client, browser):
                                  ConfigValidationObject(
                                      'DestinationRule', 'enable-mesh-mtls',
                                      namespace=BOOKINFO,
-                                     error_messages=[KIA0205]),
+                                     error_messages=[]),
                                  ConfigValidationObject(
                                      'PeerAuthentication', 'permissive-mesh-mtls',
                                      namespace=ISTIO_SYSTEM,
@@ -843,7 +844,7 @@ def test_scenario27(kiali_client, openshift_client, browser):
                                  ConfigValidationObject(
                                      'DestinationRule', 'enable-mesh-mtls',
                                      namespace=BOOKINFO,
-                                     error_messages=[KIA0205]),
+                                     error_messages=[]),
                                  ConfigValidationObject(
                                      'PeerAuthentication', 'permissive-mesh-mtls',
                                      namespace=ISTIO_SYSTEM,
@@ -863,5 +864,59 @@ def test_scenario27(kiali_client, openshift_client, browser):
                                     MeshWideTLSType.DISABLED),
                                 NamespaceTLSObject(
                                     'default',
+                                    MeshWideTLSType.DISABLED)
+                             ])
+
+
+@pytest.mark.p_group_last
+def test_scenario28(kiali_client, openshift_client, browser):
+    """ PeerAuthentication is set to STRICT at the workload level,
+        but set to PERMISSIVE at the mesh and namespace level
+        KIA0105 should not be displayed
+    """
+
+    tests = ValidationsTest(
+            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser,
+            objects_path=istio_objects_mtls_path.strpath)
+    tests.test_istio_objects(SCENARIO_28,
+                             config_validation_objects=[
+                                 ConfigValidationObject(
+                                     'DestinationRule', 'details-mtls',
+                                     namespace=BOOKINFO,
+                                     error_messages=[]),
+                                 ConfigValidationObject(
+                                     'DestinationRule', 'ratings-mtls',
+                                     namespace=BOOKINFO,
+                                     error_messages=[]),
+                                 ConfigValidationObject(
+                                     'PeerAuthentication', 'default',
+                                     namespace=ISTIO_SYSTEM,
+                                     error_messages=[]),
+                                 ConfigValidationObject(
+                                     'PeerAuthentication', 'default-policy',
+                                     namespace=BOOKINFO,
+                                     error_messages=[]),
+                                 ConfigValidationObject(
+                                     'PeerAuthentication', 'details-policy',
+                                     namespace=BOOKINFO,
+                                     error_messages=[]),
+                                 ConfigValidationObject(
+                                     'PeerAuthentication', 'ratings-policy',
+                                     namespace=BOOKINFO,
+                                     error_messages=[]),
+                                 ConfigValidationObject(
+                                     'AuthorizationPolicy', 'ratings',
+                                     namespace=BOOKINFO,
+                                     error_messages=[])
+                                 ],
+                             tls_type=MeshWideTLSType.DISABLED,
+                             namespace_tls_objects=[
+                                NamespaceTLSObject(
+                                    'bookinfo',
+                                    (MeshWideTLSType.PARTLY_ENABLED if not
+                                        openshift_client.is_auto_mtls()
+                                        else MeshWideTLSType.DISABLED)),
+                                NamespaceTLSObject(
+                                    'istio-system',
                                     MeshWideTLSType.DISABLED)
                              ])
