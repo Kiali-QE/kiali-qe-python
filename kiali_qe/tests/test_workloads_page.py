@@ -73,7 +73,7 @@ def test_workloads_filter_workloadtype(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_ro_top
-@pytest.mark.p_ro_group5
+@pytest.mark.p_ro_group1
 def test_workloads_filter_istio_sidecar_present(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -82,7 +82,7 @@ def test_workloads_filter_istio_sidecar_present(kiali_client, openshift_client, 
 
 
 @pytest.mark.p_ro_top
-@pytest.mark.p_ro_group5
+@pytest.mark.p_ro_group2
 def test_workloads_filter_istio_sidecar_not_present(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -91,7 +91,7 @@ def test_workloads_filter_istio_sidecar_not_present(kiali_client, openshift_clie
 
 
 @pytest.mark.p_ro_top
-@pytest.mark.p_ro_group8
+@pytest.mark.p_ro_group7
 def test_workloads_filter_health(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -101,7 +101,7 @@ def test_workloads_filter_health(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_ro_top
-@pytest.mark.p_ro_group5
+@pytest.mark.p_ro_group3
 def test_workloads_filter_app_label_present(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -110,7 +110,7 @@ def test_workloads_filter_app_label_present(kiali_client, openshift_client, brow
 
 
 @pytest.mark.p_ro_top
-@pytest.mark.p_ro_group5
+@pytest.mark.p_ro_group4
 def test_workloads_filter_app_label_not_present(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -137,7 +137,7 @@ def test_workloads_filter_version_label_not_present(kiali_client, openshift_clie
 
 
 @pytest.mark.p_ro_top
-@pytest.mark.p_ro_group8
+@pytest.mark.p_ro_group4
 def test_filter_workloads_by_or_label(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -148,7 +148,7 @@ def test_filter_workloads_by_or_label(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_ro_top
-@pytest.mark.p_ro_group8
+@pytest.mark.p_ro_group1
 def test_filter_workloads_by_and_label(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
