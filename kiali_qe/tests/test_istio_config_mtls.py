@@ -49,6 +49,7 @@ SCENARIO_25 = "scenario25.yaml"
 SCENARIO_26 = "scenario26.yaml"
 SCENARIO_27 = "scenario27.yaml"
 SCENARIO_28 = "scenario28.yaml"
+SCENARIO_29 = "scenario29.yaml"
 
 
 @pytest.mark.p_group_last
@@ -919,4 +920,43 @@ def test_scenario28(kiali_client, openshift_client, browser):
                                 NamespaceTLSObject(
                                     'istio-system',
                                     MeshWideTLSType.DISABLED)
+                             ])
+
+
+@pytest.mark.p_group_last
+def test_scenario29(kiali_client, openshift_client, browser):
+    """ Enable mtls at mesh-level (PeerAuthn + DR)
+        Disable mtls at ns-level (PA + DR)
+        No validations for DR/PA at NS-level
+    """
+
+    tests = ValidationsTest(
+            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser,
+            objects_path=istio_objects_mtls_path.strpath)
+    tests.test_istio_objects(SCENARIO_29,
+                             config_validation_objects=[
+                                 ConfigValidationObject(
+                                     'DestinationRule', 'enable-mesh-mtls',
+                                     namespace=ISTIO_SYSTEM,
+                                     error_messages=[]),
+                                 ConfigValidationObject(
+                                     'DestinationRule', 'bookinfo-disable-mtls',
+                                     namespace=BOOKINFO,
+                                     error_messages=[]),
+                                 ConfigValidationObject(
+                                     'PeerAuthentication', 'disable-mtls-bookinfo',
+                                     namespace=BOOKINFO,
+                                     error_messages=[]),
+                                 ConfigValidationObject(
+                                     'PeerAuthentication', 'mtls-mesh',
+                                     namespace=ISTIO_SYSTEM,
+                                     error_messages=[])
+                                 ],
+                             tls_type=MeshWideTLSType.ENABLED,
+                             namespace_tls_objects=[
+                                NamespaceTLSObject(
+                                    'bookinfo', MeshWideTLSType.DISABLED),
+                                NamespaceTLSObject(
+                                    'istio-system',
+                                    MeshWideTLSType.ENABLED)
                              ])
