@@ -3053,10 +3053,10 @@ class TableViewAbstract(ViewAbstract):
     def _get_overview_status(self, element):
         _not_valid = len(self.browser.elements(
             parent=element,
-            locator='.//*[contains(@style, "danger")]')) > 0
+            locator='.//*[contains(@class, "ace_error")]')) > 0
         _warning = len(self.browser.elements(
             parent=element,
-            locator='.//*[contains(@style, "warning")]')) > 0
+            locator='.//*[contains(@class, "ace_warning")]')) > 0
         if _not_valid:
             return IstioConfigValidation.NOT_VALID
         elif _warning:
