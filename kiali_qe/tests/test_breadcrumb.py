@@ -7,7 +7,7 @@ from kiali_qe.tests import (
     IstioConfigPageTest
 )
 
-BOOKINFO_2 = 'bookinfo2'
+BOOKINFO_1 = 'bookinfo'
 ISTIO_SYSTEM = 'istio-system'
 
 
@@ -18,7 +18,7 @@ ISTIO_SYSTEM = 'istio-system'
 def test_workload_breadcrumb_menu(kiali_client, openshift_client, browser, pick_namespace):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    namespace = pick_namespace(BOOKINFO_2)
+    namespace = pick_namespace(BOOKINFO_1)
     tests.assert_breadcrumb_menu(name='details-v1', namespace=namespace)
 
 
@@ -27,7 +27,7 @@ def test_workload_breadcrumb_menu(kiali_client, openshift_client, browser, pick_
 def test_workload_breadcrumb_namespace(kiali_client, openshift_client, browser, pick_namespace):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    namespace = pick_namespace(BOOKINFO_2)
+    namespace = pick_namespace(BOOKINFO_1)
     tests.assert_breadcrumb_namespace(name='details-v1', namespace=namespace)
 
 
@@ -37,7 +37,7 @@ def test_workload_breadcrumb_namespace(kiali_client, openshift_client, browser, 
 def test_workload_breadcrumb_object(kiali_client, openshift_client, browser, pick_namespace):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    namespace = pick_namespace(BOOKINFO_2)
+    namespace = pick_namespace(BOOKINFO_1)
     tests.assert_breadcrumb_object(name='details-v1', namespace=namespace)
 
 
@@ -49,7 +49,7 @@ def test_workload_breadcrumb_object(kiali_client, openshift_client, browser, pic
 def test_application_breadcrumb_menu(kiali_client, openshift_client, browser, pick_namespace):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    namespace = pick_namespace(BOOKINFO_2)
+    namespace = pick_namespace(BOOKINFO_1)
     tests.assert_breadcrumb_menu(name='details', namespace=namespace)
 
 
@@ -58,7 +58,7 @@ def test_application_breadcrumb_menu(kiali_client, openshift_client, browser, pi
 def test_application_breadcrumb_namespace(kiali_client, openshift_client, browser, pick_namespace):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    namespace = pick_namespace(BOOKINFO_2)
+    namespace = pick_namespace(BOOKINFO_1)
     tests.assert_breadcrumb_namespace(name='details', namespace=namespace)
 
 
@@ -67,7 +67,7 @@ def test_application_breadcrumb_namespace(kiali_client, openshift_client, browse
 def test_application_breadcrumb_object(kiali_client, openshift_client, browser, pick_namespace):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    namespace = pick_namespace(BOOKINFO_2)
+    namespace = pick_namespace(BOOKINFO_1)
     tests.assert_breadcrumb_object(name='details', namespace=namespace)
 
 
@@ -78,7 +78,7 @@ def test_application_breadcrumb_object(kiali_client, openshift_client, browser, 
 def test_service_breadcrumb_menu(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    namespace = pick_namespace(BOOKINFO_2)
+    namespace = pick_namespace(BOOKINFO_1)
     tests.assert_breadcrumb_menu(name='details', namespace=namespace)
 
 
@@ -88,7 +88,7 @@ def test_service_breadcrumb_menu(kiali_client, openshift_client, browser, pick_n
 def test_service_breadcrumb_namespace(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    namespace = pick_namespace(BOOKINFO_2)
+    namespace = pick_namespace(BOOKINFO_1)
     tests.assert_breadcrumb_namespace(name='details', namespace=namespace)
 
 
@@ -97,7 +97,7 @@ def test_service_breadcrumb_namespace(kiali_client, openshift_client, browser, p
 def test_service_breadcrumb_object(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    namespace = pick_namespace(BOOKINFO_2)
+    namespace = pick_namespace(BOOKINFO_1)
     tests.assert_breadcrumb_object(name='details', namespace=namespace)
 
 
