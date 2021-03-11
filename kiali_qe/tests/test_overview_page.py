@@ -30,6 +30,7 @@ def test_type_options(kiali_client, openshift_client, browser):
 
 # putting to p_ro_top group although right now there are no tests changing health of app so
 # it could be in p_ro_top_safe
+@pytest.mark.p_smoke
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
 def test_all_app_compact_overviews(kiali_client, openshift_client, browser):
@@ -66,6 +67,7 @@ def test_all_app_expand_overviews(kiali_client, openshift_client, browser):
                            list_type=OverviewViewType.EXPAND)
 
 
+@pytest.mark.p_smoke
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
 def test_all_services_expand_overviews(kiali_client, openshift_client, browser):
@@ -100,6 +102,7 @@ def test_all_services_list_overviews(kiali_client, openshift_client, browser):
                            list_type=OverviewViewType.LIST)
 
 
+@pytest.mark.p_smoke
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
 def test_all_workloads_list_overviews(kiali_client, openshift_client, browser):

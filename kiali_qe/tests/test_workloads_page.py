@@ -64,6 +64,7 @@ def test_filter_workloads_by_label(kiali_client, openshift_client, browser):
         {"name": WorkloadsPageFilter.LABEL.text, "value": "version:v2"}])
 
 
+@pytest.mark.p_smoke
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group9
 def test_all_workloads_namespace(kiali_client, openshift_client, browser):
