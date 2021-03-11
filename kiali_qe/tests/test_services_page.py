@@ -70,6 +70,7 @@ def test_filter_service_by_label(kiali_client, openshift_client, browser):
         {"name": ServicesPageFilter.LABEL.text, "value": "app:reviews"}])
 
 
+@pytest.mark.p_smoke
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group7
 def test_all_services_namespace(kiali_client, openshift_client, browser):
