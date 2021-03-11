@@ -13,6 +13,7 @@ from kiali_qe.utils.log import logger
 ISTIO_SYSTEM = 'istio-system'
 
 
+@pytest.mark.p_smoke
 @pytest.mark.p_atomic
 @pytest.mark.p_ro_group8
 def test_about(browser, kiali_client):
