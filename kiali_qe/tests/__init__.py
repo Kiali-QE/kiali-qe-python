@@ -555,8 +555,14 @@ class AbstractListPageTest(object):
                 namespace=namespace,
                 object_name=istio_config_ui.name,
                 object_type=istio_config_ui.type)
-            # TODO get the status from overview
-            assert istio_config_ui.status == istio_config_rest.validation
+            assert istio_config_ui.status == config_overview_ui.status, \
+                'UI Status {} not equal to Overview Status {}'.format(
+                    istio_config_ui.status,
+                    config_overview_ui.status)
+            assert istio_config_ui.status == istio_config_rest.validation, \
+                'UI Status {} not equal to REST Status {}'.format(
+                    istio_config_ui.status,
+                    istio_config_rest.status)
             if istio_config_ui.type == IstioConfigObjectType.PEER_AUTHENTICATION.text:
                 assert '\'app\': \'{}\''.format(re.sub(
                     APP_NAME_REGEX,
