@@ -1704,6 +1704,26 @@ class GraphSidePanel(Widget):
             application = application.replace('A', '')
         return application
 
+    def show_traffic(self):
+        _buttons = self.browser.elements(
+            parent=self.ROOT,
+            locator=('//button[@id="pf-tab-0-graph_summary_tabs" and contains(text(), "Traffic")]'))
+        if len(_buttons) == 1:
+            self.browser.click(_buttons[0])
+            return True
+        else:
+            return False
+
+    def show_traces(self):
+        _buttons = self.browser.elements(
+            parent=self.ROOT,
+            locator=('//button[@id="pf-tab-1-graph_summary_tabs" and contains(text(), "Traces")]'))
+        if len(_buttons) == 1:
+            self.browser.click(_buttons[0])
+            return True
+        else:
+            return False
+
 
 class GraphDisplayFilter(CheckBoxFilter):
     ROOT = ('//*[contains(@class, "pf-c-dropdown__menu")]')

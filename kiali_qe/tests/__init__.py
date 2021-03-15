@@ -518,6 +518,8 @@ class AbstractListPageTest(object):
             assert side_panel.get_application()
         else:
             assert False, "Graph Overview Page is not recognised"
+        assert side_panel.show_traffic()
+        assert side_panel.show_traces()
 
     def assert_istio_configs(self, object_ui, object_rest, object_oc, namespace):
         assert object_ui.istio_configs_number == len(object_ui.istio_configs), \
