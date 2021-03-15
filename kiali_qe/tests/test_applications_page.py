@@ -10,6 +10,7 @@ from kiali_qe.components.enums import (
 )
 
 
+BOOKINFO = 'bookinfo'
 BOOKINFO_2 = 'bookinfo2'
 ISTIO_SYSTEM = 'istio-system'
 
@@ -94,7 +95,7 @@ def test_all_applications_namespace(kiali_client, openshift_client, browser):
 def test_application_graph_overview(kiali_client, openshift_client, browser, pick_namespace):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    namespace = pick_namespace(BOOKINFO_2)
+    namespace = pick_namespace(BOOKINFO)
     tests.assert_graph_overview(name='details', namespace=namespace)
 
 

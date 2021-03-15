@@ -4,6 +4,7 @@ from kiali_qe.tests import ServicesPageTest
 from kiali_qe.components.enums import ServicesPageSort, ServicesPageFilter, LabelOperation
 
 BOOKINFO_2 = 'bookinfo2'
+BOOKINFO_3 = 'bookinfo3'
 ISTIO_SYSTEM = 'istio-system'
 
 
@@ -115,8 +116,7 @@ def test_service_details_kiali(kiali_client, openshift_client, browser, pick_nam
 def test_service_graph_overview(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    # use only bookinfo2 namespace where colliding tests are in the same p_group
-    namespace = pick_namespace(BOOKINFO_2)
+    namespace = pick_namespace(BOOKINFO_3)
     tests.assert_graph_overview(name='details', namespace=namespace)
 
 

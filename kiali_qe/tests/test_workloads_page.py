@@ -181,7 +181,7 @@ def test_workload_details_kiali(kiali_client, openshift_client, browser):
 def test_workload_graph_overview(kiali_client, openshift_client, browser, pick_namespace):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    namespace = pick_namespace(BOOKINFO_2)
+    namespace = pick_namespace(BOOKINFO_3)
     tests.assert_graph_overview(name='details-v1', namespace=namespace)
 
 
