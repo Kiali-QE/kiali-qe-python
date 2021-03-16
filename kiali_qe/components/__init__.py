@@ -1724,6 +1724,19 @@ class GraphSidePanel(Widget):
         else:
             return False
 
+    def go_to_traces(self):
+        self.show_traces()
+        _buttons = self.browser.elements(
+            parent=self.ROOT,
+            locator=('//button[contains(@class, "pf-c-button") ' +
+                     'and contains(text(), "Show Traces")]'))
+        if len(_buttons) == 1:
+            self.browser.click(_buttons[0])
+            wait_to_spinner_disappear(self.browser)
+            return TracesView(parent=self.parent, locator=self.locator, logger=self.logger)
+        else:
+            return None
+
 
 class GraphDisplayFilter(CheckBoxFilter):
     ROOT = ('//*[contains(@class, "pf-c-dropdown__menu")]')
