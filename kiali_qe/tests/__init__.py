@@ -431,6 +431,9 @@ class AbstractListPageTest(object):
 
     def assert_traces_tab(self, traces_tab):
         traces_tab.open()
+        self.assert_traces_tab_content(traces_tab)
+
+    def assert_traces_tab_content(self, traces_tab):
         assert not traces_tab.traces.is_oc_login_displayed, "OC Login should not be displayed"
         if not traces_tab.traces.has_no_results:
             assert traces_tab.traces.has_results
@@ -517,9 +520,14 @@ class AbstractListPageTest(object):
             assert name == side_panel.get_service()
             assert side_panel.get_application()
         else:
-            assert False, "Graph Overview Page is not recognised"
+            assert False, "Graph Overview Page is not recognized"
         assert side_panel.show_traffic()
         assert side_panel.show_traces()
+        # assert this on the end of tests
+        _traces_tab = side_panel.go_to_traces()
+        assert _traces_tab
+        self.assert_traces_tab_content(_traces_tab)
+        self.browser.execute_script("history.back();")
 
     def assert_istio_configs(self, object_ui, object_rest, object_oc, namespace):
         assert object_ui.istio_configs_number == len(object_ui.istio_configs), \
