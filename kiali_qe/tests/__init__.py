@@ -2176,6 +2176,7 @@ class IstioConfigPageTest(AbstractListPageTest):
                                   replace(': > ', ': ').
                                   replace('{', '').
                                   replace('}', '').
+                                  replace(':" /', ':"/').
                                   replace('"', '').
                                   replace(' ,', ',').
                                   replace(',', '').
