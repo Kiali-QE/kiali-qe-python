@@ -66,7 +66,7 @@ def test_tcp_routing_single(kiali_client, openshift_client, browser, pick_namesp
 
 
 @pytest.mark.p_ro_namespace
-@pytest.mark.p_crud_group6
+@pytest.mark.p_crud_group2
 def test_routing_keep_advanced_settings(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -118,7 +118,7 @@ def test_routing_keep_advanced_settings(kiali_client, openshift_client, browser,
 
 
 @pytest.mark.p_ro_namespace
-@pytest.mark.p_crud_group1
+@pytest.mark.p_crud_group6
 def test_matching_routing_multi(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
