@@ -180,10 +180,7 @@ def test_no_matching_entry_dr(kiali_client, openshift_client):
                 object_type='DestinationRule',
                 object_name='reviews-no-match-entry-auto',
                 namespace=BOOKINFO,
-                error_messages=[KIA0202,
-                                KIA0203,
-                                KIA0203,
-                                KIA0203])
+                error_messages=[KIA0202])
         ])
 
 
@@ -376,10 +373,7 @@ def test_dr_fqdn_not_exist(kiali_client, openshift_client):
                 object_type='DestinationRule',
                 object_name='reviews-dr-wrong-fqdn-auto',
                 namespace=BOOKINFO,
-                error_messages=[KIA0202,
-                                KIA0203,
-                                KIA0203,
-                                KIA0203])
+                error_messages=[KIA0202])
         ])
 
 
