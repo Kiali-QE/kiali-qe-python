@@ -385,7 +385,8 @@ def test_gateway_create(kiali_client, openshift_client, browser, pick_namespace)
         _delete_gateways(openshift_client, gateway_name, namespaces)
         tests = IstioConfigPageTest(
             kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-        tests.test_gateway_create(gateway_name, 'www.google.com', namespaces=namespaces)
+        tests.test_gateway_create(gateway_name, 'www.google.com', 'http', '8080',
+                                  namespaces=namespaces)
     finally:
         _delete_gateways(openshift_client, gateway_name, namespaces)
 
@@ -400,7 +401,7 @@ def test_sidecar_create(kiali_client, openshift_client, browser, pick_namespace)
         _delete_sidecars(openshift_client, sidecar_name, namespaces)
         tests = IstioConfigPageTest(
             kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-        tests.test_sidecar_create(name=sidecar_name, egress_host='bookinfo/details',
+        tests.test_sidecar_create(name=sidecar_name, egress_host='bookinfo/*',
                                   labels='<name>=<value>', namespaces=namespaces)
     finally:
         _delete_sidecars(openshift_client, sidecar_name, namespaces)

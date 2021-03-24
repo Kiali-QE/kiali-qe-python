@@ -1269,16 +1269,18 @@ class ConfigActions(Actions):
     PORT_MTLS_MODE = '//div[contains(@class, "pf-c-form__group")]' +\
         '//table//select[@name="addPortMtlsMode"]'
     ADD_VALUE = '//div[contains(@class, "pf-c-form__group")]//input[@id="addNewValues"]'
-    ADD_PORT = '//div[contains(@class, "pf-c-form__group")]//input[@id="addPortNumber"]'
+    ADD_PORT_NUMBER = '//div[contains(@class, "pf-c-form__group")]//input[@id="addPortNumber"]'
+    ADD_PORT_NAME = '//div[contains(@class, "pf-c-form__group")]//input[@id="addPortName"]'
     ADD_VALUE_BUTTON = '//div[contains(@class, "pf-c-form__group")]' +\
         '//table//button[contains(@class, "pf-m-link")]'
     ADD_RULE_BUTTON = '//div[contains(@class, "pf-c-form__group")]' +\
         '/div/button[contains(@class, "pf-m-link")]'
     CONFIG_CREATE_ROOT = '//*[contains(@class, "pf-c-form")]'
-    CREATE_ISTIO_CONFIG = 'Create New Istio Config'
-    ADD_SERVER_BUTTON = './/button[text()="Add Server"]'
-    ADD_PORT_MTLS_BUTTON = './/button[text()="Add Port MTLS"]'
-    ADD_EGRESS_HOST_BUTTON = './/button[text()="Add Egress Host"]'
+    ADD_SERVER_BUTTON = './/button//span[contains(@class, "pf-c-button__text")' +\
+        ' and text()="Add Server to Server List"]'
+    ADD_PORT_MTLS_BUTTON = './/button[@id="addServerBtn"]'
+    ADD_EGRESS_HOST_BUTTON = './/td[contains(@data-label, "Egress Host")]/..//' +\
+        'button[contains(@class, "pf-m-link")]'
 
     def __init__(self, parent, locator=None, logger=None):
         Actions.__init__(self, parent, logger=logger)
@@ -1286,15 +1288,13 @@ class ConfigActions(Actions):
             self.locator = locator
         else:
             self.locator = self.ROOT
-        self._istio_resource = SelectDropDown(
-            parent=self, locator=self.ISTIO_RESOURCE, select_button='')
         self._name = TextInput(parent=self,
                                locator='//input[@id="name"]')
-        self._hosts = TextInput(parent=self, locator='//input[@id="addHosts"]')
+        self._hosts = TextInput(parent=self, locator='//input[@id="hosts"]')
         self._egress_host = TextInput(parent=self, locator='//input[@id="addEgressHost"]')
-        self._workloadselector_switch = ButtonSwitch(parent=self, label="Add Workload Selector")
-        self._jwtrules_switch = ButtonSwitch(parent=self, label="Add JWT Rules")
-        self._portmtls_switch = ButtonSwitch(parent=self, label="Add Port MTLS")
+        self._workloadselector_switch = ButtonSwitch(parent=self, label="Workload Selector")
+        self._jwtrules_switch = ButtonSwitch(parent=self, label="JWT Rules")
+        self._portmtls_switch = ButtonSwitch(parent=self, label="Port Mutual TLS")
         self._labels = TextInput(parent=self, locator='//input[@id="gwHosts"]')
         self._policy = SelectDropDown(parent=self, locator=self.POLICY, select_button='')
         self._policy_action = SelectDropDown(parent=self,
@@ -1305,14 +1305,16 @@ class ConfigActions(Actions):
                                               locator=self.PORT_MTLS_MODE,
                                               select_button='')
         self._add_value = TextInput(parent=self, locator=self.ADD_VALUE)
-        self._add_port = TextInput(parent=self, locator=self.ADD_PORT)
+        self._add_port_number = TextInput(parent=self, locator=self.ADD_PORT_NUMBER)
+        self._add_port_name = TextInput(parent=self, locator=self.ADD_PORT_NAME)
 
-    def create_istio_config_gateway(self, name, hosts):
+    def create_istio_config_gateway(self, name, hosts, port_name, port_number):
         wait_to_spinner_disappear(self.browser)
-        self.select(self.CREATE_ISTIO_CONFIG)
-        self._istio_resource.select(IstioConfigObjectType.GATEWAY.text)
+        self.select(IstioConfigObjectType.GATEWAY.text)
         self._name.fill(name)
         self._hosts.fill(hosts)
+        self._add_port_number.fill(port_number)
+        self._add_port_name.fill(port_name)
         add_server_button = self.browser.element(
             parent=self.CONFIG_CREATE_ROOT,
             locator=(self.ADD_SERVER_BUTTON))
@@ -1328,8 +1330,7 @@ class ConfigActions(Actions):
         return True
 
     def create_istio_config_sidecar(self, name, egress_host, labels=None):
-        self.select(self.CREATE_ISTIO_CONFIG)
-        self._istio_resource.select(IstioConfigObjectType.SIDECAR.text)
+        self.select(IstioConfigObjectType.SIDECAR.text)
         self._name.fill(name)
         self._egress_host.fill(egress_host)
         self._add_workload_selector(labels)
@@ -1348,9 +1349,8 @@ class ConfigActions(Actions):
         return True
 
     def create_istio_config_authpolicy(self, name, policy, labels=None, policy_action=None):
-        self.select(self.CREATE_ISTIO_CONFIG)
-        wait_displayed(self._istio_resource)
-        self._istio_resource.select(IstioConfigObjectType.AUTHORIZATION_POLICY.text)
+        self.select(IstioConfigObjectType.AUTHORIZATION_POLICY.text)
+        wait_displayed(self._name)
         self._name.fill(name)
         self._policy.select(policy)
         self._add_workload_selector(labels)
@@ -1369,16 +1369,15 @@ class ConfigActions(Actions):
 
     def create_istio_config_peerauth(self, name, labels=None,
                                      mtls_mode=MutualTLSMode.UNSET, mtls_ports={}):
-        self.select(self.CREATE_ISTIO_CONFIG)
-        wait_displayed(self._istio_resource)
-        self._istio_resource.select(IstioConfigObjectType.PEER_AUTHENTICATION.text)
+        self.select(IstioConfigObjectType.PEER_AUTHENTICATION.text)
+        wait_displayed(self._name)
         self._name.fill(name)
         self._mtls_mode.select(mtls_mode)
         self._add_workload_selector(labels)
         if mtls_ports:
             self._portmtls_switch.on()
             for _key, _value in mtls_ports.items():
-                self._add_port.fill(_key)
+                self._add_port_number.fill(_key)
                 self._port_mtls_mode.select(_value)
                 add_value_button = self.browser.element(
                     parent=self.CONFIG_CREATE_ROOT,
@@ -1396,9 +1395,8 @@ class ConfigActions(Actions):
         return True
 
     def create_istio_config_requestauth(self, name, labels=None, jwt_rules={}):
-        self.select(self.CREATE_ISTIO_CONFIG)
-        wait_displayed(self._istio_resource)
-        self._istio_resource.select(IstioConfigObjectType.REQUEST_AUTHENTICATION.text)
+        self.select(IstioConfigObjectType.REQUEST_AUTHENTICATION.text)
+        wait_displayed(self._name)
         self._name.fill(name)
         self._add_workload_selector(labels)
         if jwt_rules:

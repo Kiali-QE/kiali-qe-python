@@ -2235,14 +2235,14 @@ class IstioConfigPageTest(AbstractListPageTest):
             or 'managedFields' in key \
             or 'creationTimestamp' in key
 
-    def test_gateway_create(self, name, hosts, namespaces):
+    def test_gateway_create(self, name, hosts, port_name, port_number, namespaces):
         logger.debug('Creating Gateway: {}, from namespaces: {}'.format(name, namespaces))
         # load the page first
         self.page.load(force_load=True)
         # apply namespace
         self.apply_namespaces(namespaces=namespaces)
         wait_to_spinner_disappear(self.browser)
-        self.page.actions.create_istio_config_gateway(name, hosts)
+        self.page.actions.create_istio_config_gateway(name, hosts, port_name, port_number)
         for namespace in namespaces:
             self.assert_details(name, IstioConfigObjectType.GATEWAY.text, namespace)
 
