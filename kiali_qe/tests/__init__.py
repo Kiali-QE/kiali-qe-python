@@ -1466,42 +1466,27 @@ class WorkloadsPageTest(AbstractListPageTest):
         self._prepare_load_details_page(name, namespace)
         self.open(name, namespace)
 
-        self.kiali_client.update_workload_auto_injection(name, namespace, 'true')
-        self.kiali_client.update_workload_auto_injection(name, namespace, 'false')
-
-        self.page.page_refresh()
-        assert 'false' == self.page.content._details_sidecar_injection_text()
-        assert self.page.actions.is_enable_auto_injection_visible()
-        assert self.page.actions.is_remove_auto_injection_visible()
-        assert not self.page.actions.is_disable_auto_injection_visible()
-
-        self.page.actions.select(OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
-        self.page.page_refresh()
-        assert 'true' == self.page.content._details_sidecar_injection_text()
-        assert not self.page.actions.is_enable_auto_injection_visible()
-        assert self.page.actions.is_remove_auto_injection_visible()
-        assert self.page.actions.is_disable_auto_injection_visible()
-
-        self.page.actions.select(OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
-        self.page.page_refresh()
-        assert 'false' == self.page.content._details_sidecar_injection_text()
-        assert self.page.actions.is_enable_auto_injection_visible()
-        assert self.page.actions.is_remove_auto_injection_visible()
-        assert not self.page.actions.is_disable_auto_injection_visible()
-
-        self.page.actions.select(OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text)
-        self.page.page_refresh()
-        assert not self.page.content._details_sidecar_injection_text()
-        assert self.page.actions.is_enable_auto_injection_visible()
-        assert not self.page.actions.is_remove_auto_injection_visible()
-        assert not self.page.actions.is_disable_auto_injection_visible()
-
-        self.page.actions.select(OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
-        self.page.page_refresh()
-        assert 'true' == self.page.content._details_sidecar_injection_text()
-        assert not self.page.actions.is_enable_auto_injection_visible()
-        assert self.page.actions.is_remove_auto_injection_visible()
-        assert self.page.actions.is_disable_auto_injection_visible()
+        if self.page.actions.is_disable_auto_injection_visible():
+            self.page.actions.select(OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
+            self.page.page_refresh()
+            assert 'false' == self.page.content._details_sidecar_injection_text()
+            assert self.page.actions.is_enable_auto_injection_visible()
+            assert self.page.actions.is_remove_auto_injection_visible()
+            assert not self.page.actions.is_disable_auto_injection_visible()
+        elif self.page.actions.is_remove_auto_injection_visible():
+            self.page.actions.select(OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text)
+            self.page.page_refresh()
+            assert not self.page.content._details_sidecar_injection_text()
+            assert self.page.actions.is_enable_auto_injection_visible()
+            assert not self.page.actions.is_remove_auto_injection_visible()
+            assert not self.page.actions.is_disable_auto_injection_visible()
+        elif self.page.actions.is_enable_auto_injection_visible():
+            self.page.actions.select(OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
+            self.page.page_refresh()
+            assert 'true' == self.page.content._details_sidecar_injection_text()
+            assert not self.page.actions.is_enable_auto_injection_visible()
+            assert self.page.actions.is_remove_auto_injection_visible()
+            assert self.page.actions.is_disable_auto_injection_visible()
 
 
 class ServicesPageTest(AbstractListPageTest):

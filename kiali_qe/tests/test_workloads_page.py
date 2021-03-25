@@ -201,4 +201,4 @@ def test_workload_auto_injection(kiali_client, openshift_client, browser, pick_n
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     namespace = pick_namespace(BOOKINFO_3)
-    tests.test_disable_enable_delete_auto_injection(name='details-v1', namespace=namespace)
+    tests.test_disable_enable_delete_auto_injection(name='reviews-v3', namespace=namespace)
