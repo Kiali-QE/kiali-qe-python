@@ -40,14 +40,8 @@ class ServiceHealth(EntityBase):
         # update requests
         _r_rest = health['requests']
         _requests = Requests(
-            errorRatio=cls._get_error_ratio(_r_rest['errorRatio']))
+            errorRatio=cls._get_error_ratio(_r_rest['inbound']))
         return ServiceHealth(requests=_requests)
-
-    @classmethod
-    def _get_error_ratio(cls, error_ratio):
-        if error_ratio != -1:
-            return float(error_ratio)
-        return float(error_ratio / 100)
 
 
 class Service(EntityBase):
@@ -58,13 +52,12 @@ class Service(EntityBase):
         name: name of the service
         namespace: namespace where service is located
         istio_sidecar: Is istio side car available
-        app_label: App label
-        version_label: version label
+        labels: labels
         health: health status
     """
 
     def __init__(self, name, namespace, istio_sidecar=None,
-                 app_label=None, version_label=None, health=None,
+                 labels={}, health=None,
                  service_status=None,
                  config_status=None,
                  icon=None):
@@ -75,25 +68,23 @@ class Service(EntityBase):
         self.name = name
         self.namespace = namespace
         self.istio_sidecar = istio_sidecar
-        self.app_label = app_label
-        self.version_label = version_label
+        self.labels = labels
         self.health = health
         self.service_status = service_status
         self.config_status = config_status
         self.icon = icon
 
     def __str__(self):
-        return 'name:{}, namespace:{}, istio_sidecar:{}, app_label:{}, '\
-            'version_label:{}, health:{}'.format(
+        return 'name:{}, namespace:{}, istio_sidecar:{}, labels:{}, '\
+            'health:{}'.format(
                 self.name, self.namespace, self.istio_sidecar,
-                self.app_label, self.version_label, self.health)
+                self.labels, self.health)
 
     def __repr__(self):
-        return "{}({}, {}, {}, {}, {}, {})".format(
+        return "{}({}, {}, {}, {}, {})".format(
             type(self).__name__,
             repr(self.name), repr(self.namespace),
-            repr(self.istio_sidecar), repr(self.app_label),
-            repr(self.version_label), repr(self.health))
+            repr(self.istio_sidecar), repr(self.labels), repr(self.health))
 
     def __hash__(self):
         return (hash(self.name) ^ hash(self.namespace) ^ hash(self.istio_sidecar))
@@ -116,6 +107,8 @@ class Service(EntityBase):
         #    return False
         if self.health != other.health:
             return False
+        if self.labels != other.labels:
+            return False
         if self.service_status and other.service_status and \
                 not self.service_status.is_equal(other.service_status):
             return False
@@ -135,7 +128,7 @@ class ServiceDetails(EntityBase):
     """
 
     def __init__(self, name, created_at, created_at_ui, service_type,
-                 resource_version, ip, ports, rule_3scale_api_handler=None,
+                 resource_version, ip, ports,
                  labels={}, selectors={},
                  istio_sidecar=False, health=None, service_status=None,
                  endpoints=[],
@@ -151,7 +144,6 @@ class ServiceDetails(EntityBase):
         self.resource_version = resource_version
         self.ip = ip
         self.ports = ports
-        self.rule_3scale_api_handler = rule_3scale_api_handler
         self.labels = labels
         self.selectors = selectors
         self.service_status = service_status
@@ -160,10 +152,10 @@ class ServiceDetails(EntityBase):
         self.icon = icon
         self.workloads_number = kwargs['workloads_number']\
             if 'workloads_number' in kwargs else None
-        self.virtual_services_number = kwargs['virtual_services_number']\
-            if 'virtual_services_number' in kwargs else None
-        self.destination_rules_number = kwargs['destination_rules_number']\
-            if 'destination_rules_number' in kwargs else None
+        self.istio_configs_number = kwargs['istio_configs_number']\
+            if 'istio_configs_number' in kwargs else None
+        self.istio_configs = kwargs['istio_configs']\
+            if 'istio_configs' in kwargs else None
         self.virtual_services = kwargs['virtual_services']\
             if 'virtual_services' in kwargs else None
         self.destination_rules = kwargs['destination_rules']\
@@ -180,11 +172,12 @@ class ServiceDetails(EntityBase):
     def __str__(self):
         return 'name:{}, created_at: {}, service_type: {}, resource_version: {}, \
         ip: {}, endpoints: {}, ports: {}, \
-        istio_sidecar:{}, health:{}, labels:{}, selectors:{}'.format(
+        istio_sidecar:{}, health:{}, labels:{}, selectors:{}, service_status: {}'.format(
             self.name, self.created_at,
             self.service_type, self.resource_version,
             self.ip, self.endpoints, self.ports,
-            self.istio_sidecar, self.health, self.labels, self.selectors)
+            self.istio_sidecar, self.health, self.labels, self.selectors,
+            self.service_status)
 
     def __repr__(self):
         return "{}({}, {}, {}, {}, {})".format(
@@ -218,14 +211,14 @@ class ServiceDetails(EntityBase):
             return False
         if self.labels != other.labels:
             return False
+        if not is_equal(self.endpoints, other.endpoints):
+            return False
         # https://github.com/kiali/kiali/issues/1382
         # if self.selectors != other.selectors:
         #    return False
         # advanced check
         if not advanced_check:
             return True
-        if not is_equal(self.endpoints, other.endpoints):
-            return False
         # if self.istio_sidecar != other.istio_sidecar:
         #    return False
         if self.health != other.health:
@@ -251,7 +244,7 @@ class VirtualService(EntityBase):
 
     def __init__(self, status, name, created_at, created_at_ui,
                  resource_version,
-                 http_route=None, hosts=[], weights=[], gateways=[]):
+                 protocol_route=None, hosts=[], weights=[], gateways=[]):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
@@ -259,7 +252,7 @@ class VirtualService(EntityBase):
         self.created_at_ui = created_at_ui
         self.resource_version = resource_version
         self.status = status
-        self.http_route = http_route
+        self.protocol_route = protocol_route
         self.hosts = hosts
         self.weights = weights
         self.gateways = gateways
@@ -301,7 +294,7 @@ class VirtualService(EntityBase):
             return True
         if self.status != other.status:
             return False
-        if self.http_route != other.http_route:
+        if self.protocol_route != other.protocol_route:
             return False
         if not compare_lists(self.hosts, other.hosts):
             return False
@@ -405,6 +398,169 @@ class VirtualServiceGateway(EntityBase):
         return True
 
 
+class VirtualServiceOverview(EntityBase):
+    """
+    Service class provides information details on VirtualService Overview.
+
+    Args:
+        hosts: references to hosts
+        gateways: references to gateways
+        validation_references: references to other VS objects having conflicts with
+    """
+
+    def __init__(self, name, status=None, hosts=[], gateways=[], validation_references=[]):
+        if name is None:
+            raise KeyError("'name' should not be 'None'")
+        self.name = name
+        self.status = status
+        self.hosts = hosts
+        self.gateways = gateways
+        self.validation_references = validation_references
+
+    def __str__(self):
+        return 'name:{}, status:{}, '\
+            'resource_version:{}, hosts:{}, weights:{}'.format(
+                self.name, self.status,
+                self.hosts, self.gateways, self.validation_references)
+
+    def __repr__(self):
+        return "{}({}, {}, {}, {}, {})".format(
+            type(self).__name__,
+            repr(self.name),
+            repr(self.status),
+            repr(self.hosts), repr(self.gateways), repr(self.validation_references))
+
+    def __hash__(self):
+        return (hash(self.name) ^ hash(self.hosts) ^ hash(self.gateways))
+
+    def __eq__(self, other):
+        return self.is_equal(other, advanced_check=True)
+
+    def is_equal(self, other, advanced_check=True):
+        # basic check
+        if not isinstance(other, VirtualServiceOverview):
+            return False
+        if self.name != other.name:
+            return False
+        if not compare_lists(self.hosts, other.hosts):
+            return False
+        if not compare_lists(self.gateways, other.gateways):
+            return False
+        if not compare_lists(self.validation_references, other.validation_references):
+            return False
+        # advanced check
+        if not advanced_check:
+            return True
+        if self.status != other.status:
+            return False
+        return True
+
+
+class DestinationRuleOverview(EntityBase):
+    """
+    Service class provides information details on DestinationRule Overview.
+
+    Args:
+        status: the validation status of DR
+        name: name of the destination rule
+        host: the host of destination rule
+        subsets: subsets as a plain text
+    """
+
+    def __init__(self, status, name, host, subsets):
+        if name is None:
+            raise KeyError("'name' should not be 'None'")
+        self.name = name
+        self.host = host
+        self.subsets = subsets
+        self.status = status
+
+    def __str__(self):
+        return 'name:{}, status:{}, host:{}, subsets:{}, '\
+            'created_at:{}, resource_version:{}'.format(
+                self.name, self.status, self.host,
+                self.subsets)
+
+    def __repr__(self):
+        return "{}({}, {}, {}, {})".format(
+            type(self).__name__,
+            repr(self.name), repr(self.status),
+            repr(self.host),
+            repr(self.subsets))
+
+    def __hash__(self):
+        return (hash(self.name) ^ hash(self.host))
+
+    def __eq__(self, other):
+        return self.is_equal(other, advanced_check=True)
+
+    def is_equal(self, other, advanced_check=True):
+        # basic check
+        if not isinstance(other, DestinationRuleOverview):
+            return False
+        if self.name != other.name:
+            return False
+        if self.host != other.host:
+            return False
+        if self.subsets != other.subsets:
+            return False
+        # advanced check
+        if not advanced_check:
+            return True
+        if self.status != other.status:
+            return False
+        return True
+
+
+class DestinationRuleSubset(EntityBase):
+    """
+    Service class provides information details on Subsets of DR Overview.
+
+    """
+
+    def __init__(self, name, status=None, labels={}, traffic_policy=None):
+        if name is None:
+            raise KeyError("'name' should not be 'None'")
+        self.name = name
+        self.traffic_policy = traffic_policy
+        self.status = status
+        self.labels = labels
+
+    def __str__(self):
+        return 'status:{}, name:{}, labels:{}, traffic_policy:{}'.format(
+            self.status, self.name, self.labels, self.traffic_policy)
+
+    def __repr__(self):
+        return "{}({}, {}, {}, {})".format(
+            type(self).__name__,
+            repr(self.status),
+            repr(self.name), repr(self.labels),
+            repr(self.traffic_policy))
+
+    def __hash__(self):
+        return (hash(self.name))
+
+    def __eq__(self, other):
+        return self.is_equal(other, advanced_check=True)
+
+    def is_equal(self, other, advanced_check=True):
+        # basic check
+        if not isinstance(other, DestinationRuleSubset):
+            return False
+        if self.name != other.name:
+            return False
+        # advanced check
+        if not advanced_check:
+            return True
+        if self.status != other.status:
+            return False
+        if self.labels != other.labels:
+            return False
+        if self.traffic_policy != other.traffic_policy:
+            return False
+        return True
+
+
 class DestinationRule(EntityBase):
     """
     Service class provides information details on DestinationRule of Service Details.
@@ -471,6 +627,72 @@ class DestinationRule(EntityBase):
         if self.traffic_policy != other.traffic_policy:
             return False
         if self.subsets != other.subsets:
+            return False
+        # advanced check
+        if not advanced_check:
+            return True
+        if self.status != other.status:
+            return False
+        return True
+
+
+class IstioConfigRow(EntityBase):
+    """
+    Service class provides information details on Istio Config of Service/Workload Details.
+
+    Args:
+        status: the validation status of config
+        name: name of the config
+        type: the config type
+        created_at: creation datetime
+        resource_version: resource version
+    """
+
+    def __init__(self, status, name, type,
+                 created_at, created_at_ui, resource_version):
+        if name is None:
+            raise KeyError("'name' should not be 'None'")
+        self.name = name
+        self.type = type
+        self.created_at = created_at
+        self.created_at_ui = created_at_ui
+        self.resource_version = resource_version
+        self.status = status
+
+    def __str__(self):
+        return 'name:{}, status:{}, type:{}, '\
+            'created_at:{}, resource_version:{}'.format(
+                self.name, self.status, self.type,
+                self.created_at, self.resource_version)
+
+    def __repr__(self):
+        return "{}({}, {}, {}, {}, {})".format(
+            type(self).__name__,
+            repr(self.name), repr(self.status),
+            repr(self.host),
+            repr(self.traffic_policy), repr(self.subsets),
+            repr(self.created_at), repr(self.resource_version))
+
+    def __hash__(self):
+        return (hash(self.name) ^ hash(self.type) ^ hash(self.created_at)
+                ^ hash(self.resource_version))
+
+    def __eq__(self, other):
+        return self.is_equal(other, advanced_check=True)
+
+    def is_equal(self, other, advanced_check=True):
+        # basic check
+        if not isinstance(other, DestinationRule):
+            return False
+        if self.name != other.name:
+            return False
+        if self.type != other.type:
+            return False
+        if self.created_at != other.created_at:
+            return False
+        if self.created_at_ui != other.created_at_ui:
+            return False
+        if self.resource_version != other.resource_version:
             return False
         # advanced check
         if not advanced_check:

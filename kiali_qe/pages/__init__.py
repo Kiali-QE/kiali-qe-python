@@ -11,18 +11,19 @@ from kiali_qe.components import (
     ListViewWorkloads,
     ListViewApplications,
     ListViewOverview,
-    TableView3ScaleConfig,
     Login,
     MainMenu,
     Notifications,
     SortDropDown,
     SortBar,
-    CheckBoxFilter,
+    GraphDisplayFilter,
     NamespaceFilter,
     Actions,
     ConfigActions,
     Traces,
-    GraphLayout)
+    GraphLayout,
+    GraphSidePanel,
+    FilterInput)
 from kiali_qe.components import wait_displayed, wait_to_spinner_disappear
 
 from kiali_qe.components.enums import (
@@ -128,9 +129,12 @@ class GraphPage(RootPage):
     interval = ItemDropDown(locator=XP_DROP_DOWN.format('time_range_refresh'))
     edge_labels = DropDown(locator=XP_DROP_DOWN.format('graph_filter_edge_labels'))
     type = ItemDropDown(locator=XP_DROP_DOWN.format('graph_filter_view_type'))
+    graph_find = FilterInput(locator='//input[@id="graph_find"]')
+    graph_hide = FilterInput(locator='//input[@id="graph_hide"]')
     layout = GraphLayout()
-    filter = CheckBoxFilter("Display")
+    filter = GraphDisplayFilter("Display")
     refresh = Button(locator=REFRESH_BUTTON)
+    side_panel = GraphSidePanel()
     # TODO: implement graph control code
 
 
@@ -140,8 +144,8 @@ class OverviewPage(RootPage):
     filter = Filter()
     sort = SortDropDown(locator=SORT_DROP_DOWN.format('sort_selector'))
     type = TypeDropDown(locator=XP_DROP_DOWN.format('overview-type'))
-    duration = DropDown(locator=XP_DROP_DOWN.format('overvoew-duration'))
-    interval = DropDown(locator=XP_DROP_DOWN.format('overview-refresh'))
+    duration = DropDown(locator=XP_DROP_DOWN.format('time_range_duration'))
+    interval = DropDown(locator=XP_DROP_DOWN.format('time_range_refresh'))
     refresh = Button(locator=REFRESH_BUTTON)
     content = ListViewOverview()
 
@@ -152,6 +156,8 @@ class ApplicationsPage(RootPage):
     namespace = NamespaceFilter()
     filter = Filter()
     sort = SortBar()
+    duration = DropDown(locator=XP_DROP_DOWN.format('time_range_duration'))
+    interval = DropDown(locator=XP_DROP_DOWN.format('time_range_refresh'))
     refresh = Button(locator=REFRESH_BUTTON)
     content = ListViewApplications()
 
@@ -162,7 +168,10 @@ class WorkloadsPage(RootPage):
     namespace = NamespaceFilter()
     filter = Filter()
     sort = SortBar()
+    duration = DropDown(locator=XP_DROP_DOWN.format('time_range_duration'))
+    interval = DropDown(locator=XP_DROP_DOWN.format('time_range_refresh'))
     refresh = Button(locator=REFRESH_BUTTON)
+    actions = Actions()
     content = ListViewWorkloads()
 
 
@@ -172,7 +181,8 @@ class ServicesPage(RootPage):
     namespace = NamespaceFilter()
     filter = Filter()
     sort = SortBar()
-    rate_interval = DropDown(locator=XP_DROP_DOWN.format('rateIntervalDropDown'))
+    duration = DropDown(locator=XP_DROP_DOWN.format('time_range_duration'))
+    interval = DropDown(locator=XP_DROP_DOWN.format('time_range_refresh'))
     refresh = Button(locator=REFRESH_BUTTON)
     actions = Actions()
     content = ListViewServices()
@@ -194,12 +204,3 @@ class DistributedTracingPage(RootPage):
 
     namespace = NamespaceFilter()
     traces = Traces()
-
-
-class ThreeScaleConfigPage(RootPage):
-    PAGE_MENU = MENU.THREESCALE_CONFIG.text
-
-    sort = SortBar()
-    actions = Actions()
-    refresh = Button(locator=REFRESH_BUTTON)
-    content = TableView3ScaleConfig()

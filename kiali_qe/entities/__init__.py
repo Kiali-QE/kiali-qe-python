@@ -16,6 +16,21 @@ class EntityBase(object):
     def is_equal(self, item):
         raise NotImplementedError('Should be implemented on sub class')
 
+    @classmethod
+    def _get_error_ratio(cls, error_ratios):
+        _ratio = 0.0
+        _rate = 0
+        if error_ratios:
+            for _ratios in error_ratios.values():
+                for _k, _v in _ratios.items():
+                    _rate += 1
+                    if _k != '200':
+                        _ratio += float(_v)
+        if _rate != 0:
+            return float(_ratio/_rate)
+        else:
+            return -1/100
+
 
 class Requests(EntityBase):
 
@@ -63,6 +78,8 @@ class AppRequests(EntityBase):
             repr(self.outboundErrorRatio))
 
     def is_healthy(self):
+        if self.inboundErrorRatio == -0.01 and self.outboundErrorRatio == -0.01:
+            return HealthType.IDLE
         if self.inboundErrorRatio < 0 and self.outboundErrorRatio < 0:
             return HealthType.NA
         if self.inboundErrorRatio < 0.001 and self.outboundErrorRatio < 0.001:
@@ -114,29 +131,32 @@ class DeploymentStatus(EntityBase):
 
 class TrafficItem(EntityBase):
 
-    def __init__(self, status, name, object_type, request_type, rps, success_rate):
+    def __init__(self, status, name, object_type, request_type, rps, success_rate,
+                 bound_traffic_type):
         self.name = name
         self.status = status
         self.object_type = object_type
         self.request_type = request_type
         self.rps = rps
         self.success_rate = success_rate
+        self.bound_traffic_type = bound_traffic_type
 
     def __str__(self):
-        return 'name:{}, object_type: {}, status:{}, request_type:{}'.format(
-            self.name, self.object_type, self.status, self.request_type)
+        return 'name:{}, object_type: {}, status:{}, request_type:{}, bound_traffic_type:{}'.format(
+            self.name, self.object_type, self.status, self.request_type, self.bound_traffic_type)
 
     def __repr__(self):
-        return "{}({}, {}, {}, {})".format(
+        return "{}({}, {}, {}, {}, {})".format(
             type(self).__name__, repr(self.name), repr(self.object_type),
-            repr(self.status), repr(self.request_type))
+            repr(self.status), repr(self.request_type), repr(self.bound_traffic_type))
 
     def is_equal(self, other):
         return isinstance(other, TrafficItem)\
          and self.name == other.name\
          and self.object_type == other.object_type\
          and self.status == other.status\
-         and self.request_type == other.request_type
+         and self.request_type == other.request_type\
+         and self.bound_traffic_type == other.bound_traffic_type
 
 
 class ConfigurationStatus(EntityBase):

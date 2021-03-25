@@ -15,7 +15,7 @@ def test_menu(browser, kiali_client):
     _response = kiali_client.get_response('getStatus')
     _products = _response['externalServices']
     options_defined = [item.text for item in MainMenuEnum]
-    if (any((d['name'] == 'Jaeger' and 'url' not in d) for d in _products)):
+    if not _get_jaeger_url(_products):
         options_defined.remove(MainMenuEnum.DISTRIBUTED_TRACING.value)
     options_listed = page.main_menu.items
     logger.debug('menus[defined:{}, listed:{}]'.format(options_defined, options_listed))
@@ -24,10 +24,20 @@ def test_menu(browser, kiali_client):
     # navigate to menus
     for _menu in options_listed:
         if str(_menu) == MainMenuEnum.DISTRIBUTED_TRACING.text:
+            assert _get_jaeger_url(_products) \
+                in page.main_menu.get_link(_menu).get_attribute('href')
+            assert '_blank' == page.main_menu.get_link(_menu).get_attribute('target')
             continue
         logger.debug('Testing menu: {}'.format(_menu))
         page.main_menu.select(_menu)
         assert page.main_menu.selected == _menu
+
+
+def _get_jaeger_url(_products):
+    for d in _products:
+        if (d['name'] == 'Jaeger' and 'url' in d):
+            return d['url']
+    return None
 
 
 @pytest.mark.p_atomic

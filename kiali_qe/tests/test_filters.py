@@ -121,7 +121,7 @@ def test_services_filters_kept(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_atomic
-@pytest.mark.p_ro_group8
+@pytest.mark.p_ro_group9
 def test_config_filters_kept(kiali_client, openshift_client, browser):
     config_filters = [
         {'name': IstioConfigPageFilter.ISTIO_TYPE.text,

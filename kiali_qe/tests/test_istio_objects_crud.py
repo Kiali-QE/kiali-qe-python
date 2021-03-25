@@ -8,23 +8,23 @@ from kiali_qe.utils.path import istio_objects_path
 from kiali_qe.components.enums import (
     IstioConfigObjectType,
     IstioConfigPageFilter,
-    IstioConfigValidationType
+    IstioConfigValidationType,
+    AuthPolicyType,
+    AuthPolicyActionType,
+    MutualTLSMode
 )
 from kiali_qe.components.error_codes import (
     KIA0202,
     KIA0203,
     KIA0201,
-    KIA1006,
-    KIA1007,
+    KIA1106,
+    KIA1107,
     KIA0101,
     KIA0102,
-    KIA0902,
-    KIA0901,
-    KIA0903,
-    KIA1001,
-    KIA0103,
+    KIA1101,
+    KIA0004,
     KIA0001,
-    KIA1005
+    KIA1105
 )
 
 '''
@@ -34,6 +34,7 @@ can be run in parallel.
 
 BOOKINFO_1 = 'bookinfo'
 BOOKINFO_2 = 'bookinfo2'
+BOOKINFO_3 = 'bookinfo3'
 REVIEWS = 'reviews'
 DETAILS = 'details'
 RATINGS = 'ratings'
@@ -50,9 +51,8 @@ VIRTUAL_SERVICE_BROKEN_WEIGHT = 'virtual-service-broken-weight.yaml'
 VIRTUAL_SERVICE_BROKEN_WEIGHT_TEXT = 'virtual-service-broken-weight-text.yaml'
 VIRTUAL_SERVICE_SVC = 'virtual-service-svc.yaml'
 VIRTUAL_SERVICE_SVC2 = 'virtual-service-svc2.yaml'
-QUOTA_SPEC = 'quota-spec.yaml'
-QUOTA_SPEC_BINDING = 'quota-spec-binding.yaml'
 GATEWAY = 'gateway.yaml'
+GATEWAY_LINK = 'gateway-link.yaml'
 SERVICE_ENTRY = 'service-entry.yaml'
 SERVICE_MESH_RBAC_CONFIG = 'service-mesh-rbac-config.yaml'
 RBAC_CONFIG = 'rbac-config.yaml'
@@ -104,7 +104,7 @@ def test_destination_rule_broken(kiali_client, openshift_client, browser):
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
                          'value': destination_rule_broken_dict.metadata.name}
                         ],
-                       namespace=BOOKINFO_1,
+                       namespace=BOOKINFO_2,
                        kind='DestinationRule',
                        api_version='networking.istio.io/v1alpha3',
                        service_name=DETAILS,
@@ -130,7 +130,7 @@ def test_destination_rule_svc_warning(kiali_client, openshift_client, browser):
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
                          'value': 'reviews-dr2-svc'}
                         ],
-                       namespace=BOOKINFO_1,
+                       namespace=BOOKINFO_2,
                        kind='DestinationRule',
                        api_version='networking.istio.io/v1alpha3',
                        service_name=DETAILS,
@@ -165,14 +165,14 @@ def test_destination_rule_host_warning(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group2
+@pytest.mark.p_crud_group5
 def test_virtual_service(kiali_client, openshift_client, browser):
-    gateway = get_yaml(istio_objects_path.strpath, GATEWAY)
-    gateway_dict = get_dict(istio_objects_path.strpath, GATEWAY)
+    gateway = get_yaml(istio_objects_path.strpath, GATEWAY_LINK)
+    gateway_dict = get_dict(istio_objects_path.strpath, GATEWAY_LINK)
     _istio_config_create(openshift_client, gateway_dict, gateway,
                          'Gateway',
                          'networking.istio.io/v1alpha3',
-                         namespace=BOOKINFO_1)
+                         namespace=BOOKINFO_2)
     virtual_service = get_yaml(istio_objects_path.strpath, VIRTUAL_SERVICE)
     virtual_service_dict = get_dict(istio_objects_path.strpath, VIRTUAL_SERVICE)
     _create_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
@@ -188,7 +188,7 @@ def test_virtual_service(kiali_client, openshift_client, browser):
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
                          'value': virtual_service_dict.metadata.name}
                         ],
-                       namespace=BOOKINFO_1,
+                       namespace=BOOKINFO_2,
                        kind='VirtualService',
                        api_version='networking.istio.io/v1alpha3',
                        service_name=REVIEWS,
@@ -198,9 +198,9 @@ def test_virtual_service(kiali_client, openshift_client, browser):
     _vs_gateway_link_test(kiali_client, openshift_client, browser, gateway_dict,
                           kind='Gateway',
                           vs_name=virtual_service_dict.metadata.name,
-                          namespace=BOOKINFO_1)
+                          namespace=BOOKINFO_2)
     _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
-    _delete_gateway_vs(openshift_client, GATEWAY)
+    _delete_gateway_vs(openshift_client, GATEWAY_LINK)
 
 
 @pytest.mark.p_crud_resource
@@ -211,13 +211,13 @@ def test_virtual_service_svc_warning(kiali_client, openshift_client, browser):
     _istio_config_create(openshift_client, virtual_service_dict, virtual_service,
                          'VirtualService',
                          'networking.istio.io/v1alpha3',
-                         namespace=BOOKINFO_1)
+                         namespace=BOOKINFO_2)
     virtual_service2 = get_yaml(istio_objects_path.strpath, VIRTUAL_SERVICE_SVC2)
     virtual_service_dict2 = get_dict(istio_objects_path.strpath, VIRTUAL_SERVICE_SVC2)
     _istio_config_create(openshift_client, virtual_service_dict2, virtual_service2,
                          'VirtualService',
                          'networking.istio.io/v1alpha3',
-                         namespace=BOOKINFO_1)
+                         namespace=BOOKINFO_2)
     _create_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
     _istio_config_details_test(kiali_client,
@@ -225,19 +225,19 @@ def test_virtual_service_svc_warning(kiali_client, openshift_client, browser):
                                browser,
                                virtual_service_dict,
                                virtual_service,
-                               namespace=BOOKINFO_1,
+                               namespace=BOOKINFO_2,
                                kind='VirtualService',
                                api_version='networking.istio.io/v1alpha3',
-                               error_messages=[KIA1006])
+                               error_messages=[KIA1106])
     _istio_config_details_test(kiali_client,
                                openshift_client,
                                browser,
                                virtual_service_dict2,
                                virtual_service2,
-                               namespace=BOOKINFO_1,
+                               namespace=BOOKINFO_2,
                                kind='VirtualService',
                                api_version='networking.istio.io/v1alpha3',
-                               error_messages=[KIA1006])
+                               error_messages=[KIA1106])
     _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
 
@@ -266,7 +266,7 @@ def test_virtual_service_subset_warning(kiali_client, openshift_client, browser)
                                namespace=BOOKINFO_1,
                                kind='VirtualService',
                                api_version='networking.istio.io/v1alpha3',
-                               error_messages=[KIA1005])
+                               error_messages=[KIA1105])
     _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
 
@@ -275,26 +275,28 @@ def test_virtual_service_subset_warning(kiali_client, openshift_client, browser)
 def test_virtual_service_broken(kiali_client, openshift_client, browser):
     virtual_service_broken = get_yaml(istio_objects_path.strpath, VIRTUAL_SERVICE_BROKEN)
     virtual_service_broken_dict = get_dict(istio_objects_path.strpath, VIRTUAL_SERVICE_BROKEN)
-    _create_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
+    _create_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS, BOOKINFO_3)
 
-    _istio_config_test(kiali_client, openshift_client, browser,
-                       virtual_service_broken_dict,
-                       virtual_service_broken,
-                       [
-                           {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
-                            'value': IstioConfigObjectType.VIRTUAL_SERVICE.text},
-                           {'name': IstioConfigPageFilter.CONFIG.text,
-                            'value': IstioConfigValidationType.NOT_VALID.text},
-                           {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                            'value': virtual_service_broken_dict.metadata.name}
-                        ],
-                       namespace=BOOKINFO_1,
-                       kind='VirtualService',
-                       api_version='networking.istio.io/v1alpha3',
-                       service_name=REVIEWS,
-                       error_messages=[KIA1001, KIA1007],
-                       check_service_details=True)
-    _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
+    try:
+        _istio_config_test(kiali_client, openshift_client, browser,
+                           virtual_service_broken_dict,
+                           virtual_service_broken,
+                           [
+                               {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
+                                'value': IstioConfigObjectType.VIRTUAL_SERVICE.text},
+                               {'name': IstioConfigPageFilter.CONFIG.text,
+                                'value': IstioConfigValidationType.NOT_VALID.text},
+                               {'name': IstioConfigPageFilter.ISTIO_NAME.text,
+                                'value': virtual_service_broken_dict.metadata.name}
+                            ],
+                           namespace=BOOKINFO_3,
+                           kind='VirtualService',
+                           api_version='networking.istio.io/v1alpha3',
+                           service_name=REVIEWS,
+                           error_messages=[KIA1101, KIA1107],
+                           check_service_details=True)
+    finally:
+        _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
 
 @pytest.mark.p_crud_resource
@@ -319,7 +321,7 @@ def test_virtual_service_broken_weight(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group3
+@pytest.mark.p_crud_group2
 def test_virtual_service_broken_weight_text(kiali_client, openshift_client, browser):
     virtual_service_broken = get_yaml(istio_objects_path.strpath,
                                       VIRTUAL_SERVICE_BROKEN_WEIGHT_TEXT)
@@ -352,51 +354,7 @@ def test_virtual_service_broken_weight_text(kiali_client, openshift_client, brow
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group3
-def test_quota_spec(kiali_client, openshift_client, browser):
-    quota_spec = get_yaml(istio_objects_path.strpath, QUOTA_SPEC)
-    quota_spec_dict = get_dict(istio_objects_path.strpath, QUOTA_SPEC)
-
-    _istio_config_test(kiali_client, openshift_client, browser,
-                       quota_spec_dict,
-                       quota_spec,
-                       [
-                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
-                         'value': IstioConfigObjectType.QUOTA_SPEC.text},
-                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': 'quota-spec-auto'}
-                        ],
-                       namespace=BOOKINFO_1,
-                       kind='QuotaSpec',
-                       api_version='config.istio.io/v1alpha2',
-                       service_name=RATINGS,
-                       check_service_details=False)
-
-
-@pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group3
-def test_quota_spec_binding(kiali_client, openshift_client, browser):
-    quota_spec_binding = get_yaml(istio_objects_path.strpath, QUOTA_SPEC_BINDING)
-    quota_spec_binding_dict = get_dict(istio_objects_path.strpath, QUOTA_SPEC_BINDING)
-
-    _istio_config_test(kiali_client, openshift_client, browser,
-                       quota_spec_binding_dict,
-                       quota_spec_binding,
-                       [
-                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
-                         'value': IstioConfigObjectType.QUOTA_SPEC_BINDING.text},
-                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': 'quota-spec-binding-auto'}
-                        ],
-                       namespace=BOOKINFO_1,
-                       kind='QuotaSpecBinding',
-                       api_version='config.istio.io/v1alpha2',
-                       service_name=RATINGS,
-                       check_service_details=False)
-
-
-@pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group3
+@pytest.mark.p_crud_group2
 def test_gateway(kiali_client, openshift_client, browser, pick_namespace):
     gateway = get_yaml(istio_objects_path.strpath, GATEWAY)
     gateway_dict = get_dict(istio_objects_path.strpath, GATEWAY)
@@ -450,6 +408,139 @@ def test_sidecar_create(kiali_client, openshift_client, browser, pick_namespace)
 
 
 @pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group3
+def test_authpolicy_deny_all_create(kiali_client, openshift_client, browser, pick_namespace):
+    namespace = pick_namespace(BOOKINFO_2)
+    authpolicy_name = 'authpolicydenyalltocreate'
+    namespaces = [BOOKINFO_1, namespace]
+    try:
+        _delete_authpolicies(openshift_client, authpolicy_name, namespaces)
+        tests = IstioConfigPageTest(
+            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+        tests.test_authpolicy_create(name=authpolicy_name,
+                                     policy=AuthPolicyType.DENY_ALL.text,
+                                     namespaces=namespaces)
+    finally:
+        _delete_authpolicies(openshift_client, authpolicy_name, namespaces)
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group3
+def test_authpolicy_allow_all_create(kiali_client, openshift_client, browser, pick_namespace):
+    namespace = pick_namespace(BOOKINFO_2)
+    authpolicy_name = 'authpolicyallowallcreate'
+    namespaces = [BOOKINFO_1, namespace]
+    try:
+        _delete_authpolicies(openshift_client, authpolicy_name, namespaces)
+        tests = IstioConfigPageTest(
+            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+        tests.test_authpolicy_create(name=authpolicy_name,
+                                     policy=AuthPolicyType.ALLOW_ALL.text,
+                                     namespaces=namespaces)
+    finally:
+        _delete_authpolicies(openshift_client, authpolicy_name, namespaces)
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group3
+def test_authpolicy_rules_allow_create(kiali_client, openshift_client, browser, pick_namespace):
+    namespace = pick_namespace(BOOKINFO_2)
+    authpolicy_name = 'authpolicyrulesallowtocreate'
+    namespaces = [BOOKINFO_1, namespace]
+    try:
+        _delete_authpolicies(openshift_client, authpolicy_name, namespaces)
+        tests = IstioConfigPageTest(
+            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+        tests.test_authpolicy_create(name=authpolicy_name,
+                                     policy=AuthPolicyType.RULES.text,
+                                     namespaces=namespaces,
+                                     policy_action=AuthPolicyActionType.ALLOW.text)
+    finally:
+        _delete_authpolicies(openshift_client, authpolicy_name, namespaces)
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group3
+def test_authpolicy_rules_deny_disabled(kiali_client, openshift_client, browser, pick_namespace):
+    namespace = pick_namespace(BOOKINFO_2)
+    authpolicy_name = 'authpolicyrulesdenydisabled'
+    namespaces = [BOOKINFO_1, namespace]
+    tests = IstioConfigPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.test_authpolicy_create(name=authpolicy_name,
+                                 policy=AuthPolicyType.RULES.text,
+                                 namespaces=namespaces,
+                                 policy_action=AuthPolicyActionType.DENY.text)
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group9
+def test_peerauth_create(kiali_client, openshift_client, browser, pick_namespace):
+    namespace = pick_namespace(BOOKINFO_2)
+    name = 'peerauthtocreate'
+    namespaces = [BOOKINFO_1, namespace]
+    try:
+        _delete_peerauths(openshift_client, name, namespaces)
+        tests = IstioConfigPageTest(
+            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+        tests.test_peerauth_create(name=name, mtls_mode=MutualTLSMode.PERMISSIVE.text,
+                                   labels='app=value', namespaces=namespaces,
+                                   mtls_ports={'8080': MutualTLSMode.STRICT.text})
+    finally:
+        _delete_peerauths(openshift_client, name, namespaces)
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group3
+def test_peerauth_create_disabled(kiali_client, openshift_client, browser, pick_namespace):
+    """
+    MTLS Ports require Labels
+    """
+    namespace = pick_namespace(BOOKINFO_2)
+    name = 'peerauthtocreatedisabled'
+    namespaces = [BOOKINFO_1, namespace]
+    tests = IstioConfigPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.test_peerauth_create(name=name, mtls_mode=MutualTLSMode.PERMISSIVE.text,
+                               namespaces=namespaces,
+                               expected_created=False,
+                               mtls_ports={'8080': MutualTLSMode.STRICT.text})
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group4
+def test_requestauth_create(kiali_client, openshift_client, browser, pick_namespace):
+    namespace = pick_namespace(BOOKINFO_2)
+    name = 'requestauthtocreate'
+    namespaces = [BOOKINFO_1, namespace]
+    try:
+        _delete_requestauths(openshift_client, name, namespaces)
+        tests = IstioConfigPageTest(
+            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+        tests.test_requestauth_create(name=name,
+                                      labels='app=value',
+                                      namespaces=namespaces,
+                                      jwt_rules={'issuer': 'value1'})
+    finally:
+        _delete_requestauths(openshift_client, name, namespaces)
+
+
+@pytest.mark.p_crud_resource
+@pytest.mark.p_crud_group4
+def test_requestauth_create_disabled(kiali_client, openshift_client, browser, pick_namespace):
+    namespace = pick_namespace(BOOKINFO_2)
+    name = 'requestauthtocreatedisabled'
+    namespaces = [BOOKINFO_1, namespace]
+    tests = IstioConfigPageTest(
+        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+    tests.test_requestauth_create(name=name,
+                                  labels='app=value',
+                                  namespaces=namespaces,
+                                  jwt_rules={'audiences': 'value1'},
+                                  expected_created=False)
+
+
+@pytest.mark.p_crud_resource
 @pytest.mark.p_crud_group1
 def test_service_entry(kiali_client, openshift_client, browser):
     yaml = get_yaml(istio_objects_path.strpath, SERVICE_ENTRY)
@@ -473,28 +564,6 @@ def test_service_entry(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_crud_resource
 @pytest.mark.p_crud_group4
-def test_rbac_config(kiali_client, openshift_client, browser):
-    yaml = get_yaml(istio_objects_path.strpath, RBAC_CONFIG)
-    _dict = get_dict(istio_objects_path.strpath, RBAC_CONFIG)
-
-    _istio_config_test(kiali_client, openshift_client, browser,
-                       _dict,
-                       yaml,
-                       [
-                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
-                         'value': IstioConfigObjectType.RBAC_CONFIG.text},
-                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': _dict.metadata.name}
-                        ],
-                       namespace=BOOKINFO_1,
-                       kind='RbacConfig',
-                       api_version='rbac.istio.io/v1alpha1',
-                       service_name=DETAILS,
-                       check_service_details=False)
-
-
-@pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group4
 def test_auth_policy(kiali_client, openshift_client, browser):
     yaml = get_yaml(istio_objects_path.strpath, AUTH_POLICY)
     _dict = get_dict(istio_objects_path.strpath, AUTH_POLICY)
@@ -508,126 +577,12 @@ def test_auth_policy(kiali_client, openshift_client, browser):
                         {'name': IstioConfigPageFilter.ISTIO_NAME.text,
                          'value': _dict.metadata.name}
                         ],
-                       namespace=BOOKINFO_1,
+                       namespace=BOOKINFO_2,
                        kind='AuthorizationPolicy',
                        api_version='security.istio.io/v1beta1',
                        service_name=DETAILS,
                        check_service_details=False,
-                       error_messages=[KIA0101, KIA0102, KIA0103, KIA0001])
-
-
-@pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group5
-def test_service_role(kiali_client, openshift_client, browser):
-    yaml = get_yaml(istio_objects_path.strpath, SERVICE_ROLE)
-    _dict = get_dict(istio_objects_path.strpath, SERVICE_ROLE)
-
-    _istio_config_test(kiali_client, openshift_client, browser,
-                       _dict,
-                       yaml,
-                       [
-                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
-                         'value': IstioConfigObjectType.SERVICE_ROLE.text},
-                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': _dict.metadata.name}
-                        ],
-                       namespace='istio-system',
-                       kind='ServiceRole',
-                       api_version='rbac.istio.io/v1alpha1',
-                       service_name=DETAILS,
-                       check_service_details=False)
-
-
-@pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group5
-def test_service_role_broken(kiali_client, openshift_client, browser):
-    yaml = get_yaml(istio_objects_path.strpath, SERVICE_ROLE_BROKEN)
-    _dict = get_dict(istio_objects_path.strpath, SERVICE_ROLE_BROKEN)
-
-    _istio_config_test(kiali_client, openshift_client, browser,
-                       _dict,
-                       yaml,
-                       [
-                        {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
-                         'value': IstioConfigObjectType.SERVICE_ROLE.text},
-                        {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                         'value': _dict.metadata.name}
-                        ],
-                       namespace='istio-system',
-                       kind='ServiceRole',
-                       api_version='rbac.istio.io/v1alpha1',
-                       service_name=DETAILS,
-                       error_messages=[KIA0902, KIA0901],
-                       check_service_details=False)
-
-
-@pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group5
-def test_service_role_binding(kiali_client, openshift_client, browser):
-    _role_yaml = get_yaml(istio_objects_path.strpath, SERVICE_ROLE)
-    _role_dict = get_dict(istio_objects_path.strpath, SERVICE_ROLE)
-    _istio_config_create(openshift_client, _role_dict, _role_yaml,
-                         namespace='istio-system',
-                         kind='ServiceRole',
-                         api_version='rbac.istio.io/v1alpha1')
-
-    yaml = get_yaml(istio_objects_path.strpath, SERVICE_ROLE_BINDING)
-    _dict = get_dict(istio_objects_path.strpath, SERVICE_ROLE_BINDING)
-    try:
-        _istio_config_test(kiali_client, openshift_client, browser,
-                           _dict,
-                           yaml,
-                           [
-                            {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
-                             'value': IstioConfigObjectType.SERVICE_ROLE_BINDING.text},
-                            {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                             'value': _dict.metadata.name}
-                            ],
-                           namespace='istio-system',
-                           kind='ServiceRoleBinding',
-                           api_version='rbac.istio.io/v1alpha1',
-                           service_name=DETAILS,
-                           check_service_details=False)
-    finally:
-        _istio_config_delete(openshift_client, _role_dict.metadata.name,
-                             namespace='istio-system',
-                             kind='ServiceRole',
-                             api_version='rbac.istio.io/v1alpha1')
-
-
-@pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group5
-def test_service_role_binding_broken(kiali_client, openshift_client, browser):
-    _role_yaml = get_yaml(istio_objects_path.strpath, SERVICE_ROLE)
-    _role_dict = get_dict(istio_objects_path.strpath, SERVICE_ROLE)
-    _istio_config_create(openshift_client, _role_dict, _role_yaml,
-                         namespace='istio-system',
-                         kind='ServiceRole',
-                         api_version='rbac.istio.io/v1alpha1')
-
-    yaml = get_yaml(istio_objects_path.strpath, SERVICE_ROLE_BINDING_BROKEN)
-    _dict = get_dict(istio_objects_path.strpath, SERVICE_ROLE_BINDING_BROKEN)
-    try:
-        _istio_config_test(kiali_client, openshift_client, browser,
-                           _dict,
-                           yaml,
-                           [
-                            {'name': IstioConfigPageFilter.ISTIO_TYPE.text,
-                             'value': IstioConfigObjectType.SERVICE_ROLE_BINDING.text},
-                            {'name': IstioConfigPageFilter.ISTIO_NAME.text,
-                             'value': _dict.metadata.name}
-                            ],
-                           namespace='istio-system',
-                           kind='ServiceRoleBinding',
-                           api_version='rbac.istio.io/v1alpha1',
-                           service_name=DETAILS,
-                           error_messages=[KIA0903],
-                           check_service_details=False)
-    finally:
-        _istio_config_delete(openshift_client, _role_dict.metadata.name,
-                             namespace='istio-system',
-                             kind='ServiceRole',
-                             api_version='rbac.istio.io/v1alpha1')
+                       error_messages=[KIA0101, KIA0102, KIA0004, KIA0001])
 
 
 def _istio_config_create(openshift_client, config_dict, config_yaml, kind, api_version,
@@ -703,6 +658,24 @@ def _delete_sidecars(openshift_client, name, namespaces):
     for namespace in namespaces:
         _istio_config_delete(openshift_client, name=name, kind='Sidecar',
                              api_version='networking.istio.io/v1alpha3', namespace=namespace)
+
+
+def _delete_authpolicies(openshift_client, name, namespaces):
+    for namespace in namespaces:
+        _istio_config_delete(openshift_client, name=name, kind='AuthorizationPolicy',
+                             api_version='security.istio.io/v1beta1', namespace=namespace)
+
+
+def _delete_peerauths(openshift_client, name, namespaces):
+    for namespace in namespaces:
+        _istio_config_delete(openshift_client, name=name, kind='PeerAuthentication',
+                             api_version='security.istio.io/v1beta1', namespace=namespace)
+
+
+def _delete_requestauths(openshift_client, name, namespaces):
+    for namespace in namespaces:
+        _istio_config_delete(openshift_client, name=name, kind='RequestAuthentication',
+                             api_version='security.istio.io/v1beta1', namespace=namespace)
 
 
 def _istio_config_test(kiali_client, openshift_client, browser, config_dict,

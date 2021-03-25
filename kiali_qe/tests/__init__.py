@@ -15,8 +15,10 @@ from kiali_qe.components.enums import (
     WorkloadsPageFilter,
     ApplicationsPageFilter,
     OverviewPageFilter,
+    OverviewViewType,
     IstioConfigObjectType as OBJECT_TYPE,
     IstioConfigValidation,
+    MainMenuEnum as MENU,
     MetricsSource,
     MetricsHistograms,
     InboundMetricsFilter,
@@ -35,18 +37,42 @@ from kiali_qe.components.enums import (
     RoutingWizardLoadBalancer,
     TrafficType,
     OverviewLinks,
+    OverviewInjectionLinks,
     OverviewGraphTypeLink,
+    OverviewTrafficLinks,
     TailLines,
     TLSMutualValues,
-    ThreeScaleConfigPageSort,
-    IstioConfigObjectType
+    IstioConfigObjectType,
+    AuthPolicyType,
+    AuthPolicyActionType,
+    LabelOperation,
+    VersionLabel,
+    AppLabel,
+    IstioSidecar,
+    OverviewHealth,
+    OverviewMTSLStatus,
+    MeshWideTLSType
 )
 from kiali_qe.components.error_codes import (
     KIA0201,
-    KIA0301
+    KIA0301,
+    KIA0205,
+    KIA0501,
+    KIA0401,
+    KIA0204,
+    KIA0206
 )
 from kiali_qe.rest.kiali_api import ISTIO_CONFIG_TYPES
-from kiali_qe.utils import is_equal, is_sublist, word_in_text, get_url, get_yaml_path
+from kiali_qe.rest.openshift_api import APP_NAME_REGEX
+from kiali_qe.utils import (
+    is_equal,
+    is_sublist,
+    word_in_text,
+    get_url,
+    get_yaml_path,
+    remove_from_list,
+    dict_contains
+)
 from kiali_qe.utils.log import logger
 from kiali_qe.utils.command_exec import oc_apply, oc_delete
 
@@ -57,7 +83,7 @@ from kiali_qe.pages import (
     ApplicationsPage,
     OverviewPage,
     DistributedTracingPage,
-    ThreeScaleConfigPage
+    GraphPage
 )
 
 
@@ -78,7 +104,8 @@ class AbstractListPageTest(object):
     def get_mesh_wide_tls(self):
         return self.page.content.get_mesh_wide_tls()
 
-    def assert_all_items(self, namespaces=[], filters=[], force_clear_all=True):
+    def assert_all_items(self, namespaces=[], filters=[], force_clear_all=True,
+                         label_operation=LabelOperation.OR):
         """
         Apply supplied filter in to UI, REST, OC and assert content
 
@@ -112,6 +139,15 @@ class AbstractListPageTest(object):
         if force_refresh:
             self.page.page_refresh()
         wait_to_spinner_disappear(self.browser)
+
+    def sidecar_presents(self, sidecar_filter, item_sidecar):
+        if item_sidecar:
+            return sidecar_filter == IstioSidecar.PRESENT.text
+        else:
+            return sidecar_filter == IstioSidecar.NOT_PRESENT.text
+
+    def health_equals(self, health_filter, health):
+        return health and health_filter == health.text
 
     def is_in_details_page(self, name, namespace):
         breadcrumb = BreadCrumb(self.page)
@@ -149,19 +185,22 @@ class AbstractListPageTest(object):
         else:
             _pre_filters.extend(self.page.namespace.checked_items)
 
-        # apply namespaces
-        for _filter in namespaces:
-            if _filter not in _pre_filters:
-                self.page.namespace.check(_filter)
-            if _filter in _pre_filters:
-                _pre_filters.remove(_filter)
-        # remove filters not in list
-        for _filter in _pre_filters:
-            self.page.namespace.uncheck(_filter)
+        if not namespaces:
+            self.page.namespace.select_all()
+        else:
+            # apply namespaces
+            for _filter in namespaces:
+                if _filter not in _pre_filters:
+                    self.page.namespace.check(_filter)
+                if _filter in _pre_filters:
+                    _pre_filters.remove(_filter)
+            # remove filters not in list
+            for _filter in _pre_filters:
+                self.page.namespace.uncheck(_filter)
 
-        self.assert_applied_namespaces(namespaces)
+            self.assert_applied_namespaces(namespaces)
 
-    def apply_filters(self, filters, force_clear_all=False):
+    def apply_filters(self, filters, force_clear_all=True):
         """
         Apply supplied filter in to UI and assert with supplied and applied filters
 
@@ -198,6 +237,10 @@ class AbstractListPageTest(object):
 
         self.assert_applied_filters(filters)
 
+    def apply_label_operation(self, label_operation):
+        assert self.page.filter._label_operation.is_displayed, 'Label Operation is not displayed'
+        self.page.filter._label_operation.select(label_operation)
+
     def assert_filter_options(self):
         # test available options
         options_defined = [item.text for item in self.FILTER_ENUM]
@@ -208,6 +251,7 @@ class AbstractListPageTest(object):
 
     def assert_applied_filters(self, filters):
         # validate applied filters
+        wait_to_spinner_disappear(self.browser)
         _active_filters = self.page.filter.active_filters
         logger.debug('Filters[applied:{}, active:{}]'.format(filters, _active_filters))
         assert is_equal(filters, _active_filters), \
@@ -316,11 +360,11 @@ class AbstractListPageTest(object):
         options_listed = metrics_page.filter.items
         logger.debug('Filter options[defined:{}, listed:{}]'
                      .format(options_defined, options_listed))
-        assert is_equal(options_defined, options_listed), \
+        assert is_sublist(options_defined, options_listed), \
             ('Filter Options mismatch: defined:{}, listed:{}'
              .format(options_defined, options_listed))
-        # enable disable each filter
-        for filter_name in options_listed:
+        # enable disable each filter, use defined options
+        for filter_name in options_defined:
             self._filter_test(metrics_page, filter_name)
 
     def _filter_test(self, page, filter_name, uncheck=True):
@@ -358,6 +402,14 @@ class AbstractListPageTest(object):
         assert metrics_page.view_in_grafana
         assert get_url(_products, 'Grafana') in metrics_page.view_in_grafana
 
+    def is_host_link(self, link_name):
+        self.browser.click(self.browser.element(locator=self.page.content.CONFIG_TAB_OVERVIEW,
+                                                parent=self.page.content.CONFIG_TABS_PARENT))
+        return len(self.browser.elements(
+            './/div[@id="subsets"]//a[contains(text(), "{}")]'.format(
+                link_name),
+            parent=self.page.content.locator)) > 0
+
     def assert_breadcrumb_menu(self, name, namespace):
         breadcrumb = self.load_details_page(name, namespace, force_refresh=False, load_only=True)
         menu_location = breadcrumb.locations[0]
@@ -379,63 +431,178 @@ class AbstractListPageTest(object):
 
     def assert_traces_tab(self, traces_tab):
         traces_tab.open()
+        self.assert_traces_tab_content(traces_tab)
+
+    def assert_traces_tab_content(self, traces_tab):
         assert not traces_tab.traces.is_oc_login_displayed, "OC Login should not be displayed"
         if not traces_tab.traces.has_no_results:
             assert traces_tab.traces.has_results
 
     def assert_logs_tab(self, logs_tab, all_pods=[]):
+        _filter = "GET"
         logs_tab.open()
+        if len(all_pods) == 0:
+            assert 'No logs for Workload' in \
+                self.browser.text(locator='//h5[contains(@class, "pf-c-title")]', parent=self)
+            return
         assert is_equal(all_pods, logs_tab.pods.options)
-        assert logs_tab.containers.options
         assert is_equal([item.text for item in TailLines],
                         logs_tab.tail_lines.options)
-        assert is_equal([item.text for item in TimeIntervalUIText],
+        _interval_options = [item.text for item in TimeIntervalUIText]
+        _interval_options.append('Custom')
+        assert is_equal(_interval_options,
+                        logs_tab.duration.options)
+        assert is_equal([item.text for item in GraphRefreshInterval],
                         logs_tab.interval.options)
+        logs_tab.logs_switch.on()
+        logs_tab.log_hide.fill(_filter)
         self.browser.click(logs_tab.refresh)
         wait_to_spinner_disappear(self.browser)
-        assert logs_tab.textarea.text
+        assert logs_tab.logs_switch.is_on
+        assert _filter not in logs_tab.pod_textarea.text
+        assert _filter not in logs_tab.proxy_textarea.text
 
     def assert_traffic(self, name, traffic_tab, self_object_type, traffic_object_type):
-        inbound_traffic = traffic_tab.inbound_items()
-        for inbound_item in inbound_traffic:
-            if inbound_item.object_type == traffic_object_type:
+        bound_traffic = traffic_tab.traffic_items()
+        for bound_item in bound_traffic:
+            if bound_item.object_type == traffic_object_type:
                 # skip istio traffic
-                if "istio" in inbound_item.name:
+                if "istio" in bound_item.name:
                     continue
                 outbound_traffic = traffic_tab.click_on(
-                    object_type=traffic_object_type, name=inbound_item.name, inbound=True)
+                    object_type=traffic_object_type, name=bound_item.name)
                 found = False
                 for outbound_item in outbound_traffic:
                     if (outbound_item.name == name
                         and outbound_item.object_type == self_object_type
-                            and outbound_item.request_type == inbound_item.request_type):
+                            and outbound_item.request_type == bound_item.request_type
+                            and outbound_item.bound_traffic_type != bound_item.bound_traffic_type):
                         found = True
-                        assert inbound_item.status == outbound_item.status, \
+                        assert bound_item.status == outbound_item.status, \
                             "Inbound Status {} is not equal to Outbound Status {} for {}".format(
-                                inbound_item.status, outbound_item.status, name)
-                        assert math.isclose(inbound_item.rps, outbound_item.rps, abs_tol=1.0), \
+                                bound_item.status, outbound_item.status, name)
+                        assert math.isclose(bound_item.rps, outbound_item.rps, abs_tol=2.0), \
                             "Inbound RPS {} is not equal to Outbound RPS {} for {}".format(
-                                inbound_item.rps,
+                                bound_item.rps,
                                 outbound_item.rps,
                                 name)
-                        assert math.isclose(inbound_item.success_rate,
+                        assert math.isclose(bound_item.success_rate,
                                             outbound_item.success_rate,
-                                            abs_tol=1.0), \
+                                            abs_tol=2.0), \
                             "Inbound Rate {} is not equal to Outbound Rate {} for {}".format(
-                                inbound_item.success_rate, outbound_item.success_rate, name)
+                                bound_item.success_rate, outbound_item.success_rate, name)
                 if not found:
                     assert found, "{} {} {} not found in {}".format(name,
                                                                     self_object_type,
-                                                                    inbound_item.request_type,
+                                                                    bound_item.request_type,
                                                                     outbound_traffic)
                 # check only the first item
                 break
+
+    def assert_graph_overview(self, name, namespace):
+        logger.debug('Asserting Graph Overview for: {}, in namespace: {}'.format(
+            name, namespace))
+        self.load_details_page(name, namespace, force_refresh=False, load_only=True)
+        self.page.content.graph_menu.select('Show full graph')
+        graph_page = GraphPage(self.browser)
+        side_panel = graph_page.side_panel
+        assert not side_panel.get_namespace()
+        if self.page.PAGE_MENU == MENU.APPLICATIONS.text:
+            assert not side_panel.get_workload()
+            assert side_panel.get_service()
+            assert name == side_panel.get_application()
+        elif self.page.PAGE_MENU == MENU.WORKLOADS.text:
+            assert name == side_panel.get_workload()
+            assert side_panel.get_service()
+            assert side_panel.get_application()
+        elif self.page.PAGE_MENU == MENU.SERVICES.text:
+            assert not side_panel.get_workload()
+            assert name == side_panel.get_service()
+            assert side_panel.get_application()
+        else:
+            assert False, "Graph Overview Page is not recognized"
+        assert side_panel.show_traffic()
+        assert side_panel.show_traces()
+        # assert this on the end of tests
+        _traces_tab = side_panel.go_to_traces()
+        assert _traces_tab
+        self.assert_traces_tab_content(_traces_tab)
+        self.browser.execute_script("history.back();")
+
+    def assert_istio_configs(self, object_ui, object_rest, object_oc, namespace):
+        assert object_ui.istio_configs_number == len(object_ui.istio_configs), \
+            'Config tab\'s number should be equal to items'
+        assert len(object_rest.istio_configs) == len(object_ui.istio_configs), \
+            'UI configs should be equal to REST configs items'
+        assert len(object_rest.istio_configs) == len(object_oc.istio_configs), \
+            'REST configs should be equal to OC configs items'
+
+        for istio_config_ui in object_ui.istio_configs:
+            found = False
+            for istio_config_rest in object_rest.istio_configs:
+                if istio_config_ui.name == istio_config_rest.name and \
+                    istio_config_ui.type == istio_config_rest.object_type and \
+                        istio_config_ui.status == istio_config_rest.validation:
+                    found = True
+                    break
+            if not found:
+                assert found, 'Config {} not found in REST {}'.format(istio_config_ui,
+                                                                      istio_config_rest)
+            found = False
+            for istio_config_oc in object_oc.istio_configs:
+                if istio_config_ui.name == istio_config_oc.name and \
+                    istio_config_ui.type == istio_config_oc.object_type and \
+                        namespace == istio_config_oc.namespace:
+                    found = True
+                    break
+            if not found:
+                assert found, 'Config {} not found in OC {}'.format(istio_config_ui,
+                                                                    istio_config_oc)
+            config_overview_ui = self.page.content.table_view_istio_config.get_overview(
+                    istio_config_ui.name,
+                    istio_config_ui.type)
+            config_details_oc = self.openshift_client.istio_config_details(
+                namespace=namespace,
+                object_name=istio_config_ui.name,
+                object_type=istio_config_ui.type)
+            assert istio_config_ui.status == config_overview_ui.status, \
+                'UI Status {} not equal to Overview Status {}'.format(
+                    istio_config_ui.status,
+                    config_overview_ui.status)
+            assert istio_config_ui.status == istio_config_rest.validation, \
+                'UI Status {} not equal to REST Status {}'.format(
+                    istio_config_ui.status,
+                    istio_config_rest.status)
+            if istio_config_ui.type == IstioConfigObjectType.PEER_AUTHENTICATION.text:
+                assert '\'app\': \'{}\''.format(re.sub(
+                    APP_NAME_REGEX,
+                    '',
+                    object_ui.name)) in config_overview_ui.text
+            elif istio_config_ui.type == IstioConfigObjectType.VIRTUAL_SERVICE.text:
+                for _host in config_overview_ui.hosts:
+                    assert '\'host\': \'{}\''.format(_host) in config_details_oc.text
+                for _gateway in config_overview_ui.gateways:
+                    assert _gateway.text in config_details_oc.text
+            else:
+                assert '\'host\': \'{}\''.format(config_overview_ui.host) in config_details_oc.text
+                for _rest_dr in object_rest.destination_rules:
+                    if _rest_dr.name == istio_config_ui.name:
+                        for _ui_subset in config_overview_ui.subsets:
+                            found = False
+                            for _rest_subset in _rest_dr.subsets:
+                                if _ui_subset.name == _rest_subset.name and \
+                                    dict_contains(_ui_subset.labels, _rest_subset.labels) and \
+                                        _ui_subset.traffic_policy == _rest_subset.traffic_policy:
+                                    found = True
+                            assert found, 'Subset {} not fund in REST {}'.format(
+                                _ui_subset, _rest_subset)
 
 
 class OverviewPageTest(AbstractListPageTest):
     FILTER_ENUM = OverviewPageFilter
     TYPE_ENUM = OverviewPageType
     SORT_ENUM = OverviewPageSort
+    VIEW_ENUM = OverviewViewType
     GRAPH_LINK_TYPES = {TYPE_ENUM.APPS: OverviewGraphTypeLink.APP,
                         TYPE_ENUM.SERVICES: OverviewGraphTypeLink.SERVICE,
                         TYPE_ENUM.WORKLOADS: OverviewGraphTypeLink.WORKLOAD}
@@ -458,7 +625,9 @@ class OverviewPageTest(AbstractListPageTest):
 
     def assert_all_items(self, filters=[],
                          overview_type=TYPE_ENUM.APPS, force_clear_all=True,
+                         list_type=VIEW_ENUM.COMPACT,
                          force_refresh=False):
+
         # apply overview type
         self.page.type.select(overview_type.text)
 
@@ -467,15 +636,23 @@ class OverviewPageTest(AbstractListPageTest):
 
         if force_refresh:
             self.page.page_refresh()
-        # get overviews from ui
-        overviews_ui = self.page.content.all_items
+
         # get overviews from rest api
         _ns = self.FILTER_ENUM.NAME.text
         _namespaces = [_f['value'] for _f in filters if _f['name'] == _ns]
         logger.debug('Namespaces:{}'.format(_namespaces))
-        overviews_rest = self.kiali_client.overview_list(
+        overviews_rest = self._apply_overview_filters(self.kiali_client.overview_list(
             namespaces=_namespaces,
-            overview_type=overview_type)
+            overview_type=overview_type),
+            filters)
+
+        # get overviews from ui
+        if list_type == self.VIEW_ENUM.LIST:
+            overviews_ui = self.page.content.list_items
+        elif list_type == self.VIEW_ENUM.EXPAND:
+            overviews_ui = self.page.content.expand_items
+        else:
+            overviews_ui = self.page.content.compact_items
 
         # compare all results
         logger.debug('Namespaces:{}'.format(_namespaces))
@@ -489,51 +666,232 @@ class OverviewPageTest(AbstractListPageTest):
         for overview_ui in overviews_ui:
             found = False
             for overview_rest in overviews_rest:
-                if overview_ui.is_equal(overview_rest, advanced_check=False):
+                if overview_ui.is_equal(overview_rest, advanced_check=True):
                     found = True
+                    assert (overview_ui.healthy +
+                            overview_ui.unhealthy +
+                            overview_ui.degraded +
+                            overview_ui.na +
+                            overview_ui.idle) == \
+                        (overview_rest.healthy +
+                         overview_rest.unhealthy +
+                         overview_rest.degraded +
+                         overview_rest.na +
+                         overview_rest.idle)
                     break
-            assert found, '{} not found in REST {}'.format(overview_ui, overviews_rest)
+            if not found:
+                assert found, '{} not found in REST {}'.format(overview_ui, overviews_rest)
 
-            self._assert_graph_link(overview_ui.graph_link,
-                                    overview_ui.namespace,
-                                    self.GRAPH_LINK_TYPES[overview_type].text)
-            self._assert_overview_link(
-                OverviewLinks.APPLICATIONS.text, overview_ui.apps_link,
-                overview_ui.namespace,
-                contains=(True if overview_type != self.TYPE_ENUM.APPS else False))
-            self._assert_overview_link(
-                OverviewLinks.WORKLOADS.text, overview_ui.workloads_link,
-                overview_ui.namespace,
-                contains=(True if overview_type != self.TYPE_ENUM.WORKLOADS else False))
-            self._assert_overview_link(
-                OverviewLinks.SERVICES.text, overview_ui.services_link,
-                overview_ui.namespace,
-                contains=(True if overview_type != self.TYPE_ENUM.SERVICES else False))
-            self._assert_overview_link(
-                OverviewLinks.ISTIO_CONFIG.text, overview_ui.configs_link,
-                overview_ui.namespace)
             self._assert_overview_config_status(overview_ui.namespace, overview_ui.config_status)
+            assert overview_ui.labels == self.openshift_client.namespace_labels(
+                overview_ui.namespace)
 
-    def _prepare_graph_link(self, namespace, graph_type):
-        return "/console/graph/namespaces?namespaces={}&graphType={}".format(namespace, graph_type)
+    def _apply_overview_filters(self, overviews=[], filters=[],
+                                skip_health=False,
+                                skip_mtls=False):
+        _ol = self.FILTER_ENUM.LABEL.text
+        _labels = [_f['value'] for _f in filters if _f['name'] == _ol]
+        logger.debug('Namespace Labels:{}'.format(_labels))
+        _omtls = self.FILTER_ENUM.MTLS_STATUS.text
+        _mtls_filters = [_f['value'] for _f in filters if _f['name'] == _omtls]
+        logger.debug('mTls Status:{}'.format(_mtls_filters))
+        _oh = self.FILTER_ENUM.HEALTH.text
+        _healths = [_f['value'] for _f in filters if _f['name'] == _oh]
+        logger.debug('Health:{}'.format(_healths))
+        items = overviews
+        # filter by labels
+        if len(_labels) > 0:
+            filtered_list = []
+            filtered_list.extend(
+                [_i for _i in items if dict_contains(
+                    _i.labels, _labels)])
+            items = set(filtered_list)
+        # filter by mtls
+        if len(_mtls_filters) > 0 and not skip_mtls:
+            filtered_list = []
+            for _mtls in _mtls_filters:
+                filtered_list.extend([_i for _i in items if
+                                      self._tls_equals(_mtls, _i.tls_type)])
+            items = set(filtered_list)
+        # filter by health
+        if len(_healths) > 0 and not skip_health:
+            filtered_list = []
+            for _health in _healths:
+                filtered_list.extend([_i for _i in items if self._health_equals(_health, _i)])
+            items = set(filtered_list)
+        return items
 
-    def _assert_graph_link(self, ui_link, namespace, graph_type):
-        expected_link = self._prepare_graph_link(namespace, graph_type)
-        assert expected_link in ui_link, "Expected {} link in UI {} not found".format(
-            expected_link, ui_link)
-
-    def _prepare_overview_link(self, link_type, namespace):
-        return "/console/{}?namespaces={}".format(link_type, namespace)
-
-    def _assert_overview_link(self, link_type, ui_link, namespace, contains=True):
-        expected_link = self._prepare_overview_link(link_type, namespace)
-        if contains:
-            assert ui_link and (expected_link in ui_link), \
-                "Expected {} link in not found in UI {}".format(
-                expected_link, ui_link)
+    def _tls_equals(self, tls_filter, overview_tls):
+        if tls_filter == OverviewMTSLStatus.ENABLED.text:
+            return overview_tls == MeshWideTLSType.ENABLED
+        elif tls_filter == OverviewMTSLStatus.DISABLED.text:
+            return overview_tls == MeshWideTLSType.DISABLED
         else:
-            assert not ui_link, "UI link {} should not exist".format(
-                ui_link)
+            return overview_tls == MeshWideTLSType.PARTLY_ENABLED
+
+    def _health_equals(self, health_filter, overview_item):
+        if health_filter == OverviewHealth.HEALTHY.text:
+            return overview_item.degraded == 0 and overview_item.unhealthy == 0 \
+                    and overview_item.healthy > 0
+        elif health_filter == OverviewHealth.DEGRADED.text:
+            return overview_item.degraded > 0 and overview_item.unhealthy == 0
+        else:
+            return overview_item.degraded == 0 and overview_item.unhealthy > 0
+
+    def test_disable_enable_delete_auto_injection(self, namespace):
+        # load the page first
+        self.page.load(force_load=True)
+        self.apply_filters(filters=[{"name": OverviewPageFilter.NAME.text, "value": namespace}],
+                           force_clear_all=True)
+
+        self.kiali_client.update_namespace_auto_injection(namespace, 'enabled')
+        self.kiali_client.update_namespace_auto_injection(namespace, 'disabled')
+
+        self.page.page_refresh()
+        overviews_ui = self.page.content.list_items
+
+        for overview_ui in overviews_ui:
+            if overview_ui.namespace == namespace:
+                assert 'istio-injection' in overview_ui.labels and \
+                    overview_ui.labels['istio-injection'] == 'disabled'
+                self._assert_overview_options(
+                    options=self.page.content.overview_action_options(namespace),
+                    enabled=False,
+                    deleted=False)
+
+        self.kiali_client.update_namespace_auto_injection(namespace, 'enabled')
+
+        self.page.page_refresh()
+        overviews_ui = self.page.content.list_items
+
+        for overview_ui in overviews_ui:
+            if overview_ui.namespace == namespace:
+                assert 'istio-injection' in overview_ui.labels and \
+                    overview_ui.labels['istio-injection'] == 'enabled'
+                self._assert_overview_options(
+                    options=self.page.content.overview_action_options(namespace),
+                    enabled=True,
+                    deleted=False)
+
+        self.kiali_client.update_namespace_auto_injection(namespace, None)
+
+        self.page.page_refresh()
+        overviews_ui = self.page.content.list_items
+
+        for overview_ui in overviews_ui:
+            if overview_ui.namespace == namespace:
+                assert 'istio-injection' not in overview_ui.labels
+                self._assert_overview_options(
+                    options=self.page.content.overview_action_options(namespace),
+                    enabled=False,
+                    deleted=True)
+
+        self.kiali_client.update_namespace_auto_injection(namespace, 'enabled')
+
+        self.page.page_refresh()
+        overviews_ui = self.page.content.list_items
+
+        for overview_ui in overviews_ui:
+            if overview_ui.namespace == namespace:
+                assert 'istio-injection' in overview_ui.labels and \
+                    overview_ui.labels['istio-injection'] == 'enabled'
+                self._assert_overview_options(
+                    options=self.page.content.overview_action_options(namespace),
+                    enabled=True,
+                    deleted=False)
+
+    def test_create_update_delete_traffic_policies(self, namespace):
+        # load the page first
+        self.page.load(force_load=True)
+        self.apply_filters(filters=[{"name": OverviewPageFilter.NAME.text, "value": namespace}],
+                           force_clear_all=True)
+
+        # first delete the policies if exists
+        self.kiali_client.update_namespace_auto_injection(namespace, 'enabled')
+        self.kiali_client.update_namespace_auto_injection(namespace, 'disabled')
+        self.page.page_refresh()
+        wait_to_spinner_disappear(self.browser)
+        if self.page.content.select_action(
+                namespace, OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text):
+            self.browser.wait_for_element(
+                parent=ListViewAbstract.DIALOG_ROOT,
+                locator=('.//button[text()="Delete"]'))
+            self.browser.click(self.browser.element(
+                parent=ListViewAbstract.DIALOG_ROOT,
+                locator=('.//button[text()="Delete"]')))
+        wait_to_spinner_disappear(self.browser)
+        self.page.page_refresh()
+        wait_to_spinner_disappear(self.browser)
+
+        self._assert_overview_options(
+            options=self.page.content.overview_action_options(namespace),
+            enabled=False,
+            deleted=False,
+            policy_created=False)
+
+        assert self.page.content.select_action(
+            namespace, OverviewTrafficLinks.CREATE_TRAFFIC_POLICIES.text)
+        wait_to_spinner_disappear(self.browser)
+        self.page.page_refresh()
+        wait_to_spinner_disappear(self.browser)
+
+        self._assert_overview_options(
+            options=self.page.content.overview_action_options(namespace),
+            enabled=False,
+            deleted=False,
+            policy_created=True)
+
+        assert self.page.content.select_action(
+            namespace, OverviewTrafficLinks.UPDATE_TRAFFIC_POLICIES.text)
+        self.browser.wait_for_element(
+            parent=ListViewAbstract.DIALOG_ROOT,
+            locator=('.//button[text()="Update"]'))
+        self.browser.click(self.browser.element(
+            parent=ListViewAbstract.DIALOG_ROOT,
+            locator=('.//button[text()="Update"]')))
+        wait_to_spinner_disappear(self.browser)
+        self.page.page_refresh()
+        wait_to_spinner_disappear(self.browser)
+
+        self._assert_overview_options(
+            options=self.page.content.overview_action_options(namespace),
+            enabled=False,
+            deleted=False,
+            policy_created=True)
+
+        assert self.page.content.select_action(
+            namespace, OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text)
+        self.browser.wait_for_element(
+            parent=ListViewAbstract.DIALOG_ROOT,
+            locator=('.//button[text()="Delete"]'))
+        self.browser.click(self.browser.element(
+            parent=ListViewAbstract.DIALOG_ROOT,
+            locator=('.//button[text()="Delete"]')))
+        wait_to_spinner_disappear(self.browser)
+        self.page.page_refresh()
+        wait_to_spinner_disappear(self.browser)
+
+        self._assert_overview_options(
+            options=self.page.content.overview_action_options(namespace),
+            enabled=False,
+            deleted=False,
+            policy_created=False)
+
+    def _assert_overview_options(self, options, enabled=True, deleted=False, policy_created=False):
+        expected_options = [item.text for item in OverviewLinks]
+        if not enabled:
+            expected_options.append(OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
+        if enabled:
+            expected_options.append(OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
+        if not deleted:
+            expected_options.append(OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text)
+        if not policy_created:
+            expected_options.append(OverviewTrafficLinks.CREATE_TRAFFIC_POLICIES.text)
+        else:
+            expected_options.append(OverviewTrafficLinks.UPDATE_TRAFFIC_POLICIES.text)
+            expected_options.append(OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text)
+        assert is_equal(expected_options, options), \
+            '{} not equal to {}'.format(expected_options, options)
 
     def _assert_overview_config_status(self, namespace, config_status):
         expected_status = IstioConfigValidation.NA
@@ -552,7 +910,7 @@ class OverviewPageTest(AbstractListPageTest):
                         expected_status = IstioConfigValidation.VALID
         assert expected_status == config_status.validation, \
             'Expected {} but got {} for {} as Config Status'.format(
-                config_status.validation, expected_status, namespace)
+                expected_status, config_status.validation, namespace)
         if config_status.validation != IstioConfigValidation.NA:
             assert '/console/istio?namespaces={}'.format(
                     namespace) in \
@@ -584,7 +942,7 @@ class ApplicationsPageTest(AbstractListPageTest):
         if not self.is_in_details_page(name, namespace):
             self._prepare_load_details_page(name, namespace)
             self.open(name, namespace, force_refresh)
-            self.browser.wait_for_element(locator='//strong[contains(., "Error Rate")]')
+            self.browser.wait_for_element(locator='//*[contains(text(), "Overall Health")]')
         return self.page.content.get_details(load_only)
 
     def assert_random_details(self, namespaces=[], filters=[], force_refresh=False):
@@ -592,8 +950,8 @@ class ApplicationsPageTest(AbstractListPageTest):
         _sn = self.FILTER_ENUM.APP_NAME.text
         _application_names = [_f['value'] for _f in filters if _f['name'] == _sn]
         logger.debug('Namespaces:{}, Application names:{}'.format(namespaces, _application_names))
-        applications_rest = self.kiali_client.application_list(
-            namespaces=namespaces, application_names=_application_names)
+        applications_rest = self._apply_app_filters(self.kiali_client.application_list(
+            namespaces=namespaces), filters=filters)
 
         # random applications filters
         assert len(applications_rest) > 0
@@ -631,6 +989,7 @@ class ApplicationsPageTest(AbstractListPageTest):
                                                advanced_check=True), \
             'Application UI {} not equal to REST {}'\
             .format(application_details_ui, application_details_rest)
+
         if application_details_ui.application_status:
             assert application_details_ui.application_status.is_healthy() == \
                 application_details_ui.health, \
@@ -639,6 +998,14 @@ class ApplicationsPageTest(AbstractListPageTest):
                 application_details_ui.application_status.is_healthy(),
                 application_details_ui.health,
                 application_details_ui.name)
+        if application_details_oc.application_status:
+            assert is_equal(application_details_ui.application_status.deployment_statuses,
+                            application_details_oc.application_status.deployment_statuses), \
+                    "Application REST Status {} is not equal to OC {} for {}"\
+                    .format(
+                            application_details_ui.application_status.deployment_statuses,
+                            application_details_oc.application_status.deployment_statuses,
+                            application_details_ui.name)
         for workload_ui in application_details_ui.workloads:
             found = False
             for workload_rest in application_details_rest.workloads:
@@ -669,10 +1036,14 @@ class ApplicationsPageTest(AbstractListPageTest):
             self.assert_metrics_options(application_details_ui.inbound_metrics)
 
             self.assert_metrics_options(application_details_ui.outbound_metrics)
+
+        self.assert_traces_tab(application_details_ui.traces_tab)
+
         self.assert_traffic(name, application_details_ui.traffic_tab,
                             self_object_type=TrafficType.APP, traffic_object_type=TrafficType.APP)
 
-    def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True):
+    def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True,
+                         label_operation=None):
         # apply namespaces
         self.apply_namespaces(namespaces, force_clear_all=force_clear_all)
 
@@ -682,22 +1053,27 @@ class ApplicationsPageTest(AbstractListPageTest):
         # apply sorting
         self.sort(sort_options)
 
-        # get applications from rest api
-        _sn = self.FILTER_ENUM.APP_NAME.text
-        _application_names = [_f['value'] for _f in filters if _f['name'] == _sn]
+        if label_operation:
+            self.apply_label_operation(label_operation)
 
-        logger.debug('Namespaces:{}, Application names:{}'.format(namespaces, _application_names))
+        logger.debug('Namespaces:{}'.format(namespaces))
         # get applications from ui
         applications_ui = self.page.content.all_items
         # get from REST
-        applications_rest = self.kiali_client.application_list(
-            namespaces=namespaces, application_names=_application_names)
+        applications_rest = self._apply_app_filters(self.kiali_client.application_list(
+            namespaces=namespaces),
+            filters,
+            label_operation)
         # get from OC
-        applications_oc = self.openshift_client.application_list(
-            namespaces=namespaces, application_names=_application_names)
+        applications_oc = self._apply_app_filters(self.openshift_client.application_list(
+            namespaces=namespaces),
+            filters,
+            label_operation,
+            True,
+            True)
 
         # compare all results
-        logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _application_names))
+        logger.debug('Namespaces:{}'.format(namespaces))
         logger.debug('Items count[UI:{}, REST:{}]'.format(
             len(applications_ui), len(applications_rest)))
         logger.debug('Applications UI:{}'.format(applications_ui))
@@ -706,7 +1082,7 @@ class ApplicationsPageTest(AbstractListPageTest):
 
         assert len(applications_ui) == len(applications_rest), \
             "UI {} and REST {} applications number not equal".format(applications_ui,
-                                                                     applications_ui)
+                                                                     applications_rest)
         assert len(applications_rest) <= len(applications_oc)
 
         for application_ui in applications_ui:
@@ -729,10 +1105,69 @@ class ApplicationsPageTest(AbstractListPageTest):
             for application_oc in applications_oc:
                 logger.debug('{} {}'.format(application_oc.name, application_oc.namespace))
                 if application_ui.is_equal(application_oc, advanced_check=False):
+                    # in OC it contains more labels, skip for jaeger and grafana
+                    if application_ui.name != 'jaeger' and application_ui.name != 'grafana':
+                        assert application_ui.labels.items() == application_oc.labels.items(), \
+                            'Expected {} but got {} labels for application {}'.format(
+                                application_oc.labels,
+                                application_ui.labels,
+                                application_ui.name)
                     found = True
+                    if application_oc.application_status and \
+                            application_oc.application_status.deployment_statuses:
+                        assert is_equal(application_rest.application_status.deployment_statuses,
+                                        application_oc.application_status.deployment_statuses), \
+                                "Application REST Status {} is not equal to OC {} for {}"\
+                                .format(
+                                        application_rest.application_status.deployment_statuses,
+                                        application_oc.application_status.deployment_statuses,
+                                        application_ui.name)
                     break
             if not found:
                 assert found, '{} not found in OC'.format(application_ui)
+
+    def _apply_app_filters(self, applications=[], filters=[], label_operation=None,
+                           skip_health=False, skip_sidecar=False):
+        _an = self.FILTER_ENUM.APP_NAME.text
+        _application_names = [_f['value'] for _f in filters if _f['name'] == _an]
+        logger.debug('Application names:{}'.format(_application_names))
+        _al = self.FILTER_ENUM.LABEL.text
+        _labels = [_f['value'] for _f in filters if _f['name'] == _al]
+        logger.debug('Application Labels:{}'.format(_labels))
+        _ais = self.FILTER_ENUM.ISTIO_SIDECAR.text
+        _sidecars = [_f['value'] for _f in filters if _f['name'] == _ais]
+        logger.debug('Istio Sidecars:{}'.format(_sidecars))
+        _ah = self.FILTER_ENUM.HEALTH.text
+        _health = [_f['value'] for _f in filters if _f['name'] == _ah]
+        logger.debug('Health:{}'.format(_health))
+        # filter by application name
+        items = applications
+        if len(_application_names) > 0:
+            filtered_list = []
+            for _name in _application_names:
+                filtered_list.extend([_i for _i in items if _name in _i.name])
+            items = set(filtered_list)
+        # filter by labels
+        if len(_labels) > 0:
+            filtered_list = []
+            filtered_list.extend(
+                [_i for _i in items if dict_contains(
+                    _i.labels, _labels,
+                    (True if label_operation == LabelOperation.AND.text else False))])
+            items = set(filtered_list)
+        # filter by sidecars
+        if len(_sidecars) > 0 and not skip_sidecar:
+            filtered_list = []
+            for _sidecar in _sidecars:
+                filtered_list.extend([_i for _i in items if
+                                      self.sidecar_presents(_sidecar, _i.istio_sidecar)])
+            items = set(filtered_list)
+        # filter by health
+        if len(_health) > 0 and not skip_health:
+            filtered_list = []
+            filtered_list.extend([_i for _i in items if self.health_equals(_health[0], _i.health)])
+            items = set(filtered_list)
+        return items
 
 
 class WorkloadsPageTest(AbstractListPageTest):
@@ -759,17 +1194,15 @@ class WorkloadsPageTest(AbstractListPageTest):
         if not self.is_in_details_page(name, namespace):
             self._prepare_load_details_page(name, namespace)
             self.open(name, namespace, force_refresh)
-            self.browser.wait_for_element(locator='//*[contains(., "Workload Overview")]')
+            self.browser.wait_for_element(locator='//*[contains(., "Workload Properties")]')
         return self.page.content.get_details(load_only)
 
     def assert_random_details(self, namespaces=[], filters=[],
                               force_clear_all=True, force_refresh=False):
         # get workloads from rest api
-        _sn = self.FILTER_ENUM.WORKLOAD_NAME.text
-        _workload_names = [_f['value'] for _f in filters if _f['name'] == _sn]
-        logger.debug('Namespaces:{}, Workload names:{}'.format(namespaces, _workload_names))
-        workloads_rest = self.kiali_client.workload_list(
-            namespaces=namespaces, workload_names=_workload_names)
+        logger.debug('Namespaces:{}'.format(namespaces))
+        workloads_rest = self._apply_workload_filters(self.kiali_client.workload_list(
+            namespaces=namespaces), filters)
         # random workloads filters
         assert len(workloads_rest) > 0
         if len(workloads_rest) > 3:
@@ -840,6 +1273,15 @@ class WorkloadsPageTest(AbstractListPageTest):
                     break
             if not found:
                 assert found, 'Pod {} not found in REST {}'.format(pod_ui, pod_rest)
+        for pod_oc in workload_details_oc.pods:
+            found = False
+            for pod_rest in workload_details_rest.pods:
+                if pod_oc.is_equal(pod_rest,
+                                   advanced_check=False):
+                    found = True
+                    break
+            if not found:
+                assert found, 'OC Pod {} not found in REST {}'.format(pod_oc, pod_rest)
         for service_ui in workload_details_ui.services:
             found = False
             for service_rest in workload_details_rest.services:
@@ -850,16 +1292,25 @@ class WorkloadsPageTest(AbstractListPageTest):
             if not found:
                 assert found, 'Service {} not found in REST {}'.format(service_ui, service_rest)
 
+        self.assert_istio_configs(workload_details_ui,
+                                  workload_details_rest,
+                                  workload_details_oc,
+                                  namespace)
+
         self.assert_logs_tab(workload_details_ui.logs_tab, all_pods)
         if check_metrics:
             self.assert_metrics_options(workload_details_ui.inbound_metrics, check_grafana=True)
 
             self.assert_metrics_options(workload_details_ui.outbound_metrics, check_grafana=True)
+
+        self.assert_traces_tab(workload_details_ui.traces_tab)
+
         self.assert_traffic(name, workload_details_ui.traffic_tab,
                             self_object_type=TrafficType.WORKLOAD,
-                            traffic_object_type=TrafficType.SERVICE)
+                            traffic_object_type=TrafficType.WORKLOAD)
 
-    def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True):
+    def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True,
+                         label_operation=None):
         # apply namespaces
         self.apply_namespaces(namespaces, force_clear_all=force_clear_all)
 
@@ -869,20 +1320,23 @@ class WorkloadsPageTest(AbstractListPageTest):
         # apply sorting
         self.sort(sort_options)
 
+        if label_operation:
+            self.apply_label_operation(label_operation)
+
+        # get workloads from rest api
+        workloads_rest = self._apply_workload_filters(self.kiali_client.workload_list(
+            namespaces=namespaces), filters, label_operation)
+        # get workloads from OC client
+        workloads_oc = self._apply_workload_filters(self.openshift_client.workload_list(
+            namespaces=(namespaces if namespaces else self.kiali_client.namespace_list())),
+            filters, label_operation,
+            skip_sidecar=True,
+            skip_health=True)
         # get workloads from ui
         workloads_ui = self.page.content.all_items
-        # get workloads from rest api
-        _sn = self.FILTER_ENUM.WORKLOAD_NAME.text
-        _workload_names = [_f['value'] for _f in filters if _f['name'] == _sn]
-        logger.debug('Namespaces:{}, Workload names:{}'.format(namespaces, _workload_names))
-        workloads_rest = self.kiali_client.workload_list(
-            namespaces=namespaces, workload_names=_workload_names)
-        # get workloads from OC client
-        workloads_oc = self.openshift_client.workload_list(
-            namespaces=namespaces, workload_names=_workload_names)
 
         # compare all results
-        logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _workload_names))
+        logger.debug('Namespaces:{}'.format(namespaces))
         logger.debug('Items count[UI:{}, REST:{}, OC:{}]'.format(
             len(workloads_ui), len(workloads_rest), len(workloads_oc)))
         logger.debug('Workloads UI:{}'.format(workloads_ui))
@@ -891,8 +1345,8 @@ class WorkloadsPageTest(AbstractListPageTest):
 
         assert len(workloads_ui) == len(workloads_rest), \
             "UI {} and REST {} workloads number not equal".format(workloads_ui, workloads_rest)
-        # TODO when workloads are filtered put == here
-        assert len(workloads_rest) <= len(workloads_oc)
+        assert len(workloads_rest) <= len(workloads_oc), \
+            "REST {} should be less or equal OC {}".format(workloads_rest, workloads_oc)
 
         for workload_ui in workloads_ui:
             found = False
@@ -901,19 +1355,153 @@ class WorkloadsPageTest(AbstractListPageTest):
                     found = True
                     if workload_ui.workload_status:
                         assert workload_ui.workload_status.is_healthy() == workload_ui.health, \
-                                "Workload Tooltip Health {} is not equal to UI Health {}".format(
+                                "Workload Tooltip Health {} is not equal to UI Health {} for {}"\
+                                .format(
                                 workload_ui.workload_status.is_healthy(),
-                                workload_ui.health)
+                                workload_ui.health,
+                                workload_ui.name)
                     break
             if not found:
                 assert found, '{} not found in REST'.format(workload_ui)
             found = False
             for workload_oc in workloads_oc:
-                if workload_ui.is_equal(workload_oc, advanced_check=False):
+                if workload_ui.is_equal(workload_oc, advanced_check=False) and \
+                        workload_ui.labels.items() == workload_oc.labels.items():
                     found = True
+                    if workload_oc.workload_status:
+                        assert workload_rest.workload_status.workload_status.is_equal(
+                            workload_oc.workload_status.workload_status), \
+                            "Workload REST Status {} is not equal to OC {} for {}"\
+                            .format(
+                            workload_rest.workload_status.workload_status,
+                            workload_oc.workload_status.workload_status,
+                            workload_ui.name)
                     break
             if not found:
                 assert found, '{} not found in OC'.format(workload_ui)
+
+    def _apply_workload_filters(self, workloads=[], filters=[], label_operation=None,
+                                skip_sidecar=False, skip_health=False):
+        _sn = self.FILTER_ENUM.WORKLOAD_NAME.text
+        _names = [_f['value'] for _f in filters if _f['name'] == _sn]
+        logger.debug('Workload names:{}'.format(_names))
+        _wl = self.FILTER_ENUM.LABEL.text
+        _labels = [_f['value'] for _f in filters if _f['name'] == _wl]
+        logger.debug('Workload Labels:{}'.format(_labels))
+        _wt = self.FILTER_ENUM.WORKLOAD_TYPE.text
+        _types = [_f['value'] for _f in filters if _f['name'] == _wt]
+        logger.debug('Workload Types:{}'.format(_types))
+        _wis = self.FILTER_ENUM.ISTIO_SIDECAR.text
+        _sidecars = [_f['value'] for _f in filters if _f['name'] == _wis]
+        logger.debug('Istio Sidecars:{}'.format(_sidecars))
+        _wh = self.FILTER_ENUM.HEALTH.text
+        _health = [_f['value'] for _f in filters if _f['name'] == _wh]
+        logger.debug('Health:{}'.format(_health))
+        _version_label = None
+        for _f in filters:
+            if _f['name'] == self.FILTER_ENUM.VERSION_LABEL.text:
+                _version_label = _f['value']
+                break
+        logger.debug('Version Label:{}'.format(_version_label))
+        _app_label = None
+        for _f in filters:
+            if _f['name'] == self.FILTER_ENUM.APP_LABEL.text:
+                _app_label = _f['value']
+                break
+        logger.debug('App Label:{}'.format(_app_label))
+        items = workloads
+        # filter by name
+        if len(_names) > 0:
+            filtered_list = []
+            for _name in _names:
+                filtered_list.extend([_i for _i in items if _name in _i.name])
+            items = set(filtered_list)
+        # filter by labels
+        if len(_labels) > 0:
+            filtered_list = []
+            filtered_list.extend(
+                [_i for _i in workloads if dict_contains(
+                    _i.labels, _labels,
+                    (True if label_operation == LabelOperation.AND.text else False))])
+            items = set(filtered_list)
+        # filter by types
+        if len(_types) > 0:
+            filtered_list = []
+            for _type in _types:
+                filtered_list.extend([_i for _i in items if _type == _i.workload_type])
+            items = set(filtered_list)
+        # filter by sidecars
+        if len(_sidecars) > 0 and not skip_sidecar:
+            filtered_list = []
+            for _sidecar in _sidecars:
+                filtered_list.extend([_i for _i in items if
+                                      self.sidecar_presents(_sidecar, _i.istio_sidecar)])
+            items = set(filtered_list)
+        # filter by version label present
+        if _version_label:
+            filtered_list = []
+            filtered_list.extend([_i for _i in items if
+                                  (_version_label == VersionLabel.NOT_PRESENT.text)
+                                  ^ dict_contains(
+                                      given_list=['version'], original_dict=_i.labels)])
+            items = set(filtered_list)
+        # filter by app label present
+        if _app_label:
+            filtered_list = []
+            filtered_list.extend([_i for _i in items if
+                                  (_app_label == AppLabel.NOT_PRESENT.text)
+                                  ^ dict_contains(
+                                      given_list=['app'], original_dict=_i.labels)])
+            items = set(filtered_list)
+        # filter by health
+        if len(_health) > 0 and not skip_health:
+            filtered_list = []
+            filtered_list.extend([_i for _i in items if self.health_equals(_health[0], _i.health)])
+            items = set(filtered_list)
+        return items
+
+    def test_disable_enable_delete_auto_injection(self, name, namespace):
+        logger.debug('Auto Injection test for Workload: {}, {}'.format(name, namespace))
+        # load workload details page
+        self._prepare_load_details_page(name, namespace)
+        self.open(name, namespace)
+
+        self.kiali_client.update_workload_auto_injection(name, namespace, 'true')
+        self.kiali_client.update_workload_auto_injection(name, namespace, 'false')
+
+        self.page.page_refresh()
+        assert 'false' == self.page.content._details_sidecar_injection_text()
+        assert self.page.actions.is_enable_auto_injection_visible()
+        assert self.page.actions.is_remove_auto_injection_visible()
+        assert not self.page.actions.is_disable_auto_injection_visible()
+
+        self.page.actions.select(OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
+        self.page.page_refresh()
+        assert 'true' == self.page.content._details_sidecar_injection_text()
+        assert not self.page.actions.is_enable_auto_injection_visible()
+        assert self.page.actions.is_remove_auto_injection_visible()
+        assert self.page.actions.is_disable_auto_injection_visible()
+
+        self.page.actions.select(OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
+        self.page.page_refresh()
+        assert 'false' == self.page.content._details_sidecar_injection_text()
+        assert self.page.actions.is_enable_auto_injection_visible()
+        assert self.page.actions.is_remove_auto_injection_visible()
+        assert not self.page.actions.is_disable_auto_injection_visible()
+
+        self.page.actions.select(OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text)
+        self.page.page_refresh()
+        assert not self.page.content._details_sidecar_injection_text()
+        assert self.page.actions.is_enable_auto_injection_visible()
+        assert not self.page.actions.is_remove_auto_injection_visible()
+        assert not self.page.actions.is_disable_auto_injection_visible()
+
+        self.page.actions.select(OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
+        self.page.page_refresh()
+        assert 'true' == self.page.content._details_sidecar_injection_text()
+        assert not self.page.actions.is_enable_auto_injection_visible()
+        assert self.page.actions.is_remove_auto_injection_visible()
+        assert self.page.actions.is_disable_auto_injection_visible()
 
 
 class ServicesPageTest(AbstractListPageTest):
@@ -940,17 +1528,14 @@ class ServicesPageTest(AbstractListPageTest):
         if not self.is_in_details_page(name, namespace):
             self._prepare_load_details_page(name, namespace)
             self.open(name, namespace, force_refresh)
-            self.browser.wait_for_element(locator='//strong[contains(., "Error Rate")]',
+            self.browser.wait_for_element(locator='//*[contains(text(), "Overall Health")]',
                                           parent='//*[@id="health"]')
         return self.page.content.get_details(load_only)
 
     def assert_random_details(self, namespaces=[], filters=[], force_refresh=False):
         # get services from rest api
-        _sn = self.FILTER_ENUM.SERVICE_NAME.text
-        _service_names = [_f['value'] for _f in filters if _f['name'] == _sn]
-        logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _service_names))
-        services_rest = self.kiali_client.service_list(
-            namespaces=namespaces, service_names=_service_names)
+        services_rest = self._apply_service_filters(self.kiali_client.service_list(
+            namespaces=namespaces), filters=filters)
         # random services filters
         assert len(services_rest) > 0
         if len(services_rest) > 2:
@@ -977,12 +1562,14 @@ class ServicesPageTest(AbstractListPageTest):
         assert service_details_rest
         assert name == service_details_rest.name
         service_details_oc = self.openshift_client.service_details(namespace=namespace,
-                                                                   service_name=name)
+                                                                   service_name=name,
+                                                                   skip_workloads=False)
         assert service_details_oc
         assert name == service_details_oc.name
 
-        assert service_details_rest.istio_sidecar\
-            == service_details_ui.istio_sidecar
+        if namespace != 'istio-system':
+            assert service_details_rest.istio_sidecar\
+                == service_details_ui.istio_sidecar
         assert service_details_ui.is_equal(service_details_rest,
                                            advanced_check=True), \
             'Service UI {} not equal to REST {}'\
@@ -993,16 +1580,12 @@ class ServicesPageTest(AbstractListPageTest):
             .format(service_details_ui, service_details_oc)
         assert service_details_ui.workloads_number\
             == len(service_details_rest.workloads)
-        assert service_details_ui.virtual_services_number\
-            == len(service_details_rest.virtual_services)
-        assert service_details_ui.destination_rules_number\
-            == len(service_details_rest.destination_rules)
+        assert service_details_ui.istio_configs_number\
+            == len(service_details_rest.istio_configs)
         assert service_details_ui.workloads_number\
             == len(service_details_rest.workloads)
-        assert service_details_ui.virtual_services_number\
-            == len(service_details_ui.virtual_services)
-        assert service_details_ui.destination_rules_number\
-            == len(service_details_ui.destination_rules)
+        assert service_details_ui.istio_configs_number\
+            == len(service_details_ui.istio_configs)
 
         if service_details_ui.service_status:
             assert service_details_ui.service_status.is_healthy() == \
@@ -1019,45 +1602,32 @@ class ServicesPageTest(AbstractListPageTest):
                 if workload_ui.is_equal(workload_rest, advanced_check=True):
                     found = True
                     break
-            assert found, 'Workload {} not found in REST {}'.format(workload_ui,
-                                                                    workload_rest)
-        for virtual_service_ui in service_details_ui.virtual_services:
+            if not found:
+                assert found, 'Workload {} not found in REST {}'.format(workload_ui,
+                                                                        workload_rest)
             found = False
-            for virtual_service_rest in service_details_rest.virtual_services:
-                if virtual_service_ui.is_equal(virtual_service_rest, advanced_check=False):
+            for workload_oc in service_details_oc.workloads:
+                if workload_ui.is_equal(workload_oc, advanced_check=True):
                     found = True
                     break
             if not found:
-                assert found, 'VS {} not found in REST {}'.format(virtual_service_ui,
-                                                                  virtual_service_rest)
-            vs_overview = self.page.content.table_view_vs.get_overview(virtual_service_ui.name)
-            assert vs_overview.is_equal(virtual_service_rest, advanced_check=True)
+                assert found, 'Workload {} not found in OC {}'.format(workload_ui,
+                                                                      workload_oc)
 
-        for destination_rule_ui in service_details_ui.destination_rules:
-            found = False
-            for destination_rule_rest in service_details_rest.destination_rules:
-                if destination_rule_ui.is_equal(destination_rule_rest, advanced_check=True):
-                    found = True
-                    break
-            if not found:
-                assert found, 'DR {} not found in REST {}'.format(destination_rule_ui,
-                                                                  destination_rule_rest)
-            dr_overview = self.page.content.table_view_dr.get_overview(destination_rule_ui.name)
-            # TODO advanced_check=True when KIALI-2152 is done
-            assert dr_overview.is_equal(
-                destination_rule_ui,
-                advanced_check=True if
-                destination_rule_ui.status == IstioConfigValidation.NOT_VALID
-                else False)
+        self.assert_istio_configs(service_details_ui,
+                                  service_details_rest,
+                                  service_details_oc,
+                                  namespace)
 
         if check_metrics:
             self.assert_metrics_options(service_details_ui.inbound_metrics, check_grafana=True)
-        # TODO KIALI-3262
-        # self.assert_traces_tab(service_details_ui.traces_tab)
+
+        self.assert_traces_tab(service_details_ui.traces_tab)
+
         # service traffic is linked to workloads
         self.assert_traffic(name, service_details_ui.traffic_tab,
                             self_object_type=TrafficType.SERVICE,
-                            traffic_object_type=TrafficType.WORKLOAD)
+                            traffic_object_type=TrafficType.SERVICE)
 
     def get_workload_names_set(self, source_workloads):
         workload_names = []
@@ -1066,7 +1636,8 @@ class ServicesPageTest(AbstractListPageTest):
                 workload_names.append(workload)
         return set(workload_names)
 
-    def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True):
+    def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True,
+                         label_operation=None):
         # apply namespaces
         self.apply_namespaces(namespaces, force_clear_all=force_clear_all)
 
@@ -1076,20 +1647,20 @@ class ServicesPageTest(AbstractListPageTest):
         # apply sorting
         self.sort(sort_options)
 
+        if label_operation:
+            self.apply_label_operation(label_operation)
+
         # get services from ui
         services_ui = self.page.content.all_items
         # get services from rest api
-        _sn = self.FILTER_ENUM.SERVICE_NAME.text
-        _service_names = [_f['value'] for _f in filters if _f['name'] == _sn]
-        logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _service_names))
-        services_rest = self.kiali_client.service_list(
-            namespaces=namespaces, service_names=_service_names)
+        services_rest = self._apply_service_filters(self.kiali_client.service_list(
+            namespaces=namespaces), filters=filters)
         # get services from OC client
-        services_oc = self.openshift_client.service_list(
-            namespaces=namespaces, service_names=_service_names)
+        services_oc = self._apply_service_filters(self.openshift_client.service_list(
+            namespaces=namespaces), filters=filters)
 
         # compare all results
-        logger.debug('Namespaces:{}, Service names:{}'.format(namespaces, _service_names))
+        logger.debug('Namespaces:{}'.format(namespaces))
         logger.debug('Items count[UI:{}, REST:{}, OC:{}]'.format(
             len(services_ui), len(services_rest), len(services_oc)))
         logger.debug('Services UI:{}'.format(services_ui))
@@ -1098,6 +1669,7 @@ class ServicesPageTest(AbstractListPageTest):
 
         assert len(services_ui) == len(services_rest), \
             "UI {} and REST {} services number not equal".format(services_ui, services_rest)
+
         assert len(services_rest) <= len(services_oc)
 
         for service_ui in services_ui:
@@ -1116,6 +1688,7 @@ class ServicesPageTest(AbstractListPageTest):
             found = False
             for service_oc in services_oc:
                 if service_ui.is_equal(service_oc, advanced_check=False):
+                    assert service_ui.labels.items() == service_oc.labels.items()
                     found = True
                     break
             if not found:
@@ -1126,6 +1699,39 @@ class ServicesPageTest(AbstractListPageTest):
                     service_ui.name) in \
                         service_ui.config_status.link, 'Wrong service link {}'.format(
                             service_ui.config_status.link)
+
+    def _apply_service_filters(self, services=[], filters=[], label_operation=None):
+        _sn = self.FILTER_ENUM.SERVICE_NAME.text
+        _service_names = [_f['value'] for _f in filters if _f['name'] == _sn]
+        logger.debug('Service names:{}'.format(_service_names))
+        _sis = self.FILTER_ENUM.ISTIO_SIDECAR.text
+        _sidecars = [_f['value'] for _f in filters if _f['name'] == _sis]
+        logger.debug('Istio Sidecars:{}'.format(_sidecars))
+        _sl = self.FILTER_ENUM.LABEL.text
+        _labels = [_f['value'] for _f in filters if _f['name'] == _sl]
+        items = services
+        # filter by service name
+        if len(_service_names) > 0:
+            filtered_list = []
+            for _name in _service_names:
+                filtered_list.extend([_i for _i in items if _name in _i.name])
+            items = set(filtered_list)
+        # filter by sidecars
+        if len(_sidecars) > 0:
+            filtered_list = []
+            for _sidecar in _sidecars:
+                filtered_list.extend([_i for _i in items if
+                                      self.sidecar_presents(_sidecar, _i.istio_sidecar)])
+            items = set(filtered_list)
+        # filter by labels
+        if len(_labels) > 0:
+            filtered_list = []
+            filtered_list.extend(
+                [_i for _i in items if dict_contains(
+                    _i.labels, _labels,
+                    (True if label_operation == LabelOperation.AND.text else False))])
+            items = set(filtered_list)
+        return items
 
     def get_additional_filters(self, namespaces, current_filters):
         logger.debug('Current filters:{}'.format(current_filters))
@@ -1146,41 +1752,91 @@ class ServicesPageTest(AbstractListPageTest):
         return []
 
     def test_routing_create(self, name, namespace, routing_type,
+                            peer_auth_mode=None,
                             tls=RoutingWizardTLS.ISTIO_MUTUAL, load_balancer=True,
                             load_balancer_type=RoutingWizardLoadBalancer.ROUND_ROBIN,
-                            gateway=True, include_mesh_gateway=True):
+                            gateway=True, include_mesh_gateway=True,
+                            circuit_braker=False,
+                            skip_advanced=False):
         logger.debug('Routing Wizard {} for Service: {}, {}'.format(routing_type, name, namespace))
         # load service details page
         self._prepare_load_details_page(name, namespace)
         self.open(name, namespace)
         self.page.actions.delete_all_routing()
-        if routing_type == RoutingWizardType.CREATE_WEIGHTED_ROUTING:
+        if routing_type == RoutingWizardType.TRAFFIC_SHIFTING:
             assert self.page.actions.create_weighted_routing(
-                tls=tls, load_balancer=load_balancer,
+                tls=tls,
+                peer_auth_mode=peer_auth_mode,
+                load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
-                include_mesh_gateway=include_mesh_gateway)
+                include_mesh_gateway=include_mesh_gateway,
+                circuit_braker=circuit_braker,
+                skip_advanced=skip_advanced)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_weighted_enabled()
             assert self.page.actions.is_create_matching_disabled()
+            assert self.page.actions.is_tcp_shifting_disabled()
+            assert self.page.actions.is_timeouts_disabled()
             assert self.page.actions.is_suspend_disabled()
-        elif routing_type == RoutingWizardType.CREATE_MATCHING_ROUTING:
-            assert self.page.actions.create_matching_routing(
-                tls=tls, load_balancer=load_balancer,
+        elif routing_type == RoutingWizardType.TCP_TRAFFIC_SHIFTING:
+            assert self.page.actions.create_tcp_traffic_shifting(
+                tls=tls,
+                peer_auth_mode=peer_auth_mode,
+                load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
-                include_mesh_gateway=include_mesh_gateway)
+                include_mesh_gateway=include_mesh_gateway,
+                skip_advanced=skip_advanced)
+            assert not self.page.actions.is_delete_disabled()
+            assert self.page.actions.is_tcp_shifting_enabled()
+            assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_create_matching_disabled()
+            assert self.page.actions.is_timeouts_disabled()
+            assert self.page.actions.is_suspend_disabled()
+        elif routing_type == RoutingWizardType.REQUEST_ROUTING:
+            assert self.page.actions.create_matching_routing(
+                tls=tls,
+                peer_auth_mode=peer_auth_mode,
+                load_balancer=load_balancer,
+                load_balancer_type=load_balancer_type, gateway=gateway,
+                include_mesh_gateway=include_mesh_gateway,
+                circuit_braker=circuit_braker,
+                skip_advanced=skip_advanced)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_matching_enabled()
             assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_tcp_shifting_disabled()
+            assert self.page.actions.is_timeouts_disabled()
             assert self.page.actions.is_suspend_disabled()
-        elif routing_type == RoutingWizardType.SUSPEND_TRAFFIC:
+        elif routing_type == RoutingWizardType.FAULT_INJECTION:
             assert self.page.actions.suspend_traffic(
-                tls=tls, load_balancer=load_balancer,
+                tls=tls,
+                peer_auth_mode=peer_auth_mode,
+                load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
-                include_mesh_gateway=include_mesh_gateway)
+                include_mesh_gateway=include_mesh_gateway,
+                circuit_braker=circuit_braker,
+                skip_advanced=skip_advanced)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_create_matching_disabled()
             assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_tcp_shifting_disabled()
+            assert self.page.actions.is_timeouts_disabled()
             assert self.page.actions.is_update_suspended_enabled()
+        elif routing_type == RoutingWizardType.REQUEST_TIMEOUTS:
+            assert self.page.actions.request_timeouts(
+                tls=tls,
+                peer_auth_mode=peer_auth_mode,
+                load_balancer=load_balancer,
+                load_balancer_type=load_balancer_type, gateway=gateway,
+                include_mesh_gateway=include_mesh_gateway,
+                circuit_braker=circuit_braker,
+                skip_advanced=skip_advanced)
+            assert not self.page.actions.is_delete_disabled()
+            assert self.page.actions.is_create_matching_disabled()
+            assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_tcp_shifting_disabled()
+            assert self.page.actions.is_suspend_disabled()
+            assert self.page.actions.is_timeouts_enabled()
         # get service details from rest
         service_details_rest = self.kiali_client.service_details(
             namespace=namespace,
@@ -1214,48 +1870,104 @@ class ServicesPageTest(AbstractListPageTest):
             namespace=namespace,
             object_type=OBJECT_TYPE.VIRTUAL_SERVICE.text,
             object_name=service_details_rest.virtual_services[0].name)
-
         assert word_in_text('\"mesh\"',
                             istio_config_details_rest.text,
                             gateway and include_mesh_gateway)
+        # get destination rule details from rest
+        istio_config_details_rest = self.kiali_client.istio_config_details(
+            namespace=namespace,
+            object_type=OBJECT_TYPE.DESTINATION_RULE.text,
+            object_name=service_details_rest.destination_rules[0].name)
+        assert word_in_text('\"http1MaxPendingRequests\"',
+                            istio_config_details_rest.text,
+                            circuit_braker)
 
     def test_routing_update(self, name, namespace, routing_type,
+                            peer_auth_mode=None,
                             tls=RoutingWizardTLS.ISTIO_MUTUAL, load_balancer=True,
                             load_balancer_type=RoutingWizardLoadBalancer.ROUND_ROBIN,
-                            gateway=True, include_mesh_gateway=True):
+                            gateway=True, include_mesh_gateway=True,
+                            circuit_braker=False,
+                            skip_advanced=False):
         logger.debug('Routing Update Wizard {} for Service: {}, {}'.format(routing_type,
                                                                            name,
                                                                            namespace))
         # load service details page
         self._prepare_load_details_page(name, namespace)
         self.open(name, namespace)
-        if routing_type == RoutingWizardType.UPDATE_WEIGHTED_ROUTING:
+        if routing_type == RoutingWizardType.TRAFFIC_SHIFTING:
             assert self.page.actions.update_weighted_routing(
-                tls=tls, load_balancer=load_balancer,
+                tls=tls,
+                peer_auth_mode=peer_auth_mode,
+                load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
-                include_mesh_gateway=include_mesh_gateway)
+                include_mesh_gateway=include_mesh_gateway,
+                circuit_braker=circuit_braker,
+                skip_advanced=skip_advanced)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_weighted_enabled()
             assert self.page.actions.is_create_matching_disabled()
+            assert self.page.actions.is_tcp_shifting_disabled()
+            assert self.page.actions.is_timeouts_disabled()
             assert self.page.actions.is_suspend_disabled()
-        elif routing_type == RoutingWizardType.UPDATE_MATCHING_ROUTING:
-            assert self.page.actions.update_matching_routing(
-                tls=tls, load_balancer=load_balancer,
+        elif routing_type == RoutingWizardType.TCP_TRAFFIC_SHIFTING:
+            assert self.page.actions.update_tcp_traffic_shifting(
+                tls=tls,
+                peer_auth_mode=peer_auth_mode,
+                load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
-                include_mesh_gateway=include_mesh_gateway)
+                include_mesh_gateway=include_mesh_gateway,
+                skip_advanced=skip_advanced)
+            assert not self.page.actions.is_delete_disabled()
+            assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_create_matching_disabled()
+            assert self.page.actions.is_tcp_shifting_enabled()
+            assert self.page.actions.is_timeouts_disabled()
+            assert self.page.actions.is_suspend_disabled()
+        elif routing_type == RoutingWizardType.REQUEST_ROUTING:
+            assert self.page.actions.update_matching_routing(
+                tls=tls,
+                peer_auth_mode=peer_auth_mode,
+                load_balancer=load_balancer,
+                load_balancer_type=load_balancer_type, gateway=gateway,
+                include_mesh_gateway=include_mesh_gateway,
+                skip_advanced=skip_advanced)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_update_matching_enabled()
             assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_tcp_shifting_disabled()
+            assert self.page.actions.is_timeouts_disabled()
             assert self.page.actions.is_suspend_disabled()
-        elif routing_type == RoutingWizardType.UPDATE_SUSPENDED_TRAFFIC:
+        elif routing_type == RoutingWizardType.FAULT_INJECTION:
             assert self.page.actions.update_suspended_traffic(
-                tls=tls, load_balancer=load_balancer,
+                tls=tls,
+                peer_auth_mode=peer_auth_mode,
+                load_balancer=load_balancer,
                 load_balancer_type=load_balancer_type, gateway=gateway,
-                include_mesh_gateway=include_mesh_gateway)
+                include_mesh_gateway=include_mesh_gateway,
+                circuit_braker=circuit_braker,
+                skip_advanced=skip_advanced)
             assert not self.page.actions.is_delete_disabled()
             assert self.page.actions.is_create_matching_disabled()
             assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_tcp_shifting_disabled()
+            assert self.page.actions.is_timeouts_disabled()
             assert self.page.actions.is_update_suspended_enabled()
+        elif routing_type == RoutingWizardType.REQUEST_TIMEOUTS:
+            assert self.page.actions.update_request_timeouts(
+                tls=tls,
+                peer_auth_mode=peer_auth_mode,
+                load_balancer=load_balancer,
+                load_balancer_type=load_balancer_type, gateway=gateway,
+                include_mesh_gateway=include_mesh_gateway,
+                circuit_braker=circuit_braker,
+                skip_advanced=skip_advanced)
+            assert not self.page.actions.is_delete_disabled()
+            assert self.page.actions.is_create_matching_disabled()
+            assert self.page.actions.is_create_weighted_disabled()
+            assert self.page.actions.is_tcp_shifting_disabled()
+            assert self.page.actions.is_suspend_disabled()
+            assert self.page.actions.is_timeouts_enabled()
         # get service details from rest
         service_details_rest = self.kiali_client.service_details(
             namespace=namespace,
@@ -1270,7 +1982,7 @@ class ServicesPageTest(AbstractListPageTest):
                                 service_details_rest.destination_rules[0].traffic_policy,
                                 load_balancer)
 
-        if tls:
+        if tls and tls.text != RoutingWizardTLS.UNSET.text:
             assert word_in_text(tls.text.lower(),
                                 service_details_rest.destination_rules[0].traffic_policy,
                                 tls)
@@ -1283,6 +1995,14 @@ class ServicesPageTest(AbstractListPageTest):
         assert word_in_text('\"mesh\"',
                             istio_config_details_rest.text,
                             gateway and include_mesh_gateway)
+        # get destination rule details from rest
+        istio_config_details_rest = self.kiali_client.istio_config_details(
+            namespace=namespace,
+            object_type=OBJECT_TYPE.DESTINATION_RULE.text,
+            object_name=service_details_rest.destination_rules[0].name)
+        assert word_in_text('\"http1MaxPendingRequests\"',
+                            istio_config_details_rest.text,
+                            circuit_braker)
 
     def test_routing_delete(self, name, namespace):
         logger.debug('Routing Delete for Service: {}, {}'.format(name, namespace))
@@ -1293,56 +2013,15 @@ class ServicesPageTest(AbstractListPageTest):
         assert self.page.actions.is_delete_disabled()
         assert self.page.actions.is_create_weighted_enabled()
         assert self.page.actions.is_create_matching_enabled()
+        assert self.page.actions.is_tcp_shifting_enabled()
         assert self.page.actions.is_suspend_enabled()
+        assert self.page.actions.is_timeouts_enabled()
         # get service details from rest
         service_details_rest = self.kiali_client.service_details(
             namespace=namespace,
             service_name=name)
         assert len(service_details_rest.virtual_services) == 0, 'Service should have no VS'
         assert len(service_details_rest.destination_rules) == 0, 'Service should have no DR'
-
-    def test_3scale_rule_create(self, name, namespace, handler_name):
-        logger.debug('3Scale Rule Create for Service: {}, {}'.format(name, namespace))
-        # load service details page
-        self._prepare_load_details_page(name, namespace)
-        self.open(name, namespace)
-        self.page.actions.delete_3scale_rule()
-        assert self.page.actions.create_3scale_rule(handler_name=handler_name)
-        assert not self.page.actions.is_delete_3scale_disabled()
-        assert self.page.actions.is_update_3scale_enabled()
-
-        service_details_ui = self.page.content.get_details()
-        assert service_details_ui.rule_3scale_api_handler == handler_name, \
-            'Selected {} != proposed {}'.format(
-                service_details_ui.rule_3scale_api_handler,
-                handler_name)
-
-    def test_3scale_rule_update(self, name, namespace, handler_name):
-        logger.debug('3Scale Rule Update for Service: {}, {}'.format(name, namespace))
-        # load service details page
-        self._prepare_load_details_page(name, namespace)
-        self.open(name, namespace)
-        assert self.page.actions.update_3scale_rule(handler_name=handler_name)
-        assert not self.page.actions.is_delete_3scale_disabled()
-        assert self.page.actions.is_update_3scale_enabled()
-
-        service_details_ui = self.page.content.get_details()
-        assert service_details_ui.rule_3scale_api_handler == handler_name, \
-            'Selected {} != proposed {}'.format(
-                service_details_ui.rule_3scale_api_handler,
-                handler_name)
-
-    def test_3scale_rule_delete(self, name, namespace):
-        logger.debug('3Scale Rule Delete for Service: {}, {}'.format(name, namespace))
-        # load service details page
-        self._prepare_load_details_page(name, namespace)
-        self.open(name, namespace)
-        assert self.page.actions.delete_3scale_rule()
-        assert self.page.actions.is_delete_3scale_disabled()
-        assert not self.page.actions.is_update_3scale_enabled()
-
-        service_details_ui = self.page.content.get_details()
-        assert not service_details_ui.rule_3scale_api_handler
 
 
 class IstioConfigPageTest(AbstractListPageTest):
@@ -1368,6 +2047,7 @@ class IstioConfigPageTest(AbstractListPageTest):
         logger.debug('Loading details page for istio config: {}'.format(name))
         if not self.is_in_details_page(name, namespace):
             self._prepare_load_details_page(name, namespace)
+            wait_to_spinner_disappear(self.browser)
             self.open(name, namespace, force_refresh)
             self.browser.wait_for_element(locator='//button[contains(., "YAML")]',
                                           parent='//*[contains(@class, "pf-c-page__main-section")]')
@@ -1389,14 +2069,14 @@ class IstioConfigPageTest(AbstractListPageTest):
         _sn = self.FILTER_ENUM.ISTIO_NAME.text
         _istio_names = [_f['value'] for _f in filters if _f['name'] == _sn]
 
-        # get rules from ui
-        config_list_ui = self.page.content.all_items
-        logger.debug('Istio config list UI:{}]'.format(config_list_ui))
-
         # get rules from rest api
         config_list_rest = self.kiali_client.istio_config_list(
             namespaces=namespaces, config_names=_istio_names)
         logger.debug('Istio config list REST:{}]'.format(config_list_rest))
+
+        # get rules from ui
+        config_list_ui = self.page.content.all_items
+        logger.debug('Istio config list UI:{}]'.format(config_list_ui))
 
         # get configs from OC api
         config_list_oc = self.openshift_client.istio_config_list(
@@ -1443,10 +2123,9 @@ class IstioConfigPageTest(AbstractListPageTest):
             _random_configs = configs_rest
         # create filters
         for _selected_config in _random_configs:
-            if _selected_config.object_type != OBJECT_TYPE.RULE.text:
-                self.assert_details(_selected_config.name,
-                                    _selected_config.object_type,
-                                    _selected_config.namespace)
+            self.assert_details(_selected_config.name,
+                                _selected_config.object_type,
+                                _selected_config.namespace)
 
     def assert_details(self, name, object_type,
                        namespace=None, error_messages=[], apply_filters=True):
@@ -1497,11 +2176,17 @@ class IstioConfigPageTest(AbstractListPageTest):
                                   replace(': > ', ': ').
                                   replace('{', '').
                                   replace('}', '').
+                                  replace(':" /', ':"/').
                                   replace('"', '').
+                                  replace(' ,', ',').
                                   replace(',', '').
                                   replace('[', '').
                                   replace(']', '').
-                                  replace('\\', '')):
+                                  replace('\\', '').
+                                  replace(' :', ':').
+                                  replace(' .', '.').
+                                  replace('...', '').
+                                  replace(' \/', '\/')):
             if config_ui.endswith(':'):
                 ui_key = config_ui
             elif config_ui.strip() != '-':  # skip this line, it was for formatting
@@ -1526,7 +2211,7 @@ class IstioConfigPageTest(AbstractListPageTest):
                         if ui_key == rest_key and config_ui == config_rest:
                             found = True
                             break
-                if not found:
+                if not found and not self._is_skip_key(ui_key):
                     assert found, '{} {} not found in REST'.format(ui_key, config_ui)
                 found = False
                 # make the OC result into the same format as shown in UI
@@ -1545,19 +2230,25 @@ class IstioConfigPageTest(AbstractListPageTest):
                     split(' ')
                 config_oc_list.append('kind:')
                 config_oc_list.append(config_details_oc._type)
-                if ui_key == 'apiVersion:':
+                if ui_key == 'apiVersion:' or ui_key == 'selfLink:':
                     continue
                 for config_oc in config_oc_list:
                     if config_oc.endswith(':'):
-                        oc_key = config_oc
+                        oc_key = re.sub('^f:', '', config_oc)
                     else:
                         # the previous one was the key of this value
                         if (ui_key == oc_key and config_ui == config_oc) or config_ui == 'null':
                             found = True
                             break
-                if not found:
+                if not found and not self._is_skip_key(ui_key):
                     assert found, '{} {} not found in OC'.format(ui_key, config_ui)
         logger.debug('Done asserting details for: {}, in namespace: {}'.format(name, namespace))
+
+    def _is_skip_key(self, key):
+        return 'last-applied-configuration' in key \
+            or key.startswith('f:') \
+            or 'managedFields' in key \
+            or 'creationTimestamp' in key
 
     def test_gateway_create(self, name, hosts, namespaces):
         logger.debug('Creating Gateway: {}, from namespaces: {}'.format(name, namespaces))
@@ -1581,6 +2272,94 @@ class IstioConfigPageTest(AbstractListPageTest):
         for namespace in namespaces:
             self.assert_details(name, IstioConfigObjectType.SIDECAR.text, namespace)
 
+    def test_authpolicy_create(self, name, policy, namespaces, labels=None, policy_action=None):
+        logger.debug('Creating AuthorizationPolicy: {}, from namespaces: {}'.format(name,
+                                                                                    namespaces))
+        # load the page first
+        self.page.load(force_load=True)
+        # apply namespace
+        self.apply_namespaces(namespaces=namespaces)
+        wait_to_spinner_disappear(self.browser)
+        is_created = self.page.actions.create_istio_config_authpolicy(name=name,
+                                                                      policy=policy,
+                                                                      labels=labels,
+                                                                      policy_action=policy_action)
+        if policy_action == AuthPolicyActionType.DENY.text:
+            # in a case of DENY action the Create button is disabled
+            assert not is_created, "Should not create but in fact created AuthPolicy"
+        else:
+            assert is_created
+        if is_created:
+            for namespace in namespaces:
+                self.assert_details(name, IstioConfigObjectType.AUTHORIZATION_POLICY.text,
+                                    namespace)
+                config_details_rest = self.kiali_client.istio_config_details(
+                    namespace=namespace,
+                    object_type=IstioConfigObjectType.AUTHORIZATION_POLICY.text,
+                    object_name=name)
+                if policy == AuthPolicyType.ALLOW_ALL.text or \
+                        policy_action == AuthPolicyActionType.ALLOW.text:
+                    assert '\"action\": \"ALLOW\"' in config_details_rest.text
+
+    def test_peerauth_create(self, name, namespaces, expected_created=True,
+                             labels=None, mtls_mode=None, mtls_ports={}):
+        logger.debug('Creating PeerAuthentication: {}, from namespaces: {}'.format(name,
+                                                                                   namespaces))
+        # load the page first
+        self.page.load(force_load=True)
+        # apply namespace
+        self.apply_namespaces(namespaces=namespaces)
+        wait_to_spinner_disappear(self.browser)
+        is_created = self.page.actions.create_istio_config_peerauth(
+            name, labels, mtls_mode, mtls_ports)
+        assert not expected_created ^ is_created, \
+            "Created expected {} but should be {}".format(expected_created,
+                                                          is_created)
+        if is_created:
+            for namespace in namespaces:
+                self.assert_details(name, IstioConfigObjectType.PEER_AUTHENTICATION.text,
+                                    namespace)
+                config_details_rest = self.kiali_client.istio_config_details(
+                    namespace=namespace,
+                    object_type=IstioConfigObjectType.PEER_AUTHENTICATION.text,
+                    object_name=name)
+                if mtls_mode:
+                    assert '\"mode\": \"{}\"'.format(mtls_mode) in config_details_rest.text
+                if labels:
+                    assert labels.replace('=', '\": \"') in config_details_rest.text
+                if mtls_ports:
+                    for _key, _value in mtls_ports.items():
+                        assert '\"portLevelMtls\": \"{}\": \"mode\": \"{}\"'.format(_key, _value) \
+                            in config_details_rest.text.replace('{', '').replace('}', '')
+
+    def test_requestauth_create(self, name, namespaces, expected_created=True,
+                                labels=None, jwt_rules={}):
+        logger.debug('Creating RequestAuthentication: {}, from namespaces: {}'.format(
+            name,
+            namespaces))
+        # load the page first
+        self.page.load(force_load=True)
+        # apply namespace
+        self.apply_namespaces(namespaces=namespaces)
+        wait_to_spinner_disappear(self.browser)
+        is_created = self.page.actions.create_istio_config_requestauth(name, labels, jwt_rules)
+        assert not expected_created ^ is_created, \
+            "Created expected {} but should be {}".format(expected_created,
+                                                          is_created)
+        if is_created:
+            for namespace in namespaces:
+                self.assert_details(name, IstioConfigObjectType.REQUEST_AUTHENTICATION.text,
+                                    namespace)
+                config_details_rest = self.kiali_client.istio_config_details(
+                    namespace=namespace,
+                    object_type=IstioConfigObjectType.REQUEST_AUTHENTICATION.text,
+                    object_name=name)
+                if labels:
+                    assert labels.replace('=', '\": \"') in config_details_rest.text
+                if jwt_rules:
+                    for _key, _value in jwt_rules.items():
+                        assert '\"{}\": \"{}\"'.format(_key, _value) in config_details_rest.text
+
     def delete_istio_config(self, name, namespace=None):
         logger.debug('Deleting istio config: {}, from namespace: {}'.format(name, namespace))
         self.load_details_page(name, namespace, force_refresh=False, load_only=True)
@@ -1590,6 +2369,13 @@ class IstioConfigPageTest(AbstractListPageTest):
         self.browser.click(self.browser.element(
             parent=ListViewAbstract.DIALOG_ROOT,
             locator=('.//button[text()="Delete"]')))
+
+    def assert_host_link(self, config_name, namespace, host_name, is_link_expected=True):
+        logger.debug('Asserting host link for: {}, in namespace: {}'.format(config_name, namespace))
+
+        # load config details page
+        self.load_details_page(config_name, namespace, force_refresh=False, load_only=True)
+        assert not is_link_expected ^ self.is_host_link(host_name)
 
     def click_on_gateway(self, name, namespace):
         self.browser.click(self.browser.element(locator=self.page.content.CONFIG_TAB_OVERVIEW,
@@ -1643,7 +2429,7 @@ class DistributedTracingPageTest(AbstractListPageTest):
 
 class ValidationsTest(object):
 
-    def __init__(self, kiali_client, objects_path, openshift_client=None, browser=None):
+    def __init__(self, kiali_client, objects_path, openshift_client, browser=None):
         self.kiali_client = kiali_client
         self.openshift_client = openshift_client
         self.browser = browser
@@ -1725,14 +2511,16 @@ class ValidationsTest(object):
         rest_error_messages = config_details_rest.error_messages
 
         if ignore_common_errors:
-            try:
-                rest_error_messages.remove(KIA0201)
-            except ValueError:
-                pass
-            try:
-                rest_error_messages.remove(KIA0301)
-            except ValueError:
-                pass
+            remove_from_list(rest_error_messages, KIA0201)
+            remove_from_list(rest_error_messages, KIA0301)
+
+        if self.openshift_client.is_auto_mtls():
+            # remove errors which are ignored during auto mtls
+            remove_from_list(error_messages, KIA0501)
+            remove_from_list(error_messages, KIA0204)
+            remove_from_list(error_messages, KIA0205)
+            remove_from_list(error_messages, KIA0401)
+            remove_from_list(error_messages, KIA0206)
 
         assert len(error_messages) == len(rest_error_messages), \
             'Error messages are different Expected:{}, Got:{}'.\
@@ -1762,91 +2550,10 @@ class ValidationsTest(object):
                 for overview_item in overview_items:
                     if overview_item.namespace == tls_object.namespace:
                         assert tls_object.tls_type == overview_item.tls_type, \
-                            'Namespace TLS type expected: {} got: {}'.format(tls_object.tls_type,
-                                                                             overview_item.tls_type)
-
-
-class ThreeScaleConfigPageTest(AbstractListPageTest):
-    SORT_ENUM = ThreeScaleConfigPageSort
-    SELECT_ITEM = './/tr//a[text()="{}"]'
-
-    def __init__(self, kiali_client, openshift_client, browser):
-        AbstractListPageTest.__init__(
-            self, kiali_client=kiali_client,
-            openshift_client=openshift_client, page=ThreeScaleConfigPage(browser))
-        self.browser = browser
-
-    def _prepare_load_details_page(self):
-        # load the page first
-        self.page.load(force_load=True)
-
-    def load_details_page(self, name, force_refresh):
-        logger.debug('Loading details page for 3scale config handler: {}'.format(name))
-        self._prepare_load_details_page()
-        self.open(name=name, force_refresh=force_refresh)
-        return self.page.content.get_details()
-
-    def assert_all_items(self):
-        logger.debug('Asserting all 3scale handler items')
-
-        # get handlers from ui
-        handler_list_ui = self.page.content.all_items
-        logger.debug('3Scale handler list UI:{}]'.format(handler_list_ui))
-
-        # get handlers from rest api
-        handler_list_rest = self.kiali_client.three_scale_handler_list()
-        logger.debug('3Scale handler list REST:{}]'.format(handler_list_rest))
-
-        assert len(handler_list_ui) == len(handler_list_rest), \
-            "UI {} and REST {} handler number not equal".format(handler_list_ui, handler_list_rest)
-        for handler_ui in handler_list_ui:
-            found = False
-            for handler_rest in handler_list_rest:
-                if handler_ui.is_equal(handler_rest, advanced_check=False):
-                    found = True
-                    break
-            if not found:
-                assert found, '{} not found in REST'.format(handler_ui)
-
-        logger.debug('Done asserting all handler items')
-
-    def assert_details(self, name, service_id, system_url, access_token):
-        logger.debug('Asserting details for: {}'.format(name))
-
-        # load handler page
-        handler_details_ui = self.load_details_page(name, force_refresh=False)
-        assert handler_details_ui
-        assert name == handler_details_ui.name
-        assert service_id == handler_details_ui.service_id
-        assert system_url == handler_details_ui.system_url
-        assert access_token == handler_details_ui.access_token
-        # get handler details from rest
-        handlers_rest = self.kiali_client.three_scale_handler_list(
-            handler_names=[name])
-        assert len(handlers_rest) == 1
-        assert handler_details_ui.is_equal(handlers_rest[0], advanced_check=True)
-
-    def assert_three_scale_handler_creation(self, name, service_id, system_url, access_token):
-        logger.debug('Creating 3Scale handler: {}'.format(name))
-
-        self.page.content.create_3scale_handler(name, service_id, system_url, access_token)
-        self.assert_details(name, service_id, system_url, access_token)
-
-    def assert_three_scale_handler_update(self, name, service_id, system_url, access_token):
-        logger.debug('Update 3Scale handler: {}'.format(name))
-
-        self.load_details_page(name, force_refresh=False)
-        self.page.content.update_3scale_handler(service_id, system_url, access_token)
-        self.assert_details(name, service_id, system_url, access_token)
-
-    def assert_three_scale_handler_delete(self, name):
-        logger.debug('Delete 3Scale handler: {}'.format(name))
-
-        self.load_details_page(name, force_refresh=False)
-        self.page.actions.select('Delete')
-        self.browser.click(self.browser.element(
-            parent=ListViewAbstract.DIALOG_ROOT,
-            locator=('.//button[text()="Delete"]')))
+                            'Namespace TLS type expected: {} got: {} for {}'.format(
+                                tls_object.tls_type,
+                                overview_item.tls_type,
+                                overview_item.namespace)
 
 
 class ConfigValidationObject(object):

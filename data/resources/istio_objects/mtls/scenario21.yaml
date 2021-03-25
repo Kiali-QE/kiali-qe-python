@@ -1,0 +1,18 @@
+# Valid: PeerAuthentication is in permissive mode, it allows mTLS connections
+apiVersion: "networking.istio.io/v1alpha3"
+kind: "DestinationRule"
+metadata:
+  name: "disable-mtls"
+spec:
+  host: "*.bookinfo.svc.cluster.local"
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
+apiVersion: "security.istio.io/v1beta1"
+kind: "PeerAuthentication"
+metadata:
+  name: "default"
+spec:
+  mtls:
+    mode: DISABLE

@@ -10,10 +10,11 @@ from kiali_qe.components.enums import (
     OverviewPageType,
     TimeIntervalRestParam,
     HealthType as HEALTH_TYPE,
-    ItemIconType
+    ItemIconType,
+    HealthType
 )
 from kiali_qe.entities import Requests
-from kiali_qe.entities.istio_config import IstioConfig, IstioConfigDetails, Rule
+from kiali_qe.entities.istio_config import IstioConfig, IstioConfigDetails
 from kiali_qe.entities.service import (
     ServiceHealth,
     Service,
@@ -21,7 +22,8 @@ from kiali_qe.entities.service import (
     VirtualService,
     DestinationRule,
     SourceWorkload,
-    VirtualServiceWeight
+    VirtualServiceWeight,
+    DestinationRuleSubset
 )
 from kiali_qe.entities.workload import (
     Workload,
@@ -36,9 +38,8 @@ from kiali_qe.entities.applications import (
     AppWorkload,
     ApplicationHealth
 )
-from kiali_qe.entities.three_scale_config import ThreeScaleHandler
 from kiali_qe.entities.overview import Overview
-from kiali_qe.utils import to_linear_string
+from kiali_qe.utils import to_linear_string, dict_to_params
 from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
 from kiali_qe.utils.log import logger
 
@@ -46,12 +47,17 @@ from kiali_qe.utils.log import logger
 ISTIO_CONFIG_TYPES = {'DestinationRule': 'destinationrules',
                       'VirtualService': 'virtualservices',
                       'ServiceEntry': 'serviceentries',
+                      'WorkloadEntry': 'workloadentries',
                       'Gateway': 'gateways',
+                      'Handler': 'handler',
+                      'EnvoyFilter': 'envoyfilters',
+                      'HTTPAPISpec': 'httpapispecs',
+                      'HTTPAPISpecBinding': 'httpapispecbindings',
                       'QuotaSpecBinding': 'quotaspecbindings',
                       'QuotaSpec': 'quotaspecs',
-                      'Policy': 'policies',
+                      'PeerAuthentication': 'peerauthentications',
+                      'RequestAuthentication': 'requestauthentications',
                       'MeshPolicy': 'meshpolicies',
-                      'ServiceMeshRbacConfig': 'servicemeshrbacconfigs',
                       'RbacConfig': 'rbacconfigs',
                       'AuthorizationPolicy': 'authorizationpolicies',
                       'Sidecar': 'sidecars',
@@ -70,11 +76,21 @@ class KialiExtendedClient(KialiClient):
                 entities.append(entity_j['name'])
         return entities
 
+    def namespace_labels(self, namespace):
+        """ Returns list of namespaces """
+        labels = []
+        entities_j = self.get_response('namespaceList')
+        if entities_j:
+            for entity_j in entities_j:
+                if entity_j['name'] == namespace:
+                    labels = self.get_labels(entity_j)
+        return labels
+
     def namespace_exists(self, namespace):
         """ Returns True if given namespace exists. False otherwise. """
         return namespace in self.namespace_list()
 
-    def service_list(self, namespaces=[], service_names=[]):
+    def service_list(self, namespaces=[]):
         """Returns list of services.
         Args:
             namespaces: can be zero or any number of namespaces
@@ -101,14 +117,9 @@ class KialiExtendedClient(KialiClient):
                     istio_sidecar=_service_rest['istioSidecar'],
                     health=_service_health.is_healthy() if _service_health else None,
                     service_status=_service_health,
-                    icon=self.get_icon_type(_service_rest))
+                    icon=self.get_icon_type(_service_rest),
+                    labels=self.get_labels(_service_rest))
                 items.append(_service)
-        # filter by service name
-        if len(service_names) > 0:
-            filtered_list = []
-            for _name in service_names:
-                filtered_list.extend([_i for _i in items if _name in _i.name])
-            return set(filtered_list)
         return items
 
     def overview_list(self, namespaces=[], overview_type=OverviewPageType.APPS):
@@ -135,6 +146,7 @@ class KialiExtendedClient(KialiClient):
             _unhealthy = 0
             _degraded = 0
             _na = 0
+            _idle = 0
             for _item in _items:
                 if _item.health == HEALTH_TYPE.HEALTHY:
                     _healthy += 1
@@ -144,6 +156,8 @@ class KialiExtendedClient(KialiClient):
                     _unhealthy += 1
                 if _item.health == HEALTH_TYPE.NA:
                     _na += 1
+                if _item.health == HEALTH_TYPE.IDLE:
+                    _idle += 1
             _overview = Overview(
                 overview_type=overview_type.text,
                 namespace=_namespace,
@@ -151,11 +165,13 @@ class KialiExtendedClient(KialiClient):
                 healthy=_healthy,
                 unhealthy=_unhealthy,
                 degraded=_degraded,
-                na=_na)
+                na=_na,
+                idle=_idle,
+                labels=self.namespace_labels(_namespace))
             overviews.append(_overview)
         return overviews
 
-    def application_list(self, namespaces=[], application_names=[]):
+    def application_list(self, namespaces=[]):
         """Returns list of applications.
         Args:
             namespaces: can be zero or any number of namespaces
@@ -181,21 +197,15 @@ class KialiExtendedClient(KialiClient):
                         name=_application_rest['name'],
                         istio_sidecar=_application_rest['istioSidecar'],
                         health=_app_health.is_healthy() if _app_health else None,
-                        application_status=_app_health)
+                        application_status=_app_health,
+                        labels=self.get_labels(_application_rest))
                     items.append(_application)
-        # filter by application name
-        if len(application_names) > 0:
-            filtered_list = []
-            for _name in application_names:
-                filtered_list.extend([_i for _i in items if _name in _i.name])
-            return set(filtered_list)
         return items
 
-    def workload_list(self, namespaces=[], workload_names=[]):
+    def workload_list(self, namespaces=[]):
         """Returns list of workloads.
         Args:
             namespaces: can be zero or any number of namespaces
-            workload_names: can be zero or any number of workloads
         """
         items = []
         namespace_list = []
@@ -212,27 +222,19 @@ class KialiExtendedClient(KialiClient):
                     _workload_health = self.get_workload_health(
                         namespace=_namespace,
                         workload_name=_workload_rest['name'])
-                    _labels = self.get_labels(_workload_rest)
                     _workload = Workload(
                         namespace=_namespace,
                         name=_workload_rest['name'],
                         workload_type=_workload_rest['type'],
                         istio_sidecar=_workload_rest['istioSidecar'],
-                        app_label='app' in _labels.keys(),
-                        version_label='version' in _labels.keys(),
+                        labels=self.get_labels(_workload_rest),
                         health=_workload_health.is_healthy() if _workload_health else None,
                         icon=self.get_icon_type(_workload_rest),
                         workload_status=_workload_health)
                     items.append(_workload)
-        # filter by workload name
-        if len(workload_names) > 0:
-            filtered_list = []
-            for _name in workload_names:
-                filtered_list.extend([_i for _i in items if _name in _i.name])
-            return set(filtered_list)
         return items
 
-    def istio_config_list(self, namespaces=[], config_names=[]):
+    def istio_config_list(self, namespaces=[], config_names=[], params=None):
         """Returns list of istio config.
         Args:
             namespaces: can be zero or any number of namespaces
@@ -245,7 +247,8 @@ class KialiExtendedClient(KialiClient):
             namespace_list = self.namespace_list()
         # update items
         for _namespace in namespace_list:
-            _data = self.get_response('istioConfigList', path={'namespace': _namespace})
+            _data = self.get_response(
+                'istioConfigList', path={'namespace': _namespace}, params=params)
 
             # update DestinationRule
             if len(_data['destinationRules']) > 0 and len(_data['destinationRules']['items']) > 0:
@@ -258,34 +261,6 @@ class KialiExtendedClient(KialiClient):
                                                                     'destinationrules',
                                                                     _policy['metadata']['name'])))
 
-            # update Rule
-            if len(_data['rules']) > 0:
-                for _policy in _data['rules']:
-                    items.append(Rule(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.RULE.text,
-                        validation=IstioConfigValidation.NA))
-
-            # update Rule with Adapter
-            if len(_data['adapters']) > 0:
-                for _policy in _data['adapters']:
-                    items.append(Rule(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type='{}: {}'.format(OBJECT_TYPE.ADAPTER.text, _policy['adapter']),
-                        validation=IstioConfigValidation.NA))
-
-            # update Rule with Template
-            if len(_data['templates']) > 0:
-                for _policy in _data['templates']:
-                    items.append(Rule(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type='{}: {}'.format(
-                            OBJECT_TYPE.TEMPLATE.text, _policy['template']),
-                        validation=IstioConfigValidation.NA))
-
             # update VirtualService
             if len(_data['virtualServices']) > 0 and len(_data['virtualServices']['items']) > 0:
                 for _policy in _data['virtualServices']['items']:
@@ -297,48 +272,26 @@ class KialiExtendedClient(KialiClient):
                                                                     'virtualservices',
                                                                     _policy['metadata']['name'])))
 
-            # update QuotaSpec
-            if len(_data['quotaSpecs']) > 0:
-                for _policy in _data['quotaSpecs']:
-                    items.append(IstioConfig(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.QUOTA_SPEC.text,
-                        validation=self.get_istio_config_validation(_namespace,
-                                                                    'quotaspecs',
-                                                                    _policy['metadata']['name'])))
-
-            # update QuotaSpecBindings
-            if len(_data['quotaSpecBindings']) > 0:
-                for _policy in _data['quotaSpecBindings']:
-                    items.append(IstioConfig(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.QUOTA_SPEC_BINDING.text,
-                        validation=self.get_istio_config_validation(_namespace,
-                                                                    'quotaspecbindings',
-                                                                    _policy['metadata']['name'])))
-
             # update Policy
-            if len(_data['policies']) > 0:
-                for _policy in _data['policies']:
+            if len(_data['peerAuthentications']) > 0:
+                for _policy in _data['peerAuthentications']:
                     items.append(IstioConfig(
                         name=_policy['metadata']['name'],
                         namespace=_namespace,
-                        object_type=OBJECT_TYPE.POLICY.text,
+                        object_type=OBJECT_TYPE.PEER_AUTHENTICATION.text,
                         validation=self.get_istio_config_validation(_namespace,
-                                                                    'policies',
+                                                                    'peerauthentications',
                                                                     _policy['metadata']['name'])))
 
-            # update MeshPolicy
-            if len(_data['meshPolicies']) > 0:
-                for _policy in _data['meshPolicies']:
+            # update RequestAuthentication
+            if len(_data['requestAuthentications']) > 0:
+                for _policy in _data['requestAuthentications']:
                     items.append(IstioConfig(
                         name=_policy['metadata']['name'],
                         namespace=_namespace,
-                        object_type=OBJECT_TYPE.MESH_POLICY.text,
+                        object_type=OBJECT_TYPE.REQUEST_AUTHENTICATION.text,
                         validation=self.get_istio_config_validation(_namespace,
-                                                                    'meshpolicies',
+                                                                    'requestauthentications',
                                                                     _policy['metadata']['name'])))
 
             # update Gateway
@@ -352,6 +305,17 @@ class KialiExtendedClient(KialiClient):
                                                                     'gateways',
                                                                     _policy['metadata']['name'])))
 
+            # update EnvoyFilter
+            if len(_data['envoyFilters']) > 0 and len(_data['envoyFilters']) > 0:
+                for _policy in _data['envoyFilters']:
+                    items.append(IstioConfig(
+                        name=_policy['metadata']['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.ENVOY_FILTER.text,
+                        validation=self.get_istio_config_validation(_namespace,
+                                                                    'envoyfilters',
+                                                                    _policy['metadata']['name'])))
+
             # update serviceEntries
             if len(_data['serviceEntries']) > 0:
                 for _policy in _data['serviceEntries']:
@@ -363,26 +327,15 @@ class KialiExtendedClient(KialiClient):
                                                                     'serviceentries',
                                                                     _policy['metadata']['name'])))
 
-            # update serviceMeshRbacConfigs
-            if len(_data['serviceMeshRbacConfigs']) > 0:
-                for _policy in _data['serviceMeshRbacConfigs']:
+            # update WorkloadEntries
+            if len(_data['workloadEntries']) > 0:
+                for _policy in _data['workloadEntries']:
                     items.append(IstioConfig(
                         name=_policy['metadata']['name'],
                         namespace=_namespace,
-                        object_type=OBJECT_TYPE.SERVICE_MESH_RBAC_CONFIG.text,
+                        object_type=OBJECT_TYPE.WORKLOAD_ENTRY.text,
                         validation=self.get_istio_config_validation(_namespace,
-                                                                    'servicemeshrbacconfigs',
-                                                                    _policy['metadata']['name'])))
-
-            # update rbacConfigs
-            if len(_data['rbacConfigs']) > 0:
-                for _policy in _data['rbacConfigs']:
-                    items.append(IstioConfig(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.RBAC_CONFIG.text,
-                        validation=self.get_istio_config_validation(_namespace,
-                                                                    'rbacconfigs',
+                                                                    'workloadentries',
                                                                     _policy['metadata']['name'])))
 
             # update sidecars
@@ -392,7 +345,9 @@ class KialiExtendedClient(KialiClient):
                         name=_policy['metadata']['name'],
                         namespace=_namespace,
                         object_type=OBJECT_TYPE.SIDECAR.text,
-                        validation=IstioConfigValidation.NA))
+                        validation=self.get_istio_config_validation(_namespace,
+                                                                    'sidecars',
+                                                                    _policy['metadata']['name'])))
 
             # update authorizationPolicies
             if len(_data['authorizationPolicies']) > 0:
@@ -405,75 +360,12 @@ class KialiExtendedClient(KialiClient):
                                                                     'authorizationpolicies',
                                                                     _policy['metadata']['name'])))
 
-            # update serviceRoles
-            if len(_data['serviceRoles']) > 0:
-                for _policy in _data['serviceRoles']:
-                    items.append(IstioConfig(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.SERVICE_ROLE.text,
-                        validation=self.get_istio_config_validation(_namespace,
-                                                                    'serviceroles',
-                                                                    _policy['metadata']['name'])))
-
-            # update serviceRoleBindings
-            if len(_data['serviceRoleBindings']) > 0:
-                for _policy in _data['serviceRoleBindings']:
-                    items.append(IstioConfig(
-                        name=_policy['metadata']['name'],
-                        namespace=_namespace,
-                        object_type=OBJECT_TYPE.SERVICE_ROLE_BINDING.text,
-                        validation=self.get_istio_config_validation(_namespace,
-                                                                    'servicerolebindings',
-                                                                    _policy['metadata']['name'])))
-
-            # not required at this stage. These options not availabe in UI
-            # # update all the rules to our custom entity
-            # for _rule_rest in _rules:
-            #     # update actions
-            #     _actions = []
-            #     for _action_r in _rule_rest['actions']:
-            #         _actions.append(Action.get_from_rest(_action_r))
-            #     _match = None
-            #     if 'match' in _rule_rest:
-            #         _match = _rule_rest['match']
-            #     _rule = Rule(
-            #         namespace=_namespace,
-            #         name=_rule_rest['name'],
-            #         actions=_actions,
-            #         match=_match)
-            #     items.append(_rule)
-
         # apply filters
         if len(config_names) > 0:
             name_filtered_list = []
             for _name in config_names:
                 name_filtered_list.extend([_i for _i in items if _name in _i.name])
             return set(name_filtered_list)
-        return items
-
-    def three_scale_handler_list(self, handler_names=[]):
-        """Returns list of 3scale handlers.
-        Args:
-            handler_names: filter by given names
-        """
-        items = []
-        # update items
-        _data = self.get_response('getThreeScaleHandlers')
-
-        for _handler in _data:
-            items.append(ThreeScaleHandler(
-                name=_handler['name'],
-                service_id=_handler['serviceId'],
-                system_url=_handler['systemUrl'],
-                access_token=_handler['accessToken']))
-
-        # apply filters
-        if len(handler_names) > 0:
-            name_filtered_list = []
-            for _name in handler_names:
-                name_filtered_list.extend([_i for _i in items if _name in _i.name])
-            return name_filtered_list
         return items
 
     def istio_config_details(self, namespace, object_type, object_name):
@@ -496,21 +388,13 @@ class KialiExtendedClient(KialiClient):
             if _data['destinationRule']:
                 config_data = _data['destinationRule']
 
-            # get Rule
-            if _data['rule']:
-                config_data = _data['rule']
-
             # get VirtualService
             if _data['virtualService']:
                 config_data = _data['virtualService']
 
-            # get QuotaSpec
-            if _data['quotaSpec']:
-                config_data = _data['quotaSpec']
-
-            # get QuotaSpecBindings
-            if _data['quotaSpecBinding']:
-                config_data = _data['quotaSpecBinding']
+            # get EnvoyFilter
+            if _data['envoyFilter']:
+                config_data = _data['envoyFilter']
 
             # get Gateway
             if _data['gateway']:
@@ -520,21 +404,17 @@ class KialiExtendedClient(KialiClient):
             if _data['serviceEntry']:
                 config_data = _data['serviceEntry']
 
-            # get policy
-            if _data['policy']:
-                config_data = _data['policy']
+            # get workloadEntry
+            if _data['workloadEntry']:
+                config_data = _data['workloadEntry']
 
-            # get meshPolicy
-            if _data['meshPolicy']:
-                config_data = _data['meshPolicy']
+            # get PeerAuthentication
+            if _data['peerAuthentication']:
+                config_data = _data['peerAuthentication']
 
-            # get serviceMeshRbacConfig
-            if _data['serviceMeshRbacConfig']:
-                config_data = _data['serviceMeshRbacConfig']
-
-            # get rbacConfig
-            if _data['rbacConfig']:
-                config_data = _data['rbacConfig']
+            # get RequestAuthentication
+            if _data['requestAuthentication']:
+                config_data = _data['requestAuthentication']
 
             # get sidecar
             if _data['sidecar']:
@@ -543,14 +423,6 @@ class KialiExtendedClient(KialiClient):
             # get authorizationPolicy
             if _data['authorizationPolicy']:
                 config_data = _data['authorizationPolicy']
-
-            # get serviceRole
-            if _data['serviceRole']:
-                config_data = _data['serviceRole']
-
-            # get serviceRoleBinding
-            if _data['serviceRoleBinding']:
-                config_data = _data['serviceRoleBinding']
 
             if config_data:
                 config = IstioConfigDetails(
@@ -577,8 +449,9 @@ class KialiExtendedClient(KialiClient):
                                           params={'validate': 'true'})
         _service = None
         if _service_data:
-            _service_rest = self.service_list(namespaces=[namespace],
-                                              service_names=[service_name]).pop()
+            _services_rest = self.service_list(namespaces=[namespace])
+            _service_rest = set([_s for _s in _services_rest
+                                if _s.name == service_name]).pop()
             workloads = []
             if _service_data['workloads']:
                 for _wl_data in _service_data['workloads']:
@@ -599,12 +472,17 @@ class KialiExtendedClient(KialiClient):
                     source_workloads.append(SourceWorkload(
                         to=_wl_data,
                         workloads=_wl_names))
+            istio_configs = []
             virtual_services = []
             if _service_data['virtualServices'] \
                     and len(_service_data['virtualServices']['items']) > 0:
                 for _vs_data in _service_data['virtualServices']['items']:
                     _weights = []
-                    for _route in _vs_data['spec']['http'][0]['route']:
+                    if 'http' in _vs_data['spec']:
+                        _protocol = _vs_data['spec']['http'][0]
+                    else:
+                        _protocol = _vs_data['spec']['tcp'][0]
+                    for _route in _protocol['route']:
                         _weights.append(VirtualServiceWeight(
                             host=_route['destination']['host'],
                             subset=_route['destination']['subset']
@@ -616,23 +494,31 @@ class KialiExtendedClient(KialiClient):
                             weight=_route['weight'] if
                             ('weight' in _route and _route['weight'] != 0) else None)
                         )
-                    if 'match' in _vs_data['spec']['http'][0]:
-                        _http_route = 'match ' + \
-                            to_linear_string(_vs_data['spec']['http'][0]['match'])
+                    if 'match' in _protocol:
+                        _protocol_route = 'match ' + \
+                            to_linear_string(_protocol['match'])
                     else:
-                        _http_route = ''
-                    virtual_services.append(VirtualService(
-                        status=self.get_istio_config_validation(
+                        _protocol_route = ''
+                    _validation = self.get_istio_config_validation(
                             _vs_data['metadata']['namespace'],
                             'virtualservices',
-                            _vs_data['metadata']['name']),
+                            _vs_data['metadata']['name'])
+                    virtual_services.append(VirtualService(
+                        status=_validation,
                         name=_vs_data['metadata']['name'],
                         created_at=parse_from_rest(_vs_data['metadata']['creationTimestamp']),
                         created_at_ui=from_rest_to_ui(_vs_data['metadata']['creationTimestamp']),
                         resource_version=_vs_data['metadata']['resourceVersion'],
-                        http_route=_http_route,
+                        protocol_route=_protocol_route,
                         hosts=_vs_data['spec']['hosts'],
                         weights=_weights))
+                    # It also requires IstioConfig type of objects in several testcases
+                    istio_configs.append(IstioConfig(
+                        name=_vs_data['metadata']['name'],
+                        namespace=_vs_data['metadata']['namespace'],
+                        object_type=OBJECT_TYPE.VIRTUAL_SERVICE.text,
+                        validation=_validation))
+
             destination_rules = []
             if _service_data['destinationRules'] \
                     and len(_service_data['destinationRules']['items']) > 0:
@@ -641,23 +527,37 @@ class KialiExtendedClient(KialiClient):
                         _traffic_policy = to_linear_string(_dr_data['spec']['trafficPolicy'])
                     else:
                         _traffic_policy = None
+                    _dr_subsets = []
                     if 'subsets' in _dr_data['spec']:
-                        _subsets = to_linear_string(
-                            self.get_subset_labels(_dr_data['spec']['subsets']))
-                    else:
-                        _subsets = None
-                    destination_rules.append(DestinationRule(
-                        status=self.get_istio_config_validation(
+                        for _subset in _dr_data['spec']['subsets']:
+                            _dr_subsets.append(DestinationRuleSubset(
+                                status=None,
+                                name=_subset['name'],
+                                labels=_subset['labels'] if 'labels' in _subset else {},
+                                traffic_policy=(to_linear_string(_subset['trafficPolicy'])
+                                                if 'trafficPolicy' in _subset else None)))
+
+                    _validation = self.get_istio_config_validation(
                             _dr_data['metadata']['namespace'],
                             'destinationrules',
-                            _dr_data['metadata']['name']),
+                            _dr_data['metadata']['name'])
+                    destination_rules.append(DestinationRule(
+                        status=_validation,
                         name=_dr_data['metadata']['name'],
                         host=_dr_data['spec']['host'],
                         traffic_policy=_traffic_policy if _traffic_policy else '',
-                        subsets=_subsets if _subsets else '',
+                        subsets=_dr_subsets,
                         created_at=parse_from_rest(_dr_data['metadata']['creationTimestamp']),
                         created_at_ui=from_rest_to_ui(_dr_data['metadata']['creationTimestamp']),
                         resource_version=_dr_data['metadata']['resourceVersion']))
+
+                    # It also requires IstioConfig type of objects in several testcases
+                    istio_configs.append(IstioConfig(
+                        name=_dr_data['metadata']['name'],
+                        namespace=_dr_data['metadata']['namespace'],
+                        object_type=OBJECT_TYPE.DESTINATION_RULE.text,
+                        validation=_validation))
+
             _ports = ''
             for _port in _service_data['service']['ports']:
                 _ports += '{}{} ({}) '.format(_port['protocol'],
@@ -697,7 +597,9 @@ class KialiExtendedClient(KialiClient):
                     workloads=workloads,
                     traffic=source_workloads,
                     virtual_services=virtual_services,
-                    destination_rules=destination_rules)
+                    destination_rules=destination_rules,
+                    istio_configs=istio_configs,
+                    istio_configs_number=len(istio_configs))
         return _service
 
     def workload_details(self, namespace, workload_name, workload_type):
@@ -711,8 +613,9 @@ class KialiExtendedClient(KialiClient):
                                            path={'namespace': namespace, 'workload': workload_name})
         _workload = None
         if _workload_data:
-            _workload_rest = self.workload_list(namespaces=[namespace],
-                                                workload_names=[workload_name]).pop()
+            _workloads_rest = self.workload_list(namespaces=[namespace])
+            _workload_rest = set([_w for _w in _workloads_rest
+                                  if _w.name == workload_name]).pop()
             _services = []
             if _workload_data['services']:
                 for _ws_data in _workload_data['services']:
@@ -801,6 +704,12 @@ class KialiExtendedClient(KialiClient):
             _workload_health = self.get_workload_health(
                         namespace=namespace,
                         workload_name=_workload_data['name'])
+
+            _labels = self.get_labels(_workload_data)
+            _config_list = self.istio_config_list(
+                namespaces=[namespace], config_names=[],
+                params={'workloadSelector': dict_to_params(_labels)})
+
             _workload = WorkloadDetails(
                 name=_workload_data['name'],
                 istio_sidecar=_workload_rest.istio_sidecar,
@@ -811,12 +720,14 @@ class KialiExtendedClient(KialiClient):
                 health=_workload_health.is_healthy() if _workload_health else None,
                 workload_status=_workload_health,
                 icon=self.get_icon_type(_workload_data),
-                labels=self.get_labels(_workload_data),
+                labels=_labels,
                 pods_number=len(_pods),
                 services_number=len(_services),
                 traffic=_destination_services,
                 pods=_pods,
-                services=_services)
+                services=_services,
+                istio_configs=_config_list,
+                istio_configs_number=len(_config_list))
         return _workload
 
     def application_details(self, namespace, application_name):
@@ -831,8 +742,9 @@ class KialiExtendedClient(KialiClient):
                                                     'app': application_name})
         _application = None
         if _application_data:
-            _application_rest = self.application_list(namespaces=[namespace],
-                                                      application_names=[application_name]).pop()
+            _applications_rest = self.application_list(namespaces=[namespace])
+            _application_rest = set([_a for _a in _applications_rest
+                                     if _a.name == application_name]).pop()
             _workloads = []
             if _application_data['workloads']:
                 for _wl_data in _application_data['workloads']:
@@ -982,30 +894,31 @@ class KialiExtendedClient(KialiClient):
                                     object_type=ISTIO_CONFIG_TYPES[kind],
                                     object=name)
 
-    def create_three_scale_handler(self, name, service_id, system_url, access_token):
-        """Creates 3Scale Handler.
-        Args:
-            name: name
-            service_id: service Id
-            system_url: URL to the system
-            access_token: access token
+    def update_namespace_auto_injection(self, namespace, auto_injection=None):
         """
-        logger.debug('Creating 3scale handler: {}'.format(name))
-        return self.post_response('postThreeScaleHandlers',
-                                  data={'name': name,
-                                        'serviceId': service_id,
-                                        'systemUrl': system_url,
-                                        'accessToken': access_token})
-
-    def delete_three_scale_handler(self, name):
-        """Deletes 3Scale Handler.
+        Update auto injection of given namespace.
         Args:
-            name: name
+            namespace: namespace
+            auto_injection: 'enabled','disabled' or None(deleted)
         """
+        date_dict = {'metadata': {'labels': {'istio-injection': auto_injection}}}
+        return self.patch_response('namespaceUpdate',
+                                   namespace=namespace,
+                                   data=date_dict)
 
-        logger.debug('Deleting 3scale handler: {}'.format(name))
-        return self.delete_response('deleteThreeScaleHandler',
-                                    threescaleHandlerName=name)
+    def update_workload_auto_injection(self, workload_name, namespace, auto_injection=None):
+        """
+        Update auto injection of given workload.
+        Args:
+            workload_name: workload name
+            auto_injection: 'enabled','disabled' or None(deleted)
+        """
+        date_dict = {'spec': {'template': {'metadata': {'annotations': {
+            'sidecar.istio.io/inject': auto_injection}}}}}
+        return self.patch_response('workloadUpdate',
+                                   namespace=namespace,
+                                   workload=workload_name,
+                                   data=date_dict)
 
     def get_icon_type(self, object_rest):
         _icon = None
@@ -1017,7 +930,7 @@ class KialiExtendedClient(KialiClient):
 
     def get_labels(self, object_rest):
         _labels = {}
-        if 'labels' in object_rest:
+        if 'labels' in object_rest and object_rest['labels']:
             _labels = object_rest['labels']
         return _labels
 
@@ -1026,20 +939,6 @@ class KialiExtendedClient(KialiClient):
         if 'selectors' in object_rest:
             _selectors = object_rest['selectors']
         return _selectors
-
-    def get_subset_labels(self, subsets):
-        """
-        Returns the labels in subsets as shown in UI: {v1: 'versionv1'}
-        """
-        _labels = {}
-        if subsets:
-            for _subset in subsets:
-                if 'name' in _subset and 'labels' in _subset:
-                    _values = []
-                    for _key, _value in _subset['labels'].items():
-                        _values.append('{}{}'.format(_key, _value))
-                    _labels[_subset['name']] = _values
-        return _labels
 
     def get_response(self, method_name, path=None, params=None):
         return super(KialiExtendedClient, self).request(method_name=method_name, path=path,
@@ -1050,6 +949,13 @@ class KialiExtendedClient(KialiClient):
             method_name=method_name,
             path=kwargs,
             http_method="POST",
+            data=json.dumps(data))
+
+    def patch_response(self, method_name, data, **kwargs):
+        return super(KialiExtendedClient, self).request(
+            method_name=method_name,
+            path=kwargs,
+            http_method="PATCH",
             data=json.dumps(data))
 
     def delete_response(self, method_name, **kwargs):
@@ -1068,6 +974,6 @@ class KialiExtendedClient(KialiClient):
     def get_pod_status(self, istioSidecar, pod_data):
         if not pod_data['versionLabel'] or not pod_data['appLabel'] \
                 or pod_data['status'] == 'Pending':
-            return IstioConfigValidation.WARNING
+            return HealthType.DEGRADED
         else:
-            return IstioConfigValidation.VALID
+            return HealthType.HEALTHY

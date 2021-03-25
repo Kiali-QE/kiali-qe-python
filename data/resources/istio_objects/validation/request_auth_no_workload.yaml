@@ -1,0 +1,67 @@
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: httpbin-no-matching
+spec:
+  selector:
+    matchLabels:
+      app: bogus
+  jwtRules:
+  - issuer: "issuer-foo"
+    jwksUri: https://example.com/.well-known/jwks.json
+---
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: httpbin-matching
+spec:
+  selector:
+    matchLabels:
+      app: ratings
+  jwtRules:
+  - issuer: "issuer-foo"
+    jwksUri: https://example.com/.well-known/jwks.json
+---
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: httpbin-ns-wise
+spec:
+  jwtRules:
+  - issuer: "issuer-foo"
+    jwksUri: https://example.com/.well-known/jwks.json
+---
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: httpbin-ns-wise-1
+spec:
+  jwtRules:
+  - issuer: "issuer-foo"
+    jwksUri: https://example.com/.well-known/jwks.json
+---
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: httpbin-dup-1
+spec:
+  selector:
+    matchLabels:
+      app: reviews
+  jwtRules:
+  - issuer: "issuer-foo"
+    jwksUri: https://example.com/.well-known/jwks.json
+---
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: httpbin-dup-2
+spec:
+  selector:
+    matchLabels:
+      app: reviews
+      version: v1
+  jwtRules:
+  - issuer: "issuer-foo"
+    jwksUri: https://example.com/.well-known/jwks.json
+

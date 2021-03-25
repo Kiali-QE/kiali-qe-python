@@ -1,9 +1,8 @@
 # Invalid: there isn't any Destination Rule enabling services start mTLS connection
-apiVersion: "authentication.istio.io/v1alpha1"
-kind: "Policy"
+apiVersion: "security.istio.io/v1beta1"
+kind: "PeerAuthentication"
 metadata:
   name: "default"
 spec:
-  peers:
-  - mtls:
-      mode: STRICT
+  mtls:
+    mode: STRICT

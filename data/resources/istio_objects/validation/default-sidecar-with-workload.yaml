@@ -1,0 +1,12 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: default-sidecar-workload-auto
+  namespace: istio-system
+spec:
+  workloadSelector:
+    labels:
+      version: v1
+  egress:
+    - hosts:
+        - '*/*'

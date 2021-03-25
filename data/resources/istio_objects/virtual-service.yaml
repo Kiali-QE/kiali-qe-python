@@ -6,7 +6,7 @@ spec:
   hosts:
   - reviews
   gateways:
-  - bookinfo-gateway-auto
+  - bookinfo-gateway-link-auto
   http:
     - match:
       - uri:

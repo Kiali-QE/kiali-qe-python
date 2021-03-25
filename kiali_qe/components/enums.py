@@ -20,7 +20,6 @@ class MainMenuEnum(StringEnum):
     SERVICES = ('Services')
     ISTIO_CONFIG = ('Istio Config')
     DISTRIBUTED_TRACING = ('Distributed Tracing')
-    THREESCALE_CONFIG = ('3scale Config')
 
 
 class HelpMenuEnum(StringEnum):
@@ -56,23 +55,31 @@ class ApplicationVersionUpstreamEnum(StringEnum):
 
 
 class TimeIntervalUIText(StringEnum):
-    LAST_MINUTE = ('1m Traffic')
-    LAST_5_MINUTES = ('5m Traffic')
-    LAST_10_MINUTES = ('10m Traffic')
-    LAST_30_MINUTES = ('30m Traffic')
-    LAST_HOUR = ('1h Traffic')
-    LAST_3_HOURS = ('3h Traffic')
-    LAST_6_HOURS = ('6h Traffic')
+    LAST_MINUTE = ('Last 1m')
+    LAST_5_MINUTES = ('Last 5m')
+    LAST_10_MINUTES = ('Last 10m')
+    LAST_30_MINUTES = ('Last 30m')
+    LAST_HOUR = ('Last 1h')
+    LAST_3_HOURS = ('Last 3h')
+    LAST_6_HOURS = ('Last 6h')
+    LAST_12_HOURS = ('Last 12h')
+    LAST_1_DAY = ('Last 1d')
+    LAST_7_DAYS = ('Last 7d')
+    LAST_30_DAYS = ('Last 30d')
 
 
 class MetricsTimeInterval(StringEnum):
-    LAST_MINUTE = ('1m Traffic')
-    LAST_5_MINUTES = ('5m Traffic')
-    LAST_10_MINUTES = ('10m Traffic')
-    LAST_30_MINUTES = ('30m Traffic')
-    LAST_HOUR = ('1h Traffic')
-    LAST_3_HOURS = ('3h Traffic')
-    LAST_6_HOURS = ('6h Traffic')
+    LAST_MINUTE = ('Last 1m')
+    LAST_5_MINUTES = ('Last 5m')
+    LAST_10_MINUTES = ('Last 10m')
+    LAST_30_MINUTES = ('Last 30m')
+    LAST_HOUR = ('Last 1h')
+    LAST_3_HOURS = ('Last 3h')
+    LAST_6_HOURS = ('Last 6h')
+    LAST_12_HOURS = ('Last 12h')
+    LAST_1_DAY = ('Last 1d')
+    LAST_7_DAYS = ('Last 7d')
+    LAST_30_DAYS = ('Last 30d')
     CUSTOM = ('Custom')
 
 
@@ -87,13 +94,13 @@ class TimeIntervalRestParam(StringEnum):
 
 
 class TailLines(StringEnum):
-    LINES_10 = ('10 lines')
-    LINES_50 = ('50 lines')
-    LINES_100 = ('100 lines')
-    LINES_300 = ('300 lines')
-    LINES_500 = ('500 lines')
-    LINES_1000 = ('1000 lines')
-    LINES_5000 = ('5000 lines')
+    LINES_10 = ('Last 10 lines')
+    LINES_50 = ('Last 50 lines')
+    LINES_100 = ('Last 100 lines')
+    LINES_300 = ('Last 300 lines')
+    LINES_500 = ('Last 500 lines')
+    LINES_1000 = ('Last 1000 lines')
+    LINES_5000 = ('Last 5000 lines')
     LINES_ALL = ('All lines')
 
 
@@ -121,11 +128,14 @@ class GraphType(StringEnum):
 
 
 class GraphPageDisplayFilter(StringEnum):
-    COMPRESS_HIDDEN = ('Compress Hidden')
-    NODE_LABELS = ('Node Names')
+    CLUSTER_BOXES = ('Cluster Boxes')
+    NAMESPACE_BOXES = ('Namespace Boxes')
+    COMPRESSED_HIDE = ('Compressed Hide')
+    IDLE_EDGES = ('Idle Edges')
+    IDLE_NODES = ('Idle Nodes')
+    OPERATION_NODES = ('Operation Nodes')
     SERVICE_NODES = ('Service Nodes')
     TRAFFIC_ANIMATION = ('Traffic Animation')
-    UNUSED_NODES = ('Unused Nodes')
 
 
 class GraphPageBadgesFilter(StringEnum):
@@ -136,16 +146,17 @@ class GraphPageBadgesFilter(StringEnum):
 
 
 class EdgeLabelsFilter(StringEnum):
-    HIDE = ('Hide')
-    REQUEST_PER_SECOND = ('Requests per second')
-    REQUEST_PERCENT = ('Requests percent of total')
-    RESPONSE_TIME = ('Response time 95th percentile')
+    NO_LABEL = ('No Label')
+    REQUEST_RATE = ('Request Rate')
+    REQUEST_DISTRIBUTION = ('Request Distribution')
+    RESPONSE_TIME = ('Response Time')
 
 
 class ApplicationsPageFilter(StringEnum):
     APP_NAME = ('App Name')
     ISTIO_SIDECAR = ('Istio Sidecar')
     HEALTH = ('Health')
+    LABEL = ('Label')
 
 
 class ApplicationsPageSort(StringEnum):
@@ -156,9 +167,10 @@ class ApplicationsPageSort(StringEnum):
 
 
 class OverviewPageFilter(StringEnum):
-    NAME = ('Name')
+    NAME = ('Namespace')
     HEALTH = ('Health')
     MTLS_STATUS = ('mTLS status')
+    LABEL = ('Namespace Label')
 
 
 class OverviewPageSort(StringEnum):
@@ -174,12 +186,30 @@ class OverviewPageType(StringEnum):
     SERVICES = ('Services')
 
 
+class OverviewViewType(StringEnum):
+    EXPAND = ('Expand view')
+    COMPACT = ('Compact view')
+    LIST = ('List view')
+
+
 class OverviewLinks(StringEnum):
-    GRAPH = ('graph')
-    APPLICATIONS = ('applications')
-    WORKLOADS = ('workloads')
-    SERVICES = ('services')
-    ISTIO_CONFIG = ('istio')
+    GRAPH = ('Graph')
+    APPLICATIONS = ('Applications')
+    WORKLOADS = ('Workloads')
+    SERVICES = ('Services')
+    ISTIO_CONFIG = ('Istio Config')
+
+
+class OverviewInjectionLinks(StringEnum):
+    DISABLE_AUTO_INJECTION = ('Disable Auto Injection')
+    ENABLE_AUTO_INJECTION = ('Enable Auto Injection')
+    REMOVE_AUTO_INJECTION = ('Remove Auto Injection')
+
+
+class OverviewTrafficLinks(StringEnum):
+    CREATE_TRAFFIC_POLICIES = ('Create Traffic Policies')
+    UPDATE_TRAFFIC_POLICIES = ('Update Traffic Policies')
+    DELETE_TRAFFIC_POLICIES = ('Delete Traffic Policies')
 
 
 class OverviewGraphTypeLink(StringEnum):
@@ -195,6 +225,7 @@ class WorkloadsPageFilter(StringEnum):
     HEALTH = ('Health')
     APP_LABEL = ('App Label')
     VERSION_LABEL = ('Version Label')
+    LABEL = ('Label')
 
 
 class WorkloadsPageSort(StringEnum):
@@ -203,7 +234,6 @@ class WorkloadsPageSort(StringEnum):
     WORKLOAD_TYPE = ('Type')
     HEALTH = ('Health')
     DETAILS = ('Details')
-    LABEL_VALIDATION = ('Label Validation')
 
 
 class WorkloadType(StringEnum):
@@ -233,10 +263,18 @@ class VersionLabel(StringEnum):
     NOT_PRESENT = ('Not Present')
 
 
+class WorkloadHealth(StringEnum):
+    HEALTHY = ('Healthy')
+    DEGRADED = ('Degraded')
+    FAILURE = ('Failure')
+    NO_HEALTH_INFO = ('No health information')
+
+
 class ServicesPageFilter(StringEnum):
     SERVICE_NAME = ('Service Name')
     ISTIO_SIDECAR = ('Istio Sidecar')
     HEALTH = ('Health')
+    LABEL = ('Label')
 
 
 class ServicesPageSort(StringEnum):
@@ -268,25 +306,16 @@ class IstioConfigPageSort(StringEnum):
 
 
 class IstioConfigObjectType(StringEnum):
-    DESTINATION_RULE = ('DestinationRule')
-    RULE = ('Rule')
-    ADAPTER = ('Adapter')
-    TEMPLATE = ('Template')
-    VIRTUAL_SERVICE = ('VirtualService')
-    GATEWAY = ('Gateway')
-    SERVICE_ENTRY = ('ServiceEntry')
-    QUOTA_SPEC = ('QuotaSpec')
-    QUOTA_SPEC_BINDING = ('QuotaSpecBinding')
-    POLICY = ('Policy')
-    MESH_POLICY = ('MeshPolicy')
-    CLUSTER_RBAC_CONFIG = ('ClusterRbacConfig')
-    SERVICE_MESH_POLICY = ('ServiceMeshPolicy')
-    SERVICE_MESH_RBAC_CONFIG = ('ServiceMeshRbacConfig')
-    RBAC_CONFIG = ('RbacConfig')
-    SIDECAR = ('Sidecar')
     AUTHORIZATION_POLICY = ('AuthorizationPolicy')
-    SERVICE_ROLE = ('ServiceRole')
-    SERVICE_ROLE_BINDING = ('ServiceRoleBinding')
+    DESTINATION_RULE = ('DestinationRule')
+    ENVOY_FILTER = ('EnvoyFilter')
+    GATEWAY = ('Gateway')
+    PEER_AUTHENTICATION = ('PeerAuthentication')
+    REQUEST_AUTHENTICATION = ('RequestAuthentication')
+    SERVICE_ENTRY = ('ServiceEntry')
+    SIDECAR = ('Sidecar')
+    VIRTUAL_SERVICE = ('VirtualService')
+    WORKLOAD_ENTRY = ('WorkloadEntry')
 
 
 class IstioConfigValidationType(StringEnum):
@@ -301,6 +330,7 @@ class HealthType(StringEnum):
     HEALTHY = ('Healthy')
     FAILURE = ('Failure')
     DEGRADED = ('Degraded')
+    IDLE = ('Idle')
 
 
 class IstioConfigValidation(StringEnum):
@@ -312,18 +342,17 @@ class IstioConfigValidation(StringEnum):
 
 class InboundMetricsFilter(StringEnum):
     LOCAL_VERSION = ('Local version')
-    REMOTE_APP = ('Remote app')
     REMOTE_VERSION = ('Remote version')
     RESPONSE_CODE = ('Response code')
+    GRPC_STATUS = ('GRPC status')
     RESPONSE_FLAGS = ('Response flags')
 
 
 class OutboundMetricsFilter(StringEnum):
     LOCAL_VERSION = ('Local version')
-    REMOTE_SERVICE = ('Remote service')
-    REMOTE_APP = ('Remote app')
     REMOTE_VERSION = ('Remote version')
     RESPONSE_CODE = ('Response code')
+    GRPC_STATUS = ('GRPC status')
     RESPONSE_FLAGS = ('Response flags')
 
 
@@ -347,18 +376,15 @@ class MeshWideTLSType(StringEnum):
 
 
 class RoutingWizardType(StringEnum):
-    CREATE_WEIGHTED_ROUTING = ('Create Weighted Routing')
-    UPDATE_WEIGHTED_ROUTING = ('Update Weighted Routing')
-    CREATE_MATCHING_ROUTING = ('Create Matching Routing')
-    UPDATE_MATCHING_ROUTING = ('Update Matching Routing')
-    SUSPEND_TRAFFIC = ('Suspend Traffic')
-    UPDATE_SUSPENDED_TRAFFIC = ('Update Suspended Traffic')
-    ADD_3_SCALE_RULE = ('Add 3scale API Management Rule')
-    UPDATE_3_SCALE_RULE = ('Update 3scale API Management Rule')
-    DELETE_3_SCALE_RULE = ('Delete 3Scale API Management Rule')
+    REQUEST_ROUTING = ('Request Routing')
+    FAULT_INJECTION = ('Fault Injection')
+    TRAFFIC_SHIFTING = ('Traffic Shifting')
+    TCP_TRAFFIC_SHIFTING = ('TCP Traffic Shifting')
+    REQUEST_TIMEOUTS = ('Request Timeouts')
 
 
 class RoutingWizardTLS(StringEnum):
+    UNSET = ('UNSET')
     DISABLE = ('DISABLE')
     ISTIO_MUTUAL = ('ISTIO_MUTUAL')
     SIMPLE = ('SIMPLE')
@@ -378,12 +404,6 @@ class RoutingWizardLoadBalancer(StringEnum):
     PASSTHROUGH = ('PASSTHROUGH')
 
 
-class ThreeScaleConfigPageSort(StringEnum):
-    HANDLER_NAME = ('Handler Name')
-    SERVICE_ID = ('Service Id')
-    SYSTEM_URL = ('System Url')
-
-
 class TrafficType(StringEnum):
     APP = ('App')
     SERVICE = ('Service')
@@ -393,3 +413,62 @@ class TrafficType(StringEnum):
 
 class ItemIconType(StringEnum):
     API_DOCUMENTATION = ('API Documentation')
+
+
+class AuthPolicyType(StringEnum):
+    DENY_ALL = ('DENY_ALL')
+    ALLOW_ALL = ('ALLOW_ALL')
+    RULES = ('RULES')
+
+
+class AuthPolicyActionType(StringEnum):
+    DENY = ('DENY')
+    ALLOW = ('ALLOW')
+
+
+class MutualTLSMode(StringEnum):
+    UNSET = ('UNSET')
+    DISABLE = ('DISABLE')
+    PERMISSIVE = ('PERMISSIVE')
+    STRICT = ('STRICT')
+
+
+class PeerAuthMode(StringEnum):
+    UNSET = ('UNSET')
+    DISABLE = ('DISABLE')
+    PERMISSIVE = ('PERMISSIVE')
+    STRICT = ('STRICT')
+
+
+class LabelOperation(StringEnum):
+    OR = ('or')
+    AND = ('and')
+
+
+class BoundTrafficType(StringEnum):
+    INBOUND = ('Inbound')
+    OUTBOUND = ('Outbound')
+
+
+class OverviewHealth(StringEnum):
+    FAILURE = ('Failure')
+    DEGRADED = ('Degraded')
+    HEALTHY = ('Healthy')
+
+
+class AppIstioSidecar(StringEnum):
+    PRESENT = ('Present')
+    NOT_PRESENT = ('Not Present')
+
+
+class AppHealth(StringEnum):
+    HEALTHY = ('Healthy')
+    DEGRADED = ('Degraded')
+    FAILURE = ('Failure')
+    NO_HEALTH_INFO = ('No health information')
+
+
+class OverviewMTSLStatus (StringEnum):
+    ENABLED = ('Enabled')
+    PARENABLED = ('Partially Enabled')
+    DISABLED = ('Disabled')

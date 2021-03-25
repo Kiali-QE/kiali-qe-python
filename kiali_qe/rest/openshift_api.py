@@ -3,57 +3,63 @@ from kubernetes import config
 from openshift.dynamic import DynamicClient
 from openshift.dynamic.exceptions import NotFoundError
 
-from kiali_qe.components.enums import IstioConfigObjectType
-from kiali_qe.entities.istio_config import IstioConfig, Rule, IstioConfigDetails
+from kiali_qe.components.enums import (
+    WorkloadType,
+    IstioConfigObjectType
+)
+from kiali_qe.entities import DeploymentStatus
+from kiali_qe.entities.istio_config import IstioConfig, IstioConfigDetails
 from kiali_qe.entities.service import Service, ServiceDetails
-from kiali_qe.entities.workload import Workload, WorkloadDetails
+from kiali_qe.entities.workload import (
+    Workload,
+    WorkloadDetails,
+    WorkloadPod,
+    WorkloadHealth
+)
 from kiali_qe.entities.applications import (
     Application,
     ApplicationDetails,
-    AppWorkload
+    AppWorkload,
+    ApplicationHealth
 )
+from kiali_qe.utils import dict_contains, to_linear_string
 from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
 from kiali_qe.utils.log import logger
 
 
+WORKLOAD_TYPES = {
+    'CronJob': '_cronjob',
+    'DaemonSet': '_daemonset',
+    'Deployment': '_deployment',
+    'DeploymentConfig': '_deploymentconfig',
+    'Job': '_job',
+    'Pod': '_pod',
+    'ReplicaSet': '_replicaset',
+    'ReplicationController': '_replicationcontroller',
+    'StatefulSet': '_statefulset',
+}
+
+CONFIG_TYPES = {
+    'Gateway': '_gateway',
+    'VirtualService': '_virtualservice',
+    'DestinationRule': '_destinationrule',
+    'ServiceEntry': '_serviceentry',
+    'WorkloadEntry': '_workloadentry',
+    'EnvoyFilter': '_envoyfilter',
+    'PeerAuthentication': '_peerauthentication',
+    'RequestAuthentication': '_requestauthentication',
+    'AuthorizationPolicy': '_authorizationpolicy',
+    'Sidecar': '_sidecar',
+}
+
+APP_NAME_REGEX = re.compile('(-v\\d+-.*)?(-v\\d+$)?(-(\\w{0,7}\\d+\\w{0,7})$)?')
+
+WORKLOAD_NAME_REGEX = re.compile('(-(\\w{1,8}\\d+\\w{1,8}))?(-(\\w{0,4}\\d?\\w{0,4})$)?')
+
+ISTIO_SYSTEM = "istio-system"
+
+
 class OpenshiftExtendedClient(object):
-
-    WORKLOAD_TYPES = {
-        'CronJob': '_cronjob',
-        'DaemonSet': '_daemonset',
-        'Deployment': '_deployment',
-        'DeploymentConfig': '_deploymentconfig',
-        'Job': '_job',
-        'Pod': '_pod',
-        'ReplicaSet': '_replicaset',
-        'ReplicationController': '_replicationcontroller',
-        'StatefulSet': '_statefulset',
-    }
-
-    CONFIG_TYPES = {
-        'Gateway': '_gateway',
-        'VirtualService': '_virtualservice',
-        'DestinationRule': '_destinationrule',
-        'ServiceEntry': '_serviceentry',
-        'Rule': '_rule',
-        'Adapter': '_handler',
-        'Adapter: adapter': '_adapter',
-        'Template: template': '_template',
-        'Template: instance': '_instance',
-        'QuotaSpec': '_quotaspec',
-        'QuotaSpecBinding': '_quotaspecbinding',
-        'Policy': '_policy',
-        'MeshPolicy': '_meshpolicy',
-        'RbacConfig': '_rbacconfig',
-        'AuthorizationPolicy': '_authorizationpolicy',
-        'Sidecar': '_sidecar',
-        'ServiceRole': '_servicerole',
-        'ServiceRoleBinding': '_servicerolebinding'
-    }
-
-    APP_NAME_REGEX = re.compile('(-v\\d+-.*)?(-v\\d+$)?(-(\\w{0,7}\\d+\\w{0,7})$)?')
-
-    WORKLOAD_NAME_REGEX = re.compile('(-(\\w{1,8}\\d+\\w{1,8}))(-(\\w{0,7}\\d+\\w{0,7})$)?')
 
     def __init__(self):
         self._k8s_client = config.new_client_from_config()
@@ -103,6 +109,10 @@ class OpenshiftExtendedClient(object):
         return self._resource(kind='ReplicaSet')
 
     @property
+    def _envoyfilter(self):
+        return self._resource(kind='EnvoyFilter', api_version='v1alpha3')
+
+    @property
     def _replicationcontroller(self):
         return self._resource(kind='ReplicationController')
 
@@ -127,11 +137,11 @@ class OpenshiftExtendedClient(object):
 
     @property
     def _serviceentry(self):
-        return self._istio_config(kind='ServiceEntry', api_version='v1alpha3')
+        return self._istio_config(kind='ServiceEntry', api_version='v1beta1')
 
     @property
-    def _rule(self):
-        return self._istio_config(kind='rule', api_version='v1alpha2')
+    def _workloadentry(self):
+        return self._istio_config(kind='WorkloadEntry', api_version='v1alpha3')
 
     @property
     def _kubernetes(self):
@@ -142,48 +152,12 @@ class OpenshiftExtendedClient(object):
         return self._istio_config(kind='metric', api_version='v1alpha2')
 
     @property
-    def _template(self):
-        return self._istio_config(kind='template', api_version='v1alpha2')
+    def _peerauthentication(self):
+        return self._istio_config(kind='PeerAuthentication', api_version='v1beta1')
 
     @property
-    def _instance(self):
-        return self._istio_config(kind='instance', api_version='v1alpha2')
-
-    @property
-    def _handler(self):
-        return self._istio_config(kind='handler', api_version='v1alpha2')
-
-    @property
-    def _adapter(self):
-        return self._istio_config(kind='adapter', api_version='v1alpha2')
-
-    @property
-    def _quotaspec(self):
-        return self._istio_config(kind='QuotaSpec', api_version='v1alpha2')
-
-    @property
-    def _quotaspecbinding(self):
-        return self._istio_config(kind='QuotaSpecBinding', api_version='v1alpha2')
-
-    @property
-    def _policy(self):
-        return self._istio_config(kind='Policy', api_version='v1alpha1')
-
-    @property
-    def _meshpolicy(self):
-        return self._istio_config(kind='Policy', api_version='v1alpha1')
-
-    @property
-    def _servicemeshpolicy(self):
-        return self._istio_config(kind='ServiceMeshPolicy', api_version='v1')
-
-    @property
-    def _servicemeshrbacconfig(self):
-        return self._istio_config(kind='ServiceMeshRbacConfig', api_version='v1')
-
-    @property
-    def _rbacconfig(self):
-        return self._istio_config(kind='RbacConfig', api_version='v1alpha1')
+    def _requestauthentication(self):
+        return self._istio_config(kind='RequestAuthentication', api_version='v1beta1')
 
     @property
     def _authorizationpolicy(self):
@@ -194,12 +168,8 @@ class OpenshiftExtendedClient(object):
         return self._istio_config(kind='Sidecar', api_version='v1alpha3')
 
     @property
-    def _servicerole(self):
-        return self._istio_config(kind='ServiceRole', api_version='v1alpha1')
-
-    @property
-    def _servicerolebinding(self):
-        return self._istio_config(kind='ServiceRoleBinding', api_version='v1alpha1')
+    def _configmap(self):
+        return self._resource(kind='ConfigMap')
 
     def namespace_list(self):
         """ Returns list of namespaces """
@@ -209,6 +179,12 @@ class OpenshiftExtendedClient(object):
             namespaces.append(_item.metadata.name)
         return namespaces
 
+    def namespace_labels(self, namespace):
+        try:
+            return dict(self._namespace.get(name=namespace).metadata.labels)
+        except NotFoundError:
+            return {}
+
     def namespace_exists(self, namespace):
         """ Returns True if given namespace exists. False otherwise. """
         try:
@@ -217,27 +193,49 @@ class OpenshiftExtendedClient(object):
         except NotFoundError:
             return False
 
-    def application_list(self, namespaces=[], application_names=[]):
+    def application_list(self, namespaces=[]):
         """ Returns list of applications """
-        result = {}
+        result_dict = {}
+        application_status_dict = {}
         workloads = []
         workloads.extend(self.workload_list(namespaces=namespaces))
 
         for workload in workloads:
             # TODO: health needs to be added
-            name = self._get_app_name(workload)
-            result[name+workload.namespace] = Application(name,
-                                                          workload.namespace,
-                                                          istio_sidecar=workload.istio_sidecar)
-        # filter by service name
-        if len(application_names) > 0:
-            filtered_list = []
-            for _name in application_names:
-                filtered_list.extend([_i for _i in result.values() if _name in _i.name])
-            return set(filtered_list)
-        return result.values()
+            _name = self._get_app_name(workload)
+            if _name+workload.namespace in result_dict:
+                _labels = self._concat_labels(
+                    result_dict[_name+workload.namespace].labels, workload.labels)
+            else:
+                _labels = workload.labels
 
-    def service_list(self, namespaces=[], service_names=[]):
+            try:
+                _labels = self._concat_labels(
+                    self.service_details(workload.namespace,
+                                         self._get_app_name(workload)).labels,
+                    _labels)
+            except NotFoundError:
+                pass
+            if workload.workload_status:
+                if _name+workload.namespace in application_status_dict:
+                    application_status_dict[_name+workload.namespace].append(
+                        workload.workload_status.workload_status)
+                else:
+                    application_status_dict[_name+workload.namespace] = \
+                        [workload.workload_status.workload_status]
+            result_dict[_name+workload.namespace] = Application(
+                _name,
+                workload.namespace,
+                istio_sidecar=workload.istio_sidecar,
+                labels=_labels,
+                # @TODO requests are not in OC
+                application_status=ApplicationHealth(
+                    deployment_statuses=application_status_dict[_name+workload.namespace] \
+                    if _name+workload.namespace in application_status_dict else None,
+                    requests=None))
+        return result_dict.values()
+
+    def service_list(self, namespaces=[]):
         """ Returns list of services
         Args:
             namespace: Namespace of the service, optional
@@ -259,32 +257,58 @@ class OpenshiftExtendedClient(object):
                 namespace=_item.metadata.namespace,
                 name=_item.metadata.name,
                 istio_sidecar=self._contains_sidecar(_item),
-                app_label=self._get_label(_item, 'app'),
-                version_label=self._get_label(_item, 'version'),
+                labels=self._get_labels(_item),
                 health=None)
             items.append(_service)
-        # filter by service name
-        if len(service_names) > 0:
-            filtered_list = []
-            for _name in service_names:
-                filtered_list.extend([_i for _i in items if _name in _i.name])
-            return set(filtered_list)
         return items
 
-    def workload_list(self, namespaces=[], workload_names=[]):
-        """ Returns list of workloads """
-        result = []
-        for _key, _value in self.WORKLOAD_TYPES.items():
-            # TODO apply Job filters
-            # TODO apply Pod filters
-            result.extend(self._workload_list(_value, _key,
-                                              namespaces=namespaces,
-                                              workload_names=workload_names))
+    def workload_list(self, namespaces=[]):
+        """ Returns list of workloads
+            Order of showing/hiding priority is: Deployments, ReplicaSets, Pods
+        """
+        full_list = []
+        filtered_list = []
+        for _key, _value in WORKLOAD_TYPES.items():
+            full_list.extend(self._workload_list(_value, _key,
+                                                 namespaces=namespaces))
 
-        return result
+        deployment_names = [_item.name + _item.namespace for _item in full_list if
+                            _item.workload_type == WorkloadType.DEPLOYMENT.text]
+
+        replicaset_names = [_item.name + _item.namespace for _item in full_list if
+                            _item.workload_type == WorkloadType.REPLICA_SET.text]
+
+        for _item in full_list:
+            _workload_name = self._get_workload_name(_item)
+            if _item.workload_type == WorkloadType.REPLICA_SET.text:
+                if _workload_name + _item.namespace not in deployment_names:
+                    filtered_list.append(Workload(
+                                            name=_workload_name,
+                                            namespace=_item.namespace,
+                                            workload_type=_item.workload_type,
+                                            istio_sidecar=_item.istio_sidecar,
+                                            labels=_item.labels,
+                                            health=_item.health,
+                                            workload_status=_item.workload_status))
+            elif _item.workload_type in [WorkloadType.POD.text,
+                                         WorkloadType.JOB.text]:
+                if _workload_name + _item.namespace not in replicaset_names and\
+                        _workload_name + _item.namespace not in deployment_names:
+                    filtered_list.append(Workload(
+                                            name=_workload_name,
+                                            namespace=_item.namespace,
+                                            workload_type=_item.workload_type,
+                                            istio_sidecar=_item.istio_sidecar,
+                                            labels=_item.labels,
+                                            health=_item.health,
+                                            workload_status=_item.workload_status))
+            else:
+                filtered_list.append(_item)
+
+        return filtered_list
 
     def _workload_list(self, attribute_name, workload_type,
-                       namespaces=[], workload_names=[]):
+                       namespaces=[]):
         """ Returns list of workload
         Args:
             attribute_name: the attribute of class for getting workload
@@ -311,16 +335,35 @@ class OpenshiftExtendedClient(object):
                 namespace=_item.metadata.namespace,
                 workload_type=workload_type,
                 istio_sidecar=self._contains_sidecar(_item),
-                app_label=self._get_label(_item, 'app'),
-                version_label=self._get_label(_item, 'version'))
+                labels=self._get_workload_labels(_item),
+                workload_status=self._get_workload_status(_item))
             items.append(_workload)
-        # filter by workload name
-        if len(workload_names) > 0:
-            filtered_list = []
-            for _name in workload_names:
-                filtered_list.extend([_i for _i in items if _name in _i.name])
-            return set(filtered_list)
         return items
+
+    def _get_workload_status(self, item):
+        if item.status.availableReplicas:
+            _workload_status = DeploymentStatus(
+                name=item.metadata.name,
+                replicas=item.status.replicas,
+                available=item.status.availableReplicas)
+            # @TODO requests are not in OC
+            return WorkloadHealth(
+                workload_status=_workload_status, requests=None)
+        else:
+            return None
+
+    def get_failing_applications(self, namespace):
+        """ Returns list of applications from given namespace which are not ready """
+        result = []
+        _raw_items = []
+        _response = getattr(self, '_deployment').get(namespace=namespace)
+        if hasattr(_response, 'items'):
+            _raw_items.extend(_response.items)
+
+        for _raw_item in _raw_items:
+            if _raw_item.status.readyReplicas < _raw_item.status.replicas:
+                result.append(_raw_item.metadata.name)
+        return result
 
     def _contains_sidecar(self, item):
         try:
@@ -333,28 +376,64 @@ class OpenshiftExtendedClient(object):
         except (KeyError, AttributeError, TypeError):
             return False
 
-    def _get_label(self, item, label):
+    def _get_workload_labels(self, item):
         try:
-            return item.metadata.labels[label]
+            labels = item.spec.template.metadata.labels if item.spec.template.metadata.labels \
+                else item.metadata.labels if item.metadata.labels \
+                else item.spec.selector.matchLabels if item.spec.selector.matchLabels \
+                else {}
         except (KeyError, AttributeError, TypeError):
-            return None
+            labels = {}
+        return dict(labels)
+
+    def _get_labels(self, item):
+        try:
+            labels = item.metadata.labels if item.metadata.labels \
+                else item.spec.selector.matchLabels if item.spec.selector.matchLabels \
+                else {}
+        except (KeyError, AttributeError, TypeError):
+            labels = {}
+        return dict(labels)
+
+    def _get_initcontainer_image(self, item):
+        try:
+            return item.spec.initContainers[0].image
+        except (KeyError, AttributeError, TypeError):
+            return ''
+
+    def _concat_labels(self, dict1, dict2):
+        result = dict1
+        for _key, _value in dict2.items():
+            if _key in result:
+                values = result[_key].split(',')
+                values.extend(_value.split(','))
+                result[_key] = ','.join(sorted(set(values)))
+            else:
+                result[_key] = _value
+        return result
 
     def _get_app_name(self, workload):
-        return workload.app_label if workload.app_label else re.sub(
-            self.APP_NAME_REGEX,
+        return workload.labels['app'] if 'app' in workload.labels else re.sub(
+            APP_NAME_REGEX,
             '',
             workload.name)
 
     def _get_workload_name(self, workload):
         return re.sub(
-            self.WORKLOAD_NAME_REGEX,
+            WORKLOAD_NAME_REGEX,
             '',
             workload.name)
+
+    def _get_service_app(self, name, labels):
+        return labels['app'] if 'app' in labels else re.sub(
+            APP_NAME_REGEX,
+            '',
+            name)
 
     def istio_config_list(self, namespaces=[], config_names=[]):
         """ Returns list of Istio Configs """
         result = []
-        for _key, _value in self.CONFIG_TYPES.items():
+        for _key, _value in CONFIG_TYPES.items():
             result.extend(self._resource_list(_value, _key,
                                               namespaces=namespaces,
                                               resource_names=config_names))
@@ -383,34 +462,11 @@ class OpenshiftExtendedClient(object):
             if hasattr(_response, 'items'):
                 _raw_items.extend(_response.items)
         for _item in _raw_items:
-            if str(resource_type) == IstioConfigObjectType.RULE.text:
-                _rule = Rule(name=_item.metadata.name,
-                             namespace=_item.metadata.namespace,
-                             object_type=resource_type)
-                # append this item to the final list
-                items.append(_rule)
-            elif str(resource_type) == IstioConfigObjectType.ADAPTER.text or\
-                    str(resource_type) == IstioConfigObjectType.TEMPLATE.text:
-                _rule = Rule(name=_item.metadata.name,
-                             namespace=_item.metadata.namespace,
-                             object_type='{}: {}'.format(
-                                 resource_type, _item.kind))
-                # append this item to the final list
-                items.append(_rule)
-            elif str(resource_type) == IstioConfigObjectType.SERVICE_MESH_POLICY.text or\
-                    str(resource_type) == IstioConfigObjectType.SERVICE_MESH_RBAC_CONFIG.text:
-                _config = IstioConfig(name=_item.metadata.name,
-                                      namespace="istio-system",
-                                      object_type=resource_type)
-                if _config not in items:
-                    # append this item to the final list
-                    items.append(_config)
-            else:
-                _config = IstioConfig(name=_item.metadata.name,
-                                      namespace=_item.metadata.namespace,
-                                      object_type=resource_type)
-                # append this item to the final list
-                items.append(_config)
+            _config = IstioConfig(name=_item.metadata.name,
+                                  namespace=_item.metadata.namespace,
+                                  object_type=_item.kind)
+            # append this item to the final list
+            items.append(_config)
         # filter by resource name
         if len(resource_names) > 0:
             filtered_list = []
@@ -418,6 +474,30 @@ class OpenshiftExtendedClient(object):
                 filtered_list.extend([_i for _i in items if _name in _i.name])
             return set(filtered_list)
         return items
+
+    def get_workload_pods(self, namespace, workload_name):
+        _raw_items = []
+        _filtered_items = []
+        _response = getattr(self, WORKLOAD_TYPES['Pod']).get(namespace=namespace)
+        if hasattr(_response, 'items'):
+            _raw_items.extend(_response.items)
+        for _item in _raw_items:
+            if self._get_workload_name(_item.metadata) == workload_name:
+                _filtered_items.append(WorkloadPod(
+                    name=_item.metadata.name,
+                    created_at=parse_from_rest(
+                        _item.metadata.creationTimestamp),
+                    created_at_ui=from_rest_to_ui(
+                        _item.metadata.creationTimestamp),
+                    created_by='{} ({})'.format(
+                        _item.metadata.ownerReferences[0].name,
+                        _item.metadata.ownerReferences[0].kind),
+                    labels=self._get_labels(_item),
+                    istio_init_containers=self._get_initcontainer_image(_item),
+                    istio_containers=self._get_initcontainer_image(_item),
+                    phase=_item.status.phase,
+                    podIP=_item.status.podIP))
+        return _filtered_items
 
     def application_details(self, namespace, application_name):
         """ Returns the details of Application
@@ -427,15 +507,17 @@ class OpenshiftExtendedClient(object):
         """
         workloads = {}
         services = []
+        deployment_statuses = []
         all_workloads = self.workload_list(namespaces=[namespace])
         all_services = self.service_list(namespaces=[namespace])
 
         for workload in all_workloads:
             if application_name == self._get_app_name(workload):
-                workload_name = self._get_workload_name(workload)
-                workloads[workload_name] = AppWorkload(
-                        name=workload_name,
+                workloads[workload.name] = AppWorkload(
+                        name=workload.name,
                         istio_sidecar=workload.istio_sidecar)
+                if workload.workload_status:
+                    deployment_statuses.append(workload.workload_status.workload_status)
 
         for service in all_services:
             if application_name == self._get_app_name(service):
@@ -446,12 +528,15 @@ class OpenshiftExtendedClient(object):
             workloads=workloads.values(),
             services=list(set(services)),
             istio_sidecar=all([w.istio_sidecar for w in workloads.values()]),
-            # TODO health
-            health=None)
+            health=None,
+            # @TODO requests are not in OC
+            application_status=ApplicationHealth(
+                deployment_statuses=deployment_statuses,
+                requests=None))
 
         return _application
 
-    def service_details(self, namespace, service_name):
+    def service_details(self, namespace, service_name, skip_workloads=True):
         """ Returns the details of service
         Args:
             namespace: Namespace of the service
@@ -461,8 +546,11 @@ class OpenshiftExtendedClient(object):
         _ports = ''
         for _port in _response.spec.ports:
             _ports += '{}{} ({}) '.format(_port['protocol'],
-                                          ' ' + _port['name'] if _port['name'] != '' else '',
+                                          ' ' + _port['name']
+                                          if _port['name'] and _port['name'] != ''
+                                          else '',
                                           _port['port'])
+        _labels = dict(_response.metadata.labels if _response.metadata.labels else {})
         _service = ServiceDetails(
             namespace=_response.metadata.namespace,
             name=_response.metadata.name,
@@ -474,14 +562,85 @@ class OpenshiftExtendedClient(object):
             resource_version=_response.metadata.resourceVersion,
             service_type=_response.spec.type,
             ip=_response.spec.clusterIP,
-            # TODO endpoints from Deployments
+            endpoints=([] if skip_workloads else self._get_service_endpoints(
+                namespace,
+                self._get_service_app(_response.metadata.name,
+                                      _labels))),
             ports=_ports.strip(),
-            labels=dict(_response.metadata.labels),
+            labels=_labels,
             selectors=dict(_response.spec.selector if _response.spec.selector else {}),
+            workloads=([] if skip_workloads else self._get_service_workloads(
+                namespace,
+                self._get_service_app(_response.metadata.name,
+                                      _labels))),
             # TODO health
-            health=None)
+            health=None,
+            istio_configs=self.get_service_configs(
+                _response.metadata.namespace,
+                service_name))
 
         return _service
+
+    def _get_service_workloads(self, namespace, app_label):
+        """ Returns the list of workload for particular service by application label
+        Args:
+            namespace: Namespace where service is located
+            app_label: app label value
+        """
+        result = []
+        _workloads_list = self.workload_list(namespaces=[namespace])
+        for _workload_item in _workloads_list:
+            if dict_contains(_workload_item.labels, ['app:{}'.format(app_label)]):
+                result.append(self.workload_details(namespace,
+                                                    _workload_item.name,
+                                                    _workload_item.workload_type))
+        return result
+
+    def _get_service_endpoints(self, namespace, app_label):
+        """ Returns the list of workload pod's IPs for particular service by application label
+        Args:
+            namespace: Namespace where service is located
+            app_label: app label value
+        """
+        endpoints = []
+        _workloads = self.workload_list(namespaces=[namespace])
+        for _workload in _workloads:
+            if dict_contains(_workload.labels, ['app:{}'.format(app_label)]):
+                _pods = self.get_workload_pods(namespace, _workload.name)
+                for _pod in _pods:
+                    endpoints.append(_pod.podIP)
+        return endpoints
+
+    def get_service_configs(self, namespace, service_name):
+        """ Returns the list of istio config pages for particular service
+        Args:
+            namespace: Namespace where service is located
+            service_name: Name of service
+        """
+        istio_configs = []
+        _all_vs_list = self._resource_list(
+            attribute_name=CONFIG_TYPES[IstioConfigObjectType.VIRTUAL_SERVICE.text],
+            resource_type=CONFIG_TYPES[IstioConfigObjectType.VIRTUAL_SERVICE.text],
+            namespaces=[namespace])
+        for _vs_item in _all_vs_list:
+            if 'host {} '.format(service_name) in to_linear_string(
+                self.istio_config_details(
+                    namespace=namespace,
+                    object_name=_vs_item.name,
+                    object_type=IstioConfigObjectType.VIRTUAL_SERVICE.text).text):
+                istio_configs.append(_vs_item)
+        _all_dr_list = self._resource_list(
+            attribute_name=CONFIG_TYPES[IstioConfigObjectType.DESTINATION_RULE.text],
+            resource_type=CONFIG_TYPES[IstioConfigObjectType.DESTINATION_RULE.text],
+            namespaces=[namespace])
+        for _dr_item in _all_dr_list:
+            if 'host {} '.format(service_name) in to_linear_string(
+                self.istio_config_details(
+                    namespace=namespace,
+                    object_name=_dr_item.name,
+                    object_type=IstioConfigObjectType.DESTINATION_RULE.text).text):
+                istio_configs.append(_dr_item)
+        return istio_configs
 
     def workload_details(self, namespace, workload_name, workload_type):
         """ Returns the details of Workload
@@ -491,7 +650,7 @@ class OpenshiftExtendedClient(object):
             workload_type: Type of workload
         """
         _response = getattr(self,
-                            self.WORKLOAD_TYPES[workload_type]).get(
+                            WORKLOAD_TYPES[workload_type]).get(
                                 namespace=namespace,
                                 name=workload_name)
         _workload = WorkloadDetails(
@@ -505,10 +664,31 @@ class OpenshiftExtendedClient(object):
             istio_sidecar=None,
             labels=dict(_response.metadata.labels if _response.metadata.labels
                         else _response.spec.selector.matchLabels),
-            # TODO health
-            health=None)
-
+            pods=self.get_workload_pods(namespace, workload_name),
+            health=None,
+            workload_status=self._get_workload_status(_response))
+        _workload.set_istio_configs(istio_configs=self.get_workload_configs(namespace, _workload))
         return _workload
+
+    def get_workload_configs(self, namespace, workload):
+        """ Returns the list of istio config pages for particular workload
+        Args:
+            namespace: Namespace where service is located
+            workload: Workload object
+        """
+        istio_configs = []
+        _all_peer_auth_list = self._resource_list(
+            attribute_name=CONFIG_TYPES[IstioConfigObjectType.PEER_AUTHENTICATION.text],
+            resource_type=CONFIG_TYPES[IstioConfigObjectType.PEER_AUTHENTICATION.text],
+            namespaces=[namespace])
+        for _peer_auth_item in _all_peer_auth_list:
+            if 'app {}'.format(self._get_app_name(workload)) in to_linear_string(
+                self.istio_config_details(
+                    namespace=namespace,
+                    object_name=_peer_auth_item.name,
+                    object_type=IstioConfigObjectType.PEER_AUTHENTICATION.text).text):
+                istio_configs.append(_peer_auth_item)
+        return istio_configs
 
     def istio_config_details(self, namespace, object_name, object_type):
         """ Returns the details of Istio Config
@@ -518,7 +698,7 @@ class OpenshiftExtendedClient(object):
             object_type: Type of config
         """
         _response = getattr(self,
-                            self.CONFIG_TYPES[object_type]).get(
+                            CONFIG_TYPES[object_type]).get(
                                 namespace=namespace,
                                 name=object_name)
         config = IstioConfigDetails(
@@ -542,3 +722,7 @@ class OpenshiftExtendedClient(object):
         resp = self._istio_config(kind=kind, api_version=api_version).create(body=body,
                                                                              namespace=namespace)
         return resp
+
+    def is_auto_mtls(self):
+        return 'enableAutoMtls: true' in self._configmap.get(name='istio',
+                                                             namespace=ISTIO_SYSTEM).data.mesh

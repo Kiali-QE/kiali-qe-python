@@ -2,7 +2,7 @@ apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
  name: httpbin
- namespace: bookinfo
+ namespace: bookinfo2
 spec:
  selector:
    matchLabels:
@@ -13,10 +13,10 @@ spec:
    - source:
        principals: ["cluster.local/ns/default/sa/sleep"]
    - source:
-       namespaces: ["test", "bookinfo"]
+       namespaces: ["test", "bookinfo2"]
    to:
    - operation:
-       hosts: ["details", "wrong", "details.bookinfo", "wrong.wrong", "prometheus.istio-system"]
+       hosts: ["details", "wrong", "details.bookinfo2", "wrong.wrong", "prometheus.istio-system"]
        methods: ["GET", "WRONG"]
        paths: ["/info*"]
    - operation:

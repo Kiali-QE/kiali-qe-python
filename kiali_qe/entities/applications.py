@@ -19,7 +19,10 @@ class ApplicationHealth(EntityBase):
             repr(self.deployment_statuses), repr(self.requests))
 
     def is_healthy(self):
-        if self.requests.is_healthy() == HealthType.NA \
+        if self.requests.is_healthy() == HealthType.IDLE \
+                and self._are_deployment_statuses_na():
+            return HealthType.IDLE
+        elif self.requests.is_healthy() == HealthType.NA \
                 and self.deployment_statuses_health() == HealthType.NA:
             return HealthType.NA
         elif self.requests.is_healthy() == HealthType.FAILURE \
@@ -38,6 +41,12 @@ class ApplicationHealth(EntityBase):
                 # if app is not deployed, it is not healthy
                 return HealthType.FAILURE
         return HealthType.HEALTHY
+
+    def _are_deployment_statuses_na(self):
+        return len(
+            [deployment_status for deployment_status in
+             self.deployment_statuses if deployment_status.is_healthy() == HealthType.NA]
+                ) == len(self.deployment_statuses)
 
     def is_equal(self, other):
         if not isinstance(other, ApplicationHealth):
@@ -62,36 +71,31 @@ class ApplicationHealth(EntityBase):
             # update requests
         _r_rest = health['requests']
         _requests = AppRequests(
-            inboundErrorRatio=cls._get_error_ratio(_r_rest['inboundErrorRatio']),
-            outboundErrorRatio=cls._get_error_ratio(_r_rest['outboundErrorRatio']))
+            inboundErrorRatio=cls._get_error_ratio(_r_rest['inbound']),
+            outboundErrorRatio=cls._get_error_ratio(_r_rest['outbound']))
         return ApplicationHealth(
             deployment_statuses=_deployment_status_list, requests=_requests)
-
-    @classmethod
-    def _get_error_ratio(cls, error_ratio):
-        if error_ratio != -1:
-            return float(error_ratio)
-        return float(error_ratio / 100)
 
 
 class Application(EntityBase):
 
     def __init__(self, name, namespace, istio_sidecar=None, health=None,
-                 application_status=None):
+                 application_status=None, labels={}):
         self.name = name
         self.namespace = namespace
         self.istio_sidecar = istio_sidecar
         self.health = health
         self.application_status = application_status
+        self.labels = labels
 
     def __str__(self):
-        return 'name:{}, namespace:{}, sidecar:{}, health:{}'.format(
-            self.name, self.namespace, self.istio_sidecar, self.health)
+        return 'name:{}, namespace:{}, sidecar:{}, health:{}, labels:{}'.format(
+            self.name, self.namespace, self.istio_sidecar, self.health, self.labels)
 
     def __repr__(self):
-        return "{}({}, {}, {}, {})".format(
+        return "{}({}, {}, {}, {}, {})".format(
             type(self).__name__, repr(self.name), repr(self.namespace),
-            repr(self.istio_sidecar), repr(self.health))
+            repr(self.istio_sidecar), repr(self.health), repr(self.labels))
 
     def __hash__(self):
         return (hash(self.name) ^ hash(self.namespace) ^ hash(self.istio_sidecar))
@@ -112,6 +116,8 @@ class Application(EntityBase):
         # advanced check
         if advanced_check:
             if self.health != other.health:
+                return False
+            if self.labels != other.labels:
                 return False
             # TODO in case of unstable env pods can recreate
             # if self.application_status and other.application_status and \
@@ -140,6 +146,8 @@ class ApplicationDetails(EntityBase):
             if 'inbound_metrics' in kwargs else None
         self.outbound_metrics = kwargs['outbound_metrics']\
             if 'outbound_metrics' in kwargs else None
+        self.traces_tab = kwargs['traces_tab']\
+            if 'traces_tab' in kwargs else None
 
     def __str__(self):
         return 'name:{}, sidecar:{}, health:{}'.format(

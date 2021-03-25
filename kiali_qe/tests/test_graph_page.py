@@ -13,6 +13,7 @@ from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
 
 ISTIO_SYSTEM = 'istio-system'
+BOOKINFO = 'bookinfo'
 
 
 @pytest.mark.p_atomic
@@ -48,15 +49,23 @@ def test_refresh_interval(browser):
 def test_type(browser):
     # get page instance
     page = GraphPage(browser)
+    namespace = ISTIO_SYSTEM
+    page.namespace.check(namespace)
     # test options
     options_defined = [item.text for item in GraphType]
     p_type = page.type
+    side_panel = page.side_panel
     options_listed = p_type.options
     assert is_equal(options_defined, options_listed), \
         ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
+    for option in options_defined:
+        p_type.select(option)
+        assert namespace == side_panel.get_namespace()
+        assert not side_panel.get_workload()
+        assert not side_panel.get_service()
+        assert not side_panel.get_application()
 
 
-@pytest.mark.skip(reason="https://issues.jboss.org/browse/OSSM-109")
 @pytest.mark.p_atomic
 @pytest.mark.p_ro_group3
 def test_filter(browser):
@@ -76,7 +85,7 @@ def test_filter(browser):
     assert is_equal(options_defined, options_listed), \
         ('Filter Options mismatch: defined:{}, listed:{}'
          .format(options_defined, options_listed))
-    assert is_equal(options_defined, options_listed), \
+    assert is_equal(edge_options_defined, edge_options_listed), \
         ('Radio Options mismatch: defined:{}, listed:{}'
          .format(edge_options_defined, edge_options_listed))
     # enable disable each filter
@@ -85,6 +94,41 @@ def test_filter(browser):
     # select each filter in radio
     for filter_name in edge_options_listed:
         _filter_test(page, filter_name, uncheck=False)
+
+
+@pytest.mark.p_atomic
+@pytest.mark.p_ro_group3
+def test_find_hide(browser):
+    # get page instance
+    page = GraphPage(browser)
+    page.namespace.check(BOOKINFO)
+    # test find and hide inputs
+    _find_text = 'version=v1'
+    _hide_text = 'version=v2'
+    page.graph_find.fill(_find_text)
+    page.graph_hide.fill(_hide_text)
+    assert _find_text == page.graph_find.text, \
+        ('Find query mismatch: defined:{}, shown:{}'
+         .format(_find_text, page.graph_find.text))
+    assert _hide_text == page.graph_hide.text, \
+        ('Hide query mismatch: defined:{}, shown:{}'
+         .format(_hide_text, page.graph_hide.text))
+    assert page.graph_find.is_clear_displayed
+    assert page.graph_hide.is_clear_displayed
+    # empty the find
+    assert page.graph_find.clear()
+    assert page.graph_find.is_empty
+    assert '' == page.graph_find.text, \
+        ('Find query mismatch: defined:{}, shown:{}'
+         .format('', page.graph_find.text))
+    # empty the hide
+    assert page.graph_hide.clear()
+    assert page.graph_hide.is_empty
+    assert '' == page.graph_hide.text, \
+        ('Hide query mismatch: defined:{}, shown:{}'
+         .format('', page.graph_hide.text))
+    assert not page.graph_find.is_clear_displayed
+    assert not page.graph_hide.is_clear_displayed
 
 
 @pytest.mark.p_atomic

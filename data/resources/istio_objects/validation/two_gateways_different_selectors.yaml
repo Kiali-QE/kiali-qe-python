@@ -1,0 +1,53 @@
+kind: Gateway
+apiVersion: networking.istio.io/v1alpha3
+metadata:
+  name: istio-gateway-prv
+  namespace: istio-system
+spec:
+  servers:
+    - hosts:
+        - '*'
+      port:
+        name: http-prv
+        number: 80
+        protocol: HTTP
+      tls:
+        httpsRedirect: true
+    - hosts:
+        - '*'
+      port:
+        name: https-prv
+        number: 443
+        protocol: HTTPS
+      tls:
+        credentialName: supersecret
+        mode: SIMPLE
+  selector:
+    istio: istio-ingressgateway-prv
+---
+kind: Gateway
+apiVersion: networking.istio.io/v1alpha3
+metadata:
+  name: istio-gateway-pub
+  namespace: istio-system
+spec:
+  servers:
+    - hosts:
+        - '*'
+      port:
+        name: http-prv
+        number: 80
+        protocol: HTTP
+      tls:
+        httpsRedirect: true
+    - hosts:
+        - '*'
+      port:
+        name: https-prv
+        number: 443
+        protocol: HTTPS
+      tls:
+        credentialName: supersecret
+        mode: SIMPLE
+  selector:
+    istio: istio-ingressgateway-pub

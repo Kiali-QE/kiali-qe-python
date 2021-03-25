@@ -5,30 +5,28 @@ from kiali_qe.components.enums import HealthType
 class Workload(EntityBase):
 
     def __init__(self, name, namespace, workload_type,
-                 istio_sidecar=None, app_label=None, version_label=None, health=None,
+                 istio_sidecar=None, labels={}, health=None,
                  icon=None,
                  workload_status=None):
         self.name = name
         self.namespace = namespace
         self.workload_type = workload_type
         self.istio_sidecar = istio_sidecar
-        self.app_label = app_label
-        self.version_label = version_label
+        self.labels = labels
         self.health = health
         self.icon = icon
         self.workload_status = workload_status
 
     def __str__(self):
-        return 'name:{}, namespace:{}, type:{}, sidecar:{}, app:{}, version:{}, health:{}'.format(
+        return 'name:{}, namespace:{}, type:{}, sidecar:{}, labels:{}, health:{}'.format(
             self.name, self.namespace, self.workload_type,
-            self.istio_sidecar, self.app_label, self.version_label, self.health)
+            self.istio_sidecar, self.labels, self.health)
 
     def __repr__(self):
-        return "{}({}, {}, {}, {}, {}, {}, {})".format(
+        return "{}({}, {}, {}, {}, {}, {})".format(
             type(self).__name__, repr(self.name),
             repr(self.namespace), repr(self.workload_type),
-            repr(self.istio_sidecar), repr(self.app_label),
-            repr(self.version_label), repr(self.health))
+            repr(self.istio_sidecar), repr(self.labels), repr(self.health))
 
     def __eq__(self, other):
         return self.is_equal(other, advanced_check=True)
@@ -54,9 +52,7 @@ class Workload(EntityBase):
                 return False
             if self.icon != other.icon:
                 return False
-            if self.app_label != other.app_label:
-                return False
-            if self.version_label != other.version_label:
+            if self.labels != other.labels:
                 return False
             # TODO in case of unstable env pods can recreate
             # if self.workload_status and other.workload_status and \
@@ -68,12 +64,14 @@ class Workload(EntityBase):
 class WorkloadDetails(EntityBase):
 
     def __init__(self, name, workload_type, created_at, created_at_ui, resource_version,
-                 istio_sidecar=False, health=None, workload_status=None, icon=None, **kwargs):
+                 istio_sidecar=False, sidecar_injection=None,
+                 health=None, workload_status=None, icon=None, **kwargs):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
         self.workload_type = workload_type
         self.istio_sidecar = istio_sidecar
+        self.sidecar_injection = sidecar_injection
         self.health = health
         self.workload_status = workload_status
         self.icon = icon
@@ -104,6 +102,12 @@ class WorkloadDetails(EntityBase):
             if 'inbound_metrics' in kwargs else None
         self.outbound_metrics = kwargs['outbound_metrics']\
             if 'outbound_metrics' in kwargs else None
+        self.istio_configs_number = kwargs['istio_configs_number']\
+            if 'istio_configs_number' in kwargs else None
+        self.istio_configs = kwargs['istio_configs']\
+            if 'istio_configs' in kwargs else None
+        self.traces_tab = kwargs['traces_tab']\
+            if 'traces_tab' in kwargs else None
 
     def __str__(self):
         return 'name:{}, type:{}, sidecar:{}, createdAt:{}, \
@@ -124,6 +128,9 @@ class WorkloadDetails(EntityBase):
 
     def __hash__(self):
         return (hash(self.name) ^ hash(self.istio_sidecar) ^ hash(self.workload_type))
+
+    def set_istio_configs(self, istio_configs):
+        self.istio_configs = istio_configs
 
     def is_equal(self, other, advanced_check=True):
         # basic check
@@ -158,7 +165,8 @@ class WorkloadDetails(EntityBase):
 class WorkloadPod(EntityBase):
 
     def __init__(self, name, created_at, created_at_ui, created_by, labels={},
-                 istio_init_containers=None, istio_containers=None, status=None, phase=None):
+                 istio_init_containers=None, istio_containers=None, status=None,
+                 phase=None, podIP=None):
         self.name = name
         self.created_at = created_at
         self.created_by = created_by
@@ -168,6 +176,7 @@ class WorkloadPod(EntityBase):
         self.istio_containers = istio_containers
         self.status = status
         self.phase = phase
+        self.podIP = podIP
 
     def __str__(self):
         return 'name:{}, created_at:{}, created_by:{}, labels: {}\
@@ -205,15 +214,15 @@ class WorkloadPod(EntityBase):
             return False
         if self.labels != other.labels:
             return False
+        if self.istio_init_containers != other.istio_init_containers:
+            return False
+        if self.istio_containers != other.istio_containers:
+            return False
+        if self.phase != other.phase:
+            return False
         # advanced check
         if advanced_check:
-            if self.istio_init_containers != other.istio_init_containers:
-                return False
-            if self.istio_containers != other.istio_containers:
-                return False
             if self.status != other.status:
-                return False
-            if self.phase != other.phase:
                 return False
         return True
 
@@ -234,7 +243,10 @@ class WorkloadHealth(EntityBase):
             repr(self.workload_status), repr(self.requests))
 
     def is_healthy(self):
-        if self.workload_status.is_healthy() == HealthType.NA \
+        if self.requests.is_healthy() == HealthType.IDLE \
+                and self.workload_status.is_healthy() == HealthType.NA:
+            return HealthType.IDLE
+        elif self.workload_status.is_healthy() == HealthType.NA \
                 and self.requests.is_healthy() == HealthType.NA:
             return HealthType.NA
         elif self.workload_status.is_healthy() == HealthType.FAILURE \
@@ -266,16 +278,10 @@ class WorkloadHealth(EntityBase):
             # update requests
         _r_rest = health['requests']
         _requests = AppRequests(
-            inboundErrorRatio=cls._get_error_ratio(_r_rest['inboundErrorRatio']),
-            outboundErrorRatio=cls._get_error_ratio(_r_rest['outboundErrorRatio']))
+            inboundErrorRatio=cls._get_error_ratio(_r_rest['inbound']),
+            outboundErrorRatio=cls._get_error_ratio(_r_rest['outbound']))
         return WorkloadHealth(
             workload_status=_workload_status, requests=_requests)
-
-    @classmethod
-    def _get_error_ratio(cls, error_ratio):
-        if error_ratio != -1:
-            return float(error_ratio)
-        return float(error_ratio / 100)
 
 
 class DestinationService(EntityBase):
