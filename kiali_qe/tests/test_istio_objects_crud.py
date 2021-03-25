@@ -15,7 +15,6 @@ from kiali_qe.components.enums import (
 )
 from kiali_qe.components.error_codes import (
     KIA0202,
-    KIA0203,
     KIA0201,
     KIA1106,
     KIA1107,
@@ -108,7 +107,7 @@ def test_destination_rule_broken(kiali_client, openshift_client, browser):
                        kind='DestinationRule',
                        api_version='networking.istio.io/v1alpha3',
                        service_name=DETAILS,
-                       error_messages=[KIA0202, KIA0203],
+                       error_messages=[KIA0202],
                        check_service_details=True)
 
 

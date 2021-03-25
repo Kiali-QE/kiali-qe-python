@@ -50,13 +50,6 @@ KIA0301 = 'KIA0301 More than one Gateway for the same host port combination'
 
 KIA0302 = 'KIA0302 No matching workload found for gateway selector in this namespace'
 
-KIA0201 = 'KIA0201 More than one DestinationRules for the same host subset combination'
-
-KIA0202 = 'KIA0202 This host has no matching entry in the service '\
-    'registry (service, workload or service entries)'
-
-KIA0203 = 'KIA0203 This subset\'s labels are not found in any matching host'
-
 KIA0204 = 'KIA0204 mTLS settings of a non-local Destination Rule are overridden'
 
 KIA0002 = 'KIA0002 More than one selector-less object in the same namespace'
