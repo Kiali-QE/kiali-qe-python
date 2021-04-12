@@ -623,24 +623,28 @@ class OpenshiftExtendedClient(object):
             resource_type=CONFIG_TYPES[IstioConfigObjectType.VIRTUAL_SERVICE.text],
             namespaces=[namespace])
         for _vs_item in _all_vs_list:
-            if 'host {} '.format(service_name) in to_linear_string(
+            if self._is_host_in_config(namespace, service_name, to_linear_string(
                 self.istio_config_details(
                     namespace=namespace,
                     object_name=_vs_item.name,
-                    object_type=IstioConfigObjectType.VIRTUAL_SERVICE.text).text):
+                    object_type=IstioConfigObjectType.VIRTUAL_SERVICE.text).text)):
                 istio_configs.append(_vs_item)
         _all_dr_list = self._resource_list(
             attribute_name=CONFIG_TYPES[IstioConfigObjectType.DESTINATION_RULE.text],
             resource_type=CONFIG_TYPES[IstioConfigObjectType.DESTINATION_RULE.text],
             namespaces=[namespace])
         for _dr_item in _all_dr_list:
-            if 'host {} '.format(service_name) in to_linear_string(
+            if self._is_host_in_config(namespace, service_name, to_linear_string(
                 self.istio_config_details(
                     namespace=namespace,
                     object_name=_dr_item.name,
-                    object_type=IstioConfigObjectType.DESTINATION_RULE.text).text):
+                    object_type=IstioConfigObjectType.DESTINATION_RULE.text).text)):
                 istio_configs.append(_dr_item)
         return istio_configs
+
+    def _is_host_in_config(self, namespace, service_name, config):
+        return 'host {} '.format(service_name) in config or \
+            'host {}.{}.svc.cluster.local '.format(service_name, namespace) in config
 
     def workload_details(self, namespace, workload_name, workload_type):
         """ Returns the details of Workload

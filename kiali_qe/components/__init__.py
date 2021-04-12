@@ -2523,8 +2523,7 @@ class ListViewAbstract(ViewAbstract):
             pass
         _selectors = self.browser.elements(
             parent=self.DETAILS_ROOT,
-            locator=('//h6[contains(text(), "Selectors")]'
-                     '/../../div[@id="selectors"]//*[contains(@class, "label-pair")]'))
+            locator=('//div[@id="selectors"]//*[contains(@class, "label-pair")]'))
         if _selectors:
             for _selector in _selectors:
                 _label_key = self.browser.element(
@@ -3002,6 +3001,7 @@ class ListViewIstioConfig(ListViewAbstract):
     TABLE_ROOT = './/table[contains(@class, "pf-c-table")]'
     CONFIG_INPUT = '//input[@id="{}"]'
     CONFIG_DETAILS_ROOT = './/*[contains(@class, "pf-c-form")]'
+    DETAILS_ROOT = CONFIG_DETAILS_ROOT
     CREATE_HANDLER_BUTTON = './/button[text()="Create"]'
     UPDATE_HANDLER_BUTTON = './/button[text()="Save"]'
 
@@ -3049,7 +3049,7 @@ class TableViewAbstract(ViewAbstract):
     OVERVIEW_PROPERTIES = ('.//div[contains(@class, "pf-c-card__body")]//'
                            'h3[@data-pf-content="true" and contains(text(), "{}")]/..')
     HOSTS_PROPERTIES = './/div/h3[contains(text(), "{}")]/..//li'
-    HOST_PROPERTIES = './/div/h3[contains(text(), "{}")]/../a'
+    HOST_PROPERTIES = './/div/h3[contains(text(), "{}")]/..'
     SERVICES_TAB = '//*[contains(@class, "pf-c-tabs__item")]//button[contains(text(), "{}")]'
     ROOT = '//[contains(@class, "tab-pane") and contains(@class, "active") and \
         contains(@class, "in")]'
@@ -3365,7 +3365,7 @@ class TableViewIstioConfig(TableViewAbstract):
 
         _host = self.browser.text(
             locator=self.HOST_PROPERTIES.format(self.HOST),
-            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.HOST, '').strip()
+            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.HOST, '').strip().split(' ')[0]
         _status = self._get_overview_status(self.OVERVIEW_DETAILS_ROOT)
         _subsets = []
 

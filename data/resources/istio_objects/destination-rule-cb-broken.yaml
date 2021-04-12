@@ -5,7 +5,7 @@ metadata:
 spec:
   labels:
     version: v2
-  host: reviews-broken
+  host: reviews
   trafficPolicy:
     connectionPool:
       tcp:
@@ -20,10 +20,8 @@ spec:
   subsets:
   - name: v1
     labels:
-      version: v1
+      version: v11
   - name: v2
     labels:
       version: v2
   - name: v3
-    labels:
-      version: v3

@@ -2036,6 +2036,7 @@ class IstioConfigPageTest(AbstractListPageTest):
             self.open(name, namespace, force_refresh)
             self.browser.wait_for_element(locator='//button[contains(., "YAML")]',
                                           parent='//*[contains(@class, "pf-c-page__main-section")]')
+            wait_to_spinner_disappear(self.browser)
         return self.page.content.get_details(name, load_only)
 
     def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True):

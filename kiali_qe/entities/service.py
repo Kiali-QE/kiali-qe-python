@@ -197,7 +197,7 @@ class ServiceDetails(EntityBase):
             return False
         if self.name != other.name:
             return False
-        if self.created_at != other.created_at:
+        if self.created_at and other.created_at and self.created_at != other.created_at:
             return False
         if self.created_at_ui != other.created_at_ui:
             return False
@@ -283,7 +283,7 @@ class VirtualService(EntityBase):
             return False
         if self.name != other.name:
             return False
-        if self.created_at != other.created_at:
+        if self.created_at and other.created_at and self.created_at != other.created_at:
             return False
         if self.created_at_ui != other.created_at_ui:
             return False
@@ -618,7 +618,7 @@ class DestinationRule(EntityBase):
             return False
         if self.host != other.host:
             return False
-        if self.created_at != other.created_at:
+        if self.created_at and other.created_at and self.created_at != other.created_at:
             return False
         if self.created_at_ui != other.created_at_ui:
             return False
@@ -688,7 +688,7 @@ class IstioConfigRow(EntityBase):
             return False
         if self.type != other.type:
             return False
-        if self.created_at != other.created_at:
+        if self.created_at and other.created_at and self.created_at != other.created_at:
             return False
         if self.created_at_ui != other.created_at_ui:
             return False

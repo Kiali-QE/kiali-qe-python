@@ -16,6 +16,8 @@ from kiali_qe.components.enums import (
 from kiali_qe.components.error_codes import (
     KIA0202,
     KIA0201,
+    KIA0203,
+    KIA0209,
     KIA1106,
     KIA1107,
     KIA0101,
@@ -107,8 +109,8 @@ def test_destination_rule_broken(kiali_client, openshift_client, browser):
                        kind='DestinationRule',
                        api_version='networking.istio.io/v1alpha3',
                        service_name=DETAILS,
-                       error_messages=[KIA0202],
-                       check_service_details=True)
+                       error_messages=[KIA0203, KIA0209],
+                       check_service_details=False)
 
 
 @pytest.mark.p_crud_resource
@@ -474,7 +476,7 @@ def test_authpolicy_rules_deny_disabled(kiali_client, openshift_client, browser,
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group9
+@pytest.mark.p_crud_group3
 def test_peerauth_create(kiali_client, openshift_client, browser, pick_namespace):
     namespace = pick_namespace(BOOKINFO_2)
     name = 'peerauthtocreate'
