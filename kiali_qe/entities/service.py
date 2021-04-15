@@ -127,7 +127,7 @@ class ServiceDetails(EntityBase):
         health: health status
     """
 
-    def __init__(self, name, created_at, created_at_ui, service_type,
+    def __init__(self, name, created_at, service_type,
                  resource_version, ip, ports,
                  labels={}, selectors={},
                  istio_sidecar=False, health=None, service_status=None,
@@ -139,7 +139,6 @@ class ServiceDetails(EntityBase):
         self.istio_sidecar = istio_sidecar
         self.health = health
         self.created_at = created_at
-        self.created_at_ui = created_at_ui
         self.service_type = service_type
         self.resource_version = resource_version
         self.ip = ip
@@ -199,11 +198,10 @@ class ServiceDetails(EntityBase):
             return False
         if self.created_at and other.created_at and self.created_at != other.created_at:
             return False
-        if self.created_at_ui != other.created_at_ui:
+        if self.service_type and other.service_type and self.service_type != other.service_type:
             return False
-        if self.service_type != other.service_type:
-            return False
-        if self.resource_version != other.resource_version:
+        if self.resource_version and other.resource_version and \
+                self.resource_version != other.resource_version:
             return False
         if self.ip != other.ip:
             return False
@@ -242,14 +240,13 @@ class VirtualService(EntityBase):
         resource_version: resource version
     """
 
-    def __init__(self, status, name, created_at, created_at_ui,
+    def __init__(self, status, name, created_at,
                  resource_version,
                  protocol_route=None, hosts=[], weights=[], gateways=[]):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
         self.created_at = created_at
-        self.created_at_ui = created_at_ui
         self.resource_version = resource_version
         self.status = status
         self.protocol_route = protocol_route
@@ -264,7 +261,7 @@ class VirtualService(EntityBase):
                 self.hosts, self.weights)
 
     def __repr__(self):
-        return "{}({}, {}, {}, {}, {})".format(
+        return "{}({}, {}, {}, {}, {}, {})".format(
             type(self).__name__,
             repr(self.name),
             repr(self.status),
@@ -285,9 +282,8 @@ class VirtualService(EntityBase):
             return False
         if self.created_at and other.created_at and self.created_at != other.created_at:
             return False
-        if self.created_at_ui != other.created_at_ui:
-            return False
-        if self.resource_version != other.resource_version:
+        if self.resource_version and other.resource_version and \
+                self.resource_version != other.resource_version:
             return False
         # advanced check
         if not advanced_check:
@@ -373,7 +369,7 @@ class VirtualServiceGateway(EntityBase):
             self.text, self.link)
 
     def __repr__(self):
-        return "{}({}, {}, {})".format(
+        return "{}({}, {})".format(
             type(self).__name__,
             repr(self.text),
             repr(self.link))
@@ -476,10 +472,9 @@ class DestinationRuleOverview(EntityBase):
         self.status = status
 
     def __str__(self):
-        return 'name:{}, status:{}, host:{}, subsets:{}, '\
-            'created_at:{}, resource_version:{}'.format(
-                self.name, self.status, self.host,
-                self.subsets)
+        return 'name:{}, status:{}, host:{}, subsets:{}'.format(
+            self.name, self.status, self.host,
+            self.subsets)
 
     def __repr__(self):
         return "{}({}, {}, {}, {})".format(
@@ -576,7 +571,7 @@ class DestinationRule(EntityBase):
     """
 
     def __init__(self, status, name, host, traffic_policy, subsets,
-                 created_at, created_at_ui, resource_version):
+                 created_at, resource_version):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
@@ -584,7 +579,6 @@ class DestinationRule(EntityBase):
         self.traffic_policy = traffic_policy
         self.subsets = subsets
         self.created_at = created_at
-        self.created_at_ui = created_at_ui
         self.resource_version = resource_version
         self.status = status
 
@@ -596,7 +590,7 @@ class DestinationRule(EntityBase):
                 self.created_at, self.resource_version)
 
     def __repr__(self):
-        return "{}({}, {}, {}, {}, {})".format(
+        return "{}({}, {}, {}, {}, {}, {}, {})".format(
             type(self).__name__,
             repr(self.name), repr(self.status),
             repr(self.host),
@@ -620,9 +614,8 @@ class DestinationRule(EntityBase):
             return False
         if self.created_at and other.created_at and self.created_at != other.created_at:
             return False
-        if self.created_at_ui != other.created_at_ui:
-            return False
-        if self.resource_version != other.resource_version:
+        if self.resource_version and other.resource_version and \
+                self.resource_version != other.resource_version:
             return False
         if self.traffic_policy != other.traffic_policy:
             return False
@@ -643,39 +636,26 @@ class IstioConfigRow(EntityBase):
     Args:
         status: the validation status of config
         name: name of the config
-        type: the config type
-        created_at: creation datetime
-        resource_version: resource version
     """
 
-    def __init__(self, status, name, type,
-                 created_at, created_at_ui, resource_version):
+    def __init__(self, status, name, type):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
-        self.type = type
-        self.created_at = created_at
-        self.created_at_ui = created_at_ui
-        self.resource_version = resource_version
         self.status = status
+        self.type = type
 
     def __str__(self):
-        return 'name:{}, status:{}, type:{}, '\
-            'created_at:{}, resource_version:{}'.format(
-                self.name, self.status, self.type,
-                self.created_at, self.resource_version)
+        return 'name:{}, status:{}, type: {}'.format(
+                self.name, self.status, self.type)
 
     def __repr__(self):
-        return "{}({}, {}, {}, {}, {})".format(
+        return "{}({}, {}, {})".format(
             type(self).__name__,
-            repr(self.name), repr(self.status),
-            repr(self.host),
-            repr(self.traffic_policy), repr(self.subsets),
-            repr(self.created_at), repr(self.resource_version))
+            repr(self.name), repr(self.status), repr(self.type))
 
     def __hash__(self):
-        return (hash(self.name) ^ hash(self.type) ^ hash(self.created_at)
-                ^ hash(self.resource_version))
+        return (hash(self.name) ^ hash(self.status) ^ hash(self.type))
 
     def __eq__(self, other):
         return self.is_equal(other, advanced_check=True)
@@ -687,12 +667,6 @@ class IstioConfigRow(EntityBase):
         if self.name != other.name:
             return False
         if self.type != other.type:
-            return False
-        if self.created_at and other.created_at and self.created_at != other.created_at:
-            return False
-        if self.created_at_ui != other.created_at_ui:
-            return False
-        if self.resource_version != other.resource_version:
             return False
         # advanced check
         if not advanced_check:

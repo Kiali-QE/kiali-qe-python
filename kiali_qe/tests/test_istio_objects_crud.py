@@ -611,9 +611,10 @@ def _istio_config_list(kiali_client, name, namespace=BOOKINFO_1):
     return kiali_client.istio_config_list(namespaces=[namespace], config_names=[name])
 
 
-def _ui_istio_config_delete(tests, name, namespace=BOOKINFO_1):
+def _ui_istio_config_delete(tests, name, object_type, namespace=BOOKINFO_1):
     tests.delete_istio_config(name=name,
-                              namespace=namespace)
+                              namespace=namespace,
+                              object_type=object_type)
 
 
 def _create_dest_rule_vs(openshift_client, destination_rule_conf, namespace=BOOKINFO_1):
@@ -719,7 +720,8 @@ def _istio_config_test(kiali_client, openshift_client, browser, config_dict,
                                   namespace)
 
         if delete_istio_config:
-            _ui_istio_config_delete(tests, config_dict.metadata.name, namespace)
+            _ui_istio_config_delete(tests, config_dict.metadata.name,
+                                    kind, namespace)
             assert len(_istio_config_list(kiali_client, config_dict.metadata.name, namespace)) == 0
     finally:
         if delete_istio_config:
@@ -753,7 +755,7 @@ def _vs_gateway_link_test(kiali_client, openshift_client, browser, config_dict,
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
 
-    tests.load_details_page(vs_name, namespace, force_refresh=False, load_only=True)
+    tests.load_details_page(vs_name, namespace, kind, force_refresh=False, load_only=True)
 
     tests.click_on_gateway(config_dict.metadata.name, namespace)
 

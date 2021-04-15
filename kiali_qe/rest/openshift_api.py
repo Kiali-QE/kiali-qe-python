@@ -23,7 +23,7 @@ from kiali_qe.entities.applications import (
     ApplicationHealth
 )
 from kiali_qe.utils import dict_contains, to_linear_string
-from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
+from kiali_qe.utils.date import from_rest_to_ui
 from kiali_qe.utils.log import logger
 
 
@@ -485,17 +485,6 @@ class OpenshiftExtendedClient(object):
             if self._get_workload_name(_item.metadata) == workload_name:
                 _filtered_items.append(WorkloadPod(
                     name=_item.metadata.name,
-                    created_at=parse_from_rest(
-                        _item.metadata.creationTimestamp),
-                    created_at_ui=from_rest_to_ui(
-                        _item.metadata.creationTimestamp),
-                    created_by='{} ({})'.format(
-                        _item.metadata.ownerReferences[0].name,
-                        _item.metadata.ownerReferences[0].kind),
-                    labels=self._get_labels(_item),
-                    istio_init_containers=self._get_initcontainer_image(_item),
-                    istio_containers=self._get_initcontainer_image(_item),
-                    phase=_item.status.phase,
                     podIP=_item.status.podIP))
         return _filtered_items
 
@@ -545,19 +534,16 @@ class OpenshiftExtendedClient(object):
         _response = self._service.get(namespace=namespace, name=service_name)
         _ports = ''
         for _port in _response.spec.ports:
-            _ports += '{}{} ({}) '.format(_port['protocol'],
-                                          ' ' + _port['name']
-                                          if _port['name'] and _port['name'] != ''
-                                          else '',
-                                          _port['port'])
+            _ports += '{}{}/{} '.format(_port['name'] + ' ' if _port['name'] and _port['name'] != ''
+                                        else '',
+                                        _port['port'],
+                                        _port['protocol'])
         _labels = dict(_response.metadata.labels if _response.metadata.labels else {})
         _service = ServiceDetails(
             namespace=_response.metadata.namespace,
             name=_response.metadata.name,
             istio_sidecar=None,
-            created_at=parse_from_rest(
-                _response.metadata.creationTimestamp),
-            created_at_ui=from_rest_to_ui(
+            created_at=from_rest_to_ui(
                 _response.metadata.creationTimestamp),
             resource_version=_response.metadata.resourceVersion,
             service_type=_response.spec.type,
@@ -660,9 +646,7 @@ class OpenshiftExtendedClient(object):
         _workload = WorkloadDetails(
             workload_type=_response.kind,
             name=_response.metadata.name,
-            created_at=parse_from_rest(
-                _response.metadata.creationTimestamp),
-            created_at_ui=from_rest_to_ui(
+            created_at=from_rest_to_ui(
                 _response.metadata.creationTimestamp),
             resource_version=_response.metadata.resourceVersion,
             istio_sidecar=None,

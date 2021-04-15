@@ -63,20 +63,19 @@ class Workload(EntityBase):
 
 class WorkloadDetails(EntityBase):
 
-    def __init__(self, name, workload_type, created_at, created_at_ui, resource_version,
-                 istio_sidecar=False, sidecar_injection=None,
+    def __init__(self, name, workload_type, created_at, resource_version,
+                 istio_sidecar=False, missing_sidecar=False,
                  health=None, workload_status=None, icon=None, **kwargs):
         if name is None:
             raise KeyError("'name' should not be 'None'")
         self.name = name
         self.workload_type = workload_type
         self.istio_sidecar = istio_sidecar
-        self.sidecar_injection = sidecar_injection
+        self.missing_sidecar = missing_sidecar
         self.health = health
         self.workload_status = workload_status
         self.icon = icon
         self.created_at = created_at
-        self.created_at_ui = created_at_ui
         self.resource_version = resource_version
         self.labels = kwargs['labels']\
             if 'labels' in kwargs else {}
@@ -86,10 +85,6 @@ class WorkloadDetails(EntityBase):
             if 'availableReplicas' in kwargs else None
         self.unavailableReplicas = kwargs['unavailableReplicas']\
             if 'unavailableReplicas' in kwargs else None
-        self.pods_number = kwargs['pods_number']\
-            if 'pods_number' in kwargs else None
-        self.services_number = kwargs['services_number']\
-            if 'services_number' in kwargs else None
         self.services = kwargs['services']\
             if 'services' in kwargs else None
         self.traffic_tab = kwargs['traffic_tab']\
@@ -102,8 +97,6 @@ class WorkloadDetails(EntityBase):
             if 'inbound_metrics' in kwargs else None
         self.outbound_metrics = kwargs['outbound_metrics']\
             if 'outbound_metrics' in kwargs else None
-        self.istio_configs_number = kwargs['istio_configs_number']\
-            if 'istio_configs_number' in kwargs else None
         self.istio_configs = kwargs['istio_configs']\
             if 'istio_configs' in kwargs else None
         self.traces_tab = kwargs['traces_tab']\
@@ -138,13 +131,12 @@ class WorkloadDetails(EntityBase):
             return False
         if self.name != other.name:
             return False
-        if self.workload_type != other.workload_type:
+        if self.workload_type and other.workload_type and self.workload_type != other.workload_type:
             return False
         if self.created_at and other.created_at and self.created_at != other.created_at:
             return False
-        if self.created_at_ui != other.created_at_ui:
-            return False
-        if self.resource_version != other.resource_version:
+        if self.resource_version and other.resource_version and \
+                self.resource_version != other.resource_version:
             return False
         if self.labels != other.labels:
             return False
@@ -164,61 +156,31 @@ class WorkloadDetails(EntityBase):
 
 class WorkloadPod(EntityBase):
 
-    def __init__(self, name, created_at, created_at_ui, created_by, labels={},
-                 istio_init_containers=None, istio_containers=None, status=None,
-                 phase=None, podIP=None):
+    def __init__(self, name, status=None, podIP=None):
         self.name = name
-        self.created_at = created_at
-        self.created_by = created_by
-        self.created_at_ui = created_at_ui
-        self.labels = labels
-        self.istio_init_containers = istio_init_containers
-        self.istio_containers = istio_containers
         self.status = status
-        self.phase = phase
         self.podIP = podIP
 
     def __str__(self):
-        return 'name:{}, created_at:{}, created_by:{}, labels: {}\
-            istio_init_containers:{}, istio_containers:{}\
-            status:{}, phase:{}'.format(
-            self.name, self.created_at, self.created_by, self.labels,
-            self.istio_init_containers, self.istio_containers,
-            self.status, self.phase)
+        return 'name:{}, status:{}'.format(
+            self.name, self.status)
 
     def __repr__(self):
-        return "{}({}, {}, {}, {}, {}, {}, {}, {}, {})".format(
+        return "{}({}, {}".format(
             type(self).__name__, repr(self.name),
-            repr(self.created_at), repr(self.created_by),
-            repr(self.labels),
-            repr(self.istio_init_containers), repr(self.istio_containers),
-            repr(self.status), repr(self.phase))
+            repr(self.status))
 
     def __eq__(self, other):
         return self.is_equal(other, advanced_check=True)
 
     def __hash__(self):
-        return (hash(self.name) ^ hash(self.created_at) ^ hash(self.created_by))
+        return (hash(self.name) ^ hash(self.status))
 
     def is_equal(self, other, advanced_check=True):
         # basic check
         if not isinstance(other, WorkloadPod):
             return False
         if self.name != other.name:
-            return False
-        if self.created_at and other.created_at and self.created_at != other.created_at:
-            return False
-        if self.created_at_ui != other.created_at_ui:
-            return False
-        if self.created_by != other.created_by:
-            return False
-        if self.labels != other.labels:
-            return False
-        if self.istio_init_containers != other.istio_init_containers:
-            return False
-        if self.istio_containers != other.istio_containers:
-            return False
-        if self.phase != other.phase:
             return False
         # advanced check
         if advanced_check:
@@ -238,7 +200,7 @@ class WorkloadHealth(EntityBase):
             self.workload_status, self.requests)
 
     def __repr__(self):
-        return "{}({}, {}, {})".format(
+        return "{}({}, {})".format(
             type(self).__name__,
             repr(self.workload_status), repr(self.requests))
 
