@@ -1,10 +1,10 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
-  name: auto-reviews-dr-3
+  name: auto-mongodb-dr-3
   namespace: bookinfo
 spec:
-  host: reviews.bookinfo.svc.cluster.local
+  host: mongodb.bookinfo.svc.cluster.local
   trafficPolicy:
     loadBalancer:
       simple: RANDOM

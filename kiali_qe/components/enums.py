@@ -94,13 +94,13 @@ class TimeIntervalRestParam(StringEnum):
 
 
 class TailLines(StringEnum):
-    LINES_10 = ('Last 10 lines')
-    LINES_50 = ('Last 50 lines')
-    LINES_100 = ('Last 100 lines')
-    LINES_300 = ('Last 300 lines')
-    LINES_500 = ('Last 500 lines')
-    LINES_1000 = ('Last 1000 lines')
-    LINES_5000 = ('Last 5000 lines')
+    LINES_10 = ('10 lines')
+    LINES_50 = ('50 lines')
+    LINES_100 = ('100 lines')
+    LINES_300 = ('300 lines')
+    LINES_500 = ('500 lines')
+    LINES_1000 = ('1000 lines')
+    LINES_5000 = ('5000 lines')
     LINES_ALL = ('All lines')
 
 
