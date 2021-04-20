@@ -2734,6 +2734,9 @@ class ListViewOverview(ListViewAbstract):
                                        logger=logger).options
         return None
 
+    def overview_action_present(self, namespace, action):
+        return action in self.overview_action_options(namespace)
+
     def select_action(self, namespace, action):
         _options = self.overview_action_options(namespace)
         if action in _options:
@@ -3652,11 +3655,7 @@ class LogsView(TabViewAbstract):
     duration = DropDown(locator=DROP_DOWN.format('metrics_filter_interval_duration'))
     interval = DropDown(locator=DROP_DOWN.format('metrics-refresh'))
     refresh = Button(locator='//button[@id="refresh_button"]')
-    pod_textarea = Text(locator='//textarea/..//div[contains(@class, "pf-l-toolbar__item") '
-                        'and not(contains(normalize-space(text()), '
-                        '"Istio proxy (sidecar)"))]/../../textarea')
-    proxy_textarea = Text(locator='//div[contains(normalize-space(text()), '
-                          '"Istio proxy (sidecar)")]/../../textarea')
+    logs_textarea = Text(locator='//div[@id="logsText"]')
 
     def open(self):
         tab = self.browser.element(locator=self.LOGS_TAB,
@@ -3669,8 +3668,8 @@ class LogsView(TabViewAbstract):
             except StaleElementReferenceException:
                 pass
         wait_to_spinner_disappear(self.browser)
-        self.logs_switch = ButtonSwitch(parent=self, label="Side by Side")
         self.log_hide = FilterInput(parent=self, locator='//input[@id="log_hide"]')
+        self.log_show = FilterInput(parent=self, locator='//input[@id="log_show"]')
 
 
 class MetricsView(TabViewAbstract):

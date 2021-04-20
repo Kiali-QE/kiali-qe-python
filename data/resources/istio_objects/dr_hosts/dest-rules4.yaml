@@ -1,7 +1,7 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
-  name: auto-reviews-dr-4
+  name: auto-mongodb-dr-4
   namespace: bookinfo
 spec:
   host: kubernetes.default.svc.cluster.local

@@ -36,7 +36,6 @@ from kiali_qe.components.enums import (
     RoutingWizardTLS,
     RoutingWizardLoadBalancer,
     TrafficType,
-    OverviewLinks,
     OverviewInjectionLinks,
     OverviewGraphTypeLink,
     OverviewTrafficLinks,
@@ -454,13 +453,10 @@ class AbstractListPageTest(object):
                         logs_tab.duration.options)
         assert is_equal([item.text for item in GraphRefreshInterval],
                         logs_tab.interval.options)
-        logs_tab.logs_switch.on()
         logs_tab.log_hide.fill(_filter)
         self.browser.click(logs_tab.refresh)
         wait_to_spinner_disappear(self.browser)
-        assert logs_tab.logs_switch.is_on
-        assert _filter not in logs_tab.pod_textarea.text
-        assert _filter not in logs_tab.proxy_textarea.text
+        assert _filter not in logs_tab.logs_textarea.text
 
     def assert_traffic(self, name, traffic_tab, self_object_type, traffic_object_type):
         bound_traffic = traffic_tab.traffic_items()
@@ -683,7 +679,8 @@ class OverviewPageTest(AbstractListPageTest):
                 assert found, '{} not found in REST {}'.format(overview_ui, overviews_rest)
 
             self._assert_overview_config_status(overview_ui.namespace, overview_ui.config_status)
-            assert overview_ui.labels == self.openshift_client.namespace_labels(
+            assert self.kiali_client.namespace_labels(overview_ui.namespace) == \
+                self.openshift_client.namespace_labels(
                 overview_ui.namespace)
 
     def _apply_overview_filters(self, overviews=[], filters=[],
@@ -744,61 +741,85 @@ class OverviewPageTest(AbstractListPageTest):
         self.apply_filters(filters=[{"name": OverviewPageFilter.NAME.text, "value": namespace}],
                            force_clear_all=True)
 
-        self.kiali_client.update_namespace_auto_injection(namespace, 'enabled')
-        self.kiali_client.update_namespace_auto_injection(namespace, 'disabled')
-
         self.page.page_refresh()
         overviews_ui = self.page.content.list_items
 
-        for overview_ui in overviews_ui:
-            if overview_ui.namespace == namespace:
-                assert 'istio-injection' in overview_ui.labels and \
-                    overview_ui.labels['istio-injection'] == 'disabled'
-                self._assert_overview_options(
-                    options=self.page.content.overview_action_options(namespace),
-                    enabled=False,
-                    deleted=False)
+        assert len(overviews_ui) == 1
 
-        self.kiali_client.update_namespace_auto_injection(namespace, 'enabled')
+        overview_ui = overviews_ui[0]
 
-        self.page.page_refresh()
-        overviews_ui = self.page.content.list_items
+        assert overview_ui.namespace == namespace
 
-        for overview_ui in overviews_ui:
-            if overview_ui.namespace == namespace:
-                assert 'istio-injection' in overview_ui.labels and \
-                    overview_ui.labels['istio-injection'] == 'enabled'
-                self._assert_overview_options(
-                    options=self.page.content.overview_action_options(namespace),
-                    enabled=True,
-                    deleted=False)
-
-        self.kiali_client.update_namespace_auto_injection(namespace, None)
-
-        self.page.page_refresh()
-        overviews_ui = self.page.content.list_items
-
-        for overview_ui in overviews_ui:
-            if overview_ui.namespace == namespace:
-                assert 'istio-injection' not in overview_ui.labels
-                self._assert_overview_options(
-                    options=self.page.content.overview_action_options(namespace),
-                    enabled=False,
-                    deleted=True)
-
-        self.kiali_client.update_namespace_auto_injection(namespace, 'enabled')
-
-        self.page.page_refresh()
-        overviews_ui = self.page.content.list_items
-
-        for overview_ui in overviews_ui:
-            if overview_ui.namespace == namespace:
-                assert 'istio-injection' in overview_ui.labels and \
-                    overview_ui.labels['istio-injection'] == 'enabled'
-                self._assert_overview_options(
-                    options=self.page.content.overview_action_options(namespace),
-                    enabled=True,
-                    deleted=False)
+        if self.page.content.overview_action_present(namespace,
+                                                     OverviewInjectionLinks.
+                                                     ENABLE_AUTO_INJECTION.text):
+            self.page.content.select_action(
+                namespace,
+                OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
+            self.page.page_refresh()
+            overviews_ui = self.page.content.list_items
+            overview_ui = overviews_ui[0]
+            assert 'istio-injection' in overview_ui.labels and \
+                overview_ui.labels['istio-injection'] == 'enabled', \
+                'istio-injection should be enabled in {}'.format(overview_ui.labels)
+            assert not self.page.content.overview_action_present(
+                namespace,
+                OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
+            assert self.page.content.overview_action_present(
+                namespace,
+                OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
+            assert self.page.content.overview_action_present(
+                namespace,
+                OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text)
+        elif self.page.content.overview_action_present(namespace,
+                                                       OverviewInjectionLinks.
+                                                       DISABLE_AUTO_INJECTION.text):
+            self.page.content.select_action(
+                namespace,
+                OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
+            self.page.page_refresh()
+            overviews_ui = self.page.content.list_items
+            overview_ui = overviews_ui[0]
+            assert 'istio-injection' in overview_ui.labels and \
+                overview_ui.labels['istio-injection'] == 'disabled', \
+                'istio-injection should be disabled in {}'.format(overview_ui.labels)
+            assert self.page.content.overview_action_present(
+                namespace,
+                OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
+            assert not self.page.content.overview_action_present(
+                namespace,
+                OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
+            assert self.page.content.overview_action_present(
+                namespace,
+                OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text)
+            self.page.page_refresh()
+            self.page.content.select_action(
+                namespace,
+                OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
+        elif self.page.content.overview_action_present(namespace,
+                                                       OverviewInjectionLinks.
+                                                       REMOVE_AUTO_INJECTION.text):
+            self.page.content.select_action(
+                namespace,
+                OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text)
+            self.page.page_refresh()
+            overviews_ui = self.page.content.list_items
+            overview_ui = overviews_ui[0]
+            assert 'istio-injection' not in overview_ui.labels, \
+                'istio-injection should not be in {}'.format(overview_ui.labels)
+            assert self.page.content.overview_action_present(
+                namespace,
+                OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
+            assert not self.page.content.overview_action_present(
+                namespace,
+                OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
+            assert not self.page.content.overview_action_present(
+                namespace,
+                OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text)
+            self.page.page_refresh()
+            self.page.content.select_action(
+                namespace,
+                OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
 
     def test_create_update_delete_traffic_policies(self, namespace):
         # load the page first
@@ -806,92 +827,76 @@ class OverviewPageTest(AbstractListPageTest):
         self.apply_filters(filters=[{"name": OverviewPageFilter.NAME.text, "value": namespace}],
                            force_clear_all=True)
 
-        # first delete the policies if exists
-        self.kiali_client.update_namespace_auto_injection(namespace, 'enabled')
-        self.kiali_client.update_namespace_auto_injection(namespace, 'disabled')
-        self.page.page_refresh()
-        wait_to_spinner_disappear(self.browser)
-        if self.page.content.select_action(
-                namespace, OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text):
+        if self.page.content.overview_action_present(namespace,
+                                                     OverviewTrafficLinks.
+                                                     DELETE_TRAFFIC_POLICIES.text):
+            self.page.page_refresh()
+            wait_to_spinner_disappear(self.browser)
+            if self.page.content.select_action(
+                    namespace, OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text):
+                wait_to_spinner_disappear(self.browser)
+                self.browser.wait_for_element(
+                    parent=ListViewAbstract.DIALOG_ROOT,
+                    locator=('.//button[text()="Delete"]'))
+                self.browser.click(self.browser.element(
+                    parent=ListViewAbstract.DIALOG_ROOT,
+                    locator=('.//button[text()="Delete"]')))
+            wait_to_spinner_disappear(self.browser)
+            self.page.page_refresh()
+            wait_to_spinner_disappear(self.browser)
+            self.page.content.list_items
+            assert not self.page.content.overview_action_present(
+                namespace,
+                OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text)
+            assert not self.page.content.overview_action_present(
+                namespace,
+                OverviewTrafficLinks.UPDATE_TRAFFIC_POLICIES.text)
+            assert self.page.content.overview_action_present(
+                namespace,
+                OverviewTrafficLinks.CREATE_TRAFFIC_POLICIES.text)
+        elif self.page.content.overview_action_present(namespace,
+                                                       OverviewTrafficLinks.
+                                                       CREATE_TRAFFIC_POLICIES.text):
+            assert self.page.content.select_action(
+                namespace, OverviewTrafficLinks.CREATE_TRAFFIC_POLICIES.text)
+            wait_to_spinner_disappear(self.browser)
+            self.page.page_refresh()
+            wait_to_spinner_disappear(self.browser)
+            self.page.content.list_items
+            assert self.page.content.overview_action_present(
+                namespace,
+                OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text)
+            assert self.page.content.overview_action_present(
+                namespace,
+                OverviewTrafficLinks.UPDATE_TRAFFIC_POLICIES.text)
+            assert not self.page.content.overview_action_present(
+                namespace,
+                OverviewTrafficLinks.CREATE_TRAFFIC_POLICIES.text)
+        elif self.page.content.overview_action_present(namespace,
+                                                       OverviewTrafficLinks.
+                                                       UPDATE_TRAFFIC_POLICIES.text):
+            assert self.page.content.select_action(
+                namespace, OverviewTrafficLinks.UPDATE_TRAFFIC_POLICIES.text)
+            wait_to_spinner_disappear(self.browser)
             self.browser.wait_for_element(
                 parent=ListViewAbstract.DIALOG_ROOT,
-                locator=('.//button[text()="Delete"]'))
+                locator=('.//button[text()="Update"]'))
             self.browser.click(self.browser.element(
                 parent=ListViewAbstract.DIALOG_ROOT,
-                locator=('.//button[text()="Delete"]')))
-        wait_to_spinner_disappear(self.browser)
-        self.page.page_refresh()
-        wait_to_spinner_disappear(self.browser)
-
-        self._assert_overview_options(
-            options=self.page.content.overview_action_options(namespace),
-            enabled=False,
-            deleted=False,
-            policy_created=False)
-
-        assert self.page.content.select_action(
-            namespace, OverviewTrafficLinks.CREATE_TRAFFIC_POLICIES.text)
-        wait_to_spinner_disappear(self.browser)
-        self.page.page_refresh()
-        wait_to_spinner_disappear(self.browser)
-
-        self._assert_overview_options(
-            options=self.page.content.overview_action_options(namespace),
-            enabled=False,
-            deleted=False,
-            policy_created=True)
-
-        assert self.page.content.select_action(
-            namespace, OverviewTrafficLinks.UPDATE_TRAFFIC_POLICIES.text)
-        self.browser.wait_for_element(
-            parent=ListViewAbstract.DIALOG_ROOT,
-            locator=('.//button[text()="Update"]'))
-        self.browser.click(self.browser.element(
-            parent=ListViewAbstract.DIALOG_ROOT,
-            locator=('.//button[text()="Update"]')))
-        wait_to_spinner_disappear(self.browser)
-        self.page.page_refresh()
-        wait_to_spinner_disappear(self.browser)
-
-        self._assert_overview_options(
-            options=self.page.content.overview_action_options(namespace),
-            enabled=False,
-            deleted=False,
-            policy_created=True)
-
-        assert self.page.content.select_action(
-            namespace, OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text)
-        self.browser.wait_for_element(
-            parent=ListViewAbstract.DIALOG_ROOT,
-            locator=('.//button[text()="Delete"]'))
-        self.browser.click(self.browser.element(
-            parent=ListViewAbstract.DIALOG_ROOT,
-            locator=('.//button[text()="Delete"]')))
-        wait_to_spinner_disappear(self.browser)
-        self.page.page_refresh()
-        wait_to_spinner_disappear(self.browser)
-
-        self._assert_overview_options(
-            options=self.page.content.overview_action_options(namespace),
-            enabled=False,
-            deleted=False,
-            policy_created=False)
-
-    def _assert_overview_options(self, options, enabled=True, deleted=False, policy_created=False):
-        expected_options = [item.text for item in OverviewLinks]
-        if not enabled:
-            expected_options.append(OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
-        if enabled:
-            expected_options.append(OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
-        if not deleted:
-            expected_options.append(OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text)
-        if not policy_created:
-            expected_options.append(OverviewTrafficLinks.CREATE_TRAFFIC_POLICIES.text)
-        else:
-            expected_options.append(OverviewTrafficLinks.UPDATE_TRAFFIC_POLICIES.text)
-            expected_options.append(OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text)
-        assert is_equal(expected_options, options), \
-            '{} not equal to {}'.format(expected_options, options)
+                locator=('.//button[text()="Update"]')))
+            wait_to_spinner_disappear(self.browser)
+            self.page.page_refresh()
+            wait_to_spinner_disappear(self.browser)
+            self.page.content.list_items
+            assert self.page.content.overview_action_present(
+                namespace,
+                OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text)
+            assert self.page.content.overview_action_present(
+                namespace,
+                OverviewTrafficLinks.UPDATE_TRAFFIC_POLICIES.text)
+            assert not self.page.content.overview_action_present(
+                namespace,
+                OverviewTrafficLinks.CREATE_TRAFFIC_POLICIES.text)
 
     def _assert_overview_config_status(self, namespace, config_status):
         expected_status = IstioConfigValidation.NA
@@ -2234,7 +2239,8 @@ class IstioConfigPageTest(AbstractListPageTest):
         return 'last-applied-configuration' in key \
             or key.startswith('f:') \
             or 'managedFields' in key \
-            or 'creationTimestamp' in key
+            or 'creationTimestamp' in key \
+            or 'selfLink' in key
 
     def test_gateway_create(self, name, hosts, port_name, port_number, namespaces):
         logger.debug('Creating Gateway: {}, from namespaces: {}'.format(name, namespaces))

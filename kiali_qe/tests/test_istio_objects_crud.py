@@ -295,7 +295,7 @@ def test_virtual_service_broken(kiali_client, openshift_client, browser):
                            api_version='networking.istio.io/v1alpha3',
                            service_name=REVIEWS,
                            error_messages=[KIA1101, KIA1107],
-                           check_service_details=True)
+                           check_service_details=False)
     finally:
         _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
