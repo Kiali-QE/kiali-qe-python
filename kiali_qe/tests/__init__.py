@@ -506,14 +506,17 @@ class AbstractListPageTest(object):
         if self.page.PAGE_MENU == MENU.APPLICATIONS.text:
             assert not side_panel.get_workload()
             assert side_panel.get_service()
-            assert name == side_panel.get_application()
+            if side_panel.get_application():
+                assert name == side_panel.get_application()
         elif self.page.PAGE_MENU == MENU.WORKLOADS.text:
-            assert name == side_panel.get_workload()
+            if side_panel.get_workload():
+                assert name == side_panel.get_workload()
             assert side_panel.get_service()
             assert side_panel.get_application()
         elif self.page.PAGE_MENU == MENU.SERVICES.text:
             assert not side_panel.get_workload()
-            assert name == side_panel.get_service()
+            if side_panel.get_service():
+                assert name == side_panel.get_service()
             assert side_panel.get_application()
         else:
             assert False, "Graph Overview Page is not recognized"

@@ -1681,7 +1681,7 @@ class GraphSidePanel(Widget):
             parent=self.ROOT,
             default=None)
         if workload:
-            workload = workload.replace('W', '')
+            workload = workload.replace('W', '').strip()
         return workload
 
     def get_service(self):
@@ -1690,7 +1690,7 @@ class GraphSidePanel(Widget):
             parent=self.ROOT,
             default=None)
         if service:
-            service = service.replace('S', '')
+            service = service.replace('S', '').strip()
         return service
 
     def get_application(self):
@@ -1699,7 +1699,7 @@ class GraphSidePanel(Widget):
             parent=self.ROOT,
             default=None)
         if application:
-            application = application.replace('A', '')
+            application = application.replace('A', '').strip()
         return application
 
     def show_traffic(self):
