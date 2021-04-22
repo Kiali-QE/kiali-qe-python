@@ -196,7 +196,7 @@ def test_workload_details_random(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_ro_top
-@pytest.mark.p_crud_group1
+@pytest.mark.p_crud_group4
 def test_workload_auto_injection(kiali_client, openshift_client, browser, pick_namespace):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)

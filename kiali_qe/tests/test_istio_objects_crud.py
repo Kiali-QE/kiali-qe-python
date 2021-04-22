@@ -166,7 +166,7 @@ def test_destination_rule_host_warning(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group5
+@pytest.mark.p_crud_group2
 def test_virtual_service(kiali_client, openshift_client, browser):
     gateway = get_yaml(istio_objects_path.strpath, GATEWAY_LINK)
     gateway_dict = get_dict(istio_objects_path.strpath, GATEWAY_LINK)
@@ -355,7 +355,7 @@ def test_virtual_service_broken_weight_text(kiali_client, openshift_client, brow
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group2
+@pytest.mark.p_crud_group3
 def test_gateway(kiali_client, openshift_client, browser, pick_namespace):
     gateway = get_yaml(istio_objects_path.strpath, GATEWAY)
     gateway_dict = get_dict(istio_objects_path.strpath, GATEWAY)
