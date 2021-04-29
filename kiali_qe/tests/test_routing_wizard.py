@@ -73,7 +73,8 @@ def test_routing_keep_advanced_settings(kiali_client, openshift_client, browser,
         namespace=namespace,
         object_type=IstioConfigObjectType.VIRTUAL_SERVICE.text,
         object_name=service_details.virtual_services[0].name)
-    assert '\"gateways\": [\"bookinfo/bookinfo-gateway\", \"mesh\"]' in vs_details.text
+    assert 'bookinfo/bookinfo-gateway' in vs_details.text
+    assert 'mesh' in vs_details.text
     assert len(service_details.destination_rules) == 1
     dr_details = kiali_client.istio_config_details(
         namespace=namespace,
