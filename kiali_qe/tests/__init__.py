@@ -74,7 +74,8 @@ from kiali_qe.utils import (
 )
 from kiali_qe.utils.log import logger
 from kiali_qe.utils.command_exec import oc_apply, oc_delete
-
+from time import sleep
+from selenium.webdriver.common.keys import Keys
 from kiali_qe.pages import (
     ServicesPage,
     IstioConfigPage,
@@ -128,6 +129,8 @@ class AbstractListPageTest(object):
 
     def open(self, name, namespace=None, force_refresh=False):
         # TODO added wait for unstable performance
+        self.browser.send_keys_to_focused_element(Keys.ESCAPE)
+        sleep(0.5)
         wait_to_spinner_disappear(self.browser)
         if namespace is not None:
             self.browser.click(self.browser.element(
@@ -235,6 +238,8 @@ class AbstractListPageTest(object):
             self.page.filter.remove(filter_name=_filter['name'], value=_filter['value'])
 
         self.assert_applied_filters(filters)
+        self.browser.send_keys_to_focused_element(Keys.ESCAPE)
+        sleep(0.2)
 
     def apply_label_operation(self, label_operation):
         assert self.page.filter._label_operation.is_displayed, 'Label Operation is not displayed'
@@ -2023,11 +2028,10 @@ class IstioConfigPageTest(AbstractListPageTest):
         # apply namespace
         self.apply_namespaces(namespaces=[namespace])
         # apply filters
-        self.apply_filters(filters=[
-            {'name': IstioConfigPageFilter.ISTIO_NAME.text, 'value': name}])
+        _filters = [{'name': IstioConfigPageFilter.ISTIO_NAME.text, 'value': name}]
         if object_type:
-            self.apply_filters(filters=[
-                {'name': IstioConfigPageFilter.ISTIO_TYPE.text, 'value': object_type}])
+            _filters.append({'name': IstioConfigPageFilter.ISTIO_TYPE.text, 'value': object_type})
+        self.apply_filters(filters=_filters)
 
     def load_details_page(self, name, namespace, object_type=None,
                           force_refresh=False, load_only=False):
@@ -2036,6 +2040,7 @@ class IstioConfigPageTest(AbstractListPageTest):
             self._prepare_load_details_page(name, namespace, object_type)
             wait_to_spinner_disappear(self.browser)
             self.open(name, namespace, force_refresh)
+            wait_to_spinner_disappear(self.browser)
             self.browser.wait_for_element(locator='//button[contains(., "YAML")]',
                                           parent='//*[contains(@class, "pf-c-page__main-section")]')
             wait_to_spinner_disappear(self.browser)
