@@ -755,7 +755,8 @@ def _vs_gateway_link_test(kiali_client, openshift_client, browser, config_dict,
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
 
-    tests.load_details_page(vs_name, namespace, kind, force_refresh=False, load_only=True)
+    # object_type should not be set here
+    tests.load_details_page(vs_name, namespace, force_refresh=False, load_only=True)
 
     tests.click_on_gateway(config_dict.metadata.name, namespace)
 
