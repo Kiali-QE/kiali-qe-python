@@ -58,7 +58,7 @@ class IstioConfigDetails(EntityBase):
             self.name, self.text, self.validation)
 
     def __repr__(self):
-        return "{}({}, {})".format(
+        return "{}({}, {}, {})".format(
             type(self).__name__, repr(self.name), repr(self.text), repr(self.validation))
 
     def __eq__(self, other):

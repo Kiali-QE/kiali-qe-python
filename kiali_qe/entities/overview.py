@@ -29,7 +29,7 @@ class Overview(EntityBase):
             self.tls_type)
 
     def __repr__(self):
-        return "{}({}, {}, {}, {}, {}, {}, {}, {})".format(
+        return "{}({}, {}, {}, {}, {}, {}, {}, {}, {})".format(
             type(self).__name__, repr(self.overview_type), repr(self.namespace), repr(self.items),
             repr(self.healthy), repr(self.unhealthy), repr(self.degraded), repr(self.na),
             repr(self.idle),

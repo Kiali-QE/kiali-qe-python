@@ -529,8 +529,6 @@ class AbstractListPageTest(object):
         self.browser.execute_script("history.back();")
 
     def assert_istio_configs(self, object_ui, object_rest, object_oc, namespace):
-        assert object_ui.istio_configs_number == len(object_ui.istio_configs), \
-            'Config tab\'s number should be equal to items'
         assert len(object_rest.istio_configs) == len(object_ui.istio_configs), \
             'UI configs should be equal to REST configs items'
         assert len(object_rest.istio_configs) == len(object_oc.istio_configs), \
@@ -557,7 +555,7 @@ class AbstractListPageTest(object):
             if not found:
                 assert found, 'Config {} not found in OC {}'.format(istio_config_ui,
                                                                     istio_config_oc)
-            config_overview_ui = self.page.content.table_view_istio_config.get_overview(
+            config_overview_ui = self.page.content.card_view_istio_config.get_overview(
                     istio_config_ui.name,
                     istio_config_ui.type)
             config_details_oc = self.openshift_client.istio_config_details(
@@ -945,12 +943,12 @@ class ApplicationsPageTest(AbstractListPageTest):
         self.apply_filters(filters=[
             {'name': ApplicationsPageFilter.APP_NAME.text, 'value': name}])
 
-    def load_details_page(self, name, namespace, force_refresh, load_only=False):
+    def load_details_page(self, name, namespace, force_refresh=False, load_only=False):
         logger.debug('Loading details page for application: {}'.format(name))
         if not self.is_in_details_page(name, namespace):
             self._prepare_load_details_page(name, namespace)
             self.open(name, namespace, force_refresh)
-            self.browser.wait_for_element(locator='//*[contains(text(), "Overall Health")]')
+            self.browser.wait_for_element(locator='//*[contains(., "Application")]')
         return self.page.content.get_details(load_only)
 
     def assert_random_details(self, namespaces=[], filters=[], force_refresh=False):
@@ -997,7 +995,7 @@ class ApplicationsPageTest(AbstractListPageTest):
                                                advanced_check=True), \
             'Application UI {} not equal to REST {}'\
             .format(application_details_ui, application_details_rest)
-
+        '''TODO read health tooltip values
         if application_details_ui.application_status:
             assert application_details_ui.application_status.is_healthy() == \
                 application_details_ui.health, \
@@ -1013,7 +1011,7 @@ class ApplicationsPageTest(AbstractListPageTest):
                     .format(
                             application_details_ui.application_status.deployment_statuses,
                             application_details_oc.application_status.deployment_statuses,
-                            application_details_ui.name)
+                            application_details_ui.name)'''
         for workload_ui in application_details_ui.workloads:
             found = False
             for workload_rest in application_details_rest.workloads:
@@ -1197,12 +1195,12 @@ class WorkloadsPageTest(AbstractListPageTest):
         self.apply_filters(filters=[
             {'name': WorkloadsPageFilter.WORKLOAD_NAME.text, 'value': name}])
 
-    def load_details_page(self, name, namespace, force_refresh, load_only=False):
+    def load_details_page(self, name, namespace, force_refresh=False, load_only=False):
         logger.debug('Loading details page for workload: {}'.format(name))
         if not self.is_in_details_page(name, namespace):
             self._prepare_load_details_page(name, namespace)
             self.open(name, namespace, force_refresh)
-            self.browser.wait_for_element(locator='//*[contains(., "Workload Properties")]')
+            self.browser.wait_for_element(locator='//*[contains(., "Workload")]')
         return self.page.content.get_details(load_only)
 
     def assert_random_details(self, namespaces=[], filters=[],
@@ -1233,8 +1231,6 @@ class WorkloadsPageTest(AbstractListPageTest):
         workload_details_ui = self.load_details_page(name, namespace, force_refresh)
         assert workload_details_ui
         assert name == workload_details_ui.name
-        assert workload_type == workload_details_ui.workload_type, \
-            '{} and {} are not equal'.format(workload_type, workload_details_ui.workload_type)
         # get workload detals from rest
         workload_details_rest = self.kiali_client.workload_details(
             namespace=namespace,
@@ -1258,10 +1254,6 @@ class WorkloadsPageTest(AbstractListPageTest):
                                             advanced_check=False), \
             'Workload UI {} not equal to OC {}'\
             .format(workload_details_ui, workload_details_oc)
-        if workload_details_ui.pods_number != workload_details_rest.pods_number:
-            return False
-        if workload_details_ui.services_number != workload_details_rest.services_number:
-            return False
         if workload_details_ui.workload_status:
             assert workload_details_ui.workload_status.is_healthy() == \
                 workload_details_ui.health, \
@@ -1293,8 +1285,7 @@ class WorkloadsPageTest(AbstractListPageTest):
         for service_ui in workload_details_ui.services:
             found = False
             for service_rest in workload_details_rest.services:
-                if service_ui.is_equal(service_rest,
-                                       advanced_check=True):
+                if service_ui == service_rest:
                     found = True
                     break
             if not found:
@@ -1477,21 +1468,21 @@ class WorkloadsPageTest(AbstractListPageTest):
         if self.page.actions.is_disable_auto_injection_visible():
             self.page.actions.select(OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
             self.page.page_refresh()
-            assert 'false' == self.page.content._details_sidecar_injection_text()
+            assert self.page.content._details_missing_sidecar()
             assert self.page.actions.is_enable_auto_injection_visible()
             assert self.page.actions.is_remove_auto_injection_visible()
             assert not self.page.actions.is_disable_auto_injection_visible()
         elif self.page.actions.is_remove_auto_injection_visible():
             self.page.actions.select(OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text)
             self.page.page_refresh()
-            assert not self.page.content._details_sidecar_injection_text()
+            assert self.page.content._details_missing_sidecar()
             assert self.page.actions.is_enable_auto_injection_visible()
             assert not self.page.actions.is_remove_auto_injection_visible()
             assert not self.page.actions.is_disable_auto_injection_visible()
         elif self.page.actions.is_enable_auto_injection_visible():
             self.page.actions.select(OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
             self.page.page_refresh()
-            assert 'true' == self.page.content._details_sidecar_injection_text()
+            assert self.page.content._details_missing_sidecar()
             assert not self.page.actions.is_enable_auto_injection_visible()
             assert self.page.actions.is_remove_auto_injection_visible()
             assert self.page.actions.is_disable_auto_injection_visible()
@@ -1516,13 +1507,12 @@ class ServicesPageTest(AbstractListPageTest):
         self.apply_filters(filters=[
             {'name': ServicesPageFilter.SERVICE_NAME.text, 'value': name}])
 
-    def load_details_page(self, name, namespace, force_refresh, load_only=False):
+    def load_details_page(self, name, namespace, force_refresh=False, load_only=False):
         logger.debug('Loading details page for service: {}'.format(name))
         if not self.is_in_details_page(name, namespace):
             self._prepare_load_details_page(name, namespace)
             self.open(name, namespace, force_refresh)
-            self.browser.wait_for_element(locator='//*[contains(text(), "Overall Health")]',
-                                          parent='//*[@id="health"]')
+            self.browser.wait_for_element(locator='//*[contains(., "Service")]')
         return self.page.content.get_details(load_only)
 
     def assert_random_details(self, namespaces=[], filters=[], force_refresh=False):
@@ -1571,14 +1561,14 @@ class ServicesPageTest(AbstractListPageTest):
                                            advanced_check=False), \
             'Service UI {} not equal to OC {}'\
             .format(service_details_ui, service_details_oc)
-        assert service_details_ui.workloads_number\
+        assert len(service_details_ui.workloads)\
             == len(service_details_rest.workloads)
-        assert service_details_ui.istio_configs_number\
+        assert len(service_details_ui.istio_configs)\
             == len(service_details_rest.istio_configs)
-        assert service_details_ui.workloads_number\
-            == len(service_details_rest.workloads)
-        assert service_details_ui.istio_configs_number\
-            == len(service_details_ui.istio_configs)
+        assert len(service_details_ui.workloads)\
+            == len(service_details_oc.workloads)
+        assert len(service_details_ui.istio_configs)\
+            == len(service_details_oc.istio_configs)
 
         if service_details_ui.service_status:
             assert service_details_ui.service_status.is_healthy() == \
@@ -1592,7 +1582,7 @@ class ServicesPageTest(AbstractListPageTest):
         for workload_ui in service_details_ui.workloads:
             found = False
             for workload_rest in service_details_rest.workloads:
-                if workload_ui.is_equal(workload_rest, advanced_check=True):
+                if workload_ui == workload_rest.name:
                     found = True
                     break
             if not found:
@@ -1600,7 +1590,7 @@ class ServicesPageTest(AbstractListPageTest):
                                                                         workload_rest)
             found = False
             for workload_oc in service_details_oc.workloads:
-                if workload_ui.is_equal(workload_oc, advanced_check=True):
+                if workload_ui == workload_oc.name:
                     found = True
                     break
             if not found:
@@ -2027,7 +2017,7 @@ class IstioConfigPageTest(AbstractListPageTest):
             openshift_client=openshift_client, page=IstioConfigPage(browser))
         self.browser = browser
 
-    def _prepare_load_details_page(self, name, namespace):
+    def _prepare_load_details_page(self, name, namespace, object_type=None):
         # load the page first
         self.page.load(force_load=True)
         # apply namespace
@@ -2035,11 +2025,15 @@ class IstioConfigPageTest(AbstractListPageTest):
         # apply filters
         self.apply_filters(filters=[
             {'name': IstioConfigPageFilter.ISTIO_NAME.text, 'value': name}])
+        if object_type:
+            self.apply_filters(filters=[
+                {'name': IstioConfigPageFilter.ISTIO_TYPE.text, 'value': object_type}])
 
-    def load_details_page(self, name, namespace, force_refresh, load_only=False):
+    def load_details_page(self, name, namespace, object_type=None,
+                          force_refresh=False, load_only=False):
         logger.debug('Loading details page for istio config: {}'.format(name))
         if not self.is_in_details_page(name, namespace):
-            self._prepare_load_details_page(name, namespace)
+            self._prepare_load_details_page(name, namespace, object_type)
             wait_to_spinner_disappear(self.browser)
             self.open(name, namespace, force_refresh)
             self.browser.wait_for_element(locator='//button[contains(., "YAML")]',
@@ -2126,7 +2120,8 @@ class IstioConfigPageTest(AbstractListPageTest):
         logger.debug('Asserting details for: {}, in namespace: {}'.format(name, namespace))
 
         # load config details page
-        config_details_ui = self.load_details_page(name, namespace, force_refresh=False)
+        config_details_ui = self.load_details_page(name, namespace, object_type,
+                                                   force_refresh=False)
         assert config_details_ui
         assert name == config_details_ui.name
         assert config_details_ui.text
@@ -2355,9 +2350,9 @@ class IstioConfigPageTest(AbstractListPageTest):
                     for _key, _value in jwt_rules.items():
                         assert '\"{}\": \"{}\"'.format(_key, _value) in config_details_rest.text
 
-    def delete_istio_config(self, name, namespace=None):
+    def delete_istio_config(self, name, object_type, namespace=None):
         logger.debug('Deleting istio config: {}, from namespace: {}'.format(name, namespace))
-        self.load_details_page(name, namespace, force_refresh=False, load_only=True)
+        self.load_details_page(name, namespace, object_type, force_refresh=False, load_only=True)
         # TODO: wait for all notification boxes to disappear, those are blocking the button
         time.sleep(10)
         self.page.actions.select('Delete')
