@@ -1017,6 +1017,10 @@ class ApplicationsPageTest(AbstractListPageTest):
                             application_details_ui.application_status.deployment_statuses,
                             application_details_oc.application_status.deployment_statuses,
                             application_details_ui.name)'''
+        assert is_equal([_w.name for _w in application_details_ui.workloads],
+                        [_w.name for _w in application_details_rest.workloads])
+        assert is_equal([_w.name for _w in application_details_oc.workloads],
+                        [_w.name for _w in application_details_rest.workloads])
         for workload_ui in application_details_ui.workloads:
             found = False
             for workload_rest in application_details_rest.workloads:
