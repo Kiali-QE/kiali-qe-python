@@ -31,13 +31,17 @@ $ source .env/bin/activate
 # install requirements
 $ pip install -r requirements.txt
 
-# update conf/emv.yaml (kiali hostname and selenium driver url)
+# update conf/env.yaml (kiali hostname, token and selenium driver url) 
 
 # Tests use OpenShift API.
 # Needs to be logged in once in to OpenShift before to run tests.
 # When we login in to OpenShift, ".kube/config" file will be created with auth token.
 # This token will be used in tests to access OpenShift
+# oc - OpenShift Command Line Interface (CLI) can be downloaded from OpenShift Help -> Command line tools
 $ oc login https://<openshift>:8443 --username=<username> --password=<password> --insecure-skip-tls-verify=true
+
+# The token necessary in env.yaml can be read after login
+$ oc whoami -t
 
 # run all tests
 $ pytest -s
