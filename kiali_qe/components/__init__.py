@@ -2789,18 +2789,18 @@ class ListViewApplications(ListViewAbstract):
         for index, el in enumerate(_elements):
             columns = self.browser.elements(self.ITEM_COL, parent=el)
             _name = self.browser.element(
-                locator=self.ITEM_TEXT, parent=columns[0]).text.strip()
-            _namespace = self._item_namespace(columns[1])
+                locator=self.ITEM_TEXT, parent=columns[1]).text.strip()
+            _namespace = self._item_namespace(columns[2])
 
             # application object creation
             _application = Application(
                 name=_name, namespace=_namespace,
                 istio_sidecar=self._item_sidecar_text(el),
                 health=self._get_item_health(element=el),
-                application_status=(self._get_application_health(element=columns[3])
+                application_status=(self._get_application_health(element=columns[0])
                                     if self._is_tooltip_visible(index=index,
                                                                 number=len(_elements)) else None),
-                labels=self._get_item_labels(element=columns[2]))
+                labels=self._get_item_labels(element=columns[3]))
             # append this item to the final list
             _items.append(_application)
         return _items
@@ -2882,18 +2882,18 @@ class ListViewWorkloads(ListViewAbstract):
             # get workload name and namespace
             columns = self.browser.elements(self.ITEM_COL, parent=el)
             _name = self.browser.element(
-                locator=self.ITEM_TEXT, parent=columns[0]).text.strip()
-            _namespace = self._item_namespace(columns[1])
-            _type = columns[2].text.strip()
+                locator=self.ITEM_TEXT, parent=columns[1]).text.strip()
+            _namespace = self._item_namespace(columns[2])
+            _type = columns[3].text.strip()
 
             # workload object creation
             _workload = Workload(
                 name=_name, namespace=_namespace, workload_type=_type,
                 istio_sidecar=self._item_sidecar_text(el),
-                labels=self._get_item_labels(columns[3]),
+                labels=self._get_item_labels(columns[4]),
                 health=self._get_item_health(element=el),
                 icon=self._get_item_details_icon(element=el),
-                workload_status=(self._get_workload_health(name=_name, element=columns[4])
+                workload_status=(self._get_workload_health(name=_name, element=columns[0])
                                  if self._is_tooltip_visible(index=index,
                                                              number=len(_elements)) else None))
             # append this item to the final list
@@ -2972,8 +2972,8 @@ class ListViewServices(ListViewAbstract):
             # get rule name and namespace
             columns = self.browser.elements(self.ITEM_COL, parent=el)
             _name = self.browser.element(
-                locator=self.ITEM_TEXT, parent=columns[0]).text.strip()
-            _namespace = self._item_namespace(columns[1])
+                locator=self.ITEM_TEXT, parent=columns[1]).text.strip()
+            _namespace = self._item_namespace(columns[2])
 
             # create service instance
             _service = Service(
@@ -2981,12 +2981,12 @@ class ListViewServices(ListViewAbstract):
                 namespace=_namespace,
                 istio_sidecar=self._item_sidecar_text(el),
                 health=self._get_item_health(element=el),
-                service_status=(self._get_service_health(element=columns[3])
+                service_status=(self._get_service_health(element=columns[0])
                                 if self._is_tooltip_visible(index=index,
                                                             number=len(_elements)) else None),
                 icon=self._get_item_details_icon(element=el),
                 config_status=self._get_item_config_status(columns[4]),
-                labels=self._get_item_labels(element=columns[2]))
+                labels=self._get_item_labels(element=columns[3]))
             # append this item to the final list
             _items.append(_service)
         return _items
