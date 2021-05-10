@@ -1271,6 +1271,10 @@ class WorkloadsPageTest(AbstractListPageTest):
                 workload_details_ui.workload_status.is_healthy(),
                 workload_details_ui.health,
                 workload_details_ui.name)
+        assert is_equal(workload_details_ui.applications,
+                        workload_details_rest.applications)
+        assert is_equal(workload_details_ui.services,
+                        workload_details_rest.services)
         all_pods = []
         for pod_ui in workload_details_ui.pods:
             all_pods.append(pod_ui.name)
@@ -1570,6 +1574,8 @@ class ServicesPageTest(AbstractListPageTest):
                                            advanced_check=False), \
             'Service UI {} not equal to OC {}'\
             .format(service_details_ui, service_details_oc)
+        assert is_equal(service_details_ui.applications,
+                        service_details_rest.applications)
         assert len(service_details_ui.workloads)\
             == len(service_details_rest.workloads)
         assert len(service_details_ui.istio_configs)\

@@ -87,6 +87,8 @@ class WorkloadDetails(EntityBase):
             if 'unavailableReplicas' in kwargs else None
         self.services = kwargs['services']\
             if 'services' in kwargs else None
+        self.applications = kwargs['applications']\
+            if 'applications' in kwargs else None
         self.traffic_tab = kwargs['traffic_tab']\
             if 'traffic_tab' in kwargs else None
         self.logs_tab = kwargs['logs_tab']\

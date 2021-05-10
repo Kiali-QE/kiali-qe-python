@@ -2840,6 +2840,8 @@ class ListViewWorkloads(ListViewAbstract):
 
         _card_view_pods = CardViewWorkloadPods(self.parent, self.locator, self.logger)
 
+        _card_view_apps = CardViewApplications(self.parent, self.locator, self.logger)
+
         _card_view_services = CardViewServices(self.parent, self.locator, self.logger)
 
         _card_view_istio_config = CardViewIstioConfig(self.parent, self.locator, self.logger)
@@ -2866,6 +2868,7 @@ class ListViewWorkloads(ListViewAbstract):
                                icon=self._get_additional_details_icon(),
                                pods=_card_view_pods.all_items,
                                services=_card_view_services.all_items,
+                               applications=_card_view_apps.all_items,
                                istio_configs=_card_view_istio_config.all_items,
                                labels=self._get_details_labels(),
                                traffic_tab=_traffic_tab,
@@ -2959,7 +2962,7 @@ class ListViewServices(ListViewAbstract):
                               selectors=self._get_details_selectors(),
                               istio_configs=self.card_view_istio_config.all_items,
                               workloads=_card_view_wl.all_items,
-                              applictions=_card_view_apps.all_items,
+                              applications=_card_view_apps.all_items,
                               traffic_tab=_traffic_tab,
                               inbound_metrics=_inbound_metrics,
                               traces_tab=_traces_tab)
@@ -3122,8 +3125,7 @@ class CardViewAbstract(ViewAbstract):
 
 
 class CardViewAppWorkloads(CardViewAbstract):
-    WORKLOADS_TEXT = 'Workloads'
-    ROWS = '//h5[contains(text(), "{}")]/../ul/li'.format(WORKLOADS_TEXT)
+    ROWS = '//ul[contains(@id, "workload-list")]//li'
 
     @property
     def items(self):
@@ -3287,8 +3289,7 @@ class CardViewWorkloadPods(CardViewAbstract):
 
 
 class CardViewApplications(CardViewAbstract):
-    APPLICATIONS_TEXT = 'Applications'
-    ROWS = '//h5[contains(text(), "{}")]/../ul/li'.format(APPLICATIONS_TEXT)
+    ROWS = '//ul[contains(@id, "app-list")]//li'
 
     @property
     def items(self):
@@ -3302,8 +3303,7 @@ class CardViewApplications(CardViewAbstract):
 
 
 class CardViewWorkloads(CardViewAbstract):
-    WORKLOADS_TEXT = 'Workloads'
-    ROWS = '//h5[contains(text(), "{}")]/../div//ul//li'.format(WORKLOADS_TEXT)
+    ROWS = '//ul[contains(@id, "workload-list")]//li'
 
     @property
     def items(self):
@@ -3317,8 +3317,7 @@ class CardViewWorkloads(CardViewAbstract):
 
 
 class CardViewServices(CardViewAbstract):
-    SERVICES_TEXT = 'Services'
-    ROWS = '//h5[contains(text(), "{}")]/../ul/li'.format(SERVICES_TEXT)
+    ROWS = '//ul[contains(@id, "service-list")]//li'
 
     @property
     def items(self):
