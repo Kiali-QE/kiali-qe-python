@@ -3131,7 +3131,7 @@ class CardViewAppWorkloads(CardViewAbstract):
         for el in self.browser.elements(locator=self.ROWS,
                                         parent=ListViewAbstract.DETAILS_ROOT):
             _name = el.text.replace('W', '').strip()
-            # TODO status
+            # TODO status and tooltip
             # create Workload instance
             _workload = AppWorkload(
                 name=_name,
@@ -3146,16 +3146,15 @@ class CardViewIstioConfig(CardViewAbstract):
     GATEWAYS = '//div[@id="gateways"]//ul[contains(@class, "details")]//li'
     SECTION_ROOT = (ListViewAbstract.DETAILS_ROOT +
                     '//article[@id="IstioConfigCard"]')
-    ROWS = SECTION_ROOT+'//table//tbody//tr'
-    ROW = SECTION_ROOT+'//table'\
-        '//tbody//tr//td//a[text()="{}"]/..//span[text()="{}"]/../../..'
+    ROWS = '//div/table/tbody/tr'
+    ROW = ROWS+'//td//a[text()="{}"]/..//span[text()="{}"]/../../..'
     SUBSETS_ROW = '//div[@id="subsets"]//table//tbody//tr'
 
     @property
     def items(self):
 
         _items = []
-        for el in self.browser.elements(self.ROWS):
+        for el in self.browser.elements(self.SECTION_ROOT+self.ROWS):
             _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
             if len(_columns) < 2:
                 # empty row

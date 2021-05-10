@@ -106,7 +106,7 @@ def test_application_graph_overview(kiali_client, openshift_client, browser, pic
 def test_application_details_random(kiali_client, openshift_client, browser, pick_namespace):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    namespace = pick_namespace(BOOKINFO_2)
+    namespace = pick_namespace(BOOKINFO)
     tests.assert_random_details(namespaces=[namespace])
 
 

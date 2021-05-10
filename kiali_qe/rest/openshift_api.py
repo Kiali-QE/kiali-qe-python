@@ -514,7 +514,7 @@ class OpenshiftExtendedClient(object):
 
         _application = ApplicationDetails(
             name=application_name,
-            workloads=workloads.values(),
+            workloads=list(set(workloads.values())),
             services=list(set(services)),
             istio_sidecar=all([w.istio_sidecar for w in workloads.values()]),
             health=None,
