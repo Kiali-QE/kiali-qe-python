@@ -1,5 +1,6 @@
 import pytest
 
+from selenium.common.exceptions import StaleElementReferenceException
 from kiali_qe.tests import WorkloadsPageTest
 from kiali_qe.components.enums import (
     WorkloadsPageSort,
@@ -123,4 +124,7 @@ def test_workload_auto_injection(kiali_client, openshift_client, browser, pick_n
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     namespace = pick_namespace(BOOKINFO_2)
-    tests.test_disable_enable_delete_auto_injection(name='details-v1', namespace=namespace)
+    try:
+        tests.test_disable_enable_delete_auto_injection(name='details-v1', namespace=namespace)
+    except (StaleElementReferenceException):
+        pass
