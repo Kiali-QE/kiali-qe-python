@@ -562,6 +562,9 @@ class KialiExtendedClient(KialiClient):
             if _service_data['endpoints']:
                 for _endpoint in _service_data['endpoints'][0]['addresses']:
                     endpoints.append(_endpoint['ip'])
+            _labels = self.get_labels(_service_data['service'])
+            _applications = set([_a.name for _a in self.application_list(namespaces=[namespace])
+                                 if _labels['app'] == _a.name])
             _validations = []
             if _service_data['validations'] \
                     and len(_service_data['validations']['service']) > 0:
@@ -582,12 +585,13 @@ class KialiExtendedClient(KialiClient):
                     endpoints=endpoints,
                     validations=_validations,
                     ports=_ports.strip(),
-                    labels=self.get_labels(_service_data['service']),
+                    labels=_labels,
                     selectors=self.get_selectors(_service_data['service']),
                     health=_service_health.is_healthy() if _service_health else None,
                     service_status=_service_health,
                     icon=self.get_icon_type(_service_data),
                     workloads=workloads,
+                    applications=_applications,
                     traffic=source_workloads,
                     virtual_services=virtual_services,
                     destination_rules=destination_rules,
@@ -643,6 +647,8 @@ class KialiExtendedClient(KialiClient):
                         workload_name=_workload_data['name'])
 
             _labels = self.get_labels(_workload_data)
+            _applications = set([_a.name for _a in self.application_list(namespaces=[namespace])
+                                 if _labels['app'] == _a.name])
             _config_list = self.istio_config_list(
                 namespaces=[namespace], config_names=[],
                 params={'workloadSelector': dict_to_params(_labels)})
@@ -660,6 +666,7 @@ class KialiExtendedClient(KialiClient):
                 traffic=_destination_services,
                 pods=_all_pods,
                 services=_services,
+                applications=_applications,
                 istio_configs=_config_list)
         return _workload
 
