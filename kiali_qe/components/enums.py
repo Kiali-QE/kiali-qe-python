@@ -317,6 +317,7 @@ class IstioConfigObjectType(StringEnum):
     SIDECAR = ('Sidecar')
     VIRTUAL_SERVICE = ('VirtualService')
     WORKLOAD_ENTRY = ('WorkloadEntry')
+    WORKLOAD_GROUP = ('WorkloadGroup')
 
 
 class IstioConfigValidationType(StringEnum):

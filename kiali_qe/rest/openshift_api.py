@@ -45,6 +45,7 @@ CONFIG_TYPES = {
     'DestinationRule': '_destinationrule',
     'ServiceEntry': '_serviceentry',
     'WorkloadEntry': '_workloadentry',
+    'WorkloadGroup': '_workloadgroup',
     'EnvoyFilter': '_envoyfilter',
     'PeerAuthentication': '_peerauthentication',
     'RequestAuthentication': '_requestauthentication',
@@ -142,6 +143,10 @@ class OpenshiftExtendedClient(object):
     @property
     def _workloadentry(self):
         return self._istio_config(kind='WorkloadEntry', api_version='v1alpha3')
+
+    @property
+    def _workloadgroup(self):
+        return self._istio_config(kind='WorkloadGroup', api_version='v1alpha3')
 
     @property
     def _kubernetes(self):

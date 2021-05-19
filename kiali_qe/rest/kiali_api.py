@@ -46,6 +46,7 @@ ISTIO_CONFIG_TYPES = {'DestinationRule': 'destinationrules',
                       'VirtualService': 'virtualservices',
                       'ServiceEntry': 'serviceentries',
                       'WorkloadEntry': 'workloadentries',
+                      'WorkloadGroup': 'workloadgroups',
                       'Gateway': 'gateways',
                       'Handler': 'handler',
                       'EnvoyFilter': 'envoyfilters',
@@ -336,6 +337,17 @@ class KialiExtendedClient(KialiClient):
                                                                     'workloadentries',
                                                                     _policy['metadata']['name'])))
 
+            # update workloadGroups
+            if len(_data['workloadGroups']) > 0:
+                for _policy in _data['workloadGroups']:
+                    items.append(IstioConfig(
+                        name=_policy['metadata']['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.WORKLOAD_GROUP.text,
+                        validation=self.get_istio_config_validation(_namespace,
+                                                                    'workloadgroups',
+                                                                    _policy['metadata']['name'])))
+
             # update sidecars
             if len(_data['sidecars']) > 0:
                 for _policy in _data['sidecars']:
@@ -405,6 +417,10 @@ class KialiExtendedClient(KialiClient):
             # get workloadEntry
             if _data['workloadEntry']:
                 config_data = _data['workloadEntry']
+
+            # get workloadGroup
+            if _data['workloadGroup']:
+                config_data = _data['workloadGroup']
 
             # get PeerAuthentication
             if _data['peerAuthentication']:
