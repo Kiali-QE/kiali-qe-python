@@ -2405,6 +2405,7 @@ class ListViewAbstract(ViewAbstract):
         return get_validation(_valid, _not_valid, _warning)
 
     def _get_details_validation(self):
+        wait_to_spinner_disappear(self.browser)
         _not_valid = len(self.browser.elements(
             parent=self.DETAILS_ROOT,
             locator='.//*[contains(@class, "ace_error")]')) > 0
