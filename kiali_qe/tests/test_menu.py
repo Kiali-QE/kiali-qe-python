@@ -6,6 +6,7 @@ from kiali_qe.utils import is_equal
 from kiali_qe.utils.log import logger
 
 
+@pytest.mark.p_smoke
 @pytest.mark.p_atomic
 @pytest.mark.p_ro_group5
 def test_menu(browser, kiali_client):
@@ -40,6 +41,7 @@ def _get_jaeger_url(_products):
     return None
 
 
+@pytest.mark.p_smoke
 @pytest.mark.p_atomic
 @pytest.mark.p_ro_group5
 def test_toggle(browser):
@@ -51,6 +53,7 @@ def test_toggle(browser):
     assert not page.main_menu.is_collapsed
 
 
+@pytest.mark.p_smoke
 @pytest.mark.p_atomic
 @pytest.mark.p_ro_group5
 def test_help_menu(browser):
@@ -63,6 +66,7 @@ def test_help_menu(browser):
         ('Help menu mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
 
 
+@pytest.mark.p_smoke
 @pytest.mark.p_atomic
 @pytest.mark.p_ro_group5
 def test_user_menu(browser):

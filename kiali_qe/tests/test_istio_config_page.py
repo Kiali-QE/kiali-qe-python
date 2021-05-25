@@ -12,6 +12,7 @@ BOOKINFO_2 = 'bookinfo2'
 ISTIO_SYSTEM = 'istio-system'
 
 
+@pytest.mark.p_smoke
 @pytest.mark.p_ro_top_safe
 @pytest.mark.p_ro_group4
 def test_namespaces(kiali_client, openshift_client, browser):
@@ -111,6 +112,7 @@ def test_configs_filter_config_validation_not_validated(kiali_client, openshift_
          "value": IstioConfigValidationType.NOT_VALIDATED.text}])
 
 
+@pytest.mark.p_smoke
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group4
 def test_all_configs_namespace(kiali_client, openshift_client, browser):
