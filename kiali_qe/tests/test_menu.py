@@ -46,7 +46,7 @@ def test_toggle(browser):
 @pytest.mark.p_smoke
 @pytest.mark.p_atomic
 @pytest.mark.p_ro_group5
-def test_help_menu(browser):
+def __test_help_menu(browser):
     # load root page
     page = RootPage(browser)
     options_defined = [item.text for item in HelpMenuEnum]
@@ -59,7 +59,7 @@ def test_help_menu(browser):
 @pytest.mark.p_smoke
 @pytest.mark.p_atomic
 @pytest.mark.p_ro_group5
-def test_user_menu(browser):
+def __test_user_menu(browser):
     # load root page
     page = RootPage(browser)
     options_defined = [item.text for item in UserMenuEnum]
