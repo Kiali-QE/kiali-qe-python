@@ -129,6 +129,10 @@ class GraphType(StringEnum):
 
 
 class GraphPageDisplayFilter(StringEnum):
+    REQUEST_RATE = ('Request Rate')
+    RESPONSE_TIME = ('Response Time')
+    THROUGHPUT = ('Throughput')
+    REQUEST_DISTRIBUTION = ('Request Distribution')
     CLUSTER_BOXES = ('Cluster Boxes')
     NAMESPACE_BOXES = ('Namespace Boxes')
     COMPRESSED_HIDE = ('Compressed Hide')
@@ -140,17 +144,9 @@ class GraphPageDisplayFilter(StringEnum):
 
 
 class GraphPageBadgesFilter(StringEnum):
-    CIRCUIT_BREAKERS = ('Circuit Breakers')
-    VIRTUAL_SERVICES = ('Virtual Services')
     MISSING_SIDECARS = ('Missing Sidecars')
     SECURITY = ('Security')
-
-
-class EdgeLabelsFilter(StringEnum):
-    NO_LABEL = ('No Label')
-    REQUEST_RATE = ('Request Rate')
-    REQUEST_DISTRIBUTION = ('Request Distribution')
-    RESPONSE_TIME = ('Response Time')
+    VIRTUAL_SERVICES = ('Virtual Services')
 
 
 class ApplicationsPageFilter(StringEnum):
