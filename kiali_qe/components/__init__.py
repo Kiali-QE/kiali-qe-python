@@ -33,7 +33,6 @@ from kiali_qe.entities.service import (
     ServiceDetails,
     VirtualServiceOverview,
     DestinationRuleOverview,
-    SourceWorkload,
     VirtualServiceGateway,
     ServiceHealth,
     IstioConfigRow,
@@ -56,7 +55,6 @@ from kiali_qe.entities.applications import (
     ApplicationHealth
 )
 from kiali_qe.entities.overview import Overview
-from kiali_qe.utils.date import parse_from_rest
 from time import sleep
 from kiali_qe.utils.log import logger
 from wait_for import wait_for
@@ -1269,16 +1267,18 @@ class ConfigActions(Actions):
     PORT_MTLS_MODE = '//div[contains(@class, "pf-c-form__group")]' +\
         '//table//select[@name="addPortMtlsMode"]'
     ADD_VALUE = '//div[contains(@class, "pf-c-form__group")]//input[@id="addNewValues"]'
-    ADD_PORT = '//div[contains(@class, "pf-c-form__group")]//input[@id="addPortNumber"]'
+    ADD_PORT_NUMBER = '//div[contains(@class, "pf-c-form__group")]//input[@id="addPortNumber"]'
+    ADD_PORT_NAME = '//div[contains(@class, "pf-c-form__group")]//input[@id="addPortName"]'
     ADD_VALUE_BUTTON = '//div[contains(@class, "pf-c-form__group")]' +\
         '//table//button[contains(@class, "pf-m-link")]'
     ADD_RULE_BUTTON = '//div[contains(@class, "pf-c-form__group")]' +\
         '/div/button[contains(@class, "pf-m-link")]'
     CONFIG_CREATE_ROOT = '//*[contains(@class, "pf-c-form")]'
-    CREATE_ISTIO_CONFIG = 'Create New Istio Config'
-    ADD_SERVER_BUTTON = './/button[text()="Add Server"]'
-    ADD_PORT_MTLS_BUTTON = './/button[text()="Add Port MTLS"]'
-    ADD_EGRESS_HOST_BUTTON = './/button[text()="Add Egress Host"]'
+    ADD_SERVER_BUTTON = './/button//span[contains(@class, "pf-c-button__text")' +\
+        ' and text()="Add Server to Server List"]'
+    ADD_PORT_MTLS_BUTTON = './/button[@id="addServerBtn"]'
+    ADD_EGRESS_HOST_BUTTON = './/td[contains(@data-label, "Egress Host")]/..//' +\
+        'button[contains(@class, "pf-m-link")]'
 
     def __init__(self, parent, locator=None, logger=None):
         Actions.__init__(self, parent, logger=logger)
@@ -1286,15 +1286,13 @@ class ConfigActions(Actions):
             self.locator = locator
         else:
             self.locator = self.ROOT
-        self._istio_resource = SelectDropDown(
-            parent=self, locator=self.ISTIO_RESOURCE, select_button='')
         self._name = TextInput(parent=self,
                                locator='//input[@id="name"]')
-        self._hosts = TextInput(parent=self, locator='//input[@id="addHosts"]')
+        self._hosts = TextInput(parent=self, locator='//input[@id="hosts"]')
         self._egress_host = TextInput(parent=self, locator='//input[@id="addEgressHost"]')
-        self._workloadselector_switch = ButtonSwitch(parent=self, label="Add Workload Selector")
-        self._jwtrules_switch = ButtonSwitch(parent=self, label="Add JWT Rules")
-        self._portmtls_switch = ButtonSwitch(parent=self, label="Add Port MTLS")
+        self._workloadselector_switch = ButtonSwitch(parent=self, label="Workload Selector")
+        self._jwtrules_switch = ButtonSwitch(parent=self, label="JWT Rules")
+        self._portmtls_switch = ButtonSwitch(parent=self, label="Port Mutual TLS")
         self._labels = TextInput(parent=self, locator='//input[@id="gwHosts"]')
         self._policy = SelectDropDown(parent=self, locator=self.POLICY, select_button='')
         self._policy_action = SelectDropDown(parent=self,
@@ -1305,14 +1303,16 @@ class ConfigActions(Actions):
                                               locator=self.PORT_MTLS_MODE,
                                               select_button='')
         self._add_value = TextInput(parent=self, locator=self.ADD_VALUE)
-        self._add_port = TextInput(parent=self, locator=self.ADD_PORT)
+        self._add_port_number = TextInput(parent=self, locator=self.ADD_PORT_NUMBER)
+        self._add_port_name = TextInput(parent=self, locator=self.ADD_PORT_NAME)
 
-    def create_istio_config_gateway(self, name, hosts):
+    def create_istio_config_gateway(self, name, hosts, port_name, port_number):
         wait_to_spinner_disappear(self.browser)
-        self.select(self.CREATE_ISTIO_CONFIG)
-        self._istio_resource.select(IstioConfigObjectType.GATEWAY.text)
+        self.select(IstioConfigObjectType.GATEWAY.text)
         self._name.fill(name)
         self._hosts.fill(hosts)
+        self._add_port_number.fill(port_number)
+        self._add_port_name.fill(port_name)
         add_server_button = self.browser.element(
             parent=self.CONFIG_CREATE_ROOT,
             locator=(self.ADD_SERVER_BUTTON))
@@ -1328,8 +1328,7 @@ class ConfigActions(Actions):
         return True
 
     def create_istio_config_sidecar(self, name, egress_host, labels=None):
-        self.select(self.CREATE_ISTIO_CONFIG)
-        self._istio_resource.select(IstioConfigObjectType.SIDECAR.text)
+        self.select(IstioConfigObjectType.SIDECAR.text)
         self._name.fill(name)
         self._egress_host.fill(egress_host)
         self._add_workload_selector(labels)
@@ -1348,9 +1347,8 @@ class ConfigActions(Actions):
         return True
 
     def create_istio_config_authpolicy(self, name, policy, labels=None, policy_action=None):
-        self.select(self.CREATE_ISTIO_CONFIG)
-        wait_displayed(self._istio_resource)
-        self._istio_resource.select(IstioConfigObjectType.AUTHORIZATION_POLICY.text)
+        self.select(IstioConfigObjectType.AUTHORIZATION_POLICY.text)
+        wait_displayed(self._name)
         self._name.fill(name)
         self._policy.select(policy)
         self._add_workload_selector(labels)
@@ -1369,16 +1367,15 @@ class ConfigActions(Actions):
 
     def create_istio_config_peerauth(self, name, labels=None,
                                      mtls_mode=MutualTLSMode.UNSET, mtls_ports={}):
-        self.select(self.CREATE_ISTIO_CONFIG)
-        wait_displayed(self._istio_resource)
-        self._istio_resource.select(IstioConfigObjectType.PEER_AUTHENTICATION.text)
+        self.select(IstioConfigObjectType.PEER_AUTHENTICATION.text)
+        wait_displayed(self._name)
         self._name.fill(name)
         self._mtls_mode.select(mtls_mode)
         self._add_workload_selector(labels)
         if mtls_ports:
             self._portmtls_switch.on()
             for _key, _value in mtls_ports.items():
-                self._add_port.fill(_key)
+                self._add_port_number.fill(_key)
                 self._port_mtls_mode.select(_value)
                 add_value_button = self.browser.element(
                     parent=self.CONFIG_CREATE_ROOT,
@@ -1396,9 +1393,8 @@ class ConfigActions(Actions):
         return True
 
     def create_istio_config_requestauth(self, name, labels=None, jwt_rules={}):
-        self.select(self.CREATE_ISTIO_CONFIG)
-        wait_displayed(self._istio_resource)
-        self._istio_resource.select(IstioConfigObjectType.REQUEST_AUTHENTICATION.text)
+        self.select(IstioConfigObjectType.REQUEST_AUTHENTICATION.text)
+        wait_displayed(self._name)
         self._name.fill(name)
         self._add_workload_selector(labels)
         if jwt_rules:
@@ -1583,9 +1579,9 @@ class CheckBoxFilter(Widget):
             self.open()
         try:
             _cb = Checkbox(locator=self.ITEM.format(filter_name), parent=self)
-            if action is 'fill':
+            if action == 'fill':
                 _cb.fill(value)
-            elif action is 'read':
+            elif action == 'read':
                 return _cb.read()
         finally:
             if not skipOpen:
@@ -1683,7 +1679,7 @@ class GraphSidePanel(Widget):
             parent=self.ROOT,
             default=None)
         if workload:
-            workload = workload.replace('W', '')
+            workload = workload.replace('W', '').strip()
         return workload
 
     def get_service(self):
@@ -1692,7 +1688,7 @@ class GraphSidePanel(Widget):
             parent=self.ROOT,
             default=None)
         if service:
-            service = service.replace('S', '')
+            service = service.replace('S', '').strip()
         return service
 
     def get_application(self):
@@ -1701,7 +1697,7 @@ class GraphSidePanel(Widget):
             parent=self.ROOT,
             default=None)
         if application:
-            application = application.replace('A', '')
+            application = application.replace('A', '').strip()
         return application
 
     def show_traffic(self):
@@ -2037,21 +2033,23 @@ class ViewAbstract(Widget):
             self.browser.click(tab)
         wait_to_spinner_disappear(self.browser)
 
-    def _get_date_tooltip(self, element):
-        date_text = ''
+    def _get_tooltip_items(self, element):
+        result = []
         try:
-            self.browser.move_to_element(locator='.//span', parent=element)
+            self.browser.move_to_element(locator='.//svg/path', parent=element)
             sleep(1.5)
-            date_text = self.browser.element(
+            _texts = self.browser.element(
                 locator=(POPOVER),
-                parent='/').text
+                parent='/').text.split('\n')
+            for _text in _texts:
+                result.append(_text.split(' ')[1].strip())
         except (NoSuchElementException, StaleElementReferenceException):
             # skip errors caused by browser delays, this health will be ignored
             pass
         finally:
             self.browser.send_keys_to_focused_element(Keys.ESCAPE)
             sleep(0.5)
-            return date_text
+            return result
 
     def click_more_labels(self, parent):
         try:
@@ -2134,14 +2132,15 @@ class ListViewAbstract(ViewAbstract):
     ITEMS = '//tr[contains(@role, "row")]'
     ITEM_COL = './/td'
     ITEM_TEXT = './/*[contains(@class, "virtualitem_definition_link")]'
-    DETAILS_ROOT = ('.//section[@id="pf-tab-section-0-basic-tabs"]'
-                    '/div[contains(@class, "pf-l-grid")]')
+    DETAILS_ROOT = ('//section[@id="pf-tab-section-0-basic-tabs"]'
+                    '//div[contains(@class, "pf-l-grid")]')
     ISTIO_PROPERTIES = ('.//*[contains(@class, "pf-l-stack__item")]'
                         '/h6[text()="{}"]/..')
-    NETWORK_PROPERTIES = ('.//*[contains(@class, "pf-l-stack__item")]'
-                          '//h6[text()="{}"]/..')
-    PROPERTY_SECTIONS = ('.//*[contains(@class, "pf-l-stack__item")]'
-                         '//span[text()="{}"]/../..')
+    NETWORK_PROPERTIES = ('.//span[text()="{}"]/..')
+    PROPERTY_SECTIONS = ('.//span[text()="{}"]/../..')
+    GRAPH_ROOT = (DETAILS_ROOT +
+                  '//article[@id="MiniGraphCard"]')
+    NAME_PROPERTY = '//div[contains(@class, "pf-c-card__header")]//h5'
     NAME = 'Name'
     PODS = 'Pods'
     SERVICES = 'Services'
@@ -2149,6 +2148,7 @@ class ListViewAbstract(ViewAbstract):
     IP = 'IP'
     SERVICE_IP = 'Service IP'
     PORTS = 'Ports'
+    ENDPOINTS = 'Endpoints'
     CREATED_AT = 'Created at'
     RESOURCE_VERSION = 'Resource Version'
     INBOUND_METRICS = 'Inbound Metrics'
@@ -2161,8 +2161,7 @@ class ListViewAbstract(ViewAbstract):
     CONFIG = 'strong[normalize-space(text()="{}:")]/..//'.format(CONFIG_TEXT)
     CONFIG_TABS_PARENT = './/ul[contains(@class, "pf-c-tabs__list")]'
     CONFIG_TAB_OVERVIEW = './/button[@id="pf-tab-0-basic-tabs"]'
-    GRAPH_OVERVIEW_MENU = '//div[contains(@class, "pf-c-card__head")]//'\
-        'h3[text()="Graph Overview"]/../..//button'
+    GRAPH_OVERVIEW_MENU = GRAPH_ROOT + '//button'
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -2187,29 +2186,31 @@ class ListViewAbstract(ViewAbstract):
 
     def _get_service_endpoints(self, element):
         result = []
+        # TODO tooltip pod value
         _endpoints = self.browser.elements(
-            locator='.//div[@id="endpoints"]//span', parent=element)
+            locator='.//div//span', parent=element)
         for endpoint in _endpoints:
             result.append(endpoint.text)
         return result
 
     def _get_details_health(self):
-        _health_sublocator = '/../..//div[@id="health"]'
+        _health_parent = self.browser.element(locator=self.NAME_PROPERTY,
+                                              parent=self.DETAILS_ROOT)
         _healthy = len(self.browser.elements(
-            parent=self.DETAILS_ROOT,
-            locator='.//*[contains(@class, "icon-healthy")]' + _health_sublocator)) > 0
+            parent=_health_parent,
+            locator='.//*[contains(@class, "icon-healthy")]')) > 0
         _not_healthy = len(self.browser.elements(
-            parent=self.DETAILS_ROOT,
-            locator='.//*[contains(@class, "icon-failure")]' + _health_sublocator)) > 0
+            parent=_health_parent,
+            locator='.//*[contains(@class, "icon-failure")]')) > 0
         _degraded = len(self.browser.elements(
-            parent=self.DETAILS_ROOT,
-            locator='.//*[contains(@class, "icon-degraded")]' + _health_sublocator)) > 0
+            parent=_health_parent,
+            locator='.//*[contains(@class, "icon-degraded")]')) > 0
         _idle = len(self.browser.elements(
-            parent=self.DETAILS_ROOT,
-            locator='.//*[contains(@class, "icon-idle")]' + _health_sublocator)) > 0
+            parent=_health_parent,
+            locator='.//*[contains(@class, "icon-idle")]')) > 0
         _not_available = len(self.browser.elements(
-            parent=self.DETAILS_ROOT,
-            locator='.//*[contains(@class, "icon-na")]' + _health_sublocator)) > 0
+            parent=_health_parent,
+            locator='.//*[contains(@class, "icon-na")]')) > 0
         _health = None
         if _healthy:
             _health = HealthType.HEALTHY
@@ -2404,6 +2405,7 @@ class ListViewAbstract(ViewAbstract):
         return get_validation(_valid, _not_valid, _warning)
 
     def _get_details_validation(self):
+        wait_to_spinner_disappear(self.browser)
         _not_valid = len(self.browser.elements(
             parent=self.DETAILS_ROOT,
             locator='.//*[contains(@class, "ace_error")]')) > 0
@@ -2481,7 +2483,7 @@ class ListViewAbstract(ViewAbstract):
             pass
         _labels = self.browser.elements(
             parent=self.DETAILS_ROOT,
-            locator=('//div[@id="labels"]//*[contains(@class, "label-pair")]'))
+            locator=('//div//*[contains(@class, "label-pair")]'))
         if _labels:
             for _label in _labels:
                 _label_key = self.browser.element(
@@ -2525,8 +2527,7 @@ class ListViewAbstract(ViewAbstract):
             pass
         _selectors = self.browser.elements(
             parent=self.DETAILS_ROOT,
-            locator=('//h6[contains(text(), "Selectors")]'
-                     '/../../div[@id="selectors"]//*[contains(@class, "label-pair")]'))
+            locator=('//div[@id="selectors"]//*[contains(@class, "label-pair")]'))
         if _selectors:
             for _selector in _selectors:
                 _label_key = self.browser.element(
@@ -2737,6 +2738,9 @@ class ListViewOverview(ListViewAbstract):
                                        logger=logger).options
         return None
 
+    def overview_action_present(self, namespace, action):
+        return action in self.overview_action_options(namespace)
+
     def select_action(self, namespace, action):
         _options = self.overview_action_options(namespace)
         if action in _options:
@@ -2755,9 +2759,9 @@ class ListViewApplications(ListViewAbstract):
             return _breadcrumb
         self.back_to_info()
 
-        _table_view_workloads = TableViewAppWorkloads(self.parent, self.locator, self.logger)
+        _card_view_workloads = CardViewAppWorkloads(self.parent, self.locator, self.logger)
 
-        _table_view_services = TableViewAppServices(self.parent, self.locator, self.logger)
+        _card_view_services = CardViewServices(self.parent, self.locator, self.logger)
 
         _traffic_tab = TrafficView(parent=self.parent, locator=self.locator, logger=self.logger)
 
@@ -2772,8 +2776,8 @@ class ListViewApplications(ListViewAbstract):
                                   istio_sidecar=self._details_sidecar_text(),
                                   health=self._get_details_health(),
                                   application_status=self._get_application_details_health(),
-                                  workloads=_table_view_workloads.all_items,
-                                  services=_table_view_services.all_items,
+                                  workloads=_card_view_workloads.all_items,
+                                  services=_card_view_services.all_items,
                                   traffic_tab=_traffic_tab,
                                   inbound_metrics=_inbound_metrics,
                                   outbound_metrics=_outbound_metrics,
@@ -2786,18 +2790,18 @@ class ListViewApplications(ListViewAbstract):
         for index, el in enumerate(_elements):
             columns = self.browser.elements(self.ITEM_COL, parent=el)
             _name = self.browser.element(
-                locator=self.ITEM_TEXT, parent=columns[0]).text.strip()
-            _namespace = self._item_namespace(columns[1])
+                locator=self.ITEM_TEXT, parent=columns[1]).text.strip()
+            _namespace = self._item_namespace(columns[2])
 
             # application object creation
             _application = Application(
                 name=_name, namespace=_namespace,
                 istio_sidecar=self._item_sidecar_text(el),
                 health=self._get_item_health(element=el),
-                application_status=(self._get_application_health(element=columns[3])
+                application_status=(self._get_application_health(element=columns[0])
                                     if self._is_tooltip_visible(index=index,
                                                                 number=len(_elements)) else None),
-                labels=self._get_item_labels(element=columns[2]))
+                labels=self._get_item_labels(element=columns[3]))
             # append this item to the final list
             _items.append(_application)
         return _items
@@ -2806,39 +2810,42 @@ class ListViewApplications(ListViewAbstract):
 class ListViewWorkloads(ListViewAbstract):
 
     SIDECAR_INJECTION_TEXT = 'Istio Sidecar Inject Annotation'
+    DETAILS_ROOT = (ListViewAbstract.DETAILS_ROOT +
+                    '//article[@id="WorkloadDescriptionCard"]')
+    CONFIGS_ROOT = (ListViewAbstract.DETAILS_ROOT +
+                    '//article[@id="IstioConfigCard"]')
 
-    def _details_sidecar_injection_text(self):
+    def _details_missing_sidecar(self):
         """
-        Return the value Istio Sidecar Inject Annotation in workload details,
-        empty string if does not exist
+        Return if is missing Istio Sidecar icon in workload details,
         """
-        return self.browser.text_or_default(
+        return len(self.browser.elements(
             parent=self.DETAILS_ROOT,
-            locator=self.ISTIO_PROPERTIES.format(self.SIDECAR_INJECTION_TEXT),
-            default='').replace(self.SIDECAR_INJECTION_TEXT, '').strip()
+            locator='.//*[contains(@d, "M78")]')) > 0
 
     def get_details(self, load_only=False):
         if load_only:
             return BreadCrumb(self.parent)
         self.back_to_info()
         _name = self.browser.text(
-            locator=self.ISTIO_PROPERTIES.format(self.NAME),
-            parent=self.DETAILS_ROOT).replace(self.NAME, '').strip()
-        _type = self.browser.text(locator=self.ISTIO_PROPERTIES.format(self.TYPE),
-                                  parent=self.DETAILS_ROOT).replace(self.TYPE, '').strip()
-        _created_at_ui = self.browser.text(locator=self.ISTIO_PROPERTIES.format(self.CREATED_AT),
-                                           parent=self.DETAILS_ROOT).replace(
-                                            self.CREATED_AT, '').strip()
-        _created_at = self._get_date_tooltip(self.browser.element(
-            locator=self.ISTIO_PROPERTIES.format(self.CREATED_AT),
+            locator=self.NAME_PROPERTY,
+            parent=self.DETAILS_ROOT).replace('W', '').strip()
+
+        ''' TODO tooltip items
+        _tooltip_items = self._get_tooltip_items(self.browser.element(
+            locator=self.NAME_PROPERTY,
             parent=self.DETAILS_ROOT))
-        _resource_version = self.browser.text(
-            locator=self.ISTIO_PROPERTIES.format(self.RESOURCE_VERSION),
-            parent=self.DETAILS_ROOT).replace(self.RESOURCE_VERSION, '').strip()
+        _type = _tooltip_items[0]
+        _created_at = _tooltip_items[1]
+        _resource_version = _tooltip_items[2]'''
 
-        _table_view_pods = TableViewWorkloadPods(self.parent, self.locator, self.logger)
+        _card_view_pods = CardViewWorkloadPods(self.parent, self.locator, self.logger)
 
-        _table_view_services = TableViewServices(self.parent, self.locator, self.logger)
+        _card_view_apps = CardViewApplications(self.parent, self.locator, self.logger)
+
+        _card_view_services = CardViewServices(self.parent, self.locator, self.logger)
+
+        _card_view_istio_config = CardViewIstioConfig(self.parent, self.locator, self.logger)
 
         _traffic_tab = TrafficView(parent=self.parent, locator=self.locator, logger=self.logger)
 
@@ -2852,21 +2859,18 @@ class ListViewWorkloads(ListViewAbstract):
         _traces_tab = TracesView(parent=self.parent, locator=self.locator, logger=self.logger)
 
         return WorkloadDetails(name=str(_name),
-                               workload_type=_type,
-                               sidecar_injection=self._details_sidecar_injection_text(),
-                               created_at_ui=_created_at_ui,
-                               created_at=parse_from_rest(_created_at),
-                               resource_version=_resource_version,
+                               workload_type=None,
+                               missing_sidecar=self._details_missing_sidecar(),
+                               created_at=None,
+                               resource_version=None,
                                istio_sidecar=self._details_sidecar_text(),
                                health=self._get_details_health(),
                                workload_status=self._get_workload_details_health(_name),
                                icon=self._get_additional_details_icon(),
-                               pods_number=_table_view_pods.number,
-                               services_number=_table_view_services.number,
-                               pods=_table_view_pods.all_items,
-                               services=_table_view_services.all_items,
-                               istio_configs_number=self.table_view_istio_config.number,
-                               istio_configs=self.table_view_istio_config.all_items,
+                               pods=_card_view_pods.all_items,
+                               services=_card_view_services.all_items,
+                               applications=_card_view_apps.all_items,
+                               istio_configs=_card_view_istio_config.all_items,
                                labels=self._get_details_labels(),
                                traffic_tab=_traffic_tab,
                                logs_tab=_logs_tab,
@@ -2882,62 +2886,62 @@ class ListViewWorkloads(ListViewAbstract):
             # get workload name and namespace
             columns = self.browser.elements(self.ITEM_COL, parent=el)
             _name = self.browser.element(
-                locator=self.ITEM_TEXT, parent=columns[0]).text.strip()
-            _namespace = self._item_namespace(columns[1])
-            _type = columns[2].text.strip()
+                locator=self.ITEM_TEXT, parent=columns[1]).text.strip()
+            _namespace = self._item_namespace(columns[2])
+            _type = columns[3].text.strip()
 
             # workload object creation
             _workload = Workload(
                 name=_name, namespace=_namespace, workload_type=_type,
                 istio_sidecar=self._item_sidecar_text(el),
-                labels=self._get_item_labels(columns[3]),
+                labels=self._get_item_labels(columns[4]),
                 health=self._get_item_health(element=el),
                 icon=self._get_item_details_icon(element=el),
-                workload_status=(self._get_workload_health(name=_name, element=columns[4])
+                workload_status=(self._get_workload_health(name=_name, element=columns[0])
                                  if self._is_tooltip_visible(index=index,
                                                              number=len(_elements)) else None))
             # append this item to the final list
             _items.append(_workload)
         return _items
 
-    @property
-    def table_view_istio_config(self):
-        return TableViewWorkloadIstioConfig(self.parent, self.locator, self.logger)
-
 
 class ListViewServices(ListViewAbstract):
+
+    DETAILS_ROOT = (ListViewAbstract.DETAILS_ROOT +
+                    '//article[@id="ServiceDescriptionCard"]')
+    NETWORK_ROOT = (ListViewAbstract.DETAILS_ROOT +
+                    '//article[@id="ServiceNetworkCard"]')
 
     def get_details(self, load_only=False):
         if load_only:
             return BreadCrumb(self.parent)
         self.back_to_info()
 
-        self.browser.click('.//button[contains(text(), "Network")]', parent=self)
         _type = self.browser.text(locator=self.NETWORK_PROPERTIES.format(self.TYPE),
-                                  parent=self.DETAILS_ROOT).replace(self.TYPE, '').strip()
+                                  parent=self.NETWORK_ROOT).replace(self.TYPE, '').strip()
         _ip = self.browser.text(locator=self.NETWORK_PROPERTIES.format(self.SERVICE_IP),
-                                parent=self.DETAILS_ROOT).replace(self.SERVICE_IP, '').strip()
+                                parent=self.NETWORK_ROOT).replace(self.SERVICE_IP, '').strip()
         _ports = self.browser.text(
-            locator=self.PROPERTY_SECTIONS.format(self.PORTS),
-            parent=self.DETAILS_ROOT).replace(self.PORTS, '').strip()
-        _endpoints = self._get_service_endpoints(self.DETAILS_ROOT)
+            locator=self.NETWORK_PROPERTIES.format(self.PORTS),
+            parent=self.NETWORK_ROOT).replace(self.PORTS, '').strip()
+        _endpoints = self._get_service_endpoints(
+            self.browser.element(locator=self.NETWORK_PROPERTIES.format(self.ENDPOINTS),
+                                 parent=self.NETWORK_ROOT))
 
-        self.browser.click('.//button[contains(text(), "Properties")]', parent=self)
         _name = self.browser.text(
-            locator=self.NETWORK_PROPERTIES.format(self.NAME),
-            parent=self.DETAILS_ROOT).replace(self.NAME, '').replace(
-                self.MISSING_SIDECAR_TEXT, '').strip()
-        _created_at_ui = self.browser.text(
-            locator=self.NETWORK_PROPERTIES.format(self.CREATED_AT),
-            parent=self.DETAILS_ROOT).replace(self.CREATED_AT, '').strip()
+            locator=self.NAME_PROPERTY,
+            parent=self.DETAILS_ROOT).replace('S', '').strip()
+        ''' TODO tooltip values
         _created_at = self._get_date_tooltip(self.browser.element(
             locator=self.NETWORK_PROPERTIES.format(self.CREATED_AT),
             parent=self.DETAILS_ROOT))
         _resource_version = self.browser.text(
             locator=self.NETWORK_PROPERTIES.format(self.RESOURCE_VERSION),
-            parent=self.DETAILS_ROOT).replace(self.RESOURCE_VERSION, '').strip()
+            parent=self.DETAILS_ROOT).replace(self.RESOURCE_VERSION, '').strip()'''
 
-        _table_view_wl = TableViewWorkloads(self.parent, self.locator, self.logger)
+        _card_view_wl = CardViewWorkloads(self.parent, self.locator, self.logger)
+
+        _card_view_apps = CardViewApplications(self.parent, self.locator, self.logger)
 
         _traffic_tab = TrafficView(parent=self.parent, locator=self.locator, logger=self.logger)
 
@@ -2946,10 +2950,9 @@ class ListViewServices(ListViewAbstract):
         _traces_tab = TracesView(parent=self.parent, locator=self.locator, logger=self.logger)
 
         return ServiceDetails(name=_name,
-                              created_at=parse_from_rest(_created_at),
-                              created_at_ui=_created_at_ui,
+                              created_at=None,
                               service_type=_type,
-                              resource_version=_resource_version,
+                              resource_version=None,
                               ip=_ip,
                               ports=str(_ports.replace('\n', ' ')),
                               endpoints=_endpoints,
@@ -2958,10 +2961,9 @@ class ListViewServices(ListViewAbstract):
                               istio_sidecar=self._details_sidecar_text(),
                               labels=self._get_details_labels(),
                               selectors=self._get_details_selectors(),
-                              workloads_number=_table_view_wl.number,
-                              istio_configs_number=self.table_view_istio_config.number,
-                              istio_configs=self.table_view_istio_config.all_items,
-                              workloads=_table_view_wl.all_items,
+                              istio_configs=self.card_view_istio_config.all_items,
+                              workloads=_card_view_wl.all_items,
+                              applications=_card_view_apps.all_items,
                               traffic_tab=_traffic_tab,
                               inbound_metrics=_inbound_metrics,
                               traces_tab=_traces_tab)
@@ -2974,8 +2976,8 @@ class ListViewServices(ListViewAbstract):
             # get rule name and namespace
             columns = self.browser.elements(self.ITEM_COL, parent=el)
             _name = self.browser.element(
-                locator=self.ITEM_TEXT, parent=columns[0]).text.strip()
-            _namespace = self._item_namespace(columns[1])
+                locator=self.ITEM_TEXT, parent=columns[1]).text.strip()
+            _namespace = self._item_namespace(columns[2])
 
             # create service instance
             _service = Service(
@@ -2983,19 +2985,19 @@ class ListViewServices(ListViewAbstract):
                 namespace=_namespace,
                 istio_sidecar=self._item_sidecar_text(el),
                 health=self._get_item_health(element=el),
-                service_status=(self._get_service_health(element=columns[3])
+                service_status=(self._get_service_health(element=columns[0])
                                 if self._is_tooltip_visible(index=index,
                                                             number=len(_elements)) else None),
                 icon=self._get_item_details_icon(element=el),
                 config_status=self._get_item_config_status(columns[4]),
-                labels=self._get_item_labels(element=columns[2]))
+                labels=self._get_item_labels(element=columns[3]))
             # append this item to the final list
             _items.append(_service)
         return _items
 
     @property
-    def table_view_istio_config(self):
-        return TableViewIstioConfig(self.parent, self.locator, self.logger)
+    def card_view_istio_config(self):
+        return CardViewIstioConfig(self.parent, self.locator, self.logger)
 
 
 class ListViewIstioConfig(ListViewAbstract):
@@ -3004,11 +3006,12 @@ class ListViewIstioConfig(ListViewAbstract):
     TABLE_ROOT = './/table[contains(@class, "pf-c-table")]'
     CONFIG_INPUT = '//input[@id="{}"]'
     CONFIG_DETAILS_ROOT = './/*[contains(@class, "pf-c-form")]'
+    DETAILS_ROOT = CONFIG_DETAILS_ROOT
     CREATE_HANDLER_BUTTON = './/button[text()="Create"]'
     UPDATE_HANDLER_BUTTON = './/button[text()="Save"]'
 
     def __init__(self, parent, locator=None, logger=None):
-        TableViewAbstract.__init__(self, parent, locator=self.CONFIG_DETAILS_ROOT, logger=logger)
+        ListViewAbstract.__init__(self, parent, locator=self.CONFIG_DETAILS_ROOT, logger=logger)
         self._handler_name = TextInput(parent=self,
                                        locator=self.CONFIG_INPUT.format('name'))
 
@@ -3043,7 +3046,8 @@ class ListViewIstioConfig(ListViewAbstract):
         return _items
 
 
-class TableViewAbstract(ViewAbstract):
+class CardViewAbstract(ViewAbstract):
+    SECTION_ID = 'pf-tab-section-0-basic-tabs'
     SERVICE_DETAILS_ROOT = './/section[contains(@class, "pf-c-page__main-section")]/div'
     OVERVIEW_DETAILS_ROOT = './/div[contains(@class, "pf-l-grid")]'
     OVERVIEW_HEADER = SERVICE_DETAILS_ROOT + \
@@ -3051,12 +3055,10 @@ class TableViewAbstract(ViewAbstract):
     OVERVIEW_PROPERTIES = ('.//div[contains(@class, "pf-c-card__body")]//'
                            'h3[@data-pf-content="true" and contains(text(), "{}")]/..')
     HOSTS_PROPERTIES = './/div/h3[contains(text(), "{}")]/..//li'
-    HOST_PROPERTIES = './/div/h3[contains(text(), "{}")]/../a'
+    HOST_PROPERTIES = './/div/h3[contains(text(), "{}")]/..'
     SERVICES_TAB = '//*[contains(@class, "pf-c-tabs__item")]//button[contains(text(), "{}")]'
     ROOT = '//[contains(@class, "tab-pane") and contains(@class, "active") and \
         contains(@class, "in")]'
-    ROWS = ('//section[@id="{}"]//table[contains(@class, "table")]'
-            '//tbody//tr')
     COLUMN = './/td'
     ROW_BY_NAME = \
         '//div[@id="{}"]//table[contains(@class, "table")]//tbody//tr//a[text()="{}"]/../..'
@@ -3109,196 +3111,64 @@ class TableViewAbstract(ViewAbstract):
             locator='.//*[contains(@style, "warning")]')) > 0
         return get_validation(_valid, _not_valid, _warning)
 
+    def _get_config_type(self, element):
+        _type = self.browser.text(locator='.//span//span', parent=element)
+        if _type == 'DR':
+            return IstioConfigObjectType.DESTINATION_RULE.text
+        elif _type == 'VS':
+            return IstioConfigObjectType.VIRTUAL_SERVICE.text
+        else:
+            return IstioConfigObjectType.PEER_AUTHENTICATION.text
+
     @property
     def all_items(self):
         return self.items
 
 
-class TableViewAppWorkloads(TableViewAbstract):
-    ROWS = ('//div[contains(@class, "pf-c-data-list__item-content")]'
-            '//h3[contains(text(), "Workloads")]/..'
-            '/ul[contains(@class, "pf-c-list")]/li')
-    COLUMN = './/a'
+class CardViewAppWorkloads(CardViewAbstract):
+    ROWS = '//ul[contains(@id, "workload-list")]//li'
 
     @property
     def items(self):
-
         _items = []
         for el in self.browser.elements(locator=self.ROWS,
-                                        parent=self.ROOT):
-            _value = self.browser.element(
-                locator=self.COLUMN, parent=el).text
+                                        parent=ListViewAbstract.DETAILS_ROOT):
+            _name = el.text.replace('W', '').strip()
+            # TODO status and tooltip
             # create Workload instance
             _workload = AppWorkload(
-                name=_value,
+                name=_name,
                 istio_sidecar=self._item_sidecar_icon(el))
             # append this item to the final list
             _items.append(_workload)
         return _items
 
 
-class TableViewAppServices(TableViewAbstract):
-    ROWS = ('//div[contains(@class, "pf-c-data-list__item-content")]'
-            '//h3[contains(text(), "Services")]/..'
-            '/ul[contains(@class, "pf-c-list")]/li/a')
-
-    @property
-    def items(self):
-
-        _items = []
-        for el in self.browser.elements(locator=self.ROWS,
-                                        parent=self.ROOT):
-            _items.append(el.text)
-        return _items
-
-
-class TableViewWorkloads(TableViewAbstract):
-    WLD_TEXT = 'Workloads'
-
-    def open(self):
-        tab = self.browser.element(locator=self.SERVICES_TAB.format(self.WLD_TEXT),
-                                   parent=self.SERVICE_DETAILS_ROOT)
-        try:
-            self.browser.click(tab)
-        finally:
-            self.browser.click(tab)
-        wait_to_spinner_disappear(self.browser)
-        self.browser.wait_for_element(locator='//section[@id="pf-tab-section-0-service-tabs"]',
-                                      parent=self.ROOT)
-
-    @property
-    def number(self):
-        _wl_text = self.browser.text(locator=self.SERVICES_TAB.format(self.WLD_TEXT),
-                                     parent=self.SERVICE_DETAILS_ROOT)
-        return int(re.search(r'\d+', _wl_text).group())
-
-    @property
-    def items(self):
-        self.open()
-
-        _items = []
-        for el in self.browser.elements(locator=self.ROWS.format(
-            'pf-tab-section-0-service-tabs'),
-                                        parent=self.ROOT):
-            _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
-
-            _name = _columns[0].text.strip()
-            _type = _columns[1].text.strip()
-            _created_at_ui = _columns[3].text.strip()
-            _created_at = self._get_date_tooltip(_columns[3])
-            _resource_version = _columns[4].text.strip()
-
-            # workload object creation
-            _workload = WorkloadDetails(
-                name=_name,
-                workload_type=_type,
-                labels=self._get_labels(_columns[2]),
-                created_at=parse_from_rest(_created_at),
-                created_at_ui=_created_at_ui,
-                resource_version=_resource_version)
-            # append this item to the final list
-            _items.append(_workload)
-        return _items
-
-
-class TableViewSourceWorkloads(TableViewAbstract):
-    WLD_TEXT = 'Source Workloads'
-    ROWS = '//div[contains(@class, "card-pf")]\
-    //div[contains(@class, "row-cards-pf")]\
-    //div[contains(@class, "card-pf-body")]'
-    DEST = './/div[contains(@class, "progress-description")]'
-    COLUMN = './/li'
-
-    def open(self):
-        tab = self.browser.element(locator=self.SERVICES_TAB.format(self.WLD_TEXT),
-                                   parent=self.SERVICE_DETAILS_ROOT)
-        try:
-            self.browser.click(tab)
-        finally:
-            self.browser.click(tab)
-        wait_to_spinner_disappear(self.browser)
-        self.browser.wait_for_element(locator=self.ROWS, parent=self.ROOT)
-
-    @property
-    def number(self):
-        _wl_text = self.browser.text(locator=self.SERVICES_TAB.format(self.WLD_TEXT),
-                                     parent=self.SERVICE_DETAILS_ROOT)
-        return int(re.search(r'\d+', _wl_text).group())
-
-    @property
-    def items(self):
-        self.open()
-
-        _items = []
-        for el in self.browser.elements(locator=self.ROWS.format(
-            'service-tabs-pane-sources'),
-                                        parent=self.ROOT):
-            _to = self.browser.element(locator=self.DEST, parent=el).text.replace('To:', '').strip()
-            _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
-            _workloads = []
-            for _column in _columns:
-                _workloads.append(_column.text.strip())
-            # source workload object creation
-            _workload = SourceWorkload(
-                to=_to,
-                workloads=_workloads)
-            # append this item to the final list
-            _items.append(_workload)
-        return _items
-
-
-class TableViewIstioConfig(TableViewAbstract):
+class CardViewIstioConfig(CardViewAbstract):
     CONFIG_TEXT = 'Istio Config'
     GATEWAYS = '//div[@id="gateways"]//ul[contains(@class, "details")]//li'
-    TAB_ID = 'pf-tab-section-1-service-tabs'
-    ROWS = '//section[@id="{}"]//table[contains(@class, "table")]'\
-        '//tbody//tr'
-    ROW = '//section[@id="{}"]//table[contains(@class, "table")]'\
-        '//tbody//tr//td//a[text()="{}"]/../..//td[text()="{}"]/..'
+    SECTION_ROOT = (ListViewAbstract.DETAILS_ROOT +
+                    '//article[@id="IstioConfigCard"]')
+    ROWS = '//div/table/tbody/tr'
+    ROW = ROWS+'//td//a[text()="{}"]/..//span[text()="{}"]/../../..'
     SUBSETS_ROW = '//div[@id="subsets"]//table//tbody//tr'
-
-    def open(self):
-        wait_to_spinner_disappear(self.browser)
-        tab = self.browser.element(locator=self.SERVICES_TAB.format(self.CONFIG_TEXT),
-                                   parent=self.SERVICE_DETAILS_ROOT)
-        try:
-            self.browser.click(tab)
-        finally:
-            self.browser.click(tab)
-        wait_to_spinner_disappear(self.browser)
-        self.browser.wait_for_element(locator='//section[@id="{}"]'.format(self.TAB_ID),
-                                      parent=self.ROOT)
-
-    @property
-    def number(self):
-        _vs_text = self.browser.text(locator=self.SERVICES_TAB.format(self.CONFIG_TEXT),
-                                     parent=self.SERVICE_DETAILS_ROOT)
-        return int(re.search(r'\d+', _vs_text).group())
 
     @property
     def items(self):
-        self.open()
 
         _items = []
-        for el in self.browser.elements(locator=self.ROWS.format(self.TAB_ID),
-                                        parent=self.ROOT):
+        for el in self.browser.elements(self.SECTION_ROOT+self.ROWS):
             _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
             if len(_columns) < 2:
                 # empty row
                 continue
-            _name = _columns[1].text.strip()
-            _type = _columns[2].text.strip()
-            _created_at_ui = _columns[3].text.strip()
-            _created_at = self._get_date_tooltip(_columns[3])
-            _resource_version = _columns[4].text.strip()
+            _name = re.sub('^[A-Z]{2}', '', _columns[0].text.strip())
+            _type = self._get_config_type(_columns[0])
             # create IstioConfigRow instance
             _istio_config = IstioConfigRow(
-                status=self._get_item_status(_columns[0]),
+                status=self._get_item_status(_columns[1]),
                 name=_name,
-                type=_type,
-                created_at=parse_from_rest(_created_at),
-                created_at_ui=_created_at_ui,
-                resource_version=_resource_version)
+                type=_type)
             # append this item to the final list
             _items.append(_istio_config)
         return _items
@@ -3312,15 +3182,10 @@ class TableViewIstioConfig(TableViewAbstract):
             return self._get_peerauth_overview(name)
 
     def _get_vs_overview(self, name):
-        self.open()
-
-        _row = self.browser.element(locator=self.ROW.format(
-            self.TAB_ID, name,
-            IstioConfigObjectType.VIRTUAL_SERVICE.text),
-                                    parent=self.ROOT)
+        _row = self.browser.element(self.ROW.format(name, 'VS'))
         _columns = list(self.browser.elements(locator=self.COLUMN, parent=_row))
 
-        self.browser.click('.//a', parent=_columns[1])
+        self.browser.click('./..//a', parent=_columns[1])
         wait_to_spinner_disappear(self.browser)
 
         _hosts = get_texts_of_elements(self.browser.elements(
@@ -3354,20 +3219,15 @@ class TableViewIstioConfig(TableViewAbstract):
                 validation_references=_validation_references)
 
     def _get_dr_overview(self, name):
-        self.open()
-
-        _row = self.browser.element(locator=self.ROW.format(
-            self.TAB_ID, name,
-            IstioConfigObjectType.DESTINATION_RULE.text),
-                                    parent=self.ROOT)
+        _row = self.browser.element(self.ROW.format(name, 'DR'))
         _columns = list(self.browser.elements(locator=self.COLUMN, parent=_row))
 
-        self.browser.click('.//a', parent=_columns[1])
+        self.browser.click('./..//a', parent=_columns[1])
         wait_to_spinner_disappear(self.browser)
 
         _host = self.browser.text(
             locator=self.HOST_PROPERTIES.format(self.HOST),
-            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.HOST, '').strip()
+            parent=self.OVERVIEW_DETAILS_ROOT).replace(self.HOST, '').strip().split(' ')[0]
         _status = self._get_overview_status(self.OVERVIEW_DETAILS_ROOT)
         _subsets = []
 
@@ -3392,13 +3252,10 @@ class TableViewIstioConfig(TableViewAbstract):
     def _get_peerauth_overview(self, name):
         self.open()
 
-        _row = self.browser.element(locator=self.ROW.format(
-            self.TAB_ID, name,
-            IstioConfigObjectType.PEER_AUTHENTICATION.text),
-                                    parent=self.ROOT)
+        _row = self.browser.element(self.ROW.format(name, 'PA'))
         _columns = list(self.browser.elements(locator=self.COLUMN, parent=_row))
 
-        self.browser.click('.//a', parent=_columns[1])
+        self.browser.click('./..//a', parent=_columns[1])
         wait_to_spinner_disappear(self.browser)
 
         _text = self.browser.text(locator=self.CONFIG_TEXT_LOCATOR,
@@ -3410,118 +3267,67 @@ class TableViewIstioConfig(TableViewAbstract):
         return IstioConfigDetails(name=name, text=_text)
 
 
-class TableViewWorkloadIstioConfig(TableViewIstioConfig):
-    TAB_ID = 'pf-tab-section-2-service-tabs'
-
-
-class TableViewWorkloadPods(TableViewAbstract):
-    POD_TEXT = 'Pods'
-    SECTION_ID = 'pf-tab-section-0-service-tabs'
-    PODS_SECTION_ROOT = '//section[@id="{}"]'.format(SECTION_ID)
-    TABLE_ROOT = '//table[contains(@class, "pf-c-table")]'
-
-    def open(self):
-        tab = self.browser.element(locator=self.SERVICES_TAB.format(self.POD_TEXT),
-                                   parent=self.SERVICE_DETAILS_ROOT)
-        try:
-            self.browser.click(tab)
-        finally:
-            self.browser.click(tab)
-        wait_to_spinner_disappear(self.browser)
-        self.browser.wait_for_element(locator=self.TABLE_ROOT, parent=self.PODS_SECTION_ROOT)
-
-    @property
-    def number(self):
-        _vs_text = self.browser.text(locator=self.SERVICES_TAB.format(self.POD_TEXT),
-                                     parent=self.SERVICE_DETAILS_ROOT)
-        return int(re.search(r'\d+', _vs_text).group())
+class CardViewWorkloadPods(CardViewAbstract):
+    SECTION_ROOT = (ListViewAbstract.DETAILS_ROOT +
+                    '//article[@id="WorkloadPodsCard"]')
+    ROWS = '//table//tbody//tr'
 
     @property
     def items(self):
-        self.open()
-        self.click_more_labels(parent=self.ROOT)
 
         _items = []
-        for el in self.browser.elements(locator=self.ROWS.format(
-            self.SECTION_ID),
-                                        parent=self.ROOT):
-            _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
-            if len(_columns) < 2:
-                # empty row
-                continue
-            _name = _columns[1].text.strip()
-            _created_at_ui = _columns[2].text.strip()
-            _created_at = self._get_date_tooltip(_columns[2])
-            _created_by = _columns[3].text.strip()
-            _istio_init_containers = _columns[5].text.strip()
-            _istio_containers = _columns[6].text.strip()
-            _phase = _columns[7].text.strip()
-
-            _items.append(WorkloadPod(
-                        name=str(_name),
-                        created_at=parse_from_rest(_created_at),
-                        created_at_ui=_created_at_ui,
-                        created_by=_created_by,
-                        labels=self._get_labels(_columns[4]),
-                        istio_init_containers=_istio_init_containers,
-                        istio_containers=_istio_containers,
-                        status=self._get_item_health(el),
-                        phase=_phase))
-        return _items
-
-
-class TableViewServices(TableViewAbstract):
-    SERVICES_TEXT = 'Services'
-    SECTION_ID = 'pf-tab-section-1-service-tabs'
-    PODS_SECTION_ROOT = '//section[@id="{}"]'.format(SECTION_ID)
-    TABLE_ROOT = '//table[contains(@class, "pf-c-table")]'
-
-    def open(self):
-        tab = self.browser.element(locator=self.SERVICES_TAB.format(self.SERVICES_TEXT),
-                                   parent=self.SERVICE_DETAILS_ROOT)
-        try:
-            self.browser.click(tab)
-        finally:
-            self.browser.click(tab)
-        wait_to_spinner_disappear(self.browser)
-        self.browser.wait_for_element(locator=self.TABLE_ROOT, parent=self.PODS_SECTION_ROOT)
-
-    @property
-    def number(self):
-        _vs_text = self.browser.text(locator=self.SERVICES_TAB.format(self.SERVICES_TEXT),
-                                     parent=self.SERVICE_DETAILS_ROOT)
-        return int(re.search(r'\d+', _vs_text).group())
-
-    @property
-    def items(self):
-        self.open()
-        self.click_more_labels(parent=self.ROOT)
-
-        _items = []
-        for el in self.browser.elements(locator=self.ROWS.format(
-            self.SECTION_ID),
-                                        parent=self.ROOT):
+        for el in self.browser.elements(self.SECTION_ROOT+self.ROWS):
             _columns = list(self.browser.elements(locator=self.COLUMN, parent=el))
             if len(_columns) < 2:
                 # empty row
                 continue
             _name = _columns[0].text.strip()
-            _created_at_ui = _columns[1].text.strip()
-            _created_at = self._get_date_tooltip(_columns[1])
-            _type = _columns[2].text.strip()
-            _resource_version = _columns[4].text.strip()
-            _ip = _columns[5].text.strip()
-            _ports = _columns[6].text.strip()
+            '''TODO pod tooltip values'''
+            _items.append(WorkloadPod(
+                        name=str(_name).replace('P', '').strip(),
+                        status=self._get_item_health(el)))
+        return _items
 
-            _items.append(ServiceDetails(
-                        name=_name,
-                        created_at=parse_from_rest(_created_at),
-                        created_at_ui=_created_at_ui,
-                        service_type=str(_type),
-                        labels=self._get_labels(_columns[3]),
-                        resource_version=str(_resource_version),
-                        ip=str(_ip),
-                        ports=str(_ports.replace('\n', ' '))))
+
+class CardViewApplications(CardViewAbstract):
+    ROWS = '//ul[contains(@id, "app-list")]//li'
+
+    @property
+    def items(self):
+        _items = []
+        for el in self.browser.elements(locator=self.ROWS,
+                                        parent=ListViewAbstract.DETAILS_ROOT):
+            _name = el.text.replace('A', '').strip()
+
+            _items.append(_name)
+        return _items
+
+
+class CardViewWorkloads(CardViewAbstract):
+    ROWS = '//ul[contains(@id, "workload-list")]//li'
+
+    @property
+    def items(self):
+        _items = []
+        for el in self.browser.elements(locator=self.ROWS,
+                                        parent=ListViewAbstract.DETAILS_ROOT):
+            _name = el.text.replace('W', '').strip()
+
+            _items.append(_name)
+        return _items
+
+
+class CardViewServices(CardViewAbstract):
+    ROWS = '//ul[contains(@id, "service-list")]//li'
+
+    @property
+    def items(self):
+        _items = []
+        for el in self.browser.elements(locator=self.ROWS,
+                                        parent=ListViewAbstract.DETAILS_ROOT):
+            _name = el.text.replace('S', '').strip()
+
+            _items.append(_name)
         return _items
 
 
@@ -3654,11 +3460,7 @@ class LogsView(TabViewAbstract):
     duration = DropDown(locator=DROP_DOWN.format('metrics_filter_interval_duration'))
     interval = DropDown(locator=DROP_DOWN.format('metrics-refresh'))
     refresh = Button(locator='//button[@id="refresh_button"]')
-    pod_textarea = Text(locator='//textarea/..//div[contains(@class, "pf-l-toolbar__item") '
-                        'and not(contains(normalize-space(text()), '
-                        '"Istio proxy (sidecar)"))]/../../textarea')
-    proxy_textarea = Text(locator='//div[contains(normalize-space(text()), '
-                          '"Istio proxy (sidecar)")]/../../textarea')
+    logs_textarea = Text(locator='//div[@id="logsText"]')
 
     def open(self):
         tab = self.browser.element(locator=self.LOGS_TAB,
@@ -3671,8 +3473,8 @@ class LogsView(TabViewAbstract):
             except StaleElementReferenceException:
                 pass
         wait_to_spinner_disappear(self.browser)
-        self.logs_switch = ButtonSwitch(parent=self, label="Side by Side")
         self.log_hide = FilterInput(parent=self, locator='//input[@id="log_hide"]')
+        self.log_show = FilterInput(parent=self, locator='//input[@id="log_show"]')
 
 
 class MetricsView(TabViewAbstract):

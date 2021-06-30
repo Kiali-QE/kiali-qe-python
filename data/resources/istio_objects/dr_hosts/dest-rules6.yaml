@@ -1,7 +1,7 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
-  name: auto-reviews-dr-6
+  name: auto-mongodb-dr-6
   namespace: bookinfo
 spec:
   host: "*.cluster.local"

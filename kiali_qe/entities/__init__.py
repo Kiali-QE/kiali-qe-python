@@ -170,7 +170,7 @@ class ConfigurationStatus(EntityBase):
             self.validation, self.link)
 
     def __repr__(self):
-        return "{}({}, {}, {}, {})".format(
+        return "{}({}, {})".format(
             type(self).__name__, repr(self.validation), repr(self.link))
 
     def is_equal(self, other):

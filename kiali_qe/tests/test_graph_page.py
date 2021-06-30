@@ -4,7 +4,6 @@ from kiali_qe.components.enums import (
     GraphPageDisplayFilter,
     GraphType,
     GraphPageLayout,
-    EdgeLabelsFilter,
     TimeIntervalUIText,
     GraphRefreshInterval
 )
@@ -75,25 +74,15 @@ def test_filter(browser):
     options_defined = [item.text for item in GraphPageBadgesFilter]
     for item in GraphPageDisplayFilter:
         options_defined.append(item.text)
-    edge_options_defined = [item.text for item in EdgeLabelsFilter]
     options_listed = page.filter.items
-    edge_options_listed = page.filter.radio_items
     logger.debug('Filter options[defined:{}, listed:{}]'
                  .format(options_defined, options_listed))
-    logger.debug('Radio options[defined:{}, listed:{}]'
-                 .format(edge_options_defined, edge_options_listed))
     assert is_equal(options_defined, options_listed), \
         ('Filter Options mismatch: defined:{}, listed:{}'
          .format(options_defined, options_listed))
-    assert is_equal(edge_options_defined, edge_options_listed), \
-        ('Radio Options mismatch: defined:{}, listed:{}'
-         .format(edge_options_defined, edge_options_listed))
     # enable disable each filter
     for filter_name in options_listed:
         _filter_test(page, filter_name)
-    # select each filter in radio
-    for filter_name in edge_options_listed:
-        _filter_test(page, filter_name, uncheck=False)
 
 
 @pytest.mark.p_atomic

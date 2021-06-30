@@ -1,7 +1,5 @@
 import json
 
-from itertools import groupby
-
 from selenium.common.exceptions import NoSuchElementException
 from kiali.client import KialiClient
 from kiali_qe.components.enums import (
@@ -40,7 +38,7 @@ from kiali_qe.entities.applications import (
 )
 from kiali_qe.entities.overview import Overview
 from kiali_qe.utils import to_linear_string, dict_to_params
-from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
+from kiali_qe.utils.date import from_rest_to_ui
 from kiali_qe.utils.log import logger
 
 
@@ -48,6 +46,7 @@ ISTIO_CONFIG_TYPES = {'DestinationRule': 'destinationrules',
                       'VirtualService': 'virtualservices',
                       'ServiceEntry': 'serviceentries',
                       'WorkloadEntry': 'workloadentries',
+                      'WorkloadGroup': 'workloadgroups',
                       'Gateway': 'gateways',
                       'Handler': 'handler',
                       'EnvoyFilter': 'envoyfilters',
@@ -338,6 +337,17 @@ class KialiExtendedClient(KialiClient):
                                                                     'workloadentries',
                                                                     _policy['metadata']['name'])))
 
+            # update workloadGroups
+            if len(_data['workloadGroups']) > 0:
+                for _policy in _data['workloadGroups']:
+                    items.append(IstioConfig(
+                        name=_policy['metadata']['name'],
+                        namespace=_namespace,
+                        object_type=OBJECT_TYPE.WORKLOAD_GROUP.text,
+                        validation=self.get_istio_config_validation(_namespace,
+                                                                    'workloadgroups',
+                                                                    _policy['metadata']['name'])))
+
             # update sidecars
             if len(_data['sidecars']) > 0:
                 for _policy in _data['sidecars']:
@@ -408,6 +418,10 @@ class KialiExtendedClient(KialiClient):
             if _data['workloadEntry']:
                 config_data = _data['workloadEntry']
 
+            # get workloadGroup
+            if _data['workloadGroup']:
+                config_data = _data['workloadGroup']
+
             # get PeerAuthentication
             if _data['peerAuthentication']:
                 config_data = _data['peerAuthentication']
@@ -459,8 +473,7 @@ class KialiExtendedClient(KialiClient):
                         name=_wl_data['name'],
                         workload_type=_wl_data['type'],
                         labels=self.get_labels(_wl_data),
-                        created_at=parse_from_rest(_wl_data['createdAt']),
-                        created_at_ui=from_rest_to_ui(_wl_data['createdAt']),
+                        created_at=from_rest_to_ui(_wl_data['createdAt']),
                         resource_version=_wl_data['resourceVersion']))
             source_workloads = []
             # TODO better way to find Traffic
@@ -506,8 +519,7 @@ class KialiExtendedClient(KialiClient):
                     virtual_services.append(VirtualService(
                         status=_validation,
                         name=_vs_data['metadata']['name'],
-                        created_at=parse_from_rest(_vs_data['metadata']['creationTimestamp']),
-                        created_at_ui=from_rest_to_ui(_vs_data['metadata']['creationTimestamp']),
+                        created_at=from_rest_to_ui(_vs_data['metadata']['creationTimestamp']),
                         resource_version=_vs_data['metadata']['resourceVersion'],
                         protocol_route=_protocol_route,
                         hosts=_vs_data['spec']['hosts'],
@@ -547,8 +559,7 @@ class KialiExtendedClient(KialiClient):
                         host=_dr_data['spec']['host'],
                         traffic_policy=_traffic_policy if _traffic_policy else '',
                         subsets=_dr_subsets,
-                        created_at=parse_from_rest(_dr_data['metadata']['creationTimestamp']),
-                        created_at_ui=from_rest_to_ui(_dr_data['metadata']['creationTimestamp']),
+                        created_at=from_rest_to_ui(_dr_data['metadata']['creationTimestamp']),
                         resource_version=_dr_data['metadata']['resourceVersion']))
 
                     # It also requires IstioConfig type of objects in several testcases
@@ -560,13 +571,16 @@ class KialiExtendedClient(KialiClient):
 
             _ports = ''
             for _port in _service_data['service']['ports']:
-                _ports += '{}{} ({}) '.format(_port['protocol'],
-                                              ' ' + _port['name'] if _port['name'] != '' else '',
-                                              _port['port'])
+                _ports += '{}{}/{} '.format(_port['name'] + ' ' if _port['name'] != '' else '',
+                                            _port['port'],
+                                            _port['protocol'])
             endpoints = []
             if _service_data['endpoints']:
                 for _endpoint in _service_data['endpoints'][0]['addresses']:
                     endpoints.append(_endpoint['ip'])
+            _labels = self.get_labels(_service_data['service'])
+            _applications = set([_a.name for _a in self.application_list(namespaces=[namespace])
+                                 if _labels['app'] == _a.name])
             _validations = []
             if _service_data['validations'] \
                     and len(_service_data['validations']['service']) > 0:
@@ -579,9 +593,7 @@ class KialiExtendedClient(KialiClient):
             _service = ServiceDetails(
                     name=_service_data['service']['name'],
                     istio_sidecar=_service_rest.istio_sidecar,
-                    created_at=parse_from_rest(
-                        _service_data['service']['createdAt']),
-                    created_at_ui=from_rest_to_ui(
+                    created_at=from_rest_to_ui(
                         _service_data['service']['createdAt']),
                     resource_version=_service_data['service']['resourceVersion'],
                     service_type=_service_data['service']['type'],
@@ -589,12 +601,13 @@ class KialiExtendedClient(KialiClient):
                     endpoints=endpoints,
                     validations=_validations,
                     ports=_ports.strip(),
-                    labels=self.get_labels(_service_data['service']),
+                    labels=_labels,
                     selectors=self.get_selectors(_service_data['service']),
                     health=_service_health.is_healthy() if _service_health else None,
                     service_status=_service_health,
                     icon=self.get_icon_type(_service_data),
                     workloads=workloads,
+                    applications=_applications,
                     traffic=source_workloads,
                     virtual_services=virtual_services,
                     destination_rules=destination_rules,
@@ -619,22 +632,7 @@ class KialiExtendedClient(KialiClient):
             _services = []
             if _workload_data['services']:
                 for _ws_data in _workload_data['services']:
-                    _ports = ''
-                    for _port in _ws_data['ports']:
-                        _ports += '{}{} ({}) '.format(_port['protocol'],
-                                                      ' ' + _port['name']
-                                                      if _port['name'] != '' else '',
-                                                      _port['port'])
-                    _services.append(ServiceDetails(
-                        name=_ws_data['name'],
-                        created_at=parse_from_rest(_ws_data['createdAt']),
-                        created_at_ui=from_rest_to_ui(_ws_data['createdAt']),
-                        service_type=_ws_data['type'],
-                        ip=_ws_data['ip'],
-                        ports=_ports.strip(),
-                        labels=self.get_labels(_ws_data),
-                        selectors=self.get_selectors(_ws_data),
-                        resource_version=_ws_data['resourceVersion']))
+                    _services.append(_ws_data['name'])
             _destination_services = []
             # TODO find a better way to take Traffic
             if 'destinationServices' in _workload_data:
@@ -646,6 +644,7 @@ class KialiExtendedClient(KialiClient):
             _all_pods = []
             if _workload_data['pods']:
                 for _pod_data in _workload_data['pods']:
+                    ''' TODO read from tooltip in UI and then activate this code
                     _istio_init_containers = ''
                     _istio_containers = ''
                     if _pod_data['istioContainers']:
@@ -653,59 +652,19 @@ class KialiExtendedClient(KialiClient):
                     if _pod_data['istioInitContainers']:
                         _istio_init_containers = _pod_data['istioInitContainers'][0]['image']
                     _created_by = '{} ({})'.format(_pod_data['createdBy'][0]['name'],
-                                                   _pod_data['createdBy'][0]['kind'])
+                                                   _pod_data['createdBy'][0]['kind'])'''
                     _pod = WorkloadPod(
                         name=str(_pod_data['name']),
-                        created_at=parse_from_rest(_pod_data['createdAt']),
-                        created_at_ui=from_rest_to_ui(_pod_data['createdAt']),
-                        created_by=_created_by,
-                        labels=self.get_labels(_pod_data),
-                        istio_init_containers=str(_istio_init_containers),
-                        istio_containers=str(_istio_containers),
-                        status=self.get_pod_status(_workload_data['istioSidecar'], _pod_data),
-                        phase=_pod_data['status'])
+                        status=self.get_pod_status(_workload_data['istioSidecar'], _pod_data))
                     _all_pods.append(_pod)
-
-            def get_created_by(nodeid):
-                return nodeid.created_by
-
-            _pods = []
-            # group by created_by fielts, as it is shown grouped in UI
-            for _created_by, _grouped_pods in groupby(_all_pods, key=get_created_by):
-                _workload_pods = []
-                for _grouped_pod in _grouped_pods:
-                    _workload_pods.append(_grouped_pod)
-                if len(_workload_pods) > 1:
-                    _pod = WorkloadPod(
-                        name='{}... ({} replicas)'.format(_pod.name[:-5], len(_workload_pods)),
-                        created_at='{} and {}'.format(
-                            _pod.created_at, _workload_pods[len(_workload_pods)-1].created_at),
-                        created_at_ui=_pod.created_at_ui,
-                        created_by=_created_by,
-                        labels=_workload_pods[0].labels,
-                        istio_init_containers=_workload_pods[0].istio_init_containers,
-                        istio_containers=_workload_pods[0].istio_containers,
-                        status=_workload_pods[0].status,
-                        phase=_workload_pods[0].phase)
-                    _pods.append(_pod)
-                elif len(_workload_pods) == 1:
-                    _pod = WorkloadPod(
-                        name=_workload_pods[0].name,
-                        created_at=_workload_pods[0].created_at,
-                        created_at_ui=_workload_pods[0].created_at_ui,
-                        created_by=_created_by,
-                        labels=_workload_pods[0].labels,
-                        istio_init_containers=_workload_pods[0].istio_init_containers,
-                        istio_containers=_workload_pods[0].istio_containers,
-                        status=_workload_pods[0].status,
-                        phase=_workload_pods[0].phase)
-                    _pods.append(_pod)
 
             _workload_health = self.get_workload_health(
                         namespace=namespace,
                         workload_name=_workload_data['name'])
 
             _labels = self.get_labels(_workload_data)
+            _applications = set([_a.name for _a in self.application_list(namespaces=[namespace])
+                                 if _labels['app'] == _a.name])
             _config_list = self.istio_config_list(
                 namespaces=[namespace], config_names=[],
                 params={'workloadSelector': dict_to_params(_labels)})
@@ -714,20 +673,17 @@ class KialiExtendedClient(KialiClient):
                 name=_workload_data['name'],
                 istio_sidecar=_workload_rest.istio_sidecar,
                 workload_type=_workload_data['type'],
-                created_at=parse_from_rest(_workload_data['createdAt']),
-                created_at_ui=from_rest_to_ui(_workload_data['createdAt']),
+                created_at=from_rest_to_ui(_workload_data['createdAt']),
                 resource_version=_workload_data['resourceVersion'],
                 health=_workload_health.is_healthy() if _workload_health else None,
                 workload_status=_workload_health,
                 icon=self.get_icon_type(_workload_data),
                 labels=_labels,
-                pods_number=len(_pods),
-                services_number=len(_services),
                 traffic=_destination_services,
-                pods=_pods,
+                pods=_all_pods,
                 services=_services,
-                istio_configs=_config_list,
-                istio_configs_number=len(_config_list))
+                applications=_applications,
+                istio_configs=_config_list)
         return _workload
 
     def application_details(self, namespace, application_name):

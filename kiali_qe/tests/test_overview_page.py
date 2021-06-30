@@ -1,5 +1,6 @@
 import pytest
 
+from selenium.common.exceptions import StaleElementReferenceException
 from kiali_qe.tests import OverviewPageTest
 from kiali_qe.components.enums import (
     OverviewPageType,
@@ -160,16 +161,19 @@ def test_filter_overviews_by_two_namespaces(kiali_client, openshift_client, brow
 
 
 @pytest.mark.p_ro_top
-@pytest.mark.p_ro_group6
+@pytest.mark.p_crud_group4
 def test_overview_auto_injection(kiali_client, openshift_client, browser, pick_namespace):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     namespace = pick_namespace(BOOKINFO_2)
-    tests.test_disable_enable_delete_auto_injection(namespace)
+    try:
+        tests.test_disable_enable_delete_auto_injection(namespace)
+    except (StaleElementReferenceException):
+        pass
 
 
 @pytest.mark.p_ro_top
-@pytest.mark.p_ro_group6
+@pytest.mark.p_crud_group4
 def test_overview_traffic_policies(kiali_client, openshift_client, browser, pick_namespace):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)

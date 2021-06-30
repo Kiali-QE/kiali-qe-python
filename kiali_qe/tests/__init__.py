@@ -36,7 +36,6 @@ from kiali_qe.components.enums import (
     RoutingWizardTLS,
     RoutingWizardLoadBalancer,
     TrafficType,
-    OverviewLinks,
     OverviewInjectionLinks,
     OverviewGraphTypeLink,
     OverviewTrafficLinks,
@@ -75,7 +74,8 @@ from kiali_qe.utils import (
 )
 from kiali_qe.utils.log import logger
 from kiali_qe.utils.command_exec import oc_apply, oc_delete
-
+from time import sleep
+from selenium.webdriver.common.keys import Keys
 from kiali_qe.pages import (
     ServicesPage,
     IstioConfigPage,
@@ -129,6 +129,8 @@ class AbstractListPageTest(object):
 
     def open(self, name, namespace=None, force_refresh=False):
         # TODO added wait for unstable performance
+        self.browser.send_keys_to_focused_element(Keys.ESCAPE)
+        sleep(0.5)
         wait_to_spinner_disappear(self.browser)
         if namespace is not None:
             self.browser.click(self.browser.element(
@@ -236,6 +238,8 @@ class AbstractListPageTest(object):
             self.page.filter.remove(filter_name=_filter['name'], value=_filter['value'])
 
         self.assert_applied_filters(filters)
+        self.browser.send_keys_to_focused_element(Keys.ESCAPE)
+        sleep(0.2)
 
     def apply_label_operation(self, label_operation):
         assert self.page.filter._label_operation.is_displayed, 'Label Operation is not displayed'
@@ -454,13 +458,10 @@ class AbstractListPageTest(object):
                         logs_tab.duration.options)
         assert is_equal([item.text for item in GraphRefreshInterval],
                         logs_tab.interval.options)
-        logs_tab.logs_switch.on()
         logs_tab.log_hide.fill(_filter)
         self.browser.click(logs_tab.refresh)
         wait_to_spinner_disappear(self.browser)
-        assert logs_tab.logs_switch.is_on
-        assert _filter not in logs_tab.pod_textarea.text
-        assert _filter not in logs_tab.proxy_textarea.text
+        assert _filter not in logs_tab.logs_textarea.text
 
     def assert_traffic(self, name, traffic_tab, self_object_type, traffic_object_type):
         bound_traffic = traffic_tab.traffic_items()
@@ -510,14 +511,17 @@ class AbstractListPageTest(object):
         if self.page.PAGE_MENU == MENU.APPLICATIONS.text:
             assert not side_panel.get_workload()
             assert side_panel.get_service()
-            assert name == side_panel.get_application()
+            if side_panel.get_application():
+                assert name == side_panel.get_application()
         elif self.page.PAGE_MENU == MENU.WORKLOADS.text:
-            assert name == side_panel.get_workload()
+            if side_panel.get_workload():
+                assert name == side_panel.get_workload()
             assert side_panel.get_service()
             assert side_panel.get_application()
         elif self.page.PAGE_MENU == MENU.SERVICES.text:
             assert not side_panel.get_workload()
-            assert name == side_panel.get_service()
+            if side_panel.get_service():
+                assert name == side_panel.get_service()
             assert side_panel.get_application()
         else:
             assert False, "Graph Overview Page is not recognized"
@@ -530,8 +534,6 @@ class AbstractListPageTest(object):
         self.browser.execute_script("history.back();")
 
     def assert_istio_configs(self, object_ui, object_rest, object_oc, namespace):
-        assert object_ui.istio_configs_number == len(object_ui.istio_configs), \
-            'Config tab\'s number should be equal to items'
         assert len(object_rest.istio_configs) == len(object_ui.istio_configs), \
             'UI configs should be equal to REST configs items'
         assert len(object_rest.istio_configs) == len(object_oc.istio_configs), \
@@ -558,7 +560,7 @@ class AbstractListPageTest(object):
             if not found:
                 assert found, 'Config {} not found in OC {}'.format(istio_config_ui,
                                                                     istio_config_oc)
-            config_overview_ui = self.page.content.table_view_istio_config.get_overview(
+            config_overview_ui = self.page.content.card_view_istio_config.get_overview(
                     istio_config_ui.name,
                     istio_config_ui.type)
             config_details_oc = self.openshift_client.istio_config_details(
@@ -683,7 +685,8 @@ class OverviewPageTest(AbstractListPageTest):
                 assert found, '{} not found in REST {}'.format(overview_ui, overviews_rest)
 
             self._assert_overview_config_status(overview_ui.namespace, overview_ui.config_status)
-            assert overview_ui.labels == self.openshift_client.namespace_labels(
+            assert self.kiali_client.namespace_labels(overview_ui.namespace) == \
+                self.openshift_client.namespace_labels(
                 overview_ui.namespace)
 
     def _apply_overview_filters(self, overviews=[], filters=[],
@@ -744,61 +747,85 @@ class OverviewPageTest(AbstractListPageTest):
         self.apply_filters(filters=[{"name": OverviewPageFilter.NAME.text, "value": namespace}],
                            force_clear_all=True)
 
-        self.kiali_client.update_namespace_auto_injection(namespace, 'enabled')
-        self.kiali_client.update_namespace_auto_injection(namespace, 'disabled')
-
         self.page.page_refresh()
         overviews_ui = self.page.content.list_items
 
-        for overview_ui in overviews_ui:
-            if overview_ui.namespace == namespace:
-                assert 'istio-injection' in overview_ui.labels and \
-                    overview_ui.labels['istio-injection'] == 'disabled'
-                self._assert_overview_options(
-                    options=self.page.content.overview_action_options(namespace),
-                    enabled=False,
-                    deleted=False)
+        assert len(overviews_ui) == 1
 
-        self.kiali_client.update_namespace_auto_injection(namespace, 'enabled')
+        overview_ui = overviews_ui[0]
 
-        self.page.page_refresh()
-        overviews_ui = self.page.content.list_items
+        assert overview_ui.namespace == namespace
 
-        for overview_ui in overviews_ui:
-            if overview_ui.namespace == namespace:
-                assert 'istio-injection' in overview_ui.labels and \
-                    overview_ui.labels['istio-injection'] == 'enabled'
-                self._assert_overview_options(
-                    options=self.page.content.overview_action_options(namespace),
-                    enabled=True,
-                    deleted=False)
-
-        self.kiali_client.update_namespace_auto_injection(namespace, None)
-
-        self.page.page_refresh()
-        overviews_ui = self.page.content.list_items
-
-        for overview_ui in overviews_ui:
-            if overview_ui.namespace == namespace:
-                assert 'istio-injection' not in overview_ui.labels
-                self._assert_overview_options(
-                    options=self.page.content.overview_action_options(namespace),
-                    enabled=False,
-                    deleted=True)
-
-        self.kiali_client.update_namespace_auto_injection(namespace, 'enabled')
-
-        self.page.page_refresh()
-        overviews_ui = self.page.content.list_items
-
-        for overview_ui in overviews_ui:
-            if overview_ui.namespace == namespace:
-                assert 'istio-injection' in overview_ui.labels and \
-                    overview_ui.labels['istio-injection'] == 'enabled'
-                self._assert_overview_options(
-                    options=self.page.content.overview_action_options(namespace),
-                    enabled=True,
-                    deleted=False)
+        if self.page.content.overview_action_present(namespace,
+                                                     OverviewInjectionLinks.
+                                                     ENABLE_AUTO_INJECTION.text):
+            self.page.content.select_action(
+                namespace,
+                OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
+            self.page.page_refresh()
+            overviews_ui = self.page.content.list_items
+            overview_ui = overviews_ui[0]
+            assert 'istio-injection' in overview_ui.labels and \
+                overview_ui.labels['istio-injection'] == 'enabled', \
+                'istio-injection should be enabled in {}'.format(overview_ui.labels)
+            assert not self.page.content.overview_action_present(
+                namespace,
+                OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
+            assert self.page.content.overview_action_present(
+                namespace,
+                OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
+            assert self.page.content.overview_action_present(
+                namespace,
+                OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text)
+        elif self.page.content.overview_action_present(namespace,
+                                                       OverviewInjectionLinks.
+                                                       DISABLE_AUTO_INJECTION.text):
+            self.page.content.select_action(
+                namespace,
+                OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
+            self.page.page_refresh()
+            overviews_ui = self.page.content.list_items
+            overview_ui = overviews_ui[0]
+            assert 'istio-injection' in overview_ui.labels and \
+                overview_ui.labels['istio-injection'] == 'disabled', \
+                'istio-injection should be disabled in {}'.format(overview_ui.labels)
+            assert self.page.content.overview_action_present(
+                namespace,
+                OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
+            assert not self.page.content.overview_action_present(
+                namespace,
+                OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
+            assert self.page.content.overview_action_present(
+                namespace,
+                OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text)
+            self.page.page_refresh()
+            self.page.content.select_action(
+                namespace,
+                OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
+        elif self.page.content.overview_action_present(namespace,
+                                                       OverviewInjectionLinks.
+                                                       REMOVE_AUTO_INJECTION.text):
+            self.page.content.select_action(
+                namespace,
+                OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text)
+            self.page.page_refresh()
+            overviews_ui = self.page.content.list_items
+            overview_ui = overviews_ui[0]
+            assert 'istio-injection' not in overview_ui.labels, \
+                'istio-injection should not be in {}'.format(overview_ui.labels)
+            assert self.page.content.overview_action_present(
+                namespace,
+                OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
+            assert not self.page.content.overview_action_present(
+                namespace,
+                OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
+            assert not self.page.content.overview_action_present(
+                namespace,
+                OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text)
+            self.page.page_refresh()
+            self.page.content.select_action(
+                namespace,
+                OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
 
     def test_create_update_delete_traffic_policies(self, namespace):
         # load the page first
@@ -806,92 +833,76 @@ class OverviewPageTest(AbstractListPageTest):
         self.apply_filters(filters=[{"name": OverviewPageFilter.NAME.text, "value": namespace}],
                            force_clear_all=True)
 
-        # first delete the policies if exists
-        self.kiali_client.update_namespace_auto_injection(namespace, 'enabled')
-        self.kiali_client.update_namespace_auto_injection(namespace, 'disabled')
-        self.page.page_refresh()
-        wait_to_spinner_disappear(self.browser)
-        if self.page.content.select_action(
-                namespace, OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text):
+        if self.page.content.overview_action_present(namespace,
+                                                     OverviewTrafficLinks.
+                                                     DELETE_TRAFFIC_POLICIES.text):
+            self.page.page_refresh()
+            wait_to_spinner_disappear(self.browser)
+            if self.page.content.select_action(
+                    namespace, OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text):
+                wait_to_spinner_disappear(self.browser)
+                self.browser.wait_for_element(
+                    parent=ListViewAbstract.DIALOG_ROOT,
+                    locator=('.//button[text()="Delete"]'))
+                self.browser.click(self.browser.element(
+                    parent=ListViewAbstract.DIALOG_ROOT,
+                    locator=('.//button[text()="Delete"]')))
+            wait_to_spinner_disappear(self.browser)
+            self.page.page_refresh()
+            wait_to_spinner_disappear(self.browser)
+            self.page.content.list_items
+            assert not self.page.content.overview_action_present(
+                namespace,
+                OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text)
+            assert not self.page.content.overview_action_present(
+                namespace,
+                OverviewTrafficLinks.UPDATE_TRAFFIC_POLICIES.text)
+            assert self.page.content.overview_action_present(
+                namespace,
+                OverviewTrafficLinks.CREATE_TRAFFIC_POLICIES.text)
+        elif self.page.content.overview_action_present(namespace,
+                                                       OverviewTrafficLinks.
+                                                       CREATE_TRAFFIC_POLICIES.text):
+            assert self.page.content.select_action(
+                namespace, OverviewTrafficLinks.CREATE_TRAFFIC_POLICIES.text)
+            wait_to_spinner_disappear(self.browser)
+            self.page.page_refresh()
+            wait_to_spinner_disappear(self.browser)
+            self.page.content.list_items
+            assert self.page.content.overview_action_present(
+                namespace,
+                OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text)
+            assert self.page.content.overview_action_present(
+                namespace,
+                OverviewTrafficLinks.UPDATE_TRAFFIC_POLICIES.text)
+            assert not self.page.content.overview_action_present(
+                namespace,
+                OverviewTrafficLinks.CREATE_TRAFFIC_POLICIES.text)
+        elif self.page.content.overview_action_present(namespace,
+                                                       OverviewTrafficLinks.
+                                                       UPDATE_TRAFFIC_POLICIES.text):
+            assert self.page.content.select_action(
+                namespace, OverviewTrafficLinks.UPDATE_TRAFFIC_POLICIES.text)
+            wait_to_spinner_disappear(self.browser)
             self.browser.wait_for_element(
                 parent=ListViewAbstract.DIALOG_ROOT,
-                locator=('.//button[text()="Delete"]'))
+                locator=('.//button[text()="Update"]'))
             self.browser.click(self.browser.element(
                 parent=ListViewAbstract.DIALOG_ROOT,
-                locator=('.//button[text()="Delete"]')))
-        wait_to_spinner_disappear(self.browser)
-        self.page.page_refresh()
-        wait_to_spinner_disappear(self.browser)
-
-        self._assert_overview_options(
-            options=self.page.content.overview_action_options(namespace),
-            enabled=False,
-            deleted=False,
-            policy_created=False)
-
-        assert self.page.content.select_action(
-            namespace, OverviewTrafficLinks.CREATE_TRAFFIC_POLICIES.text)
-        wait_to_spinner_disappear(self.browser)
-        self.page.page_refresh()
-        wait_to_spinner_disappear(self.browser)
-
-        self._assert_overview_options(
-            options=self.page.content.overview_action_options(namespace),
-            enabled=False,
-            deleted=False,
-            policy_created=True)
-
-        assert self.page.content.select_action(
-            namespace, OverviewTrafficLinks.UPDATE_TRAFFIC_POLICIES.text)
-        self.browser.wait_for_element(
-            parent=ListViewAbstract.DIALOG_ROOT,
-            locator=('.//button[text()="Update"]'))
-        self.browser.click(self.browser.element(
-            parent=ListViewAbstract.DIALOG_ROOT,
-            locator=('.//button[text()="Update"]')))
-        wait_to_spinner_disappear(self.browser)
-        self.page.page_refresh()
-        wait_to_spinner_disappear(self.browser)
-
-        self._assert_overview_options(
-            options=self.page.content.overview_action_options(namespace),
-            enabled=False,
-            deleted=False,
-            policy_created=True)
-
-        assert self.page.content.select_action(
-            namespace, OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text)
-        self.browser.wait_for_element(
-            parent=ListViewAbstract.DIALOG_ROOT,
-            locator=('.//button[text()="Delete"]'))
-        self.browser.click(self.browser.element(
-            parent=ListViewAbstract.DIALOG_ROOT,
-            locator=('.//button[text()="Delete"]')))
-        wait_to_spinner_disappear(self.browser)
-        self.page.page_refresh()
-        wait_to_spinner_disappear(self.browser)
-
-        self._assert_overview_options(
-            options=self.page.content.overview_action_options(namespace),
-            enabled=False,
-            deleted=False,
-            policy_created=False)
-
-    def _assert_overview_options(self, options, enabled=True, deleted=False, policy_created=False):
-        expected_options = [item.text for item in OverviewLinks]
-        if not enabled:
-            expected_options.append(OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
-        if enabled:
-            expected_options.append(OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
-        if not deleted:
-            expected_options.append(OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text)
-        if not policy_created:
-            expected_options.append(OverviewTrafficLinks.CREATE_TRAFFIC_POLICIES.text)
-        else:
-            expected_options.append(OverviewTrafficLinks.UPDATE_TRAFFIC_POLICIES.text)
-            expected_options.append(OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text)
-        assert is_equal(expected_options, options), \
-            '{} not equal to {}'.format(expected_options, options)
+                locator=('.//button[text()="Update"]')))
+            wait_to_spinner_disappear(self.browser)
+            self.page.page_refresh()
+            wait_to_spinner_disappear(self.browser)
+            self.page.content.list_items
+            assert self.page.content.overview_action_present(
+                namespace,
+                OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text)
+            assert self.page.content.overview_action_present(
+                namespace,
+                OverviewTrafficLinks.UPDATE_TRAFFIC_POLICIES.text)
+            assert not self.page.content.overview_action_present(
+                namespace,
+                OverviewTrafficLinks.CREATE_TRAFFIC_POLICIES.text)
 
     def _assert_overview_config_status(self, namespace, config_status):
         expected_status = IstioConfigValidation.NA
@@ -937,12 +948,12 @@ class ApplicationsPageTest(AbstractListPageTest):
         self.apply_filters(filters=[
             {'name': ApplicationsPageFilter.APP_NAME.text, 'value': name}])
 
-    def load_details_page(self, name, namespace, force_refresh, load_only=False):
+    def load_details_page(self, name, namespace, force_refresh=False, load_only=False):
         logger.debug('Loading details page for application: {}'.format(name))
         if not self.is_in_details_page(name, namespace):
             self._prepare_load_details_page(name, namespace)
             self.open(name, namespace, force_refresh)
-            self.browser.wait_for_element(locator='//*[contains(text(), "Overall Health")]')
+            self.browser.wait_for_element(locator='//*[contains(., "Application")]')
         return self.page.content.get_details(load_only)
 
     def assert_random_details(self, namespaces=[], filters=[], force_refresh=False):
@@ -989,7 +1000,7 @@ class ApplicationsPageTest(AbstractListPageTest):
                                                advanced_check=True), \
             'Application UI {} not equal to REST {}'\
             .format(application_details_ui, application_details_rest)
-
+        '''TODO read health tooltip values
         if application_details_ui.application_status:
             assert application_details_ui.application_status.is_healthy() == \
                 application_details_ui.health, \
@@ -1005,7 +1016,11 @@ class ApplicationsPageTest(AbstractListPageTest):
                     .format(
                             application_details_ui.application_status.deployment_statuses,
                             application_details_oc.application_status.deployment_statuses,
-                            application_details_ui.name)
+                            application_details_ui.name)'''
+        assert is_equal([_w.name for _w in application_details_ui.workloads],
+                        [_w.name for _w in application_details_rest.workloads])
+        assert is_equal([_w.name for _w in application_details_oc.workloads],
+                        [_w.name for _w in application_details_rest.workloads])
         for workload_ui in application_details_ui.workloads:
             found = False
             for workload_rest in application_details_rest.workloads:
@@ -1189,12 +1204,12 @@ class WorkloadsPageTest(AbstractListPageTest):
         self.apply_filters(filters=[
             {'name': WorkloadsPageFilter.WORKLOAD_NAME.text, 'value': name}])
 
-    def load_details_page(self, name, namespace, force_refresh, load_only=False):
+    def load_details_page(self, name, namespace, force_refresh=False, load_only=False):
         logger.debug('Loading details page for workload: {}'.format(name))
         if not self.is_in_details_page(name, namespace):
             self._prepare_load_details_page(name, namespace)
             self.open(name, namespace, force_refresh)
-            self.browser.wait_for_element(locator='//*[contains(., "Workload Properties")]')
+            self.browser.wait_for_element(locator='//*[contains(., "Workload")]')
         return self.page.content.get_details(load_only)
 
     def assert_random_details(self, namespaces=[], filters=[],
@@ -1225,8 +1240,6 @@ class WorkloadsPageTest(AbstractListPageTest):
         workload_details_ui = self.load_details_page(name, namespace, force_refresh)
         assert workload_details_ui
         assert name == workload_details_ui.name
-        assert workload_type == workload_details_ui.workload_type, \
-            '{} and {} are not equal'.format(workload_type, workload_details_ui.workload_type)
         # get workload detals from rest
         workload_details_rest = self.kiali_client.workload_details(
             namespace=namespace,
@@ -1250,10 +1263,6 @@ class WorkloadsPageTest(AbstractListPageTest):
                                             advanced_check=False), \
             'Workload UI {} not equal to OC {}'\
             .format(workload_details_ui, workload_details_oc)
-        if workload_details_ui.pods_number != workload_details_rest.pods_number:
-            return False
-        if workload_details_ui.services_number != workload_details_rest.services_number:
-            return False
         if workload_details_ui.workload_status:
             assert workload_details_ui.workload_status.is_healthy() == \
                 workload_details_ui.health, \
@@ -1262,6 +1271,10 @@ class WorkloadsPageTest(AbstractListPageTest):
                 workload_details_ui.workload_status.is_healthy(),
                 workload_details_ui.health,
                 workload_details_ui.name)
+        assert is_equal(workload_details_ui.applications,
+                        workload_details_rest.applications)
+        assert is_equal(workload_details_ui.services,
+                        workload_details_rest.services)
         all_pods = []
         for pod_ui in workload_details_ui.pods:
             all_pods.append(pod_ui.name)
@@ -1285,8 +1298,7 @@ class WorkloadsPageTest(AbstractListPageTest):
         for service_ui in workload_details_ui.services:
             found = False
             for service_rest in workload_details_rest.services:
-                if service_ui.is_equal(service_rest,
-                                       advanced_check=True):
+                if service_ui == service_rest:
                     found = True
                     break
             if not found:
@@ -1466,42 +1478,27 @@ class WorkloadsPageTest(AbstractListPageTest):
         self._prepare_load_details_page(name, namespace)
         self.open(name, namespace)
 
-        self.kiali_client.update_workload_auto_injection(name, namespace, 'true')
-        self.kiali_client.update_workload_auto_injection(name, namespace, 'false')
-
-        self.page.page_refresh()
-        assert 'false' == self.page.content._details_sidecar_injection_text()
-        assert self.page.actions.is_enable_auto_injection_visible()
-        assert self.page.actions.is_remove_auto_injection_visible()
-        assert not self.page.actions.is_disable_auto_injection_visible()
-
-        self.page.actions.select(OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
-        self.page.page_refresh()
-        assert 'true' == self.page.content._details_sidecar_injection_text()
-        assert not self.page.actions.is_enable_auto_injection_visible()
-        assert self.page.actions.is_remove_auto_injection_visible()
-        assert self.page.actions.is_disable_auto_injection_visible()
-
-        self.page.actions.select(OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
-        self.page.page_refresh()
-        assert 'false' == self.page.content._details_sidecar_injection_text()
-        assert self.page.actions.is_enable_auto_injection_visible()
-        assert self.page.actions.is_remove_auto_injection_visible()
-        assert not self.page.actions.is_disable_auto_injection_visible()
-
-        self.page.actions.select(OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text)
-        self.page.page_refresh()
-        assert not self.page.content._details_sidecar_injection_text()
-        assert self.page.actions.is_enable_auto_injection_visible()
-        assert not self.page.actions.is_remove_auto_injection_visible()
-        assert not self.page.actions.is_disable_auto_injection_visible()
-
-        self.page.actions.select(OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
-        self.page.page_refresh()
-        assert 'true' == self.page.content._details_sidecar_injection_text()
-        assert not self.page.actions.is_enable_auto_injection_visible()
-        assert self.page.actions.is_remove_auto_injection_visible()
-        assert self.page.actions.is_disable_auto_injection_visible()
+        if self.page.actions.is_disable_auto_injection_visible():
+            self.page.actions.select(OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
+            self.page.page_refresh()
+            assert self.page.content._details_missing_sidecar()
+            assert self.page.actions.is_enable_auto_injection_visible()
+            assert self.page.actions.is_remove_auto_injection_visible()
+            assert not self.page.actions.is_disable_auto_injection_visible()
+        elif self.page.actions.is_remove_auto_injection_visible():
+            self.page.actions.select(OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text)
+            self.page.page_refresh()
+            assert self.page.content._details_missing_sidecar()
+            assert self.page.actions.is_enable_auto_injection_visible()
+            assert not self.page.actions.is_remove_auto_injection_visible()
+            assert not self.page.actions.is_disable_auto_injection_visible()
+        elif self.page.actions.is_enable_auto_injection_visible():
+            self.page.actions.select(OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
+            self.page.page_refresh()
+            assert self.page.content._details_missing_sidecar()
+            assert not self.page.actions.is_enable_auto_injection_visible()
+            assert self.page.actions.is_remove_auto_injection_visible()
+            assert self.page.actions.is_disable_auto_injection_visible()
 
 
 class ServicesPageTest(AbstractListPageTest):
@@ -1523,13 +1520,12 @@ class ServicesPageTest(AbstractListPageTest):
         self.apply_filters(filters=[
             {'name': ServicesPageFilter.SERVICE_NAME.text, 'value': name}])
 
-    def load_details_page(self, name, namespace, force_refresh, load_only=False):
+    def load_details_page(self, name, namespace, force_refresh=False, load_only=False):
         logger.debug('Loading details page for service: {}'.format(name))
         if not self.is_in_details_page(name, namespace):
             self._prepare_load_details_page(name, namespace)
             self.open(name, namespace, force_refresh)
-            self.browser.wait_for_element(locator='//*[contains(text(), "Overall Health")]',
-                                          parent='//*[@id="health"]')
+            self.browser.wait_for_element(locator='//*[contains(., "Service")]')
         return self.page.content.get_details(load_only)
 
     def assert_random_details(self, namespaces=[], filters=[], force_refresh=False):
@@ -1578,14 +1574,16 @@ class ServicesPageTest(AbstractListPageTest):
                                            advanced_check=False), \
             'Service UI {} not equal to OC {}'\
             .format(service_details_ui, service_details_oc)
-        assert service_details_ui.workloads_number\
+        assert is_equal(service_details_ui.applications,
+                        service_details_rest.applications)
+        assert len(service_details_ui.workloads)\
             == len(service_details_rest.workloads)
-        assert service_details_ui.istio_configs_number\
+        assert len(service_details_ui.istio_configs)\
             == len(service_details_rest.istio_configs)
-        assert service_details_ui.workloads_number\
-            == len(service_details_rest.workloads)
-        assert service_details_ui.istio_configs_number\
-            == len(service_details_ui.istio_configs)
+        assert len(service_details_ui.workloads)\
+            == len(service_details_oc.workloads)
+        assert len(service_details_ui.istio_configs)\
+            == len(service_details_oc.istio_configs)
 
         if service_details_ui.service_status:
             assert service_details_ui.service_status.is_healthy() == \
@@ -1599,7 +1597,7 @@ class ServicesPageTest(AbstractListPageTest):
         for workload_ui in service_details_ui.workloads:
             found = False
             for workload_rest in service_details_rest.workloads:
-                if workload_ui.is_equal(workload_rest, advanced_check=True):
+                if workload_ui == workload_rest.name:
                     found = True
                     break
             if not found:
@@ -1607,7 +1605,7 @@ class ServicesPageTest(AbstractListPageTest):
                                                                         workload_rest)
             found = False
             for workload_oc in service_details_oc.workloads:
-                if workload_ui.is_equal(workload_oc, advanced_check=True):
+                if workload_ui == workload_oc.name:
                     found = True
                     break
             if not found:
@@ -1620,7 +1618,7 @@ class ServicesPageTest(AbstractListPageTest):
                                   namespace)
 
         if check_metrics:
-            self.assert_metrics_options(service_details_ui.inbound_metrics, check_grafana=True)
+            self.assert_metrics_options(service_details_ui.inbound_metrics, check_grafana=False)
 
         self.assert_traces_tab(service_details_ui.traces_tab)
 
@@ -2034,23 +2032,28 @@ class IstioConfigPageTest(AbstractListPageTest):
             openshift_client=openshift_client, page=IstioConfigPage(browser))
         self.browser = browser
 
-    def _prepare_load_details_page(self, name, namespace):
+    def _prepare_load_details_page(self, name, namespace, object_type=None):
         # load the page first
         self.page.load(force_load=True)
         # apply namespace
         self.apply_namespaces(namespaces=[namespace])
         # apply filters
-        self.apply_filters(filters=[
-            {'name': IstioConfigPageFilter.ISTIO_NAME.text, 'value': name}])
+        _filters = [{'name': IstioConfigPageFilter.ISTIO_NAME.text, 'value': name}]
+        if object_type:
+            _filters.append({'name': IstioConfigPageFilter.ISTIO_TYPE.text, 'value': object_type})
+        self.apply_filters(filters=_filters)
 
-    def load_details_page(self, name, namespace, force_refresh, load_only=False):
+    def load_details_page(self, name, namespace, object_type=None,
+                          force_refresh=False, load_only=False):
         logger.debug('Loading details page for istio config: {}'.format(name))
         if not self.is_in_details_page(name, namespace):
-            self._prepare_load_details_page(name, namespace)
+            self._prepare_load_details_page(name, namespace, object_type)
             wait_to_spinner_disappear(self.browser)
             self.open(name, namespace, force_refresh)
+            wait_to_spinner_disappear(self.browser)
             self.browser.wait_for_element(locator='//button[contains(., "YAML")]',
                                           parent='//*[contains(@class, "pf-c-page__main-section")]')
+            wait_to_spinner_disappear(self.browser)
         return self.page.content.get_details(name, load_only)
 
     def assert_all_items(self, namespaces=[], filters=[], sort_options=[], force_clear_all=True):
@@ -2132,7 +2135,8 @@ class IstioConfigPageTest(AbstractListPageTest):
         logger.debug('Asserting details for: {}, in namespace: {}'.format(name, namespace))
 
         # load config details page
-        config_details_ui = self.load_details_page(name, namespace, force_refresh=False)
+        config_details_ui = self.load_details_page(name, namespace, object_type,
+                                                   force_refresh=False)
         assert config_details_ui
         assert name == config_details_ui.name
         assert config_details_ui.text
@@ -2248,16 +2252,17 @@ class IstioConfigPageTest(AbstractListPageTest):
         return 'last-applied-configuration' in key \
             or key.startswith('f:') \
             or 'managedFields' in key \
-            or 'creationTimestamp' in key
+            or 'creationTimestamp' in key \
+            or 'selfLink' in key
 
-    def test_gateway_create(self, name, hosts, namespaces):
+    def test_gateway_create(self, name, hosts, port_name, port_number, namespaces):
         logger.debug('Creating Gateway: {}, from namespaces: {}'.format(name, namespaces))
         # load the page first
         self.page.load(force_load=True)
         # apply namespace
         self.apply_namespaces(namespaces=namespaces)
         wait_to_spinner_disappear(self.browser)
-        self.page.actions.create_istio_config_gateway(name, hosts)
+        self.page.actions.create_istio_config_gateway(name, hosts, port_name, port_number)
         for namespace in namespaces:
             self.assert_details(name, IstioConfigObjectType.GATEWAY.text, namespace)
 
@@ -2360,9 +2365,9 @@ class IstioConfigPageTest(AbstractListPageTest):
                     for _key, _value in jwt_rules.items():
                         assert '\"{}\": \"{}\"'.format(_key, _value) in config_details_rest.text
 
-    def delete_istio_config(self, name, namespace=None):
+    def delete_istio_config(self, name, object_type, namespace=None):
         logger.debug('Deleting istio config: {}, from namespace: {}'.format(name, namespace))
-        self.load_details_page(name, namespace, force_refresh=False, load_only=True)
+        self.load_details_page(name, namespace, object_type, force_refresh=False, load_only=True)
         # TODO: wait for all notification boxes to disappear, those are blocking the button
         time.sleep(10)
         self.page.actions.select('Delete')

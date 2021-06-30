@@ -15,8 +15,9 @@ from kiali_qe.components.enums import (
 )
 from kiali_qe.components.error_codes import (
     KIA0202,
-    KIA0203,
     KIA0201,
+    KIA0203,
+    KIA0209,
     KIA1106,
     KIA1107,
     KIA0101,
@@ -108,8 +109,8 @@ def test_destination_rule_broken(kiali_client, openshift_client, browser):
                        kind='DestinationRule',
                        api_version='networking.istio.io/v1alpha3',
                        service_name=DETAILS,
-                       error_messages=[KIA0202, KIA0203],
-                       check_service_details=True)
+                       error_messages=[KIA0203, KIA0209],
+                       check_service_details=False)
 
 
 @pytest.mark.p_crud_resource
@@ -165,7 +166,7 @@ def test_destination_rule_host_warning(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group5
+@pytest.mark.p_crud_group2
 def test_virtual_service(kiali_client, openshift_client, browser):
     gateway = get_yaml(istio_objects_path.strpath, GATEWAY_LINK)
     gateway_dict = get_dict(istio_objects_path.strpath, GATEWAY_LINK)
@@ -294,7 +295,7 @@ def test_virtual_service_broken(kiali_client, openshift_client, browser):
                            api_version='networking.istio.io/v1alpha3',
                            service_name=REVIEWS,
                            error_messages=[KIA1101, KIA1107],
-                           check_service_details=True)
+                           check_service_details=False)
     finally:
         _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
@@ -354,7 +355,7 @@ def test_virtual_service_broken_weight_text(kiali_client, openshift_client, brow
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group2
+@pytest.mark.p_crud_group3
 def test_gateway(kiali_client, openshift_client, browser, pick_namespace):
     gateway = get_yaml(istio_objects_path.strpath, GATEWAY)
     gateway_dict = get_dict(istio_objects_path.strpath, GATEWAY)
@@ -386,7 +387,8 @@ def test_gateway_create(kiali_client, openshift_client, browser, pick_namespace)
         _delete_gateways(openshift_client, gateway_name, namespaces)
         tests = IstioConfigPageTest(
             kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-        tests.test_gateway_create(gateway_name, 'www.google.com', namespaces=namespaces)
+        tests.test_gateway_create(gateway_name, 'www.google.com', 'http', '8080',
+                                  namespaces=namespaces)
     finally:
         _delete_gateways(openshift_client, gateway_name, namespaces)
 
@@ -401,7 +403,7 @@ def test_sidecar_create(kiali_client, openshift_client, browser, pick_namespace)
         _delete_sidecars(openshift_client, sidecar_name, namespaces)
         tests = IstioConfigPageTest(
             kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-        tests.test_sidecar_create(name=sidecar_name, egress_host='bookinfo/details',
+        tests.test_sidecar_create(name=sidecar_name, egress_host='bookinfo/*',
                                   labels='<name>=<value>', namespaces=namespaces)
     finally:
         _delete_sidecars(openshift_client, sidecar_name, namespaces)
@@ -474,7 +476,7 @@ def test_authpolicy_rules_deny_disabled(kiali_client, openshift_client, browser,
 
 
 @pytest.mark.p_crud_resource
-@pytest.mark.p_crud_group9
+@pytest.mark.p_crud_group3
 def test_peerauth_create(kiali_client, openshift_client, browser, pick_namespace):
     namespace = pick_namespace(BOOKINFO_2)
     name = 'peerauthtocreate'
@@ -609,9 +611,10 @@ def _istio_config_list(kiali_client, name, namespace=BOOKINFO_1):
     return kiali_client.istio_config_list(namespaces=[namespace], config_names=[name])
 
 
-def _ui_istio_config_delete(tests, name, namespace=BOOKINFO_1):
+def _ui_istio_config_delete(tests, name, object_type, namespace=BOOKINFO_1):
     tests.delete_istio_config(name=name,
-                              namespace=namespace)
+                              namespace=namespace,
+                              object_type=object_type)
 
 
 def _create_dest_rule_vs(openshift_client, destination_rule_conf, namespace=BOOKINFO_1):
@@ -717,7 +720,8 @@ def _istio_config_test(kiali_client, openshift_client, browser, config_dict,
                                   namespace)
 
         if delete_istio_config:
-            _ui_istio_config_delete(tests, config_dict.metadata.name, namespace)
+            _ui_istio_config_delete(tests, config_dict.metadata.name,
+                                    kind, namespace)
             assert len(_istio_config_list(kiali_client, config_dict.metadata.name, namespace)) == 0
     finally:
         if delete_istio_config:
@@ -751,6 +755,7 @@ def _vs_gateway_link_test(kiali_client, openshift_client, browser, config_dict,
     tests = IstioConfigPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
 
+    # object_type should not be set here
     tests.load_details_page(vs_name, namespace, force_refresh=False, load_only=True)
 
     tests.click_on_gateway(config_dict.metadata.name, namespace)

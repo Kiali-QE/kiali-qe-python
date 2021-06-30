@@ -23,7 +23,7 @@ from kiali_qe.entities.applications import (
     ApplicationHealth
 )
 from kiali_qe.utils import dict_contains, to_linear_string
-from kiali_qe.utils.date import parse_from_rest, from_rest_to_ui
+from kiali_qe.utils.date import from_rest_to_ui
 from kiali_qe.utils.log import logger
 
 
@@ -45,6 +45,7 @@ CONFIG_TYPES = {
     'DestinationRule': '_destinationrule',
     'ServiceEntry': '_serviceentry',
     'WorkloadEntry': '_workloadentry',
+    'WorkloadGroup': '_workloadgroup',
     'EnvoyFilter': '_envoyfilter',
     'PeerAuthentication': '_peerauthentication',
     'RequestAuthentication': '_requestauthentication',
@@ -142,6 +143,10 @@ class OpenshiftExtendedClient(object):
     @property
     def _workloadentry(self):
         return self._istio_config(kind='WorkloadEntry', api_version='v1alpha3')
+
+    @property
+    def _workloadgroup(self):
+        return self._istio_config(kind='WorkloadGroup', api_version='v1alpha3')
 
     @property
     def _kubernetes(self):
@@ -485,17 +490,6 @@ class OpenshiftExtendedClient(object):
             if self._get_workload_name(_item.metadata) == workload_name:
                 _filtered_items.append(WorkloadPod(
                     name=_item.metadata.name,
-                    created_at=parse_from_rest(
-                        _item.metadata.creationTimestamp),
-                    created_at_ui=from_rest_to_ui(
-                        _item.metadata.creationTimestamp),
-                    created_by='{} ({})'.format(
-                        _item.metadata.ownerReferences[0].name,
-                        _item.metadata.ownerReferences[0].kind),
-                    labels=self._get_labels(_item),
-                    istio_init_containers=self._get_initcontainer_image(_item),
-                    istio_containers=self._get_initcontainer_image(_item),
-                    phase=_item.status.phase,
                     podIP=_item.status.podIP))
         return _filtered_items
 
@@ -525,7 +519,7 @@ class OpenshiftExtendedClient(object):
 
         _application = ApplicationDetails(
             name=application_name,
-            workloads=workloads.values(),
+            workloads=list(set(workloads.values())),
             services=list(set(services)),
             istio_sidecar=all([w.istio_sidecar for w in workloads.values()]),
             health=None,
@@ -545,19 +539,16 @@ class OpenshiftExtendedClient(object):
         _response = self._service.get(namespace=namespace, name=service_name)
         _ports = ''
         for _port in _response.spec.ports:
-            _ports += '{}{} ({}) '.format(_port['protocol'],
-                                          ' ' + _port['name']
-                                          if _port['name'] and _port['name'] != ''
-                                          else '',
-                                          _port['port'])
+            _ports += '{}{}/{} '.format(_port['name'] + ' ' if _port['name'] and _port['name'] != ''
+                                        else '',
+                                        _port['port'],
+                                        _port['protocol'])
         _labels = dict(_response.metadata.labels if _response.metadata.labels else {})
         _service = ServiceDetails(
             namespace=_response.metadata.namespace,
             name=_response.metadata.name,
             istio_sidecar=None,
-            created_at=parse_from_rest(
-                _response.metadata.creationTimestamp),
-            created_at_ui=from_rest_to_ui(
+            created_at=from_rest_to_ui(
                 _response.metadata.creationTimestamp),
             resource_version=_response.metadata.resourceVersion,
             service_type=_response.spec.type,
@@ -623,24 +614,28 @@ class OpenshiftExtendedClient(object):
             resource_type=CONFIG_TYPES[IstioConfigObjectType.VIRTUAL_SERVICE.text],
             namespaces=[namespace])
         for _vs_item in _all_vs_list:
-            if 'host {} '.format(service_name) in to_linear_string(
+            if self._is_host_in_config(namespace, service_name, to_linear_string(
                 self.istio_config_details(
                     namespace=namespace,
                     object_name=_vs_item.name,
-                    object_type=IstioConfigObjectType.VIRTUAL_SERVICE.text).text):
+                    object_type=IstioConfigObjectType.VIRTUAL_SERVICE.text).text)):
                 istio_configs.append(_vs_item)
         _all_dr_list = self._resource_list(
             attribute_name=CONFIG_TYPES[IstioConfigObjectType.DESTINATION_RULE.text],
             resource_type=CONFIG_TYPES[IstioConfigObjectType.DESTINATION_RULE.text],
             namespaces=[namespace])
         for _dr_item in _all_dr_list:
-            if 'host {} '.format(service_name) in to_linear_string(
+            if self._is_host_in_config(namespace, service_name, to_linear_string(
                 self.istio_config_details(
                     namespace=namespace,
                     object_name=_dr_item.name,
-                    object_type=IstioConfigObjectType.DESTINATION_RULE.text).text):
+                    object_type=IstioConfigObjectType.DESTINATION_RULE.text).text)):
                 istio_configs.append(_dr_item)
         return istio_configs
+
+    def _is_host_in_config(self, namespace, service_name, config):
+        return 'host {} '.format(service_name) in config or \
+            'host {}.{}.svc.cluster.local '.format(service_name, namespace) in config
 
     def workload_details(self, namespace, workload_name, workload_type):
         """ Returns the details of Workload
@@ -656,9 +651,7 @@ class OpenshiftExtendedClient(object):
         _workload = WorkloadDetails(
             workload_type=_response.kind,
             name=_response.metadata.name,
-            created_at=parse_from_rest(
-                _response.metadata.creationTimestamp),
-            created_at_ui=from_rest_to_ui(
+            created_at=from_rest_to_ui(
                 _response.metadata.creationTimestamp),
             resource_version=_response.metadata.resourceVersion,
             istio_sidecar=None,

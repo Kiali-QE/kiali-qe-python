@@ -20,6 +20,7 @@ class MainMenuEnum(StringEnum):
     SERVICES = ('Services')
     ISTIO_CONFIG = ('Istio Config')
     DISTRIBUTED_TRACING = ('Distributed Tracing')
+    MESH = ('Mesh')
 
 
 class HelpMenuEnum(StringEnum):
@@ -94,13 +95,13 @@ class TimeIntervalRestParam(StringEnum):
 
 
 class TailLines(StringEnum):
-    LINES_10 = ('Last 10 lines')
-    LINES_50 = ('Last 50 lines')
-    LINES_100 = ('Last 100 lines')
-    LINES_300 = ('Last 300 lines')
-    LINES_500 = ('Last 500 lines')
-    LINES_1000 = ('Last 1000 lines')
-    LINES_5000 = ('Last 5000 lines')
+    LINES_10 = ('10 lines')
+    LINES_50 = ('50 lines')
+    LINES_100 = ('100 lines')
+    LINES_300 = ('300 lines')
+    LINES_500 = ('500 lines')
+    LINES_1000 = ('1000 lines')
+    LINES_5000 = ('5000 lines')
     LINES_ALL = ('All lines')
 
 
@@ -128,6 +129,10 @@ class GraphType(StringEnum):
 
 
 class GraphPageDisplayFilter(StringEnum):
+    REQUEST_RATE = ('Request Rate')
+    RESPONSE_TIME = ('Response Time')
+    THROUGHPUT = ('Throughput')
+    REQUEST_DISTRIBUTION = ('Request Distribution')
     CLUSTER_BOXES = ('Cluster Boxes')
     NAMESPACE_BOXES = ('Namespace Boxes')
     COMPRESSED_HIDE = ('Compressed Hide')
@@ -139,17 +144,9 @@ class GraphPageDisplayFilter(StringEnum):
 
 
 class GraphPageBadgesFilter(StringEnum):
-    CIRCUIT_BREAKERS = ('Circuit Breakers')
-    VIRTUAL_SERVICES = ('Virtual Services')
     MISSING_SIDECARS = ('Missing Sidecars')
     SECURITY = ('Security')
-
-
-class EdgeLabelsFilter(StringEnum):
-    NO_LABEL = ('No Label')
-    REQUEST_RATE = ('Request Rate')
-    REQUEST_DISTRIBUTION = ('Request Distribution')
-    RESPONSE_TIME = ('Response Time')
+    VIRTUAL_SERVICES = ('Virtual Services')
 
 
 class ApplicationsPageFilter(StringEnum):
@@ -316,6 +313,7 @@ class IstioConfigObjectType(StringEnum):
     SIDECAR = ('Sidecar')
     VIRTUAL_SERVICE = ('VirtualService')
     WORKLOAD_ENTRY = ('WorkloadEntry')
+    WORKLOAD_GROUP = ('WorkloadGroup')
 
 
 class IstioConfigValidationType(StringEnum):
