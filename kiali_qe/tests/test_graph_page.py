@@ -15,6 +15,7 @@ ISTIO_SYSTEM = 'istio-system'
 BOOKINFO = 'bookinfo'
 
 
+@pytest.mark.p_smoke
 @pytest.mark.p_atomic
 @pytest.mark.p_ro_group3
 def test_duration(browser):
@@ -29,6 +30,7 @@ def test_duration(browser):
         ('Options mismatch: defined:{}, listed:{}'.format(options_defined, options_listed))
 
 
+@pytest.mark.p_smoke
 @pytest.mark.p_atomic
 @pytest.mark.p_ro_group3
 def test_refresh_interval(browser):
