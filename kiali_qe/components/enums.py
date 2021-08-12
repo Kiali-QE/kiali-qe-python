@@ -128,6 +128,12 @@ class GraphType(StringEnum):
     WORKLOAD = ('Workload graph')
 
 
+class GraphTraffic(StringEnum):
+    GRPC = ('Grpc')
+    HTTP = ('Http')
+    TCP = ('Tcp')
+
+
 class GraphPageDisplayFilter(StringEnum):
     RESPONSE_TIME = ('Response Time')
     THROUGHPUT = ('Throughput')
@@ -265,6 +271,7 @@ class WorkloadHealth(StringEnum):
     HEALTHY = ('Healthy')
     DEGRADED = ('Degraded')
     FAILURE = ('Failure')
+    NOT_READY = ('Not Ready')
     NO_HEALTH_INFO = ('No health information')
 
 
