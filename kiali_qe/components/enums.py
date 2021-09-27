@@ -265,6 +265,7 @@ class WorkloadHealth(StringEnum):
     HEALTHY = ('Healthy')
     DEGRADED = ('Degraded')
     FAILURE = ('Failure')
+    NOT_READY = ('Not Ready')
     NO_HEALTH_INFO = ('No health information')
 
 
