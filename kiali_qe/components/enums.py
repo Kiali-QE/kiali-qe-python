@@ -120,10 +120,10 @@ class GraphType(StringEnum):
 
 
 class GraphPageDisplayFilter(StringEnum):
-    REQUEST_RATE = ('Request Rate')
     RESPONSE_TIME = ('Response Time')
     THROUGHPUT = ('Throughput')
-    REQUEST_DISTRIBUTION = ('Request Distribution')
+    TRAFFIC_DISTRIBUTION = ('Traffic Distribution')
+    TRAFFIC_RATE = ('Traffic Rate')
     CLUSTER_BOXES = ('Cluster Boxes')
     NAMESPACE_BOXES = ('Namespace Boxes')
     COMPRESSED_HIDE = ('Compressed Hide')
@@ -210,6 +210,7 @@ class WorkloadsPageFilter(StringEnum):
     WORKLOAD_NAME = ('Workload Name')
     WORKLOAD_TYPE = ('Workload Type')
     ISTIO_SIDECAR = ('Istio Sidecar')
+    ISTIO_TYPE = ('Istio Type')
     HEALTH = ('Health')
     APP_LABEL = ('App Label')
     VERSION_LABEL = ('Version Label')
