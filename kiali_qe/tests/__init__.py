@@ -1618,7 +1618,7 @@ class ServicesPageTest(AbstractListPageTest):
                                   namespace)
 
         if check_metrics:
-            self.assert_metrics_options(service_details_ui.inbound_metrics, check_grafana=False)
+            self.assert_metrics_options(service_details_ui.inbound_metrics, check_grafana=True)
 
         self.assert_traces_tab(service_details_ui.traces_tab)
 
