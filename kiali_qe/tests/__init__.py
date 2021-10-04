@@ -1685,8 +1685,8 @@ class ServicesPageTest(AbstractListPageTest):
             #                     service_ui.service_status.is_healthy(),
             #                     service_ui.health)
             #         break
-            if not found:
-                assert found, '{} not found in REST'.format(service_ui)
+            # if not found:
+            #     assert found, '{} not found in REST'.format(service_ui)
             found = False
             for service_oc in services_oc:
                 if service_ui.is_equal(service_oc, advanced_check=False):
