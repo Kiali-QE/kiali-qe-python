@@ -1114,8 +1114,8 @@ class ApplicationsPageTest(AbstractListPageTest):
             #                 application_ui.health,
             #                 application_ui.name)
             #         break
-            if not found:
-                assert found, '{} not found in REST'.format(application_ui)
+            # if not found:
+            #     assert found, '{} not found in REST'.format(application_ui)
             found = False
             for application_oc in applications_oc:
                 logger.debug('{} {}'.format(application_oc.name, application_oc.namespace))
