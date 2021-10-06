@@ -135,7 +135,7 @@ def test_filter_applications_istio_sidecar_not_present(kiali_client, openshift_c
 def test_filter_applications_health_healthy(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.assert_all_items(filters=[
+    tests.apply_filters(filters=[
         {"name": ApplicationsPageFilter.HEALTH.text, "value": AppHealth.HEALTHY.text}])
 
 
