@@ -1105,7 +1105,7 @@ class ApplicationsPageTest(AbstractListPageTest):
             for application_rest in applications_rest:
                 if application_ui.is_equal(application_rest, advanced_check=True):
                     found = True
-                    if application_ui.application_status:
+                    if application_ui.application_status and type(applications_ui) is not list:
                         if applications_ui.name != "mysqldb":
                             hel1 = application_ui.application_status.is_healthy()
                             hel2 = application_ui.health
