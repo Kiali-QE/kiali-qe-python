@@ -25,6 +25,7 @@ class MainMenuEnum(StringEnum):
 class HelpMenuEnum(StringEnum):
     DOCUMENTATION = ('Documentation')
     VIEW_DEBUG_INFO = ('View Debug Info')
+    VIEW_CERTIFICATES_INFO = ('View Certificates Info')
     ABOUT = ('About')
 
 
@@ -143,6 +144,7 @@ class GraphPageBadgesFilter(StringEnum):
 class ApplicationsPageFilter(StringEnum):
     APP_NAME = ('App Name')
     ISTIO_SIDECAR = ('Istio Sidecar')
+    ISTIO_TYPE = ('Istio Type')
     HEALTH = ('Health')
     LABEL = ('Label')
 
@@ -261,6 +263,7 @@ class WorkloadHealth(StringEnum):
 class ServicesPageFilter(StringEnum):
     SERVICE_NAME = ('Service Name')
     ISTIO_SIDECAR = ('Istio Sidecar')
+    ISTIO_TYPE = ('Istio Type')
     HEALTH = ('Health')
     LABEL = ('Label')
 
