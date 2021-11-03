@@ -63,6 +63,11 @@ class TimeIntervalUIText(StringEnum):
     LAST_HOUR = ('Last 1h')
     LAST_3_HOURS = ('Last 3h')
     LAST_6_HOURS = ('Last 6h')
+    LAST_12_HOURS = ('Last 12h')
+    LAST_1_DAY = ('Last 1d')
+    LAST_7_DAYS = ('Last 7d')
+    LAST_30_DAYS = ('Last 30d')
+    
 
 
 class MetricsTimeInterval(StringEnum):
@@ -73,6 +78,10 @@ class MetricsTimeInterval(StringEnum):
     LAST_HOUR = ('Last 1h')
     LAST_3_HOURS = ('Last 3h')
     LAST_6_HOURS = ('Last 6h')
+    LAST_12_HOURS = ('Last 12h')
+    LAST_1_DAY = ('Last 1d')
+    LAST_7_DAYS = ('Last 7d')
+    LAST_30_DAYS = ('Last 30d')
     CUSTOM = ('Custom')
 
 
