@@ -128,7 +128,7 @@ class GraphPage(RootPage):
     duration = ItemDropDown(locator=XP_DROP_DOWN.format('time_range_duration'))
     interval = ItemDropDown(locator=XP_DROP_DOWN.format('time_range_refresh'))
     edge_labels = DropDown(locator=XP_DROP_DOWN.format('graph_filter_edge_labels'))
-    type = ItemDropDown(locator=XP_DROP_DOWN.format('graph_type_dropdown'))
+    type = ItemDropDown(locator=XP_DROP_DOWN.format('graph_filter_view_type'))
     graph_find = FilterInput(locator='//input[@id="graph_find"]')
     graph_hide = FilterInput(locator='//input[@id="graph_hide"]')
     layout = GraphLayout()
