@@ -81,6 +81,7 @@ def test_filter_applications_by_and_label(kiali_client, openshift_client, browse
         label_operation=LabelOperation.AND.text)
 
 
+@pytest.mark.p_smoke
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group1
 def test_all_applications_namespace(kiali_client, openshift_client, browser):
@@ -115,7 +116,7 @@ def test_application_details_random(kiali_client, openshift_client, browser, pic
 def test_filter_applications_istio_sidecar_present(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.assert_all_items(filters=[
+    tests.apply_filters(filters=[
         {"name": ApplicationsPageFilter.ISTIO_SIDECAR.text, "value": AppIstioSidecar.PRESENT.text}])
 
 
@@ -124,7 +125,7 @@ def test_filter_applications_istio_sidecar_present(kiali_client, openshift_clien
 def test_filter_applications_istio_sidecar_not_present(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.assert_all_items(filters=[
+    tests.apply_filters(filters=[
         {"name": ApplicationsPageFilter.ISTIO_SIDECAR.text,
          "value": AppIstioSidecar.NOT_PRESENT.text}])
 
@@ -134,7 +135,7 @@ def test_filter_applications_istio_sidecar_not_present(kiali_client, openshift_c
 def test_filter_applications_health_healthy(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.assert_all_items(filters=[
+    tests.apply_filters(filters=[
         {"name": ApplicationsPageFilter.HEALTH.text, "value": AppHealth.HEALTHY.text}])
 
 

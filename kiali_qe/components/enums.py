@@ -20,7 +20,6 @@ class MainMenuEnum(StringEnum):
     SERVICES = ('Services')
     ISTIO_CONFIG = ('Istio Config')
     DISTRIBUTED_TRACING = ('Distributed Tracing')
-    MESH = ('Mesh')
 
 
 class HelpMenuEnum(StringEnum):
@@ -64,10 +63,6 @@ class TimeIntervalUIText(StringEnum):
     LAST_HOUR = ('Last 1h')
     LAST_3_HOURS = ('Last 3h')
     LAST_6_HOURS = ('Last 6h')
-    LAST_12_HOURS = ('Last 12h')
-    LAST_1_DAY = ('Last 1d')
-    LAST_7_DAYS = ('Last 7d')
-    LAST_30_DAYS = ('Last 30d')
 
 
 class MetricsTimeInterval(StringEnum):
@@ -78,10 +73,6 @@ class MetricsTimeInterval(StringEnum):
     LAST_HOUR = ('Last 1h')
     LAST_3_HOURS = ('Last 3h')
     LAST_6_HOURS = ('Last 6h')
-    LAST_12_HOURS = ('Last 12h')
-    LAST_1_DAY = ('Last 1d')
-    LAST_7_DAYS = ('Last 7d')
-    LAST_30_DAYS = ('Last 30d')
     CUSTOM = ('Custom')
 
 
@@ -130,10 +121,10 @@ class GraphType(StringEnum):
 
 
 class GraphPageDisplayFilter(StringEnum):
+    REQUEST_RATE = ('Request Rate')
     RESPONSE_TIME = ('Response Time')
     THROUGHPUT = ('Throughput')
-    TRAFFIC_DISTRIBUTION = ('Traffic Distribution')
-    TRAFFIC_RATE = ('Traffic Rate')
+    REQUEST_DISTRIBUTION = ('Request Distribution')
     CLUSTER_BOXES = ('Cluster Boxes')
     NAMESPACE_BOXES = ('Namespace Boxes')
     COMPRESSED_HIDE = ('Compressed Hide')
@@ -221,7 +212,6 @@ class WorkloadsPageFilter(StringEnum):
     WORKLOAD_NAME = ('Workload Name')
     WORKLOAD_TYPE = ('Workload Type')
     ISTIO_SIDECAR = ('Istio Sidecar')
-    ISTIO_TYPE = ('Istio Type')
     HEALTH = ('Health')
     APP_LABEL = ('App Label')
     VERSION_LABEL = ('Version Label')
