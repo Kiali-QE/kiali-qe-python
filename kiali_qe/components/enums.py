@@ -67,7 +67,6 @@ class TimeIntervalUIText(StringEnum):
     LAST_1_DAY = ('Last 1d')
     LAST_7_DAYS = ('Last 7d')
     LAST_30_DAYS = ('Last 30d')
-    
 
 
 class MetricsTimeInterval(StringEnum):
