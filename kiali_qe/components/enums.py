@@ -127,10 +127,10 @@ class GraphTraffic(StringEnum):
 
 
 class GraphPageDisplayFilter(StringEnum):
-    REQUEST_RATE = ('Request Rate')
     RESPONSE_TIME = ('Response Time')
     THROUGHPUT = ('Throughput')
-    REQUEST_DISTRIBUTION = ('Request Distribution')
+    TRAFFIC_DISTRIBUTION = ('Traffic Distribution')
+    TRAFFIC_RATE = ('Traffic Rate')
     CLUSTER_BOXES = ('Cluster Boxes')
     NAMESPACE_BOXES = ('Namespace Boxes')
     COMPRESSED_HIDE = ('Compressed Hide')
