@@ -10,7 +10,7 @@ pytest==3.5.1
 pytest_jira==0.3.6
 pyyaml
 selenium==3.12.0
-widgetastic.core==0.39
+widgetastic.core==0.64
 python-dateutil
 swagger-parser
 jsonschema<4.0
