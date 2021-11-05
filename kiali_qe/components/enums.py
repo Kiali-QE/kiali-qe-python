@@ -20,6 +20,7 @@ class MainMenuEnum(StringEnum):
     SERVICES = ('Services')
     ISTIO_CONFIG = ('Istio Config')
     DISTRIBUTED_TRACING = ('Distributed Tracing')
+    MESH = ('Mesh')
 
 
 class HelpMenuEnum(StringEnum):
