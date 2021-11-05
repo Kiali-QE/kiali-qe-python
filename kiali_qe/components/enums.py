@@ -213,6 +213,7 @@ class WorkloadsPageFilter(StringEnum):
     WORKLOAD_NAME = ('Workload Name')
     WORKLOAD_TYPE = ('Workload Type')
     ISTIO_SIDECAR = ('Istio Sidecar')
+    ISTIO_TYPE = ('Istio Type')
     HEALTH = ('Health')
     APP_LABEL = ('App Label')
     VERSION_LABEL = ('Version Label')
