@@ -488,8 +488,8 @@ class KialiExtendedClient(KialiClient):
             istio_configs = []
             virtual_services = []
             if _service_data['virtualServices'] \
-                    and len(_service_data['virtualServices']['items']) > 0:
-                for _vs_data in _service_data['virtualServices']['items']:
+                    and len(_service_data['virtualServices']) > 0:
+                for _vs_data in _service_data['virtualServices']:
                     _weights = []
                     if 'http' in _vs_data['spec']:
                         _protocol = _vs_data['spec']['http'][0]
@@ -533,8 +533,8 @@ class KialiExtendedClient(KialiClient):
 
             destination_rules = []
             if _service_data['destinationRules'] \
-                    and len(_service_data['destinationRules']['items']) > 0:
-                for _dr_data in _service_data['destinationRules']['items']:
+                    and len(_service_data['destinationRules']) > 0:
+                for _dr_data in _service_data['destinationRules']:
                     if 'trafficPolicy' in _dr_data['spec']:
                         _traffic_policy = to_linear_string(_dr_data['spec']['trafficPolicy'])
                     else:
