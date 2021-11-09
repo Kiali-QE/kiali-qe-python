@@ -4,7 +4,7 @@ metadata:
   name: auto-reviews-dr-svc
   namespace: bookinfo2
 spec:
-  host: reviews.bookinfo2
+  host: reviews.bookinfo2.svc.cluster.local
   trafficPolicy:
     loadBalancer:
       simple: RANDOM
