@@ -464,12 +464,16 @@ def test_duplicate_sidecar_errors(kiali_client, openshift_client):
                 object_type='Sidecar',
                 object_name='dupliacate-sidecar1-auto',
                 namespace=BOOKINFO,
-                error_messages=[KIA0002]),
+                error_messages=[KIA0002,
+                                KIA1004,
+                                KIA1004]),
             ConfigValidationObject(
                 object_type='Sidecar',
                 object_name='dupliacate-sidecar2-auto',
                 namespace=BOOKINFO,
-                error_messages=[KIA0002])
+                error_messages=[KIA0002,
+                                KIA1004,
+                                KIA1004])
         ])
 
 
