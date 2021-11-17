@@ -444,7 +444,9 @@ def test_sidecar_errors(kiali_client, openshift_client):
                 object_name='wrong-host-sidecar-auto',
                 namespace=BOOKINFO,
                 error_messages=[KIA0004,
-                                KIA0001,
+                                KIA1004,
+                                KIA1004,
+                                KIA1004,
                                 KIA1004])
         ])
 
@@ -492,12 +494,12 @@ def test_duplicate_workload_sidecar_errors(kiali_client, openshift_client):
                 object_type='Sidecar',
                 object_name='dupliacate-workload-sidecar1-auto',
                 namespace=BOOKINFO,
-                error_messages=[KIA0003]),
+                error_messages=[KIA1004, KIA1004, KIA0003]),
             ConfigValidationObject(
                 object_type='Sidecar',
                 object_name='dupliacate-workload-sidecar2-auto',
                 namespace=BOOKINFO,
-                error_messages=[KIA0003])
+                error_messages=[KIA1004, KIA1004, KIA0003])
         ])
 
 
@@ -582,7 +584,7 @@ def test_vs_subset_validations_service_entry(kiali_client, openshift_client):
                 object_type='VirtualService',
                 object_name='orahub-vs',
                 namespace=BOOKINFO,
-                error_messages=[])
+                error_messages=[KIA1104, KIA1104])
         ])
 
 
@@ -601,7 +603,7 @@ def test_vs_subset_validations_no_service_entry(kiali_client, openshift_client):
                 object_type='VirtualService',
                 object_name='orahub-vs-no-dr',
                 namespace=BOOKINFO,
-                error_messages=[KIA1107, KIA1107])
+                error_messages=[KIA1104, KIA1104, KIA1107, KIA1107])
         ])
 
 
