@@ -140,6 +140,7 @@ class GraphPageDisplayFilter(StringEnum):
     IDLE_EDGES = ('Idle Edges')
     IDLE_NODES = ('Idle Nodes')
     OPERATION_NODES = ('Operation Nodes')
+    RANK = ('Rank')
     SERVICE_NODES = ('Service Nodes')
     TRAFFIC_ANIMATION = ('Traffic Animation')
 
