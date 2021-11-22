@@ -71,8 +71,8 @@ def test_filter(browser):
     # get page instance
     page = GraphPage(browser)
     # test available filters
-    options_defined = [item.text for item in GraphPageBadgesFilter]
-    for item in GraphPageDisplayFilter:
+    options_defined = [item.text for item in GraphPageDisplayFilter]
+    for item in GraphPageBadgesFilter:
         options_defined.append(item.text)
     options_listed = page.filter.items
     logger.debug('Filter options[defined:{}, listed:{}]'
