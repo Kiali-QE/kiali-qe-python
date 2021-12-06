@@ -414,7 +414,7 @@ def test_sidecar_create(kiali_client, openshift_client, browser, pick_namespace)
 @pytest.mark.p_crud_group3
 def test_authpolicy_deny_all_create(kiali_client, openshift_client, browser, pick_namespace):
     namespace = pick_namespace(BOOKINFO_2)
-    authpolicy_name = 'authpolicydenyalltocreate'
+    authpolicy_name = 'authorizationpolicies'
     namespaces = [BOOKINFO_1, namespace]
     try:
         _delete_authpolicies(openshift_client, authpolicy_name, namespaces)
