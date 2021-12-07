@@ -78,3 +78,5 @@ KIA1006 = 'Global default sidecar should not have workloadSelector'
 KIA1008 = 'Destination field is mandatory'
 
 KIA0105 = 'This field requires mTLS to be enabled'
+
+KIA0104 = 'This host has no matching entry in the service registry'

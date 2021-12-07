@@ -25,7 +25,8 @@ from kiali_qe.components.error_codes import (
     KIA1101,
     KIA0004,
     KIA0001,
-    KIA1105
+    KIA1105,
+    KIA0104
 )
 
 '''
@@ -585,7 +586,7 @@ def test_auth_policy(kiali_client, openshift_client, browser):
                        api_version='security.istio.io/v1beta1',
                        service_name=DETAILS,
                        check_service_details=False,
-                       error_messages=[KIA0101, KIA0102, KIA0004, KIA0001])
+                       error_messages=[KIA0004, KIA0101, KIA0102, KIA0102, KIA0104, KIA0104, KIA0104])
 
 
 def _istio_config_create(openshift_client, config_dict, config_yaml, kind, api_version,
