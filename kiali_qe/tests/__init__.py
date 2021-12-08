@@ -1856,11 +1856,6 @@ class ServicesPageTest(AbstractListPageTest):
         assert service_details_rest.virtual_services[0].name == name
         assert service_details_rest.destination_rules[0].name == name
 
-        if load_balancer_type:
-            assert word_in_text(load_balancer_type.text.lower(),
-                                service_details_rest.destination_rules[0].traffic_policy,
-                                load_balancer)
-
         if tls:
             assert word_in_text(tls.text.lower(),
                                 service_details_rest.destination_rules[0].traffic_policy,
