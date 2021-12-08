@@ -273,6 +273,7 @@ class WorkloadHealth(StringEnum):
 
 class ServicesPageFilter(StringEnum):
     SERVICE_NAME = ('Service Name')
+    SERVICE_TYPE = ('Service Type')
     ISTIO_SIDECAR = ('Istio Sidecar')
     ISTIO_TYPE = ('Istio Type')
     HEALTH = ('Health')
