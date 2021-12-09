@@ -71,7 +71,7 @@ KIA1104 = 'The weight is assumed to be '\
 
 KIA0004 = 'No matching workload found for the selector in this namespace'
 
-KIA1105 = 'This subset is already referenced in another route destination'
+KIA1105 = 'This host subset combination is already referenced in another route destination'
 
 KIA1006 = 'Global default sidecar should not have workloadSelector'
 
