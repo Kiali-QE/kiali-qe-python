@@ -269,7 +269,7 @@ def test_virtual_service_subset_warning(kiali_client, openshift_client, browser)
                                namespace=BOOKINFO_1,
                                kind='VirtualService',
                                api_version='networking.istio.io/v1alpha3',
-                               error_messages=[KIA1105])
+                               error_messages=[KIA1105, KIA1105])
     _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
 
