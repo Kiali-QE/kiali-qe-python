@@ -779,6 +779,7 @@ class Actions(Widget):
         self._abort_switch = ButtonSwitch(parent=self, label="Add HTTP Abort")
         self._connection_pool_switch = ButtonSwitch(parent=self, label="Add Connection Pool")
         self._outlier_detection_switch = ButtonSwitch(parent=self, label="Add Outlier Detection")
+        self._http_header_name = TextInput(parent=self, locator='//input[@name="httpHeaderName"]')
 
     def __locator__(self):
         return self.locator
@@ -1228,10 +1229,11 @@ class Actions(Widget):
         if load_balancer and load_balancer_type:
             self.browser.click(_traffic_tab)
             self._loadbalancer_switch.on()
-            if load_balancer_type:
-                wait_displayed(self._loadbalancer_type)
-                self._loadbalancer_type.select(load_balancer_type.text)
+            if load_balancer_type and self._loadbalancer_type.is_displayed:
+                    wait_displayed(self._loadbalancer_type)
+                    self._loadbalancer_type.select(load_balancer_type.text)
         else:
+            self._http_header_name.fill('test')
             self.browser.click(_traffic_tab)
             self._loadbalancer_switch.off()
         if gateway:
