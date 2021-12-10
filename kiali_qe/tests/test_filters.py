@@ -24,7 +24,7 @@ FILTER_NAMESPACE = ['istio-system']
 FILTER_PRESENT = IstioSidecar.PRESENT.text
 FILTER_HEALTHY = HealthType.HEALTHY.text
 FILTER_NAME = "test"
-CONFIG_KEPT_FILTER = []
+CONFIG_KEPT_FILTER = [{'name': 'Istio Type', 'value': 'DestinationRule'}]
 
 
 @pytest.mark.p_atomic
