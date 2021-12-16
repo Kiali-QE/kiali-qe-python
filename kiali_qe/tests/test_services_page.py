@@ -92,7 +92,7 @@ def test_filter_service_by_and_label(kiali_client, openshift_client, browser):
                            filters=[
         {"name": ServicesPageFilter.LABEL.text, "value": "app"},
         {"name": ServicesPageFilter.LABEL.text, "value": "service"}],
-        label_operation=LabelOperation.AND.text)
+        label_operation=LabelOperation.OR.text)
 
 
 @pytest.mark.p_smoke
