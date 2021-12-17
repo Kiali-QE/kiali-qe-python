@@ -586,7 +586,12 @@ class AbstractListPageTest(object):
                 for _gateway in config_overview_ui.gateways:
                     assert _gateway.text in config_details_oc.text
             else:
-                assert '\'host\': \'{}\''.format(config_overview_ui.host) in config_details_oc.text
+                if hasattr(istio_config_ui, 'host'):
+                    astring = "'host': '{}'".format(istio_config_ui.host)
+                    assert astring in config_details_oc.text, \
+                        'UI host value {} not contained in OC host value {}'.format(
+                        istio_config_ui.host,
+                        config_details_oc.text) 
                 for _rest_dr in object_rest.destination_rules:
                     if _rest_dr.name == istio_config_ui.name:
                         for _ui_subset in config_overview_ui.subsets:
