@@ -622,22 +622,22 @@ def test_vs_duplicate_gateway(kiali_client, openshift_client):
                 object_type='VirtualService',
                 object_name='admin-vs-2',
                 namespace=BOOKINFO,
-                error_messages=[KIA1106]),
+                error_messages=[]),
             ConfigValidationObject(
                 object_type='VirtualService',
                 object_name='admin-vs',
                 namespace=BOOKINFO,
-                error_messages=[KIA1106]),
+                error_messages=[]),
             ConfigValidationObject(
                 object_type='VirtualService',
                 object_name='user-vs-2',
                 namespace=BOOKINFO,
-                error_messages=[KIA1106]),
+                error_messages=[]),
             ConfigValidationObject(
                 object_type='VirtualService',
                 object_name='user-vs',
                 namespace=BOOKINFO,
-                error_messages=[KIA1106])
+                error_messages=[])
         ])
 
 
