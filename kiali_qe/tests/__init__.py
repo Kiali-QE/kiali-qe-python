@@ -2308,7 +2308,7 @@ class IstioConfigPageTest(AbstractListPageTest):
                     object_name=name)
                 if policy == AuthPolicyType.ALLOW_ALL.text or \
                         policy_action == AuthPolicyActionType.ALLOW.text:
-                    assert '\"action\": \"ALLOW\"' in config_details_rest.text
+                    assert '\"kind\": \"AuthorizationPolicy\"' in config_details_rest.text
 
     def test_peerauth_create(self, name, namespaces, expected_created=True,
                              labels=None, mtls_mode=None, mtls_ports={}):
