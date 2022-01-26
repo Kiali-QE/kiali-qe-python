@@ -1552,9 +1552,11 @@ class ServicesPageTest(AbstractListPageTest):
             _random_services = services_rest
         # create filters
         for _idx, _selected_service in enumerate(_random_services):
-            self.assert_details(_selected_service.name, _selected_service.namespace,
-                                check_metrics=True if _idx == 0 else False,
-                                force_refresh=force_refresh)
+            service_details_ui = self.load_details_page(_selected_service.name, _selected_service.namespace, force_refresh)
+            service_details_rest = self.kiali_client.service_details(namespace=_selected_service.namespace, service_name=_selected_service.name)
+            logger.warning(service_details_rest)
+            assert is_equal(service_details_ui.applications, service_details_rest.applications)
+            assert len(service_details_ui.workloads) == len(service_details_rest.workloads)
 
     def assert_details(self, name, namespace, check_metrics=False,
                        force_refresh=False):
