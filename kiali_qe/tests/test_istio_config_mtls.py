@@ -51,7 +51,7 @@ SCENARIO_27 = "scenario27.yaml"
 SCENARIO_28 = "scenario28.yaml"
 SCENARIO_29 = "scenario29.yaml"
 
-
+@pytest.mark.skip(reason="interop pipeline - skipping flaky test")
 @pytest.mark.p_group_last
 def test_scenario1(kiali_client, openshift_client, browser):
     """ PeerAuthentication is in permissive mode, it allows mTLS connections """
@@ -83,6 +83,7 @@ def test_scenario1(kiali_client, openshift_client, browser):
                              ])
 
 
+@pytest.mark.skip(reason="interop pipeline - skipping flaky test")
 @pytest.mark.p_group_last
 def test_scenario2(kiali_client, openshift_client, browser):
     """ PeerAuthentication explicitly asks for mTLS connections

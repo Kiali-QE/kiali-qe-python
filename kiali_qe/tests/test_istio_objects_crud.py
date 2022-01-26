@@ -510,6 +510,7 @@ def test_peerauth_create_disabled(kiali_client, openshift_client, browser, pick_
                                mtls_ports={'8080': MutualTLSMode.STRICT.text})
 
 
+@pytest.mark.skip(reason="interop pipeline - skipping flaky test")
 @pytest.mark.p_crud_resource
 @pytest.mark.p_crud_group4
 def test_requestauth_create(kiali_client, openshift_client, browser, pick_namespace):
