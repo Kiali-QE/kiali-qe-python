@@ -25,6 +25,8 @@ from kiali_qe.entities.applications import (
 from kiali_qe.utils import dict_contains, to_linear_string
 from kiali_qe.utils.date import from_rest_to_ui
 from kiali_qe.utils.log import logger
+from kiali_qe.utils.conf import env as cfg
+
 
 
 WORKLOAD_TYPES = {
@@ -717,5 +719,5 @@ class OpenshiftExtendedClient(object):
         return resp
 
     def is_auto_mtls(self):
-        return 'enableAutoMtls: true' in self._configmap.get(name='istio',
+        return 'enableAutoMtls: true' in self._configmap.get(name=cfg.kiali.configMapName,
                                                              namespace=ISTIO_SYSTEM).data.mesh
