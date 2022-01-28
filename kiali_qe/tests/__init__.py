@@ -507,7 +507,7 @@ class AbstractListPageTest(object):
         self.page.content.graph_menu.select('Show full graph')
         graph_page = GraphPage(self.browser)
         side_panel = graph_page.side_panel
-        assert not side_panel.get_namespace()
+        assert side_panel.get_namespace() == 'bookinfo3'
         if self.page.PAGE_MENU == MENU.APPLICATIONS.text:
             assert not side_panel.get_workload()
             assert side_panel.get_service()
