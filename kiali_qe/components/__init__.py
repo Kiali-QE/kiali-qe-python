@@ -1233,7 +1233,10 @@ class Actions(Widget):
                     wait_displayed(self._loadbalancer_type)
                     self._loadbalancer_type.select(load_balancer_type.text)
         else:
-            self._http_header_name.fill('test')
+            try:
+                self._http_header_name.fill('test')
+            except (NoSuchElementException):
+                pass
             self.browser.click(_traffic_tab)
             self._loadbalancer_switch.off()
         if gateway:
