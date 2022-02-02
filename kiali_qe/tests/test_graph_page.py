@@ -65,6 +65,7 @@ def test_type(browser):
         assert not side_panel.get_application()
 
 
+@pytest.mark.skip(reason="interop pipeline - skipping flaky test")
 @pytest.mark.p_atomic
 @pytest.mark.p_ro_group3
 def test_filter(browser):
