@@ -175,6 +175,8 @@ def test_overview_auto_injection(kiali_client, openshift_client, browser, pick_n
         pass
 
 
+
+@pytest.mark.skip(reason="interop pipeline - skipping flaky test")
 @pytest.mark.p_ro_top
 @pytest.mark.p_crud_group4
 def test_overview_traffic_policies(kiali_client, openshift_client, browser, pick_namespace):
@@ -211,6 +213,7 @@ def test_filter_overviews_by_health_healthy(kiali_client, openshift_client, brow
         {"name": OverviewPageFilter.HEALTH.text, "value": OverviewHealth.HEALTHY.text}])
 
 
+@pytest.mark.skip(reason="interop pipeline - skipping flaky test")
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group3
 def test_filter_overviews_by_mtlsstatus_enabled(kiali_client, openshift_client, browser):
@@ -229,6 +232,7 @@ def test_filter_overviews_by_mtlsstatus_partiallyenabled(kiali_client, openshift
         {"name": OverviewPageFilter.MTLS_STATUS.text, "value": OverviewMTSLStatus.PARENABLED.text}])
 
 
+@pytest.mark.skip(reason="interop pipeline - skipping flaky test")
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group1
 def test_filter_overviews_by_mtlsstatus_disabled(kiali_client, openshift_client, browser):
