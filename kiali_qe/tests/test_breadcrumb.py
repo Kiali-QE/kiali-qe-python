@@ -103,6 +103,7 @@ def test_service_breadcrumb_object(kiali_client, openshift_client, browser, pick
 
 # putting to p_ro_top group although right now there are no tests changing health of app so
 # it could be in p_ro_top_safe
+@pytest.mark.skip(reason="interop pipeline - skipping flaky test")
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group2
 def test_config_breadcrumb_menu(kiali_client, openshift_client, browser):
@@ -111,6 +112,7 @@ def test_config_breadcrumb_menu(kiali_client, openshift_client, browser):
     tests.assert_breadcrumb_menu(name='metadata-exchange-1.9-basic', namespace=ISTIO_SYSTEM)
 
 
+@pytest.mark.skip(reason="interop pipeline - skipping flaky test")
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group2
 def test_config_breadcrumb_namespace(kiali_client, openshift_client, browser):
@@ -119,6 +121,7 @@ def test_config_breadcrumb_namespace(kiali_client, openshift_client, browser):
     tests.assert_breadcrumb_namespace(name='metadata-exchange-1.9-basic', namespace=ISTIO_SYSTEM)
 
 
+@pytest.mark.skip(reason="interop pipeline - skipping flaky test")
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group2
 def test_config_breadcrumb_object(kiali_client, openshift_client, browser):
