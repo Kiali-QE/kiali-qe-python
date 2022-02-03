@@ -738,7 +738,7 @@ class Actions(Widget):
     SELECT_BUTTON = './/button[text()="SELECT"]'
     DELETE_BUTTON = './/button[text()="Delete"]'
     REMOVE_RULE = 'Remove Rule'
-    ADD_RULE_BUTTON = './/button[text()="Add Rule"]'
+    ADD_RULE_BUTTON = './/button[text()="Add Route Rule"]'
     DELETE_TRAFFIC_ROUTING = 'Delete Traffic Routing'
     REQUEST_ROUTING = RoutingWizardType.REQUEST_ROUTING.text
     TRAFFIC_SHIFTING = RoutingWizardType.TRAFFIC_SHIFTING.text
