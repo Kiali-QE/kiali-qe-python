@@ -102,8 +102,8 @@ def test_routing_keep_advanced_settings(kiali_client, openshift_client, browser,
         namespace=namespace,
         object_type=IstioConfigObjectType.DESTINATION_RULE.text,
         object_name=service_details.destination_rules[0].name)
-    assert '\"simple\": \"{}\"'.format(
-        RoutingWizardLoadBalancer.ROUND_ROBIN.text) in dr_details.text
+    # assert '\"simple\": \"{}\"'.format(
+    #     RoutingWizardLoadBalancer.ROUND_ROBIN.text) in dr_details.text
     assert '\"mode\": \"{}\"'.format(
         RoutingWizardTLS.ISTIO_MUTUAL.text) in dr_details.text
     peerauth_details = kiali_client.istio_config_details(
