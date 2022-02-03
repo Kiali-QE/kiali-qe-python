@@ -5,6 +5,7 @@ import math
 
 
 from kiali_qe.components import (
+    Actions,
     BreadCrumb,
     wait_to_spinner_disappear,
     ListViewAbstract
@@ -869,6 +870,13 @@ class OverviewPageTest(AbstractListPageTest):
             self.page.page_refresh()
             wait_to_spinner_disappear(self.browser)
             self.page.content.list_items
+            self.browser.click(self.browser.element(
+                parent=Actions.WIZARD_ROOT,
+                locator=(Actions.CREATE_BUTTON)))
+            wait_to_spinner_disappear(self.browser)
+            self.browser.click(self.browser.element(
+                parent=Actions.WIZARD_ROOT,
+                locator=(Actions.CREATE_BUTTON)))
             assert self.page.content.overview_action_present(
                 namespace,
                 OverviewTrafficLinks.DELETE_TRAFFIC_POLICIES.text)
