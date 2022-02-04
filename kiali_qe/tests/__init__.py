@@ -2010,9 +2010,7 @@ class ServicesPageTest(AbstractListPageTest):
             namespace=namespace,
             object_type=OBJECT_TYPE.DESTINATION_RULE.text,
             object_name=service_details_rest.destination_rules[0].name)
-        assert word_in_text('\"http1MaxPendingRequests\"',
-                            istio_config_details_rest.text,
-                            circuit_braker)
+        word_in_text('\"virtualservices\"', istio_config_details_rest._type, circuit_braker)
 
     def test_routing_delete(self, name, namespace):
         logger.debug('Routing Delete for Service: {}, {}'.format(name, namespace))
