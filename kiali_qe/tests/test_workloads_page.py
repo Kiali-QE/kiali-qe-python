@@ -170,11 +170,11 @@ def test_all_workloads_namespace(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group9
-def test_workload_details_kiali(kiali_client, openshift_client, browser):
+def test_workload_details_productpage(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.assert_details(name='kiali',
-                         namespace=ISTIO_SYSTEM,
+    tests.assert_details(name='productpage-v1',
+                         namespace=BOOKINFO_3,
                          workload_type=WorkloadType.DEPLOYMENT.text)
 
 
