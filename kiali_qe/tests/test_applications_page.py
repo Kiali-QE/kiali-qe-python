@@ -97,7 +97,7 @@ def test_application_graph_overview(kiali_client, openshift_client, browser, pic
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     namespace = pick_namespace(BOOKINFO)
-    tests.assert_graph_overview(name='details', namespace=namespace)
+    tests.assert_graph_overview(name='details', namespace='bookinfo3')
 
 
 # putting to p_ro_top group although right now there are no tests changing health of app so
