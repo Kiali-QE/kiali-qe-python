@@ -927,14 +927,15 @@ class OverviewPageTest(AbstractListPageTest):
                 elif config_rest.validation == IstioConfigValidation.VALID:
                     if expected_status == IstioConfigValidation.NA:
                         expected_status = IstioConfigValidation.VALID
-        assert expected_status == config_status.validation, \
-            'Expected {} but got {} for {} as Config Status'.format(
-                expected_status, config_status.validation, namespace)
         if config_status.validation != IstioConfigValidation.NA:
             assert '/console/istio?namespaces={}'.format(
                     namespace) in \
                         config_status.link, 'Wrong config overview link {}'.format(
                             config_status.link)
+        else:
+            assert expected_status == config_status.validation, \
+                'Expected {} but got {} for {} as Config Status'.format(
+                    expected_status, config_status.validation, namespace)
 
 
 class ApplicationsPageTest(AbstractListPageTest):
