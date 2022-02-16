@@ -737,6 +737,7 @@ class Actions(Widget):
     UPDATE_BUTTON = './/button[text()="Update"]'
     SELECT_BUTTON = './/button[text()="SELECT"]'
     DELETE_BUTTON = './/button[text()="Delete"]'
+    PREVIEW_BUTTON = './/button[text()="Preview"]'
     REMOVE_RULE = 'Remove Rule'
     ADD_RULE_BUTTON = './/button[text()="Add Route Rule"]'
     DELETE_TRAFFIC_ROUTING = 'Delete Traffic Routing'
@@ -888,6 +889,12 @@ class Actions(Widget):
                                   skip_advanced=skip_advanced)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
+                locator=(self.PREVIEW_BUTTON)))
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.CREATE_BUTTON)))
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
                 locator=(self.CREATE_BUTTON)))
             wait_not_displayed(self)
             # wait to Spinner disappear
@@ -913,6 +920,12 @@ class Actions(Widget):
                                   include_mesh_gateway=include_mesh_gateway,
                                   circuit_braker=circuit_braker,
                                   skip_advanced=skip_advanced)
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.PREVIEW_BUTTON)))
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.UPDATE_BUTTON)))
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.UPDATE_BUTTON)))
@@ -944,6 +957,12 @@ class Actions(Widget):
                                   skip_advanced=skip_advanced)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
+                locator=(self.PREVIEW_BUTTON)))
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.CREATE_BUTTON)))
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
                 locator=(self.CREATE_BUTTON)))
             wait_not_displayed(self)
             # wait to Spinner disappear
@@ -968,6 +987,12 @@ class Actions(Widget):
                                   include_mesh_gateway=include_mesh_gateway,
                                   circuit_braker=False,
                                   skip_advanced=skip_advanced)
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.PREVIEW_BUTTON)))
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.UPDATE_BUTTON)))
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.UPDATE_BUTTON)))
@@ -1013,6 +1038,12 @@ class Actions(Widget):
             self.browser.click(_timeout_tab)
             self._timeout_switch.on()
             self._retry_switch.on()
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.PREVIEW_BUTTON)))
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.CREATE_BUTTON)))
             create_button = self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.CREATE_BUTTON))
@@ -1057,6 +1088,12 @@ class Actions(Widget):
             self.browser.click(_timeout_tab)
             self._timeout_switch.off()
             self._retry_switch.off()
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.PREVIEW_BUTTON)))
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.UPDATE_BUTTON)))
             update_button = self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.UPDATE_BUTTON))
@@ -1093,6 +1130,12 @@ class Actions(Widget):
                                   skip_advanced=skip_advanced)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
+                locator=(self.PREVIEW_BUTTON)))
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.CREATE_BUTTON)))
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
                 locator=(self.CREATE_BUTTON)))
             wait_not_displayed(self)
             # wait to Spinner disappear
@@ -1119,6 +1162,12 @@ class Actions(Widget):
                                   include_mesh_gateway=include_mesh_gateway,
                                   circuit_braker=circuit_braker,
                                   skip_advanced=skip_advanced)
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.PREVIEW_BUTTON)))
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.UPDATE_BUTTON)))
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.UPDATE_BUTTON)))
@@ -1153,6 +1202,12 @@ class Actions(Widget):
                                   skip_advanced=skip_advanced)
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
+                locator=(self.PREVIEW_BUTTON)))
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.CREATE_BUTTON)))
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
                 locator=(self.CREATE_BUTTON)))
             wait_not_displayed(self)
             # wait to Spinner disappear
@@ -1179,6 +1234,12 @@ class Actions(Widget):
                                   include_mesh_gateway=include_mesh_gateway,
                                   circuit_braker=circuit_braker,
                                   skip_advanced=skip_advanced)
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.PREVIEW_BUTTON)))
+            self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.UPDATE_BUTTON)))
             self.browser.click(self.browser.element(
                 parent=self.WIZARD_ROOT,
                 locator=(self.UPDATE_BUTTON)))
