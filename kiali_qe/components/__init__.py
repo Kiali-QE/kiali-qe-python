@@ -738,6 +738,8 @@ class Actions(Widget):
     SELECT_BUTTON = './/button[text()="SELECT"]'
     DELETE_BUTTON = './/button[text()="Delete"]'
     PREVIEW_BUTTON = './/button[text()="Preview"]'
+    DISABLE_BUTTON = './/button[text()="Disable"]'
+    ENABLE_BUTTON = './/button[text()="Enable"]'
     REMOVE_RULE = 'Remove Rule'
     ADD_RULE_BUTTON = './/button[text()="Add Route Rule"]'
     DELETE_TRAFFIC_ROUTING = 'Delete Traffic Routing'
