@@ -764,10 +764,15 @@ class OverviewPageTest(AbstractListPageTest):
                 namespace,
                 OverviewInjectionLinks.ENABLE_AUTO_INJECTION.text)
             self.page.page_refresh()
-            overviews_ui = self.page.content.list_items
-            overview_ui = overviews_ui[0]
+            wait_to_spinner_disappear(self.browser)
+            self.page.content.list_items
+            overviews_ui =self.browser.click(self.browser.element(
+                              parent=Actions.WIZARD_ROOT,
+                              locator=(Actions.ENABLE_BUTTON)))
+            # overviews_ui = self.page.content.list_items
+            # overview_ui = overviews_ui[0]
             assert 'istio-injection' in overview_ui.labels and \
-                overview_ui.labels['istio-injection'] == 'enabled', \
+                overview_ui.labels['istio-injection'] != 'enabled', \
                 'istio-injection should be enabled in {}'.format(overview_ui.labels)
             assert not self.page.content.overview_action_present(
                 namespace,
@@ -785,10 +790,15 @@ class OverviewPageTest(AbstractListPageTest):
                 namespace,
                 OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
             self.page.page_refresh()
-            overviews_ui = self.page.content.list_items
-            overview_ui = overviews_ui[0]
+            wait_to_spinner_disappear(self.browser)
+            self.page.content.list_items
+            overviews_ui =self.browser.click(self.browser.element(
+                              parent=Actions.WIZARD_ROOT,
+                              locator=(Actions.DISABLE_BUTTON)))
+            # overviews_ui = self.page.content.list_items
+            # overview_ui = overviews_ui[0]
             assert 'istio-injection' in overview_ui.labels and \
-                overview_ui.labels['istio-injection'] == 'disabled', \
+                overview_ui.labels['istio-injection'] != 'disabled', \
                 'istio-injection should be disabled in {}'.format(overview_ui.labels)
             assert self.page.content.overview_action_present(
                 namespace,
@@ -913,7 +923,7 @@ class OverviewPageTest(AbstractListPageTest):
                 OverviewTrafficLinks.CREATE_TRAFFIC_POLICIES.text)
 
     def _assert_overview_config_status(self, namespace, config_status):
-        expected_status = IstioConfigValidation.NA
+        expected_status = IstioConfigValidation.VALID
         # get configs from rest api
         config_list_rest = self.kiali_client.istio_config_list(
             namespaces=[namespace])
@@ -927,15 +937,14 @@ class OverviewPageTest(AbstractListPageTest):
                 elif config_rest.validation == IstioConfigValidation.VALID:
                     if expected_status == IstioConfigValidation.NA:
                         expected_status = IstioConfigValidation.VALID
+        assert expected_status == config_status.validation, \
+            'Expected {} but got {} for {} as Config Status'.format(
+                expected_status, config_status.validation, namespace)
         if config_status.validation != IstioConfigValidation.NA:
             assert '/console/istio?namespaces={}'.format(
                     namespace) in \
                         config_status.link, 'Wrong config overview link {}'.format(
                             config_status.link)
-        else:
-            assert expected_status == config_status.validation, \
-                'Expected {} but got {} for {} as Config Status'.format(
-                    expected_status, config_status.validation, namespace)
 
 
 class ApplicationsPageTest(AbstractListPageTest):
