@@ -1386,6 +1386,9 @@ class ConfigActions(Actions):
             locator=(self.ADD_SERVER_BUTTON))
         wait_displayed(add_server_button)
         self.browser.click(add_server_button)
+        self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.PREVIEW_BUTTON)))
         create_button = self.browser.element(
             parent=self.CONFIG_CREATE_ROOT,
             locator=(self.CREATE_BUTTON))
@@ -1405,6 +1408,9 @@ class ConfigActions(Actions):
             locator=(self.ADD_EGRESS_HOST_BUTTON))
         wait_displayed(add_egress_button)
         self.browser.click(add_egress_button)
+        self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.PREVIEW_BUTTON)))
         create_button = self.browser.element(
             parent=self.CONFIG_CREATE_ROOT,
             locator=(self.CREATE_BUTTON))
@@ -1422,6 +1428,9 @@ class ConfigActions(Actions):
         self._add_workload_selector(labels)
         if policy_action:
             self._policy_action.select(policy_action)
+        self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.PREVIEW_BUTTON)))
         create_button = self.browser.element(
             parent=self.CONFIG_CREATE_ROOT,
             locator=(self.CREATE_BUTTON))
@@ -1449,6 +1458,9 @@ class ConfigActions(Actions):
                     parent=self.CONFIG_CREATE_ROOT,
                     locator=(self.ADD_PORT_MTLS_BUTTON))
                 self.browser.click(add_value_button)
+                self.browser.click(self.browser.element(
+                parent=self.WIZARD_ROOT,
+                locator=(self.PREVIEW_BUTTON)))
         create_button = self.browser.element(
             parent=self.CONFIG_CREATE_ROOT,
             locator=(self.CREATE_BUTTON))
@@ -1480,6 +1492,9 @@ class ConfigActions(Actions):
             if add_rule_button.get_attribute("disabled"):
                 return False
             self.browser.click(add_rule_button)
+        self.browser.click(self.browser.element(
+            parent=self.WIZARD_ROOT,
+            locator=(self.PREVIEW_BUTTON)))
         create_button = self.browser.element(
             parent=self.CONFIG_CREATE_ROOT,
             locator=(self.CREATE_BUTTON))
