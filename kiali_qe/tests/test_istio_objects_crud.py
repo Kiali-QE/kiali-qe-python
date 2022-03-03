@@ -503,12 +503,15 @@ def test_peerauth_create_disabled(kiali_client, openshift_client, browser, pick_
     namespace = pick_namespace(BOOKINFO_2)
     name = 'peerauthtocreatedisabled'
     namespaces = [BOOKINFO_1, namespace]
-    tests = IstioConfigPageTest(
-        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.test_peerauth_create(name=name, mtls_mode=MutualTLSMode.PERMISSIVE.text,
-                               namespaces=namespaces,
-                               expected_created=False,
-                               mtls_ports={'8080': MutualTLSMode.STRICT.text})
+    try:
+        _delete_peerauths(openshift_client, name, namespaces)
+        tests = IstioConfigPageTest(
+            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+        tests.test_peerauth_create(name=name, mtls_mode=MutualTLSMode.PERMISSIVE.text,
+                                   labels='app=value',namespaces=namespaces,
+                                   mtls_ports={'8080': MutualTLSMode.STRICT.text},)
+    finally:
+        _delete_peerauths(openshift_client, name, namespaces) 
 
 
 @pytest.mark.p_crud_resource
