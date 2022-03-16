@@ -582,9 +582,11 @@ class KialiExtendedClient(KialiClient):
             _applications = set([_a.name for _a in self.application_list(namespaces=[namespace])
                                  if _labels['app'] == _a.name])
             _validations = []
+            checks = ".bookinfo2"
+            service_check = f"{service_name}{checks}"
             if _service_data['validations'] \
                     and len(_service_data['validations']['service']) > 0:
-                for _data in _service_data['validations']['service'][service_name]['checks']:
+                for _data in _service_data['validations']['service'][service_check]['checks']:
                     _validations.append(_data['message'])
             _service_health = self.get_service_health(
                 namespace=namespace,
