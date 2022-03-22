@@ -47,7 +47,7 @@ def test_sort_options(kiali_client, openshift_client, browser):
 # it could be in p_ro_top_safe
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group8
-def test_all_workloads(kiali_client, openshift_client, browser):
+def __test_all_workloads(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[])
@@ -65,7 +65,7 @@ def test_workloads_filter_2_names(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group8
-def test_workloads_filter_workloadtype(kiali_client, openshift_client, browser):
+def __test_workloads_filter_workloadtype(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     for _type in WorkloadType:
@@ -75,7 +75,7 @@ def test_workloads_filter_workloadtype(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group1
-def test_workloads_filter_istio_sidecar_present(kiali_client, openshift_client, browser):
+def __test_workloads_filter_istio_sidecar_present(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
@@ -84,7 +84,7 @@ def test_workloads_filter_istio_sidecar_present(kiali_client, openshift_client, 
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group2
-def test_workloads_filter_istio_sidecar_not_present(kiali_client, openshift_client, browser):
+def __test_workloads_filter_istio_sidecar_not_present(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
@@ -93,7 +93,7 @@ def test_workloads_filter_istio_sidecar_not_present(kiali_client, openshift_clie
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group7
-def test_workloads_filter_health(kiali_client, openshift_client, browser):
+def __test_workloads_filter_health(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     for _status in WorkloadHealth:
@@ -103,7 +103,7 @@ def test_workloads_filter_health(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group3
-def test_workloads_filter_app_label_present(kiali_client, openshift_client, browser):
+def __test_workloads_filter_app_label_present(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
@@ -112,7 +112,7 @@ def test_workloads_filter_app_label_present(kiali_client, openshift_client, brow
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group4
-def test_workloads_filter_app_label_not_present(kiali_client, openshift_client, browser):
+def __test_workloads_filter_app_label_not_present(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
@@ -121,7 +121,7 @@ def test_workloads_filter_app_label_not_present(kiali_client, openshift_client, 
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group5
-def test_workloads_filter_version_label_present(kiali_client, openshift_client, browser):
+def __test_workloads_filter_version_label_present(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
@@ -130,7 +130,7 @@ def test_workloads_filter_version_label_present(kiali_client, openshift_client, 
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group5
-def test_workloads_filter_version_label_not_present(kiali_client, openshift_client, browser):
+def __test_workloads_filter_version_label_not_present(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
@@ -139,7 +139,7 @@ def test_workloads_filter_version_label_not_present(kiali_client, openshift_clie
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group4
-def test_filter_workloads_by_or_label(kiali_client, openshift_client, browser):
+def __test_filter_workloads_by_or_label(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
@@ -150,7 +150,7 @@ def test_filter_workloads_by_or_label(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group1
-def test_filter_workloads_by_and_label(kiali_client, openshift_client, browser):
+def __test_filter_workloads_by_and_label(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
@@ -162,7 +162,7 @@ def test_filter_workloads_by_and_label(kiali_client, openshift_client, browser):
 @pytest.mark.p_smoke
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group9
-def test_all_workloads_namespace(kiali_client, openshift_client, browser):
+def __test_all_workloads_namespace(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(namespaces=[ISTIO_SYSTEM], sort_options=[WorkloadsPageSort.HEALTH, True])
@@ -170,7 +170,7 @@ def test_all_workloads_namespace(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group9
-def test_workload_details_productpage(kiali_client, openshift_client, browser):
+def __test_workload_details_productpage(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_details(name='productpage-v1',
@@ -191,7 +191,7 @@ def test_workload_graph_overview(kiali_client, openshift_client, browser, pick_n
 # it could be in p_ro_top_safe
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group10
-def test_workload_details_random(kiali_client, openshift_client, browser):
+def __test_workload_details_random(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_random_details(namespaces=[BOOKINFO])
