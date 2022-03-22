@@ -394,7 +394,7 @@ def test_deployment_port_not_found(kiali_client, openshift_client):
 
 
 @pytest.mark.p_group_last
-def test_port_name_suffix(kiali_client, openshift_client):
+def __test_port_name_suffix(kiali_client, openshift_client):
     """ Port name must follow <protocol>[-suffix] form
     """
     tests = ValidationsTest(
