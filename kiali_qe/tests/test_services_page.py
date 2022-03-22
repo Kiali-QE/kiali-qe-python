@@ -36,7 +36,7 @@ def test_sort_options(kiali_client, openshift_client, browser):
 # it could be in p_ro_top_safe
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group7
-def test_filter_feature_random(kiali_client, openshift_client, browser):
+def __test_filter_feature_random(kiali_client, openshift_client, browser):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_filter_feature_random()
@@ -46,7 +46,7 @@ def test_filter_feature_random(kiali_client, openshift_client, browser):
 # it could be in p_ro_top_safe
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group7
-def test_all_services(kiali_client, openshift_client, browser):
+def __test_all_services(kiali_client, openshift_client, browser):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[])
@@ -64,7 +64,7 @@ def test_services_filter_2_names(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group7
-def test_filter_service_by_label(kiali_client, openshift_client, browser):
+def __test_filter_service_by_label(kiali_client, openshift_client, browser):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
@@ -73,7 +73,7 @@ def test_filter_service_by_label(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group7
-def test_filter_service_by_or_label(kiali_client, openshift_client, browser):
+def __test_filter_service_by_or_label(kiali_client, openshift_client, browser):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(namespaces=[BOOKINFO_2],
@@ -85,7 +85,7 @@ def test_filter_service_by_or_label(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group7
-def test_filter_service_by_and_label(kiali_client, openshift_client, browser):
+def __test_filter_service_by_and_label(kiali_client, openshift_client, browser):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(namespaces=[BOOKINFO_2],
@@ -106,7 +106,7 @@ def test_all_services_namespace(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_ro_namespace
 @pytest.mark.p_ro_group7
-def test_service_details_kiali(kiali_client, openshift_client, browser, pick_namespace):
+def __test_service_details_kiali(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_details(name='kiali', namespace=ISTIO_SYSTEM)
@@ -123,7 +123,7 @@ def test_service_graph_overview(kiali_client, openshift_client, browser, pick_na
 
 @pytest.mark.p_ro_namespace
 @pytest.mark.p_ro_group10
-def test_service_details_random(kiali_client, openshift_client, browser, pick_namespace):
+def __test_service_details_random(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     # use only bookinfo2 namespace where colliding tests are in the same p_group
