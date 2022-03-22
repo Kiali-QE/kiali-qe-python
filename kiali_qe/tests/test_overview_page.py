@@ -44,7 +44,7 @@ def test_type_options(kiali_client, openshift_client, browser):
 @pytest.mark.p_smoke
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
-def test_all_app_compact_overviews(kiali_client, openshift_client, browser):
+def __test_all_app_compact_overviews(kiali_client, openshift_client, browser):
     _idle_bookinfo()
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -54,7 +54,7 @@ def test_all_app_compact_overviews(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
-def test_all_services_compact_overviews(kiali_client, openshift_client, browser):
+def __test_all_services_compact_overviews(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[], overview_type=OverviewPageType.SERVICES,
@@ -63,7 +63,7 @@ def test_all_services_compact_overviews(kiali_client, openshift_client, browser)
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
-def test_all_workloads_compact_overviews(kiali_client, openshift_client, browser):
+def __test_all_workloads_compact_overviews(kiali_client, openshift_client, browser):
     _idle_bookinfo()
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -73,7 +73,7 @@ def test_all_workloads_compact_overviews(kiali_client, openshift_client, browser
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
-def test_all_app_expand_overviews(kiali_client, openshift_client, browser):
+def __test_all_app_expand_overviews(kiali_client, openshift_client, browser):
     _idle_bookinfo()
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -84,7 +84,7 @@ def test_all_app_expand_overviews(kiali_client, openshift_client, browser):
 @pytest.mark.p_smoke
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
-def test_all_services_expand_overviews(kiali_client, openshift_client, browser):
+def __test_all_services_expand_overviews(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[], overview_type=OverviewPageType.SERVICES,
@@ -93,7 +93,7 @@ def test_all_services_expand_overviews(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
-def test_all_workloads_expand_overviews(kiali_client, openshift_client, browser):
+def __test_all_workloads_expand_overviews(kiali_client, openshift_client, browser):
     _idle_bookinfo()
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -103,7 +103,7 @@ def test_all_workloads_expand_overviews(kiali_client, openshift_client, browser)
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
-def test_all_app_list_overviews(kiali_client, openshift_client, browser):
+def __test_all_app_list_overviews(kiali_client, openshift_client, browser):
     _idle_bookinfo()
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -113,7 +113,7 @@ def test_all_app_list_overviews(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
-def test_all_services_list_overviews(kiali_client, openshift_client, browser):
+def __test_all_services_list_overviews(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[], overview_type=OverviewPageType.SERVICES,
@@ -123,7 +123,7 @@ def test_all_services_list_overviews(kiali_client, openshift_client, browser):
 @pytest.mark.p_smoke
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
-def test_all_workloads_list_overviews(kiali_client, openshift_client, browser):
+def __test_all_workloads_list_overviews(kiali_client, openshift_client, browser):
     _idle_bookinfo()
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
@@ -133,7 +133,7 @@ def test_all_workloads_list_overviews(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
-def test_filter_overviews_by_label(kiali_client, openshift_client, browser):
+def __test_filter_overviews_by_label(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
@@ -144,7 +144,7 @@ def test_filter_overviews_by_label(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
-def test_filter_overviews_by_single_namespace(kiali_client, openshift_client, browser):
+def __test_filter_overviews_by_single_namespace(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
@@ -186,7 +186,7 @@ def test_overview_traffic_policies(kiali_client, openshift_client, browser, pick
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
-def test_filter_overviews_by_health_failure(kiali_client, openshift_client, browser):
+def __test_filter_overviews_by_health_failure(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
@@ -195,7 +195,7 @@ def test_filter_overviews_by_health_failure(kiali_client, openshift_client, brow
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
-def test_filter_overviews_by_health_degraded(kiali_client, openshift_client, browser):
+def __test_filter_overviews_by_health_degraded(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
@@ -204,7 +204,7 @@ def test_filter_overviews_by_health_degraded(kiali_client, openshift_client, bro
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group4
-def test_filter_overviews_by_health_healthy(kiali_client, openshift_client, browser):
+def __test_filter_overviews_by_health_healthy(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
@@ -213,7 +213,7 @@ def test_filter_overviews_by_health_healthy(kiali_client, openshift_client, brow
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group3
-def test_filter_overviews_by_mtlsstatus_enabled(kiali_client, openshift_client, browser):
+def __test_filter_overviews_by_mtlsstatus_enabled(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
@@ -222,7 +222,7 @@ def test_filter_overviews_by_mtlsstatus_enabled(kiali_client, openshift_client, 
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group2
-def test_filter_overviews_by_mtlsstatus_partiallyenabled(kiali_client, openshift_client, browser):
+def __test_filter_overviews_by_mtlsstatus_partiallyenabled(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
@@ -231,7 +231,7 @@ def test_filter_overviews_by_mtlsstatus_partiallyenabled(kiali_client, openshift
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group1
-def test_filter_overviews_by_mtlsstatus_disabled(kiali_client, openshift_client, browser):
+def __test_filter_overviews_by_mtlsstatus_disabled(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
