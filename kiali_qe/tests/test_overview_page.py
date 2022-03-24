@@ -154,7 +154,7 @@ def __test_filter_overviews_by_single_namespace(kiali_client, openshift_client, 
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group6
-def test_filter_overviews_by_two_namespaces(kiali_client, openshift_client, browser):
+def __test_filter_overviews_by_two_namespaces(kiali_client, openshift_client, browser):
     tests = OverviewPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[

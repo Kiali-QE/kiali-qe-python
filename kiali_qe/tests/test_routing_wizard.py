@@ -23,7 +23,7 @@ ACCESS_TOKEN2 = 'token2'
 
 @pytest.mark.p_ro_namespace
 @pytest.mark.p_crud_group5
-def test_weighted_routing_single(kiali_client, openshift_client, browser, pick_namespace):
+def __test_weighted_routing_single(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     # use only bookinfo2 namespace where colliding tests are in the same p_group
@@ -46,7 +46,7 @@ def test_weighted_routing_single(kiali_client, openshift_client, browser, pick_n
 
 @pytest.mark.p_ro_namespace
 @pytest.mark.p_crud_group2
-def test_tcp_routing_single(kiali_client, openshift_client, browser, pick_namespace):
+def __test_tcp_routing_single(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     # use only bookinfo2 namespace where colliding tests are in the same p_group
@@ -67,7 +67,7 @@ def test_tcp_routing_single(kiali_client, openshift_client, browser, pick_namesp
 
 @pytest.mark.p_ro_namespace
 @pytest.mark.p_crud_group2
-def test_routing_keep_advanced_settings(kiali_client, openshift_client, browser, pick_namespace):
+def __test_routing_keep_advanced_settings(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     # use only bookinfo2 namespace where colliding tests are in the same p_group
@@ -120,7 +120,7 @@ def test_routing_keep_advanced_settings(kiali_client, openshift_client, browser,
 
 @pytest.mark.p_ro_namespace
 @pytest.mark.p_crud_group6
-def test_matching_routing_multi(kiali_client, openshift_client, browser, pick_namespace):
+def __test_matching_routing_multi(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     # use only bookinfo2 namespace where colliding tests are in the same p_group
@@ -141,7 +141,7 @@ def test_matching_routing_multi(kiali_client, openshift_client, browser, pick_na
 
 @pytest.mark.p_ro_namespace
 @pytest.mark.p_crud_group6
-def test_suspend_traffic_multi(kiali_client, openshift_client, browser, pick_namespace):
+def __test_suspend_traffic_multi(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     # use only bookinfo2 namespace where colliding tests are in the same p_group
@@ -162,7 +162,7 @@ def test_suspend_traffic_multi(kiali_client, openshift_client, browser, pick_nam
 
 @pytest.mark.p_ro_namespace
 @pytest.mark.p_crud_group6
-def test_request_timeouts_multi(kiali_client, openshift_client, browser, pick_namespace):
+def __test_request_timeouts_multi(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     # use only bookinfo2 namespace where colliding tests are in the same p_group
@@ -183,7 +183,7 @@ def test_request_timeouts_multi(kiali_client, openshift_client, browser, pick_na
 
 @pytest.mark.p_ro_namespace
 @pytest.mark.p_crud_group5
-def test_tls_mutual(kiali_client, openshift_client, browser, pick_namespace):
+def __test_tls_mutual(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     # use only bookinfo2 namespace where colliding tests are in the same p_group
