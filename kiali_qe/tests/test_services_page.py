@@ -123,6 +123,7 @@ def test_service_graph_overview(kiali_client, openshift_client, browser, pick_na
 
 @pytest.mark.p_ro_namespace
 @pytest.mark.p_ro_group10
+@pytest.mark.skip(reason="interop pipeline - skipping flaky test")
 def test_service_details_random(kiali_client, openshift_client, browser, pick_namespace):
     tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
