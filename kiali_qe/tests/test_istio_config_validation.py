@@ -378,7 +378,7 @@ def test_dr_fqdn_not_exist(kiali_client, openshift_client):
 
 
 @pytest.mark.p_group_last
-def test_deployment_port_not_found(kiali_client, openshift_client):
+def __test_deployment_port_not_found(kiali_client, openshift_client):
     """ Deployment exposing same port as Service not found
     """
     tests = ValidationsTest(
