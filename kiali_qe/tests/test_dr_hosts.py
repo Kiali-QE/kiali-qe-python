@@ -32,7 +32,7 @@ def test_destination_rule_host_1(kiali_client, openshift_client, browser):
                        kind='DestinationRule',
                        api_version='networking.istio.io/v1alpha3',
                        namespace=BOOKINFO_1,
-                       is_link_expected=True)
+                       is_link_expected=False)
 
 
 @pytest.mark.p_crud_resource
@@ -47,7 +47,7 @@ def test_destination_rule_host_2(kiali_client, openshift_client, browser):
                        kind='DestinationRule',
                        api_version='networking.istio.io/v1alpha3',
                        namespace=BOOKINFO_1,
-                       is_link_expected=True)
+                       is_link_expected=False)
 
 
 @pytest.mark.p_crud_resource
@@ -62,7 +62,7 @@ def test_destination_rule_host_3(kiali_client, openshift_client, browser):
                        kind='DestinationRule',
                        api_version='networking.istio.io/v1alpha3',
                        namespace=BOOKINFO_1,
-                       is_link_expected=True)
+                       is_link_expected=False)
 
 
 @pytest.mark.p_crud_resource
