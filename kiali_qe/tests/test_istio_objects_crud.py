@@ -67,7 +67,8 @@ SERVICE_ROLE_BINDING_BROKEN = 'service-role-binding-broken.yaml'
 @pytest.mark.p_smoke
 @pytest.mark.p_crud_resource
 @pytest.mark.p_crud_group1
-def __test_destination_rule(kiali_client, openshift_client, browser):
+@pytest.mark.skip(reason="interop pipeline - skipping flaky test")
+def test_destination_rule(kiali_client, openshift_client, browser):
     destination_rule = get_yaml(istio_objects_path.strpath, DEST_RULE)
     destination_rule_dict = get_dict(istio_objects_path.strpath, DEST_RULE)
 
