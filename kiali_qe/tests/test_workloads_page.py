@@ -47,7 +47,7 @@ def test_sort_options(kiali_client, openshift_client, browser):
 # it could be in p_ro_top_safe
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group8
-def test_all_workloads(kiali_client, openshift_client, browser):
+def __test_all_workloads(kiali_client, openshift_client, browser):
     tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[])
