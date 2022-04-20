@@ -5,14 +5,14 @@ from selenium.common.exceptions import NoSuchElementException
 class KialiBrowser(Browser):
 
     def __init__(
-            self, selenium, kiali_versions,
+            self, selenium, kiali_version,
             plugin_class=None, logger=None, extra_objects=None):
         Browser.__init__(self, selenium, plugin_class=None, logger=None, extra_objects=None)
-        self.kiali_versions = kiali_versions
+        self.kiali_version = kiali_version
 
     @property
     def product_version(self):
-        return self.kiali_versions['core']
+        return self.kiali_version
 
     def text_or_default(self, locator, default='None', *args, **kwargs):
         try:

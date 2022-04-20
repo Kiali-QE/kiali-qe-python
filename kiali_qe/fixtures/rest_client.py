@@ -20,8 +20,7 @@ def kiali_client():
     # update kiali version details
     _response = _client.get_response('getStatus')
     _status = _response['status']
-    cfg.kiali.version.core = _status['Kiali core version']
-    cfg.kiali.version.console = _status['Kiali console version']
+    cfg.kiali.version = _status['Kiali version']
 
     # There is an issue to show video recordings when we use special chars in build details
     # https://github.com/zalando/zalenium/issues/572
@@ -29,7 +28,7 @@ def kiali_client():
     #    cfg.kiali.version.console,
     #    cfg.kiali.version.core,
     #    _status['Kiali core commit hash'])
-    cfg.selenium.capabilities.zalenium.build = '{}'.format(cfg.kiali.version.core)
+    cfg.selenium.capabilities.zalenium.build = '{}'.format(cfg.kiali.version)
     logger.info('Kiali versions:\n{}'.format(json.dumps(_response, indent=2)))
     return _client
 
