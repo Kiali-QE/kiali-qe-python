@@ -1,4 +1,4 @@
-import pytest
+mport pytest
 import os
 
 from kiali_qe.components.enums import (
@@ -42,20 +42,14 @@ def test_about(browser, kiali_client):
     # compare each versions
     # get version details from REST API
 
-    # kiali core version
+    # kiali version
     _core_rest = '{}{}'.format(
-        _response['status']['Kiali core version'], ' ({})'.format(
-            _response['status']['Kiali core commit hash'])
-        if _response['status']['Kiali core commit hash'] != 'unknown' else '')
+        _response['status']['Kiali version'], ' ({})'.format(
+            _response['status']['Kiali commit hash'])
+        if _response['status']['Kiali commit hash'] != 'unknown' else '')
     # skip in case of code coverage run where the version is not set correctly during the build
     if "ENABLE_CODE_COVERAGE" not in os.environ or os.environ["ENABLE_CODE_COVERAGE"] != "true":
-        assert versions_ui[version_enum.KIALI_CORE.text] == _core_rest
-
-    # versions mismatch between console on UI
-    # TODO: check with manual test team and enable this
-    # _console_rest = '{} ({})'.format(
-    #     _response['status']['Kiali core version'], _response['status']['Kiali console version'])
-    # assert versions_ui[ApplicationVersionEnum.KIALI_UI.text] == _console_rest
+        assert versions_ui[version_enum.KIALI.text] == _core_rest
 
     # test other product versions
 
