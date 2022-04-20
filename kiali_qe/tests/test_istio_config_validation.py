@@ -378,7 +378,7 @@ def test_dr_fqdn_not_exist(kiali_client, openshift_client):
 
 
 @pytest.mark.p_group_last
-def test_deployment_port_not_found(kiali_client, openshift_client):
+def __test_deployment_port_not_found(kiali_client, openshift_client):
     """ Deployment exposing same port as Service not found
     """
     tests = ValidationsTest(
@@ -394,7 +394,7 @@ def test_deployment_port_not_found(kiali_client, openshift_client):
 
 
 @pytest.mark.p_group_last
-def test_port_name_suffix(kiali_client, openshift_client):
+def __test_port_name_suffix(kiali_client, openshift_client):
     """ Port name must follow <protocol>[-suffix] form
     """
     tests = ValidationsTest(
@@ -444,7 +444,9 @@ def test_sidecar_errors(kiali_client, openshift_client):
                 object_name='wrong-host-sidecar-auto',
                 namespace=BOOKINFO,
                 error_messages=[KIA0004,
-                                KIA0001,
+                                KIA1004,
+                                KIA1004,
+                                KIA1004,
                                 KIA1004])
         ])
 
@@ -464,12 +466,16 @@ def test_duplicate_sidecar_errors(kiali_client, openshift_client):
                 object_type='Sidecar',
                 object_name='dupliacate-sidecar1-auto',
                 namespace=BOOKINFO,
-                error_messages=[KIA0002]),
+                error_messages=[KIA0002,
+                                KIA1004,
+                                KIA1004]),
             ConfigValidationObject(
                 object_type='Sidecar',
                 object_name='dupliacate-sidecar2-auto',
                 namespace=BOOKINFO,
-                error_messages=[KIA0002])
+                error_messages=[KIA0002,
+                                KIA1004,
+                                KIA1004])
         ])
 
 
@@ -488,12 +494,12 @@ def test_duplicate_workload_sidecar_errors(kiali_client, openshift_client):
                 object_type='Sidecar',
                 object_name='dupliacate-workload-sidecar1-auto',
                 namespace=BOOKINFO,
-                error_messages=[KIA0003]),
+                error_messages=[KIA1004, KIA1004, KIA0003]),
             ConfigValidationObject(
                 object_type='Sidecar',
                 object_name='dupliacate-workload-sidecar2-auto',
                 namespace=BOOKINFO,
-                error_messages=[KIA0003])
+                error_messages=[KIA1004, KIA1004, KIA0003])
         ])
 
 
@@ -578,7 +584,7 @@ def test_vs_subset_validations_service_entry(kiali_client, openshift_client):
                 object_type='VirtualService',
                 object_name='orahub-vs',
                 namespace=BOOKINFO,
-                error_messages=[])
+                error_messages=[KIA1104, KIA1104])
         ])
 
 
@@ -597,7 +603,7 @@ def test_vs_subset_validations_no_service_entry(kiali_client, openshift_client):
                 object_type='VirtualService',
                 object_name='orahub-vs-no-dr',
                 namespace=BOOKINFO,
-                error_messages=[KIA1107, KIA1107])
+                error_messages=[KIA1104, KIA1104, KIA1107, KIA1107])
         ])
 
 
@@ -616,22 +622,22 @@ def test_vs_duplicate_gateway(kiali_client, openshift_client):
                 object_type='VirtualService',
                 object_name='admin-vs-2',
                 namespace=BOOKINFO,
-                error_messages=[KIA1106]),
+                error_messages=[]),
             ConfigValidationObject(
                 object_type='VirtualService',
                 object_name='admin-vs',
                 namespace=BOOKINFO,
-                error_messages=[KIA1106]),
+                error_messages=[]),
             ConfigValidationObject(
                 object_type='VirtualService',
                 object_name='user-vs-2',
                 namespace=BOOKINFO,
-                error_messages=[KIA1106]),
+                error_messages=[]),
             ConfigValidationObject(
                 object_type='VirtualService',
                 object_name='user-vs',
                 namespace=BOOKINFO,
-                error_messages=[KIA1106])
+                error_messages=[])
         ])
 
 

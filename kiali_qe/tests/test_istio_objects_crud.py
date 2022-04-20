@@ -25,7 +25,8 @@ from kiali_qe.components.error_codes import (
     KIA1101,
     KIA0004,
     KIA0001,
-    KIA1105
+    KIA1105,
+    KIA0104
 )
 
 '''
@@ -64,9 +65,10 @@ SERVICE_ROLE_BINDING = 'service-role-binding.yaml'
 SERVICE_ROLE_BINDING_BROKEN = 'service-role-binding-broken.yaml'
 
 
+@pytest.mark.p_smoke
 @pytest.mark.p_crud_resource
 @pytest.mark.p_crud_group1
-def test_destination_rule(kiali_client, openshift_client, browser):
+def __test_destination_rule(kiali_client, openshift_client, browser):
     destination_rule = get_yaml(istio_objects_path.strpath, DEST_RULE)
     destination_rule_dict = get_dict(istio_objects_path.strpath, DEST_RULE)
 
@@ -267,7 +269,7 @@ def test_virtual_service_subset_warning(kiali_client, openshift_client, browser)
                                namespace=BOOKINFO_1,
                                kind='VirtualService',
                                api_version='networking.istio.io/v1alpha3',
-                               error_messages=[KIA1105])
+                               error_messages=[KIA1105, KIA1105])
     _delete_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
 
 
@@ -413,7 +415,7 @@ def test_sidecar_create(kiali_client, openshift_client, browser, pick_namespace)
 @pytest.mark.p_crud_group3
 def test_authpolicy_deny_all_create(kiali_client, openshift_client, browser, pick_namespace):
     namespace = pick_namespace(BOOKINFO_2)
-    authpolicy_name = 'authpolicydenyalltocreate'
+    authpolicy_name = 'authorizationpolicies'
     namespaces = [BOOKINFO_1, namespace]
     try:
         _delete_authpolicies(openshift_client, authpolicy_name, namespaces)
@@ -501,12 +503,15 @@ def test_peerauth_create_disabled(kiali_client, openshift_client, browser, pick_
     namespace = pick_namespace(BOOKINFO_2)
     name = 'peerauthtocreatedisabled'
     namespaces = [BOOKINFO_1, namespace]
-    tests = IstioConfigPageTest(
-        kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.test_peerauth_create(name=name, mtls_mode=MutualTLSMode.PERMISSIVE.text,
-                               namespaces=namespaces,
-                               expected_created=False,
-                               mtls_ports={'8080': MutualTLSMode.STRICT.text})
+    try:
+        _delete_peerauths(openshift_client, name, namespaces)
+        tests = IstioConfigPageTest(
+            kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
+        tests.test_peerauth_create(name=name, mtls_mode=MutualTLSMode.PERMISSIVE.text,
+                                   labels='app=value',namespaces=namespaces,
+                                   mtls_ports={'8080': MutualTLSMode.STRICT.text},)
+    finally:
+        _delete_peerauths(openshift_client, name, namespaces) 
 
 
 @pytest.mark.p_crud_resource
@@ -584,7 +589,7 @@ def test_auth_policy(kiali_client, openshift_client, browser):
                        api_version='security.istio.io/v1beta1',
                        service_name=DETAILS,
                        check_service_details=False,
-                       error_messages=[KIA0101, KIA0102, KIA0004, KIA0001])
+                       error_messages=[KIA0004, KIA0101, KIA0102, KIA0102, KIA0104, KIA0104, KIA0104])
 
 
 def _istio_config_create(openshift_client, config_dict, config_yaml, kind, api_version,

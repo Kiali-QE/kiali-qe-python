@@ -135,13 +135,13 @@ def test_config_filters_kept(kiali_client, openshift_client, browser):
     config_tests.apply_filters(filters=config_filters)
     services_tests = ServicesPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    services_tests.assert_applied_filters(CONFIG_KEPT_FILTER)
+    services_tests.assert_applied_filters([{'name': 'Istio Type', 'value': 'DestinationRule'}])
     services_tests.assert_applied_namespaces(FILTER_NAMESPACE)
     app_tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    app_tests.assert_applied_filters(CONFIG_KEPT_FILTER)
+    app_tests.assert_applied_filters([{'name': 'Istio Type', 'value': 'DestinationRule'}])
     app_tests.assert_applied_namespaces(FILTER_NAMESPACE)
     wl_tests = WorkloadsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    wl_tests.assert_applied_filters(CONFIG_KEPT_FILTER)
+    wl_tests.assert_applied_filters([{'name': 'Istio Type', 'value': 'DestinationRule'}])
     wl_tests.assert_applied_namespaces(FILTER_NAMESPACE)

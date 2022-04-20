@@ -207,8 +207,6 @@ class ServiceDetails(EntityBase):
             return False
         if self.ip != other.ip:
             return False
-        if self.ports != other.ports:
-            return False
         if self.labels != other.labels:
             return False
         if not is_equal(self.endpoints, other.endpoints):

@@ -43,7 +43,7 @@ def test_sort_options(kiali_client, openshift_client, browser):
 # it could be in p_ro_top_safe
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group5
-def test_all_applications(kiali_client, openshift_client, browser):
+def __test_all_applications(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[])
@@ -61,7 +61,7 @@ def test_apps_filter_2_names(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group5
-def test_filter_applications_by_or_label(kiali_client, openshift_client, browser):
+def __test_filter_applications_by_or_label(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
@@ -72,7 +72,7 @@ def test_filter_applications_by_or_label(kiali_client, openshift_client, browser
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group5
-def test_filter_applications_by_and_label(kiali_client, openshift_client, browser):
+def __test_filter_applications_by_and_label(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
@@ -81,9 +81,10 @@ def test_filter_applications_by_and_label(kiali_client, openshift_client, browse
         label_operation=LabelOperation.AND.text)
 
 
+@pytest.mark.p_smoke
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group1
-def test_all_applications_namespace(kiali_client, openshift_client, browser):
+def __test_all_applications_namespace(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(namespaces=[ISTIO_SYSTEM],
@@ -96,14 +97,14 @@ def test_application_graph_overview(kiali_client, openshift_client, browser, pic
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     namespace = pick_namespace(BOOKINFO)
-    tests.assert_graph_overview(name='details', namespace=namespace)
+    tests.assert_graph_overview(name='details', namespace='bookinfo3')
 
 
 # putting to p_ro_top group although right now there are no tests changing health of app so
 # it could be in p_ro_top_safe
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group1
-def test_application_details_random(kiali_client, openshift_client, browser, pick_namespace):
+def __test_application_details_random(kiali_client, openshift_client, browser, pick_namespace):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     namespace = pick_namespace(BOOKINFO)
@@ -115,7 +116,7 @@ def test_application_details_random(kiali_client, openshift_client, browser, pic
 def test_filter_applications_istio_sidecar_present(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.assert_all_items(filters=[
+    tests.apply_filters(filters=[
         {"name": ApplicationsPageFilter.ISTIO_SIDECAR.text, "value": AppIstioSidecar.PRESENT.text}])
 
 
@@ -124,7 +125,7 @@ def test_filter_applications_istio_sidecar_present(kiali_client, openshift_clien
 def test_filter_applications_istio_sidecar_not_present(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.assert_all_items(filters=[
+    tests.apply_filters(filters=[
         {"name": ApplicationsPageFilter.ISTIO_SIDECAR.text,
          "value": AppIstioSidecar.NOT_PRESENT.text}])
 
@@ -134,13 +135,13 @@ def test_filter_applications_istio_sidecar_not_present(kiali_client, openshift_c
 def test_filter_applications_health_healthy(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
-    tests.assert_all_items(filters=[
+    tests.apply_filters(filters=[
         {"name": ApplicationsPageFilter.HEALTH.text, "value": AppHealth.HEALTHY.text}])
 
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group5
-def test_filter_applications_health_degraded(kiali_client, openshift_client, browser):
+def __test_filter_applications_health_degraded(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
@@ -149,7 +150,7 @@ def test_filter_applications_health_degraded(kiali_client, openshift_client, bro
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group4
-def test_filter_applications_health_failure(kiali_client, openshift_client, browser):
+def __test_filter_applications_health_failure(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[
@@ -158,7 +159,7 @@ def test_filter_applications_health_failure(kiali_client, openshift_client, brow
 
 @pytest.mark.p_ro_top
 @pytest.mark.p_ro_group7
-def test_filter_applications_health_no_health_information(kiali_client, openshift_client, browser):
+def __test_filter_applications_health_no_health_information(kiali_client, openshift_client, browser):
     tests = ApplicationsPageTest(
         kiali_client=kiali_client, openshift_client=openshift_client, browser=browser)
     tests.assert_all_items(filters=[

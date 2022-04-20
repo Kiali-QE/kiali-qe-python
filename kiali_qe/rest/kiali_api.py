@@ -250,8 +250,8 @@ class KialiExtendedClient(KialiClient):
                 'istioConfigList', path={'namespace': _namespace}, params=params)
 
             # update DestinationRule
-            if len(_data['destinationRules']) > 0 and len(_data['destinationRules']['items']) > 0:
-                for _policy in _data['destinationRules']['items']:
+            if len(_data['destinationRules']) > 0:
+                for _policy in _data['destinationRules']:
                     items.append(IstioConfig(
                         name=_policy['metadata']['name'],
                         namespace=_namespace,
@@ -261,8 +261,8 @@ class KialiExtendedClient(KialiClient):
                                                                     _policy['metadata']['name'])))
 
             # update VirtualService
-            if len(_data['virtualServices']) > 0 and len(_data['virtualServices']['items']) > 0:
-                for _policy in _data['virtualServices']['items']:
+            if len(_data['virtualServices']) > 0:
+                for _policy in _data['virtualServices']:
                     items.append(IstioConfig(
                         name=_policy['metadata']['name'],
                         namespace=_namespace,
@@ -488,8 +488,8 @@ class KialiExtendedClient(KialiClient):
             istio_configs = []
             virtual_services = []
             if _service_data['virtualServices'] \
-                    and len(_service_data['virtualServices']['items']) > 0:
-                for _vs_data in _service_data['virtualServices']['items']:
+                    and len(_service_data['virtualServices']) > 0:
+                for _vs_data in _service_data['virtualServices']:
                     _weights = []
                     if 'http' in _vs_data['spec']:
                         _protocol = _vs_data['spec']['http'][0]
@@ -533,8 +533,8 @@ class KialiExtendedClient(KialiClient):
 
             destination_rules = []
             if _service_data['destinationRules'] \
-                    and len(_service_data['destinationRules']['items']) > 0:
-                for _dr_data in _service_data['destinationRules']['items']:
+                    and len(_service_data['destinationRules']) > 0:
+                for _dr_data in _service_data['destinationRules']:
                     if 'trafficPolicy' in _dr_data['spec']:
                         _traffic_policy = to_linear_string(_dr_data['spec']['trafficPolicy'])
                     else:
@@ -582,9 +582,11 @@ class KialiExtendedClient(KialiClient):
             _applications = set([_a.name for _a in self.application_list(namespaces=[namespace])
                                  if _labels['app'] == _a.name])
             _validations = []
+            checks = ".bookinfo2"
+            service_check = f"{service_name}{checks}"
             if _service_data['validations'] \
                     and len(_service_data['validations']['service']) > 0:
-                for _data in _service_data['validations']['service'][service_name]['checks']:
+                for _data in _service_data['validations']['service'][service_check]['checks']:
                     _validations.append(_data['message'])
             _service_health = self.get_service_health(
                 namespace=namespace,

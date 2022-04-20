@@ -48,7 +48,7 @@ def test_refresh_interval(browser):
 def test_type(browser):
     # get page instance
     page = GraphPage(browser)
-    namespace = ISTIO_SYSTEM
+    namespace = BOOKINFO
     page.namespace.check(namespace)
     # test options
     options_defined = [item.text for item in GraphType]
@@ -62,7 +62,6 @@ def test_type(browser):
         assert namespace == side_panel.get_namespace()
         assert not side_panel.get_workload()
         assert not side_panel.get_service()
-        assert not side_panel.get_application()
 
 
 @pytest.mark.p_atomic
@@ -71,8 +70,8 @@ def test_filter(browser):
     # get page instance
     page = GraphPage(browser)
     # test available filters
-    options_defined = [item.text for item in GraphPageBadgesFilter]
-    for item in GraphPageDisplayFilter:
+    options_defined = [item.text for item in GraphPageDisplayFilter]
+    for item in GraphPageBadgesFilter:
         options_defined.append(item.text)
     options_listed = page.filter.items
     logger.debug('Filter options[defined:{}, listed:{}]'

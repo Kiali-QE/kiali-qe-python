@@ -26,6 +26,7 @@ class MainMenuEnum(StringEnum):
 class HelpMenuEnum(StringEnum):
     DOCUMENTATION = ('Documentation')
     VIEW_DEBUG_INFO = ('View Debug Info')
+    VIEW_CERTIFICATES_INFO = ('View Certificates Info')
     ABOUT = ('About')
 
 
@@ -66,8 +67,6 @@ class TimeIntervalUIText(StringEnum):
     LAST_12_HOURS = ('Last 12h')
     LAST_1_DAY = ('Last 1d')
     LAST_7_DAYS = ('Last 7d')
-    LAST_30_DAYS = ('Last 30d')
-
 
 class MetricsTimeInterval(StringEnum):
     LAST_MINUTE = ('Last 1m')
@@ -139,6 +138,7 @@ class GraphPageDisplayFilter(StringEnum):
     IDLE_EDGES = ('Idle Edges')
     IDLE_NODES = ('Idle Nodes')
     OPERATION_NODES = ('Operation Nodes')
+    RANK = ('Rank')
     SERVICE_NODES = ('Service Nodes')
     TRAFFIC_ANIMATION = ('Traffic Animation')
 
@@ -152,6 +152,7 @@ class GraphPageBadgesFilter(StringEnum):
 class ApplicationsPageFilter(StringEnum):
     APP_NAME = ('App Name')
     ISTIO_SIDECAR = ('Istio Sidecar')
+    ISTIO_TYPE = ('Istio Type')
     HEALTH = ('Health')
     LABEL = ('Label')
 
@@ -270,7 +271,9 @@ class WorkloadHealth(StringEnum):
 
 class ServicesPageFilter(StringEnum):
     SERVICE_NAME = ('Service Name')
+    SERVICE_TYPE = ('Service Type')
     ISTIO_SIDECAR = ('Istio Sidecar')
+    ISTIO_TYPE = ('Istio Type')
     HEALTH = ('Health')
     LABEL = ('Label')
 
