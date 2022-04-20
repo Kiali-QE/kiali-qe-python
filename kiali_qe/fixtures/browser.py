@@ -29,7 +29,7 @@ def browser(kiali_client):
     # load KialiBrowser
     kiali_browser = KialiBrowser(
         selenium, logger=logger,
-        kiali_versions={'core': cfg.kiali.version.core, 'console': cfg.kiali.version.console})
+        kiali_version=cfg.kiali.version)
     # ugly hack to pass browser object to zalenium fixtures
     # needs to remove this global assignment
     set_browser(kiali_browser)
