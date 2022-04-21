@@ -1,4 +1,4 @@
-mport pytest
+import pytest
 import os
 
 from kiali_qe.components.enums import (
