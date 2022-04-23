@@ -676,12 +676,12 @@ def test_request_auth_workload_not_found(kiali_client, openshift_client):
                 object_type='RequestAuthentication',
                 object_name='httpbin-dup-1',
                 namespace=BOOKINFO,
-                error_messages=[KIA0003]),
+                error_messages=[]),
             ConfigValidationObject(
                 object_type='RequestAuthentication',
                 object_name='httpbin-dup-2',
                 namespace=BOOKINFO,
-                error_messages=[KIA0003]),
+                error_messages=[]),
             ConfigValidationObject(
                 object_type='RequestAuthentication',
                 object_name='httpbin-matching',

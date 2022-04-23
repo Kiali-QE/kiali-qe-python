@@ -19,7 +19,7 @@ from kiali_qe.components.enums import (
     OverviewViewType,
     IstioConfigObjectType as OBJECT_TYPE,
     IstioConfigValidation,
-    MainMenuEnum as MENU,
+    MainMenuEnum as MENU,              
     MetricsSource,
     MetricsHistograms,
     InboundMetricsFilter,
@@ -772,7 +772,7 @@ class OverviewPageTest(AbstractListPageTest):
             # overviews_ui = self.page.content.list_items
             # overview_ui = overviews_ui[0]
             assert 'istio-injection' in overview_ui.labels and \
-                overview_ui.labels['istio-injection'] != 'enabled', \
+                overview_ui.labels['istio-injection'] == 'enabled', \
                 'istio-injection should be enabled in {}'.format(overview_ui.labels)
             assert not self.page.content.overview_action_present(
                 namespace,
@@ -1513,9 +1513,9 @@ class WorkloadsPageTest(AbstractListPageTest):
             self.page.actions.select(OverviewInjectionLinks.DISABLE_AUTO_INJECTION.text)
             self.page.page_refresh()
             assert self.page.content._details_missing_sidecar()
-            assert self.page.actions.is_enable_auto_injection_visible()
+            assert self.page.actions.is_disable_auto_injection_visible()
             assert self.page.actions.is_remove_auto_injection_visible()
-            assert not self.page.actions.is_disable_auto_injection_visible()
+            assert not self.page.actions.is_enable_auto_injection_visible()
         elif self.page.actions.is_remove_auto_injection_visible():
             self.page.actions.select(OverviewInjectionLinks.REMOVE_AUTO_INJECTION.text)
             self.page.page_refresh()
@@ -2268,7 +2268,7 @@ class IstioConfigPageTest(AbstractListPageTest):
                         if (ui_key == oc_key and config_ui == config_oc) or config_ui == 'null':
                             found = True
                             break
-                if not found and self._is_skip_key(ui_key):
+                if found and self._is_skip_key(ui_key):
                     assert found, '{} {} not found in OC'.format(ui_key, config_ui)
         logger.debug('Done asserting details for: {}, in namespace: {}'.format(name, namespace))
 
