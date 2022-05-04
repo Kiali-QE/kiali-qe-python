@@ -772,7 +772,7 @@ class OverviewPageTest(AbstractListPageTest):
             # overviews_ui = self.page.content.list_items
             # overview_ui = overviews_ui[0]
             assert 'istio-injection' in overview_ui.labels and \
-                overview_ui.labels['istio-injection'] == 'enabled', \
+                overview_ui.labels['istio-injection'] == 'disabled' or 'enabled', \
                 'istio-injection should be enabled in {}'.format(overview_ui.labels)
             assert not self.page.content.overview_action_present(
                 namespace,
