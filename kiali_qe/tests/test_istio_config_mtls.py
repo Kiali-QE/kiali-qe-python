@@ -79,7 +79,7 @@ def test_scenario1(kiali_client, openshift_client, browser):
                                     MeshWideTLSType.DISABLED),
                                 NamespaceTLSObject(
                                     'default',
-                                    MeshWideTLSType.PARTLY_ENABLED)
+                                    MeshWideTLSType.PARTLY_ENABLED or MeshWideTLSType.PARTLY_ENABLED)
                              ])
 
 
@@ -114,7 +114,7 @@ def test_scenario2(kiali_client, openshift_client, browser):
                 MeshWideTLSType.DISABLED),
             NamespaceTLSObject(
                 'default',
-                MeshWideTLSType.PARTLY_ENABLED)
+                MeshWideTLSType.PARTLY_ENABLED or MeshWideTLSType.PARTLY_ENABLED)
         ])
 
 
