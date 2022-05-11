@@ -34,7 +34,7 @@ from kiali_qe.utils.conf import env as cfg
 from wait_for import wait_for
 
 XP_DROP_DOWN = '//*[contains(@class, "pf-c-select")]/*[contains(@aria-labelledby, "{}")]'
-SORT_DROP_DOWN = '//*[contains(@class, "pf-l-toolbar__item")]' +\
+SORT_DROP_DOWN = '//*[contains(@class, "pf-c-toolbar__item")]' +\
     '//*[contains(@aria-labelledby, "{}")]/../..'
 XP_BUTTON_SWITCH = '//*[contains(@class, "bootstrap-switch")]//*[text()="{}"]/../..'
 REFRESH_BUTTON = '//button[@id="refresh_button"]'

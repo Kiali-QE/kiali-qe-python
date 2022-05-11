@@ -381,7 +381,7 @@ class DropDown(Widget):
 
 
 class MenuDropDown(DropDown):
-    ROOT = '//*[contains(@class, "pf-l-toolbar")]'
+    ROOT = '//*[contains(@class, "pf-c-toolbar")]'
     SELECT_BUTTON = '//*[contains(@class, "pf-c-dropdown__toggle")]'
     OPTIONS_LIST = ('//*[contains(@class, "pf-c-dropdown__menu")]//*[contains(@role, "menuitem")'
                     ' and not(contains(@class, "pf-m-disabled"))]')
@@ -400,7 +400,7 @@ class MenuDropDown(DropDown):
 
 
 class ActionsDropDown(DropDown):
-    ROOT = '//*[contains(@class, "pf-l-toolbar")]'
+    ROOT = '//*[contains(@class, "pf-c-toolbar")]'
     SELECT_BUTTON = '//*[contains(@class, "pf-c-dropdown__toggle")]'
     OPTIONS_LIST = ('//*[contains(@class, "pf-c-dropdown__menu")]//*[contains(@role, "menuitem")]'
                     '//*[not(contains(@class, "pf-m-disabled"))]')
@@ -420,7 +420,7 @@ class ActionsDropDown(DropDown):
 
 
 class OverviewActionsDropDown(DropDown):
-    ROOT = '//*[contains(@class, "pf-l-toolbar")]'
+    ROOT = '//*[contains(@class, "pf-c-toolbar")]'
     SELECT_BUTTON = '//*[contains(@class, "pf-c-dropdown__toggle")]'
     OPTIONS_LIST = ('//*[contains(@class, "pf-c-dropdown__menu")]//*[contains(@role, "menuitem")]'
                     '//*[not(contains(@class, "pf-m-disabled"))]')
@@ -603,7 +603,7 @@ class SortBar(Widget):
 
 
 class FilterList(Widget):
-    ROOT = './/*[contains(@class, "pf-l-toolbar")]'
+    ROOT = './/*[contains(@class, "pf-c-toolbar")]'
     ITEMS = '//ul[contains(@class, "pf-c-chip-group") and contains(@class, "pf-m-toolbar")]/li'
     ITEM_LABEL = './/*[contains(@class, "pf-c-chip-group__label")]'
     ITEM_TEXT = './/*[contains(@class, "pf-c-chip__text")]'
@@ -649,7 +649,7 @@ class FilterList(Widget):
 
 
 class Filter(Widget):
-    ROOT = '//*[contains(@class, "pf-l-toolbar")]//*[contains(@class, "pf-l-toolbar__section")]'
+    ROOT = '//*[contains(@class, "pf-c-toolbar")]//*[contains(@class, "pf-c-toolbar__content-section")]'
     FILTER_DROPDOWN = '//select[contains(@aria-label, "filter_select_type")]'
     VALUE_INPUT = './/input'
     VALUE_DROPDOWN = '//select[contains(@aria-label, "filter_select_value")]'
@@ -1699,7 +1699,7 @@ class CheckBoxFilter(Widget):
 
 
 class GraphLayout(Widget):
-    ROOT = ('//*[contains(@class, "pf-l-toolbar")]')
+    ROOT = ('//*[contains(@class, "pf-c-toolbar")]')
 
     def __init__(self, parent, locator=None, logger=None):
         Widget.__init__(self, parent, logger=logger)
@@ -1921,13 +1921,13 @@ class About(Widget):
 class NavBar(Widget):
     ROOT = '//*[contains(@class, "pf-c-page__header")]'
     TOGGLE_NAVIGATION = './/*[@id="nav-toggle"]'
-    NAVBAR_HELP = ('//*[contains(@class, "pf-l-toolbar__group")]'
+    NAVBAR_HELP = ('//*[contains(@class, "pf-c-toolbar__group")]'
                    '//*[contains(@class, "pf-c-dropdown")]//span[not(@class)]/../..')
-    NAVBAR_USER = ('//*[contains(@class, "pf-l-toolbar__group")]'
+    NAVBAR_USER = ('//*[contains(@class, "pf-c-toolbar__group")]'
                    '//*[contains(@class, "pf-c-dropdown")]//'
                    'span[contains(@class, "pf-c-dropdown__toggle-text")]/../..')
     USER_SELECT_BUTTON = '//*[contains(@class, "pf-c-dropdown__toggle-text")]/..'
-    NAVBAR_MASTHEAD = './/*[contains(@class, "pf-l-toolbar__item")]//*[contains(@d, "M512")]'
+    NAVBAR_MASTHEAD = './/*[contains(@class, "pf-c-toolbar__item")]//*[contains(@d, "M512")]'
 
     def __init__(self, parent, logger=None):
         logger.debug('Loading navbar')
@@ -2628,11 +2628,11 @@ class ListViewAbstract(ViewAbstract):
         wait_displayed(self)
         _partial = len(self.browser.elements(
             parent=self.ROOT,
-            locator='//*[contains(@class, "pf-l-toolbar")]'
+            locator='//*[contains(@class, "pf-c-toolbar")]'
             '//img[contains(@src, "mtls-status-partial")]')) > 0
         _full = len(self.browser.elements(
             parent=self.ROOT,
-            locator='//*[contains(@class, "pf-l-toolbar")]'
+            locator='//*[contains(@class, "pf-c-toolbar")]'
             '//img[contains(@src, "mtls-status-full")]')) > 0
         if _full:
             return MeshWideTLSType.ENABLED
