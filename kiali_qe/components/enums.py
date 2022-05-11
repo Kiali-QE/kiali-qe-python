@@ -165,7 +165,7 @@ class ApplicationsPageSort(StringEnum):
 class OverviewPageFilter(StringEnum):
     NAME = ('Namespace')
     HEALTH = ('Health')
-    MTLS_STATUS = ('mTLS status')
+    MTLS_STATUS = ('mTLS')
     LABEL = ('Namespace Label')
 
 
