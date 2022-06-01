@@ -117,7 +117,7 @@ def test_destination_rule_broken(kiali_client, openshift_client, browser):
 
 @pytest.mark.p_crud_resource
 @pytest.mark.p_crud_group1
-def test_destination_rule_svc_warning(kiali_client, openshift_client, browser):
+def __test_destination_rule_svc_warning(kiali_client, openshift_client, browser):
     destination_rule_warning = get_yaml(istio_objects_path.strpath, DEST_RULE_WARNING)
     destination_rule_warning_dict = get_dict(istio_objects_path.strpath, DEST_RULE_WARNING)
     _create_dest_rule_vs(openshift_client, DEST_RULE_VS_REVIEWS)
@@ -465,7 +465,7 @@ def test_authpolicy_rules_allow_create(kiali_client, openshift_client, browser, 
 
 @pytest.mark.p_crud_resource
 @pytest.mark.p_crud_group3
-def test_authpolicy_rules_deny_disabled(kiali_client, openshift_client, browser, pick_namespace):
+def __test_authpolicy_rules_deny_disabled(kiali_client, openshift_client, browser, pick_namespace):
     namespace = pick_namespace(BOOKINFO_2)
     authpolicy_name = 'authpolicyrulesdenydisabled'
     namespaces = [BOOKINFO_1, namespace]
