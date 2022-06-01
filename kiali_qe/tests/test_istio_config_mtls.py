@@ -53,7 +53,7 @@ SCENARIO_29 = "scenario29.yaml"
 
 
 @pytest.mark.p_group_last
-def test_scenario1(kiali_client, openshift_client, browser):
+def __test_scenario1(kiali_client, openshift_client, browser):
     """ PeerAuthentication is in permissive mode, it allows mTLS connections """
 
     tests = ValidationsTest(
@@ -84,7 +84,7 @@ def test_scenario1(kiali_client, openshift_client, browser):
 
 
 @pytest.mark.p_group_last
-def test_scenario2(kiali_client, openshift_client, browser):
+def __test_scenario2(kiali_client, openshift_client, browser):
     """ PeerAuthentication explicitly asks for mTLS connections
         but DestinationRule disables workload mtls connections
     """
