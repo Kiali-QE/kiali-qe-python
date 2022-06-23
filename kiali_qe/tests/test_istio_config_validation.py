@@ -71,7 +71,7 @@ SCENARIO_29 = "subset_not_have_label.yaml"
 
 
 @pytest.mark.p_group_last
-def test_two_gateways_same_host(kiali_client, openshift_client):
+def __test_two_gateways_same_host(kiali_client, openshift_client):
     """ More than one Gateway for the same host port combination
     """
     tests = ValidationsTest(
@@ -121,7 +121,7 @@ def test_two_gateways_different_selectors(kiali_client, openshift_client):
 
 
 @pytest.mark.p_group_last
-def test_gateway_no_matching_workload(kiali_client, openshift_client):
+def __test_gateway_no_matching_workload(kiali_client, openshift_client):
     """ No matching workload found for gateway selector in this namespace
     """
     tests = ValidationsTest(
@@ -140,7 +140,7 @@ def test_gateway_no_matching_workload(kiali_client, openshift_client):
 
 
 @pytest.mark.p_group_last
-def test_more_drs_same_host_port(kiali_client, openshift_client):
+def __test_more_drs_same_host_port(kiali_client, openshift_client):
     """ More than one DestinationRules for the same host subset combination
     """
     tests = ValidationsTest(
@@ -165,7 +165,7 @@ def test_more_drs_same_host_port(kiali_client, openshift_client):
 
 
 @pytest.mark.p_group_last
-def test_no_matching_entry_dr(kiali_client, openshift_client):
+def __test_no_matching_entry_dr(kiali_client, openshift_client):
     """ This host has no matching entry in the service registry
         (service, workload or service entries)
     """
@@ -185,7 +185,7 @@ def test_no_matching_entry_dr(kiali_client, openshift_client):
 
 
 @pytest.mark.p_group_last
-def test_subset_label_not_found(kiali_client, openshift_client):
+def __test_subset_label_not_found(kiali_client, openshift_client):
     """ This subset’s labels are not found in any matching host
     """
     tests = ValidationsTest(
@@ -298,7 +298,7 @@ def test_meshpolicy_mtls_enable_ok(kiali_client, openshift_client):
 
 
 @pytest.mark.p_group_last
-def test_vs_to_non_existing_gateway(kiali_client, openshift_client):
+def __test_vs_to_non_existing_gateway(kiali_client, openshift_client):
     """ VirtualService is pointing to a non-existent gateway
     """
     tests = ValidationsTest(
@@ -317,7 +317,7 @@ def test_vs_to_non_existing_gateway(kiali_client, openshift_client):
 
 
 @pytest.mark.p_group_last
-def test_vs_not_defined_protocol(kiali_client, openshift_client):
+def __test_vs_not_defined_protocol(kiali_client, openshift_client):
     """ VirtualService doesn’t define any route protocol
     """
     try:
@@ -410,7 +410,7 @@ def __test_port_name_suffix(kiali_client, openshift_client):
 
 
 @pytest.mark.p_group_last
-def test_vs_less_than_100_weight(kiali_client, openshift_client):
+def __test_vs_less_than_100_weight(kiali_client, openshift_client):
     """ VirtualService has only weight < 100
     """
     tests = ValidationsTest(
@@ -429,7 +429,7 @@ def test_vs_less_than_100_weight(kiali_client, openshift_client):
 
 
 @pytest.mark.p_group_last
-def test_sidecar_errors(kiali_client, openshift_client):
+def __test_sidecar_errors(kiali_client, openshift_client):
     """ Multiple errors
     """
     tests = ValidationsTest(
@@ -452,7 +452,7 @@ def test_sidecar_errors(kiali_client, openshift_client):
 
 
 @pytest.mark.p_group_last
-def test_duplicate_sidecar_errors(kiali_client, openshift_client):
+def __test_duplicate_sidecar_errors(kiali_client, openshift_client):
     """ More than one selector-less Sidecar in the same namespace
     """
     tests = ValidationsTest(
@@ -480,7 +480,7 @@ def test_duplicate_sidecar_errors(kiali_client, openshift_client):
 
 
 @pytest.mark.p_group_last
-def test_duplicate_workload_sidecar_errors(kiali_client, openshift_client):
+def __test_duplicate_workload_sidecar_errors(kiali_client, openshift_client):
     """ More than one selector-less Sidecar in the same namespace
     """
     tests = ValidationsTest(
@@ -504,7 +504,7 @@ def test_duplicate_workload_sidecar_errors(kiali_client, openshift_client):
 
 
 @pytest.mark.p_group_last
-def test_default_workload_sidecar(kiali_client, openshift_client):
+def __test_default_workload_sidecar(kiali_client, openshift_client):
     """ Global default sidecar should not have workloadSelector
     """
     tests = ValidationsTest(
@@ -570,7 +570,7 @@ def test_authpolicy_validations_mtls(kiali_client, openshift_client):
 
 
 @pytest.mark.p_group_last
-def test_vs_subset_validations_service_entry(kiali_client, openshift_client):
+def __test_vs_subset_validations_service_entry(kiali_client, openshift_client):
     """ KIA1107 Subset found as ServiceEntry exists
     """
     tests = ValidationsTest(
@@ -589,7 +589,7 @@ def test_vs_subset_validations_service_entry(kiali_client, openshift_client):
 
 
 @pytest.mark.p_group_last
-def test_vs_subset_validations_no_service_entry(kiali_client, openshift_client):
+def __test_vs_subset_validations_no_service_entry(kiali_client, openshift_client):
     """ KIA1107 Subset not found as ServiceEntry missing
     """
     tests = ValidationsTest(
@@ -608,7 +608,7 @@ def test_vs_subset_validations_no_service_entry(kiali_client, openshift_client):
 
 
 @pytest.mark.p_group_last
-def test_vs_duplicate_gateway(kiali_client, openshift_client):
+def __test_vs_duplicate_gateway(kiali_client, openshift_client):
     """ KIA1106 More than one Virtual Service for same host
     """
     tests = ValidationsTest(
@@ -642,7 +642,7 @@ def test_vs_duplicate_gateway(kiali_client, openshift_client):
 
 
 @pytest.mark.p_group_last
-def test_vs_destination_host_not_found(kiali_client, openshift_client):
+def __test_vs_destination_host_not_found(kiali_client, openshift_client):
     """ KIA1101 DestinationWeight on route doesn't have a
             valid service (host not found)
     """
@@ -662,7 +662,7 @@ def test_vs_destination_host_not_found(kiali_client, openshift_client):
 
 
 @pytest.mark.p_group_last
-def test_request_auth_workload_not_found(kiali_client, openshift_client):
+def __test_request_auth_workload_not_found(kiali_client, openshift_client):
     """ KIA0003, KIA0004, KIA0002
     """
     tests = ValidationsTest(
@@ -706,7 +706,7 @@ def test_request_auth_workload_not_found(kiali_client, openshift_client):
 
 
 @pytest.mark.p_group_last
-def test_subset_no_label(kiali_client, openshift_client):
+def __test_subset_no_label(kiali_client, openshift_client):
     """ This subset have not label
     """
     tests = ValidationsTest(
