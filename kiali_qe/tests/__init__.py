@@ -2360,7 +2360,7 @@ class IstioConfigPageTest(AbstractListPageTest):
                         assert '\"portLevelMtls\": \"{}\": \"mode\": \"{}\"'.format(_key, _value) \
                             in config_details_rest.text.replace('{', '').replace('}', '')
 
-    def test_requestauth_create(self, name, namespaces, expected_created=True,
+    def __test_requestauth_create(self, name, namespaces, expected_created=True,
                                 labels=None, jwt_rules={}):
         logger.debug('Creating RequestAuthentication: {}, from namespaces: {}'.format(
             name,
