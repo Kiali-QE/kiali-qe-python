@@ -516,7 +516,7 @@ def test_peerauth_create_disabled(kiali_client, openshift_client, browser, pick_
 
 @pytest.mark.p_crud_resource
 @pytest.mark.p_crud_group4
-def test_requestauth_create(kiali_client, openshift_client, browser, pick_namespace):
+def __test_requestauth_create(kiali_client, openshift_client, browser, pick_namespace):
     namespace = pick_namespace(BOOKINFO_2)
     name = 'requestauthtocreate'
     namespaces = [BOOKINFO_1, namespace]
@@ -534,7 +534,7 @@ def test_requestauth_create(kiali_client, openshift_client, browser, pick_namesp
 
 @pytest.mark.p_crud_resource
 @pytest.mark.p_crud_group4
-def test_requestauth_create_disabled(kiali_client, openshift_client, browser, pick_namespace):
+def __test_requestauth_create_disabled(kiali_client, openshift_client, browser, pick_namespace):
     namespace = pick_namespace(BOOKINFO_2)
     name = 'requestauthtocreatedisabled'
     namespaces = [BOOKINFO_1, namespace]
