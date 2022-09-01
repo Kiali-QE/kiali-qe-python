@@ -121,7 +121,7 @@ def test_find_hide(browser):
 
 @pytest.mark.p_atomic
 @pytest.mark.p_ro_group3
-def __test_layout(browser):
+def test_layout(browser):
     # get page instance
     page = GraphPage(browser)
     page.namespace.check(ISTIO_SYSTEM)
