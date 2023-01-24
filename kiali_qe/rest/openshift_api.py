@@ -85,7 +85,7 @@ class OpenshiftExtendedClient(object):
 
     @property
     def _cronjob(self):
-        return self._resource(kind='CronJob', api_version='v1beta1')
+        return self._resource(kind='CronJob', api_version='v1')
 
     @property
     def _daemonset(self):
